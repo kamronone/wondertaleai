@@ -124,3 +124,18 @@ def test_signature_valid_but_unknown_session_is_rejected():
     signature=secure_main.encode(__import__("hmac").new(secure_main.SECRET.encode(),part.encode(),__import__("hashlib").sha256).digest())
     forged=part+"."+signature
     assert client.get("/api/me",headers=headers(forged)).status_code==401
+
+def test_password_change_invalidates_all_previous_tokens():
+    import uuid
+    email="pw-"+str(uuid.uuid4())+"@example.com"
+    token=signup(email)
+    new_password="wondertale-new-strong-password-2026"
+    invalid=client.post("/api/auth/change-password",headers=headers(token),json={"current_password":"wrong-strong-password","new_password":new_password})
+    assert invalid.status_code==401
+    changed=client.post("/api/auth/change-password",headers=headers(token),json={"current_password":PASSWORD,"new_password":new_password})
+    assert changed.status_code==200,changed.text
+    next_token=changed.json()["access_token"]
+    assert client.get("/api/me",headers=headers(token)).status_code==401
+    assert client.get("/api/me",headers=headers(next_token)).status_code==200
+    assert client.post("/api/auth/login",json={"email":email,"password":PASSWORD}).status_code==401
+    assert client.post("/api/auth/login",json={"email":email,"password":new_password}).status_code==200
