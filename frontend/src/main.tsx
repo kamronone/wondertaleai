@@ -7,9 +7,10 @@ import { createDemoBook, getDemoBooks, saveDemoBooks, isDemoBook } from "./demo"
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
+import { endings, storyPresets, type EndingId } from "./story_interactions";
 
 type Page={number:number;text:string;image_url:string};
-type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean};
+type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
 
 function App(){
@@ -51,6 +52,8 @@ function App(){
   const [consent,setConsent]=useState(false);
   const [saveOnDevice,setSaveOnDevice]=useState(false);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
+  const [editingPage,setEditingPage]=useState(false);
+  const [pageDraft,setPageDraft]=useState("");
   const [speaking,setSpeaking]=useState(false);
   const [speechPaused,setSpeechPaused]=useState(false);
   const [busy,setBusy]=useState(false);
@@ -73,11 +76,11 @@ function App(){
   },[page,tab,active?.id]);
   useEffect(()=>{void fetchBooks();if(API)fetch(API+"/api/health",{signal:AbortSignal.timeout(1800)}).then(r=>r.json()).then(data=>{setMode(data.mode);setOnlineApi(true)}).catch(()=>{});},[]);
   const openBook=(book:Book)=>{
-    setActive(book);setPage(Math.max(0,Math.min(book.lastPage||0,book.pages.length-1)));setTab("reader");setError("");
+    setEditingPage(false);setActive(book);setPage(Math.max(0,Math.min(book.lastPage||0,book.pages.length-1)));setTab("reader");setError("");
   };
   useEffect(()=>{
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
-    setSpeaking(false);setSpeechPaused(false);
+    setSpeaking(false);setSpeechPaused(false);setEditingPage(false);
   },[tab,page,active?.id]);
   useEffect(()=>{
     if(tab!=="reader"||!active||!isDemoBook(active))return;
@@ -118,6 +121,32 @@ function App(){
   const stopSpeech=()=>{
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpeaking(false);setSpeechPaused(false);
+  };
+  const applyLocalBookChange=(book:Book)=>{
+    if(!isDemoBook(book))return;
+    saveDemoBooks(getDemoBooks().map(b=>b.id===book.id?{...b,...book}:b));
+    setBooks(prev=>prev.map(b=>b.id===book.id?book:b));
+    setActive(book);
+  };
+  const beginPageEdit=()=>{
+    if(!active||!isDemoBook(active))return;
+    stopSpeech();setPageDraft(active.pages[page].text);setEditingPage(true);
+  };
+  const savePageEdit=()=>{
+    if(!active||!isDemoBook(active))return;
+    const text=pageDraft.trim();
+    if(text.length<12||text.length>1500){setError(t.generateError);return;}
+    const revised={...active,pages:active.pages.map((p,i)=>i===page?{...p,text}:p)};
+    if(page===active.pages.length-1){revised.originalEnding=text;revised.endingChoice=undefined;}
+    applyLocalBookChange(revised);setEditingPage(false);setError("");
+  };
+  const selectEnding=(choice:EndingId)=>{
+    if(!active||!isDemoBook(active))return;
+    const last=active.pages.length-1;
+    const originalEnding=active.originalEnding||active.pages[last].text;
+    const addition=endings[active.language||storyLang][choice].addition;
+    applyLocalBookChange({...active,originalEnding,endingChoice:choice,pages:active.pages.map((p,i)=>i===last?{...p,text:originalEnding+" "+addition}:p)});
+    setEditingPage(false);
   };
   const generate=async(e:React.FormEvent)=>{
     e.preventDefault();setError("");setBusy(true);
@@ -180,6 +209,8 @@ function App(){
           <div className="classic-choice"><button type="button" className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
           {activeClassic&&<p className="classic-selected"><CheckCircle2 size={16}/> {t.classicSelected}: <strong>{activeClassic.title[lang]}</strong></p>}
           <label>{t.world}</label><div className="chips">{themes.map((x,i)=><button type="button" key={x} className={"chip "+(themeIndex===i?"selected":"")} onClick={()=>setThemeIndex(i)}>{x}</button>)}</div>
+          <label className="story-preset-label">{t.storyIdeas}</label>
+          <div className="story-preset-actions">{storyPresets[storyLang].map(preset=><button type="button" key={preset.id} onClick={()=>{setClassicId(null);setPrompt(preset.idea);setThemeIndex(preset.id==="bedtime"?5:preset.id==="confidence"?4:0);}}>{preset.title}</button>)}</div>
           <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
@@ -201,6 +232,15 @@ function App(){
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         <div className="story-page"><div className="story-page-image"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
+        {isDemoBook(active)&&<div className="story-edit-zone">
+          {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
+            <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
+              <div><button type="button" onClick={savePageEdit}>{t.savePage}</button><button type="button" onClick={()=>setEditingPage(false)}>{t.cancelEdit}</button></div>
+            </div>}
+        </div>}
+        {isDemoBook(active)&&page===active.pages.length-1&&<div className="interactive-endings"><strong>{t.interactiveEnding}</strong>
+          <div>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
+        </div>}
         {isDemoBook(active)&&<article className="print-book" aria-hidden="true">
           <div className="print-book-cover"><img src={active.pages[0].image_url} alt=""/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
           {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><img src={item.image_url} alt=""/><p>{item.text}</p></section>)}
