@@ -320,3 +320,19 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
  .compact-install p{font-size:11px}
  .coming .soon{font-size:9px}
 }
+
+/* Local demo book privacy: optional on-device persistence. */
+.device-save-option{margin:15px 0 11px;padding:13px 14px;background:#fbf8ff;border:1px solid #e9d9f0;border-radius:14px}
+.device-save-option label{display:flex;align-items:flex-start;gap:11px;cursor:pointer;font-weight:normal;margin:0}
+.device-save-option input[type="checkbox"]{width:20px;height:20px;min-width:20px;margin:2px 0 0;accent-color:#8a4cce}
+.device-save-option label span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.device-save-option strong{font-size:13px;color:#482968;line-height:1.4}
+.device-save-option small{font-size:11px;color:#8b7a98;line-height:1.5;font-weight:400}
+.reader-saved-tag{display:inline-flex;align-items:center;gap:5px;color:#6a429f;background:#f5ecff;border:1px solid #e0c9f1;border-radius:18px;font-size:11px;font-weight:700;padding:5px 9px;max-width:100%}
+.reader-title .reader-saved-tag{margin:6px auto 0}
+.story-page-image img[src^="/images/classics/"]{object-fit:cover;object-position:center 40%}
+@media(max-width:620px){
+  .device-save-option{margin:12px 0 9px;padding:12px}
+  .device-save-option strong{font-size:12px}
+  .device-save-option small{font-size:10.5px}
+}
