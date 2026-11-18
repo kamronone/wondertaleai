@@ -10,7 +10,6 @@ import re
 import secrets
 import smtplib
 from email.message import EmailMessage
-from urllib.parse import urlencode
 
 def verification_required()->bool:
     return os.getenv("REQUIRE_EMAIL_VERIFICATION","true").lower()!="false"
@@ -38,7 +37,7 @@ def send_account_email(to:str,token:str,kind:str)->None:
     if not re.fullmatch(r"https://[A-Za-z0-9.-]+(?::[0-9]{2,5})?",origin):
         raise RuntimeError("PUBLIC_APP_ORIGIN must be an HTTPS origin")
     # Tokens are sent only by email, never returned in HTTP responses.
-    destination=origin+("/verify-email" if kind=="verify" else "/reset-password")+"?"+urlencode({"token":token})
+    destination=origin+"/#"+("verify=" if kind=="verify" else "recover=")+token
     subject="WonderTale AI: confirm your email" if kind=="verify" else "WonderTale AI: reset your password"
     body=(
       "Hello!\n\nTo confirm your parent account, open:\n" if kind=="verify"
