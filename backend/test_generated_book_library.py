@@ -141,3 +141,22 @@ def test_ai_generation_respects_daily_parent_limit(api):
     third=client.post("/api/books/generate", headers=headers, json=payload)
     assert third.status_code == 429
     assert len(client.get("/api/books", headers=headers).json()) == 2
+
+
+def test_private_library_response_disables_caching(api):
+    client, module, parent_id, headers = api
+    response=client.get("/api/books", headers=headers)
+    assert response.status_code==200
+    assert response.headers["cache-control"]=="private, no-store"
+    assert response.headers["pragma"]=="no-cache"
+    assert response.headers["x-content-type-options"]=="nosniff"
+    unauthorized=client.get("/api/books")
+    assert unauthorized.status_code==401
+    assert unauthorized.headers["cache-control"]=="private, no-store"
+
+
+def test_oversized_bearer_token_is_rejected(api):
+    client, module, parent_id, headers = api
+    response=client.get("/api/me",headers={"Authorization":"Bearer "+"x"*5000})
+    assert response.status_code==401
+    assert response.headers["cache-control"]=="private, no-store"
