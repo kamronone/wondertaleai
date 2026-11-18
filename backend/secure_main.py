@@ -597,6 +597,11 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
 @app.delete("/api/me",status_code=204)
 def delete_account(owner:str=Depends(current_parent)):
     with connection() as c:
-        sql(c,"DELETE FROM books WHERE owner_id=?",(owner,))
+        # Login throttling uses a keyed email digest rather than a foreign key,
+        # so ON DELETE CASCADE cannot remove its record automatically.
+        row=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
+        if not row:
+            raise HTTPException(404,"Account not found")
+        sql(c,"DELETE FROM login_attempts WHERE email_key=?",(_email_key(row[0]),))
         sql(c,"DELETE FROM parents WHERE id=?",(owner,))
         c.commit()
