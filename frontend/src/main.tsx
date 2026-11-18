@@ -28,12 +28,11 @@ function App(){
     if(accountAction)window.history.replaceState(null,"",window.location.pathname+window.location.search);
   },[]);
   const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account">("home");
-  const [onboardingSeen,setOnboardingSeen]=useState(()=>localStorage.getItem("wondertale-onboarding-v1")==="seen");
   const [onboardingStep,setOnboardingStep]=useState(0);
   const [showOnboarding,setShowOnboarding]=useState(()=>localStorage.getItem("wondertale-onboarding-v1")!=="seen");
   const finishOnboarding=(destination:"home"|"account")=>{
     localStorage.setItem("wondertale-onboarding-v1","seen");
-    setOnboardingSeen(true);setShowOnboarding(false);setTab(destination);
+    setShowOnboarding(false);setTab(destination);
   };
   const [lang,setLang]=useState<Lang>(getSavedLanguage);
   const [storyLang,setStoryLang]=useState<Lang>(getSavedLanguage);
