@@ -16,7 +16,7 @@ def test_smtp_is_required(monkeypatch):
     for key in ("SMTP_HOST","SMTP_USERNAME","SMTP_PASSWORD","SMTP_FROM","PUBLIC_APP_ORIGIN"):
         monkeypatch.delenv(key,raising=False)
     assert not mail_configured()
-    with pytest.raises(RuntimeError,match="SMTP"):
+    with pytest.raises(RuntimeError,match="Email provider is not configured"):
         send_account_email("parent@example.com",new_code(),"verify")
 
 def test_links_use_https_and_no_external_network(monkeypatch):
