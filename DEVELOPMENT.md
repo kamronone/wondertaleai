@@ -280,3 +280,18 @@ Backend tests are now verified across SQLite (33 passed) and dedicated Neon Post
 - Updated protected FastAPI Preview: `dpl_GetiYohKTgJpj27rZCyoKDn3Zsa6`, `READY`, and `GET /api/ready` returned `200 {"ok":true,"database":"connected"}` against the isolated WonderTale Neon branch.
 - Updated public static Vite Preview: `dpl_FVx2pXx4kdRCjcmeNXegeRHSHDHM`, `READY`, TypeScript/Vite build passed; existing demo app and 30 classic covers remain.
 - No SMTP host, username, password, sender domain, or verified delivery service is configured on `wondertaleai-api-preview`. `ENABLE_REGISTRATION=false`, `ENABLE_TEXT_AI=false`, and full Vercel Authentication remain enforced. Do **not** expose signup to the public frontend until a sending provider, abuse-protection review, and actual email delivery checks are completed.
+
+
+## Transactional email provider integration — 2026-11-18
+
+The private email delivery adapter `backend/email_auth.py` now supports two backend-only transports:
+1. **Resend HTTPS API (recommended on Vercel):** `RESEND_API_KEY` plus `MAIL_FROM` on the private FastAPI project; it POSTs to the Resend send-email API using bearer authentication, `from`, `to`, `subject`, and `text`. HTTP and network errors are sanitized to avoid leaking API keys/provider details.
+2. **Existing SMTP fallback:** `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` and port `465` (SSL) or `587` (STARTTLS only).
+
+Both require `PUBLIC_APP_ORIGIN` pointing to the static WonderTale frontend's canonical HTTPS origin so links open `/#verify=<token>` or `/#recover=<token>`. **Never put these credentials into Vite environment variables**, and never commit them. The user must own and verify the mail sending domain with the provider before configuring a real sender. A Resend API key or confirmed sender has not been provided to, or installed on, the backend in this turn.
+
+Status: static UI and the API are still decoupled; FastAPI registration `ENABLE_REGISTRATION=false` and `REQUIRE_EMAIL_VERIFICATION=true`, AI `ENABLE_TEXT_AI=false`, and Vercel Authentication stays enabled on the API. Do not claim real email delivery or enable public accounts without proof of actual provider delivery.
+
+Regression: `pytest` completed with **40 passed in 3.19 seconds**, one non-failing Starlette deprecation warning. Resend tests mock HTTPS requests and cover POST parameters, sender config and safe error messages. API Preview deployment `dpl_9YAC566R64d5bN1ZAtugUsg8o7Bn` reached `READY`; `/api/ready` returned HTTP 200 and `{"ok":true,"database":"connected"}` against isolated Neon.
+
+Provider activation checklist: verify a domain in Resend (SPF/DKIM DNS); create a restricted sending API key; configure `RESEND_API_KEY`, `MAIL_FROM` and `PUBLIC_APP_ORIGIN` only on `wondertaleai-api-preview` Preview environment; test delivery to a parent-owned address and single-use token expiration; verify runtime API CORS, login abuse controls and public-auth architecture before making the API publicly reachable and setting `VITE_API_BASE` on the site. No active-user email or password credentials should ever be pasted into chat.
