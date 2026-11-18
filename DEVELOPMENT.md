@@ -306,3 +306,16 @@ Completed:
 - Redeployed isolated protected FastAPI API Preview `dpl_49kdys7LEhuWjDrwLitgdWHgnxnL`. Build `READY`; database readiness `GET /api/ready` returned HTTP 200 with `{"ok":true,"database":"connected"}`.
 
 External activation steps (account owner via Vercel UI): install Resend in project `wondertaleai-api-preview`, ensure `RESEND_API_KEY` is injected into **Preview** only, verify sender DNS in Resend, set `MAIL_FROM` to an actual verified email address, perform an email-delivery end-to-end test, then review abuse controls and remove Vercel Authentication only after the public parent-auth API is ready. Until these conditions are met, keep all account registration and AI/photo upload features disabled.
+
+
+## Live Resend environment readiness — 2026-11-18
+
+The isolated protected Vercel API project `wondertaleai-api-preview` now has Preview-only Sensitive environment entries for `RESEND_API_KEY` and `MAIL_FROM`, plus `PUBLIC_APP_ORIGIN`. No secret values were exposed or committed.
+
+The backend now validates structurally correct sender email identity and HTTPS site origin in `mail_configured()` and returns a **non-secret** `email_configured` boolean from its existing `GET /api/ready` endpoint. This is a configuration check, **not** a real delivery test or guarantee that the Resend API key is valid.
+
+- Temporary Vercel Sandbox regression run: **42 passed in 2.32 seconds**, 1 non-failing Starlette/httpx deprecation warning. New tests check valid Resend sender, display-name sender, invalid sender, CRLF header injection, non-HTTPS site origin, and readiness without an external provider request.
+- Updated FastAPI Preview deployment: `dpl_HKsNbaEFaDDjpKcZokech2dWzWYx`, `READY`. Verified live `GET /api/ready` returned HTTP 200 with `{"ok":true,"database":"connected","email_configured":true}`.
+- `ENABLE_REGISTRATION=false`, `ENABLE_TEXT_AI=false`, and Vercel Authentication for all API deployment targets remain intact. Public parent login is **not enabled**.
+- The actual Resend inbox delivery has **not** been tested: the user has not provided or selected an authorized destination email. The sandbox sender `onboarding@resend.dev` typically only sends to the account owner, subject to the provider's current restrictions.
+- Before releasing parent registration, run a controlled one-message real-delivery test to the user's own Resend-registered address, verify sender/domain policy, CORS, abuse limits, token single-use, and browser login flow. Never echo or put email credentials in the frontend.
