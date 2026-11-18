@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2 } from "lucide-react";
+import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
 import { createDemoBook, getDemoBooks, saveDemoBooks, isDemoBook } from "./demo";
@@ -30,6 +30,17 @@ function App(){
   const style=styles[styleIndex];
   const [prompt,setPrompt]=useState("");
   const [classicId,setClassicId]=useState<ClassicId|null>(null);
+  const [classicQuery,setClassicQuery]=useState("");
+  const [classicCategory,setClassicCategory]=useState("all");
+  const [classicAge,setClassicAge]=useState("all");
+  const [showAllClassics,setShowAllClassics]=useState(false);
+  const visibleClassics=classics.filter(item=>{
+    const q=classicQuery.trim().toLocaleLowerCase();
+    const text=Object.values(item.title).concat(Object.values(item.summary)).join(" ").toLocaleLowerCase();
+    const matchAge=classicAge==="all"||((item.minAge??(item.id==="red-hood"?4:5))<=Number(classicAge));
+    return (!q||text.includes(q))&&(classicCategory==="all"||item.category===classicCategory)&&matchAge;
+  });
+  const shownClassics=showAllClassics||classicQuery.trim()||classicCategory!=="all"||classicAge!=="all"?visibleClassics:visibleClassics.slice(0,6);
   const activeClassic=classics.find(x=>x.id===classicId);
   const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);setTab("create");};
   const changeStoryLanguage=(next:Lang)=>{setStoryLang(next);if(activeClassic)setPrompt(activeClassic.prompt[next]);};
@@ -75,7 +86,18 @@ function App(){
         <div className="quick-actions"><button type="button" onClick={()=>setTab("create")}><span className="quick-icon"><BookOpen size={22}/></span><strong>{t.create}</strong><ArrowRight size={16}/></button><button type="button" onClick={()=>setTab("library")}><span className="quick-icon"><Library size={22}/></span><strong>{t.library}</strong><ArrowRight size={16}/></button><div className="quick-coming"><span className="quick-icon"><PlayCircle size={22}/></span><strong>{t.cartoons}</strong><span className="mini-soon">{t.soon}</span></div></div>
         <section className="classic-section">
           <div className="section-head"><div><span className="section-eyebrow">✦ WonderTale</span><h2>{t.classicsTitle}</h2><p className="classic-intro">{t.classicsDesc}</p></div></div>
-          <div className="classic-grid">{classics.map(item=><ClassicTile key={item.id} item={item} lang={lang} onPick={()=>pickClassic(item.id)} action={t.classicSelect}/>)}</div>
+          <div className="classic-controls">
+            <div className="classic-search"><Search size={18}/><input type="search" value={classicQuery} onChange={e=>setClassicQuery(e.target.value)} placeholder={t.classicSearch} aria-label={t.classicSearch}/></div>
+            <div className="classic-filters">
+              <div className="classic-categories" role="group" aria-label={t.classicCategory}>
+                {([["all",t.classicAll],["magic",t.classicMagic],["adventure",t.classicAdventure],["animals",t.classicAnimals],["kindness",t.classicKindness]] as const).map(([value,label])=><button key={value} type="button" className={classicCategory===value?"active":""} onClick={()=>setClassicCategory(value)}>{label}</button>)}
+              </div>
+              <label className="classic-age"><SlidersHorizontal size={15}/><span>{t.classicAge}</span><select value={classicAge} onChange={e=>setClassicAge(e.target.value)} aria-label={t.classicAge}><option value="all">{t.classicAnyAge}</option>{[3,4,5,6,7,8,10].map(v=><option key={v} value={v}>{v}+</option>)}</select></label>
+            </div>
+            <span className="classic-count">{visibleClassics.length} {t.classicCount}</span>
+          </div>
+          {shownClassics.length?<div className="classic-grid">{shownClassics.map(item=><ClassicTile key={item.id} item={item} lang={lang} onPick={()=>pickClassic(item.id)} action={t.classicSelect}/>)}</div>:<p className="classic-empty">{t.classicEmpty}</p>}
+          {visibleClassics.length>6&&!classicQuery.trim()&&classicCategory==="all"&&classicAge==="all"&&<button type="button" className="classic-toggle" onClick={()=>setShowAllClassics(v=>!v)}>{showAllClassics?t.classicLess:t.classicMore}{showAllClassics?<ChevronUp size={18}/>:<ChevronDown size={18}/>}</button>}
         </section>
         <div className="features"><article><span>📷</span><h3>{t.recognizable}</h3><p>{t.recognizableDesc}</p></article><article><span>✨</span><h3>{t.anyStory}</h3><p>{t.anyStoryDesc}</p></article><article><span>📚</span><h3>{t.realBook}</h3><p>{t.realBookDesc}</p></article></div>
         <div className="section-head"><div><span className="section-eyebrow">✦ WonderTale</span><h2>{t.shelf}</h2></div><button className="text-link" onClick={()=>setTab("library")}>{t.seeAll} <ArrowRight size={16}/></button></div>
