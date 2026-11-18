@@ -172,6 +172,45 @@ def delete_book(book_id:str,owner:str=Depends(current_parent)):
         if result.rowcount==0:raise HTTPException(404,"Book not found")
         c.commit()
 
+# Text-only AI generation is opt-in. This API is NOT deployed to the public PWA.
+# A persistent per-user daily quota prevents unbounded model calls in local testing.
+from ai_generation import GenerateStoryInput, generate_story
+
+with connection() as c:
+    sql(c, "CREATE TABLE IF NOT EXISTS generation_quota (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, day TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner_id,day))")
+    c.commit()
+
+@app.post("/api/books/generate",status_code=201)
+def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current_parent)):
+    if os.getenv("ENABLE_TEXT_AI","false").lower()!="true":
+        raise HTTPException(503,"AI generation is not enabled")
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(503,"AI provider is not configured")
+    today=datetime.now(timezone.utc).date().isoformat()
+    with connection() as c:
+        # Serialize quota reservation in PostgreSQL using a single atomic upsert.
+        if IS_PG:
+            row=sql(c,"INSERT INTO generation_quota(owner_id,day,used) VALUES(?,?,1) ON CONFLICT(owner_id,day) DO UPDATE SET used=generation_quota.used+1 WHERE generation_quota.used<2 RETURNING used",(owner,today)).fetchone()
+            if row is None:
+                raise HTTPException(429,"Daily AI story limit reached")
+        else:
+            sql(c,"INSERT OR IGNORE INTO generation_quota(owner_id,day,used) VALUES(?,?,0)",(owner,today))
+            result=sql(c,"UPDATE generation_quota SET used=used+1 WHERE owner_id=? AND day=? AND used<2",(owner,today))
+            if result.rowcount==0:
+                raise HTTPException(429,"Daily AI story limit reached")
+        c.commit()
+    try:
+        generated=generate_story(body)
+    except Exception:
+        # Never return internal API errors or provider details to a parent.
+        raise HTTPException(502,"Unable to generate this story. Please try later.")
+    bid=str(uuid.uuid4())
+    now=datetime.now(timezone.utc).isoformat()
+    with connection() as c:
+        sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps({"language":generated.language,"pages":generated.pages},ensure_ascii=False),now))
+        c.commit()
+    return {"id":bid,"title":generated.title,"language":generated.language,"pages":generated.pages,"created_at":now}
+
 @app.delete("/api/me",status_code=204)
 def delete_account(owner:str=Depends(current_parent)):
     with connection() as c:
