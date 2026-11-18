@@ -132,3 +132,63 @@ def test_registration_stays_fail_closed_without_smtp(monkeypatch):
     assert denied.status_code==503
     with secure_main.connection() as c:
         assert secure_main.sql(c,"SELECT id FROM parents WHERE email=?",(new_email,)).fetchone() is None
+
+
+def test_postgres_email_verification_and_password_recovery(monkeypatch):
+    """Real token rows and session revocation in PostgreSQL; fake SMTP only."""
+    new_email=f"pg-email-{uuid.uuid4().hex}@example.com"
+    sent=[]
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","true")
+    monkeypatch.setattr(secure_main,"mail_configured",lambda:True)
+    monkeypatch.setattr(secure_main,"send_account_email",lambda to,token,kind:sent.append((to,token,kind)))
+    try:
+        reg=client.post("/api/auth/register",json={"email":new_email,"password":PASSWORD})
+        assert reg.status_code==201,reg.text
+        assert reg.json()=={"status":"verification_sent"}
+        assert len(sent)==1 and sent[0][2]=="verify"
+        assert client.post("/api/auth/login",json={"email":new_email,"password":PASSWORD}).status_code==403
+        verified=client.post("/api/auth/verify-email",json={"token":sent[0][1]})
+        assert verified.status_code==200,verified.text
+        assert client.post("/api/auth/verify-email",json={"token":sent[0][1]}).status_code==400
+        logged=client.post("/api/auth/login",json={"email":new_email,"password":PASSWORD})
+        assert logged.status_code==200,logged.text
+        bearer_token=logged.json()["access_token"]
+        assert client.get("/api/me",headers=bearer(bearer_token)).status_code==200
+        forgotten=client.post("/api/auth/forgot-password",json={"email":new_email})
+        assert forgotten.status_code==200,forgotten.text
+        assert len(sent)==2 and sent[1][2]=="recover"
+        new_password="pg-test-new-password-2026"
+        changed=client.post("/api/auth/reset-password",json={"token":sent[1][1],"new_password":new_password})
+        assert changed.status_code==200,changed.text
+        assert client.post("/api/auth/reset-password",json={"token":sent[1][1],"new_password":new_password}).status_code==400
+        assert client.get("/api/me",headers=bearer(bearer_token)).status_code==401
+        assert client.post("/api/auth/login",json={"email":new_email,"password":new_password}).status_code==200
+    finally:
+        with secure_main.connection() as c:
+            secure_main.sql(c,"DELETE FROM parents WHERE email=?",(new_email,))
+            c.commit()
+
+
+def test_postgres_concurrent_book_writes_obey_quota(monkeypatch):
+    """The parent row lock serializes two inserts, so only one can pass quota=1."""
+    from concurrent.futures import ThreadPoolExecutor
+    new_email=f"pg-concurrent-{uuid.uuid4().hex}@example.com"
+    monkeypatch.setattr(secure_main,"MAX_BOOKS_PER_PARENT",1)
+    registration=client.post("/api/auth/register",json={"email":new_email,"password":PASSWORD})
+    assert registration.status_code==201,registration.text
+    token=registration.json()["access_token"]
+    def create(index):
+        return client.post("/api/books",headers=bearer(token),json={
+            "title":f"Concurrent {index}","child_name":"Test child","age":6,"story":"A private test story"
+        }).status_code
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            codes=list(pool.map(create,[1,2]))
+        assert sorted(codes)==[201,409],codes
+        library=client.get("/api/books",headers=bearer(token))
+        assert library.status_code==200
+        assert len(library.json())==1
+    finally:
+        with secure_main.connection() as c:
+            secure_main.sql(c,"DELETE FROM parents WHERE email=?",(new_email,))
+            c.commit()
