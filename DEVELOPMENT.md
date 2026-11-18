@@ -295,3 +295,14 @@ Status: static UI and the API are still decoupled; FastAPI registration `ENABLE_
 Regression: `pytest` completed with **40 passed in 3.19 seconds**, one non-failing Starlette deprecation warning. Resend tests mock HTTPS requests and cover POST parameters, sender config and safe error messages. API Preview deployment `dpl_9YAC566R64d5bN1ZAtugUsg8o7Bn` reached `READY`; `/api/ready` returned HTTP 200 and `{"ok":true,"database":"connected"}` against isolated Neon.
 
 Provider activation checklist: verify a domain in Resend (SPF/DKIM DNS); create a restricted sending API key; configure `RESEND_API_KEY`, `MAIL_FROM` and `PUBLIC_APP_ORIGIN` only on `wondertaleai-api-preview` Preview environment; test delivery to a parent-owned address and single-use token expiration; verify runtime API CORS, login abuse controls and public-auth architecture before making the API publicly reachable and setting `VITE_API_BASE` on the site. No active-user email or password credentials should ever be pasted into chat.
+
+## Resend activation gate — 2026-11-18 (latest)
+
+Verified `wondertaleai-api-preview` has *no* installed mail-provider API key or sender secret, and the Vercel team only has the Neon Marketplace integration installed. Resend's Vercel Marketplace installation requires the account owner's authorization and a verified sending domain. No real emails were sent, and `ENABLE_REGISTRATION=false` is still in effect.
+
+Completed:
+- Added Preview-only `PUBLIC_APP_ORIGIN=https://wondertaleai-preview-kamronones-projects.vercel.app` to the private FastAPI Vercel project. This is non-secret, server-side configuration for email action links; do not copy mail credentials to Vite.
+- The existing code already supports Resend HTTPS with `RESEND_API_KEY` and `MAIL_FROM`, including mock delivery and error sanitization tests.
+- Redeployed isolated protected FastAPI API Preview `dpl_49kdys7LEhuWjDrwLitgdWHgnxnL`. Build `READY`; database readiness `GET /api/ready` returned HTTP 200 with `{"ok":true,"database":"connected"}`.
+
+External activation steps (account owner via Vercel UI): install Resend in project `wondertaleai-api-preview`, ensure `RESEND_API_KEY` is injected into **Preview** only, verify sender DNS in Resend, set `MAIL_FROM` to an actual verified email address, perform an email-delivery end-to-end test, then review abuse controls and remove Vercel Authentication only after the public parent-auth API is ready. Until these conditions are met, keep all account registration and AI/photo upload features disabled.
