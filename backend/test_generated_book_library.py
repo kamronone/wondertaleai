@@ -186,3 +186,39 @@ def test_failed_ai_provider_does_not_consume_parent_or_global_quota(api, monkeyp
     with module.connection() as conn:
         assert module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_global_quota").fetchone()[0] == 1
         assert module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_quota").fetchone()[0] == 1
+
+
+def test_child_profiles_are_private_and_limited_to_five(api):
+    client, module, first_parent, headers = api
+    second_parent = str(uuid.uuid4())
+    with module.connection() as conn:
+        module.sql(
+            conn,
+            "INSERT INTO parents(id,email,password_hash,created_at) VALUES(?,?,?,?)",
+            (second_parent, "second-parent@test.invalid", "not-a-real-password-hash", "2026-01-01"),
+        )
+        conn.commit()
+    other_headers = {"Authorization": "Bearer " + module.make_token(second_parent)}
+
+    created = []
+    for index in range(5):
+        response = client.post(
+            "/api/children",
+            headers=headers,
+            json={"nickname": f"Child {index + 1}", "age": 6},
+        )
+        assert response.status_code == 201, response.text
+        created.append(response.json()["id"])
+    assert len(client.get("/api/children", headers=headers).json()) == 5
+    assert client.post("/api/children", headers=headers, json={"nickname": "Sixth", "age": 6}).status_code == 409
+
+    # Another authenticated parent cannot enumerate or remove these profiles.
+    assert client.get("/api/children", headers=other_headers).json() == []
+    assert client.delete("/api/children/" + created[0], headers=other_headers).status_code == 404
+    assert len(client.get("/api/children", headers=headers).json()) == 5
+    assert client.get("/api/children").status_code == 401
+
+    # Removing a profile frees exactly one slot for its owner.
+    assert client.delete("/api/children/" + created[0], headers=headers).status_code == 204
+    assert client.post("/api/children", headers=headers, json={"nickname": "New child", "age": 7}).status_code == 201
+    assert len(client.get("/api/children", headers=headers).json()) == 5
