@@ -373,3 +373,28 @@ def test_ai_quota_refunded_if_library_fills_during_generation(api, monkeypatch):
     books = client.get("/api/books", headers=headers).json()
     assert len(books) == 1
     assert books[0]["title"] == "Another story"
+
+
+def test_logout_all_revokes_only_current_parent_sessions(api):
+    client, module, first_parent, first_headers = api
+    second_parent = str(uuid.uuid4())
+    with module.connection() as conn:
+        module.sql(
+            conn,
+            "INSERT INTO parents(id,email,password_hash,created_at) VALUES(?,?,?,?)",
+            (second_parent, "independent-parent@test.invalid", "not-a-real-password-hash", "2026-01-01"),
+        )
+        conn.commit()
+
+    second_headers = {"Authorization": "Bearer " + module.make_token(second_parent)}
+    another_first_session = {"Authorization": "Bearer " + module.make_token(first_parent)}
+
+    listed = client.get("/api/auth/sessions", headers=first_headers)
+    assert listed.status_code == 200, listed.text
+    assert len(listed.json()) == 2
+
+    response = client.post("/api/auth/logout-all", headers=first_headers)
+    assert response.status_code == 204, response.text
+    assert client.get("/api/me", headers=first_headers).status_code == 401
+    assert client.get("/api/me", headers=another_first_session).status_code == 401
+    assert client.get("/api/me", headers=second_headers).status_code == 200
