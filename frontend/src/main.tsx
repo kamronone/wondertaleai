@@ -61,7 +61,7 @@ function App(){
     </header>
     <main>
       {tab==="home"&&<>
-        <div className="hero"><div className="hero-sky" aria-hidden="true"><div className="hero-castle">🏰</div><div className="hero-moon">☾</div><div className="hero-fox">🦊</div><div className="hero-book">📖</div><span className="sky-star star-a">✦</span><span className="sky-star star-b">✧</span><span className="sky-star star-c">✦</span></div><div className="hero-content"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
+        <div className="hero"><div className="hero-sky" aria-hidden="true"><img src="/images/wondertale-hero.webp" alt="" loading="eager" decoding="async"/></div><div className="hero-content"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
           <div className="hero-brand"><Crown size={26}/><span>WonderTale <strong>AI</strong></span></div><h1>{t.hero1} <em>{t.hero2}</em> {t.hero3}</h1>
           <p>{t.heroDesc}</p>
           <button className="primary-button" onClick={()=>setTab("create")}><WandSparkles size={19}/> {t.create} <ArrowRight size={18}/></button>
