@@ -1,0 +1,31 @@
+{
+  "id": "/",
+  "name": "WonderTale AI — Персональные сказки",
+  "short_name": "WonderTale",
+  "description": "Иллюстрированные персональные сказки для детей.",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbf8f5",
+  "theme_color": "#37316f",
+  "orientation": "portrait-primary",
+  "categories": [
+    "books",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
