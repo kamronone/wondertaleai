@@ -233,3 +233,41 @@ def test_recovery_does_not_reveal_unknown_email(monkeypatch):
     r=client.post("/api/auth/forgot-password",json={"email":unknown})
     assert r.status_code==200
     assert r.json()=={"status":"if_account_exists_email_sent"}
+
+
+def test_private_library_rejects_blank_content_and_enforces_quota(monkeypatch):
+    import uuid
+    token=signup("quota-"+str(uuid.uuid4())+"@example.com")
+    auth=headers(token)
+    for field in ("title","child_name","story"):
+        body={"title":"Story","child_name":"Mira","age":6,"story":"A thoughtful story."}
+        body[field]="   "
+        response=client.post("/api/books",headers=auth,json=body)
+        assert response.status_code==422,(field,response.text)
+    # A small isolated limit exercises the enforcement without creating 100 books.
+    monkeypatch.setattr(secure_main,"MAX_BOOKS_PER_PARENT",2)
+    for title in ("First","Second"):
+        result=client.post("/api/books",headers=auth,json={
+            "title":title,"child_name":"Mira","age":6,"story":"A gentle adventure."
+        })
+        assert result.status_code==201,result.text
+    rejected=client.post("/api/books",headers=auth,json={
+        "title":"Third","child_name":"Mira","age":6,"story":"A gentle adventure."
+    })
+    assert rejected.status_code==409
+    listed=client.get("/api/books",headers=auth)
+    assert listed.status_code==200
+    assert len(listed.json())==2
+
+def test_personal_library_limit_does_not_affect_other_parents(monkeypatch):
+    import uuid
+    monkeypatch.setattr(secure_main,"MAX_BOOKS_PER_PARENT",1)
+    a=signup("limit-a-"+str(uuid.uuid4())+"@example.com")
+    b=signup("limit-b-"+str(uuid.uuid4())+"@example.com")
+    for token in (a,b):
+        result=client.post("/api/books",headers=headers(token),json={
+            "title":"One book","child_name":"Hero","age":6,"story":"An independent private story."
+        })
+        assert result.status_code==201,result.text
+    assert len(client.get("/api/books",headers=headers(a)).json())==1
+    assert len(client.get("/api/books",headers=headers(b)).json())==1
