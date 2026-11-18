@@ -5,6 +5,7 @@ All content endpoints require a bearer token and enforce owner_id.
 """
 import base64
 import hashlib
+import binascii
 import hmac
 import json
 import os
@@ -54,6 +55,8 @@ def init_schema():
     with connection() as c:
         sql(c, "CREATE TABLE IF NOT EXISTS parents (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TEXT NOT NULL)")
         sql(c, "CREATE TABLE IF NOT EXISTS books (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, title TEXT NOT NULL, child_name TEXT NOT NULL, age INTEGER NOT NULL, story TEXT NOT NULL, created_at TEXT NOT NULL)")
+        sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
+        sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
         c.commit()
 
 init_schema()
@@ -88,7 +91,7 @@ def password_matches(password: str, hashed: str):
         salt,expected=hashed.split(".")
         result=hashlib.scrypt(password.encode(),salt=decode(salt),n=2**14,r=8,p=1,dklen=32)
         return hmac.compare_digest(result,decode(expected))
-    except (ValueError,TypeError):
+    except (ValueError,TypeError,binascii.Error):
         return False
 
 def make_token(parent_id: str):
@@ -106,18 +109,43 @@ def current_parent(authorization: str | None=Header(default=None)):
         if not hmac.compare_digest(signature,expected):
             raise ValueError("signature")
         data=json.loads(decode(payload))
-        if int(data["exp"])<int(time.time()) or not re.fullmatch(r"[0-9a-f-]{36}",data["sub"]):
+        if int(data["exp"])<=int(time.time()) or not re.fullmatch(r"[0-9a-f-]{36}",data["sub"]):
             raise ValueError("expired")
         with connection() as c:
             row=sql(c,"SELECT id FROM parents WHERE id=?",(data["sub"],)).fetchone()
         if row is None:raise ValueError("not found")
         return row[0]
-    except (ValueError,TypeError,KeyError,OverflowError,UnicodeDecodeError):
+    except (ValueError,TypeError,KeyError,OverflowError,UnicodeDecodeError,binascii.Error,json.JSONDecodeError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Invalid or expired token")
 
 @app.get("/api/health")
 def health():
     return {"ok":True}
+
+
+LOGIN_WINDOW_SECONDS=15*60
+MAX_LOGIN_FAILURES=5
+
+def _email_key(email:str)->str:
+    return hmac.new(SECRET.encode(),email.strip().lower().encode(),hashlib.sha256).hexdigest()
+
+def _login_locked(email:str)->bool:
+    now=int(time.time())
+    with connection() as c:
+        row=sql(c,"SELECT window_started,failures FROM login_attempts WHERE email_key=?",(_email_key(email),)).fetchone()
+    return bool(row and now-int(row[0])<LOGIN_WINDOW_SECONDS and int(row[1])>=MAX_LOGIN_FAILURES)
+
+def _record_login_failure(email:str)->None:
+    now=int(time.time())
+    key=_email_key(email)
+    with connection() as c:
+        sql(c,"INSERT INTO login_attempts(email_key,window_started,failures) VALUES(?,?,1) ON CONFLICT(email_key) DO UPDATE SET failures=CASE WHEN login_attempts.window_started<? THEN 1 ELSE login_attempts.failures+1 END, window_started=CASE WHEN login_attempts.window_started<? THEN excluded.window_started ELSE login_attempts.window_started END",(key,now,now-LOGIN_WINDOW_SECONDS,now-LOGIN_WINDOW_SECONDS))
+        c.commit()
+
+def _clear_login_failures(email:str)->None:
+    with connection() as c:
+        sql(c,"DELETE FROM login_attempts WHERE email_key=?",(_email_key(email),))
+        c.commit()
 
 @app.post("/api/auth/register",response_model=Token,status_code=201)
 def register(body:Credentials):
@@ -133,10 +161,14 @@ def register(body:Credentials):
 @app.post("/api/auth/login",response_model=Token)
 def login(body:Credentials):
     email=str(body.email).lower()
+    if _login_locked(email):
+        raise HTTPException(429,"Too many login attempts. Try again later.")
     with connection() as c:
         row=sql(c,"SELECT id,password_hash FROM parents WHERE email=?",(email,)).fetchone()
     if not row or not password_matches(body.password,row[1]):
+        _record_login_failure(email)
         raise HTTPException(401,"Invalid email or password")
+    _clear_login_failures(email)
     return Token(access_token=make_token(row[0]))
 
 @app.get("/api/me")
