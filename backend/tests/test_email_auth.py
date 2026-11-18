@@ -47,7 +47,8 @@ def test_reject_insecure_origin(monkeypatch):
     for key in ("SMTP_HOST","SMTP_USERNAME","SMTP_PASSWORD","SMTP_FROM"):
         monkeypatch.setenv(key,"test")
     monkeypatch.setenv("PUBLIC_APP_ORIGIN","http://not-secure.example.com")
-    with pytest.raises(RuntimeError,match="HTTPS"):
+    assert not mail_configured()
+    with pytest.raises(RuntimeError,match="not configured"):
         send_account_email("parent@example.com",new_code(),"recover")
 
 
@@ -84,7 +85,8 @@ def test_plaintext_smtp_port_rejected(monkeypatch):
         "SMTP_FROM":"wondertale@example.com","PUBLIC_APP_ORIGIN":"https://wondertale.example.com",
     }.items():
         monkeypatch.setenv(key,value)
-    with pytest.raises(RuntimeError,match="Supported SMTP ports"):
+    assert not mail_configured()
+    with pytest.raises(RuntimeError,match="not configured"):
         send_account_email("parent@example.com",new_code(),"verify")
 
 
@@ -95,7 +97,8 @@ def test_malformed_smtp_port_rejected(monkeypatch):
         "SMTP_FROM":"wondertale@example.com","PUBLIC_APP_ORIGIN":"https://wondertale.example.com",
     }.items():
         monkeypatch.setenv(key,value)
-    with pytest.raises(RuntimeError,match="Invalid SMTP port"):
+    assert not mail_configured()
+    with pytest.raises(RuntimeError,match="not configured"):
         send_account_email("parent@example.com",new_code(),"verify")
 
 
