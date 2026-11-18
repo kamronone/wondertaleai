@@ -15,7 +15,7 @@ import { endings, storyPresets, type EndingId } from "./story_interactions";
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
-const bookImage=(url:string)=>url.startsWith("/images/")?url:API+url;
+const bookImage=(url:string)=>!url?"/images/wondertale-hero.webp":url.startsWith("/images/")?url:API+url;
 
 function App(){
   const [accountAction,setAccountAction]=useState<{kind:"verify"|"recover";token:string}|null>(()=>{
@@ -75,8 +75,7 @@ function App(){
   const [speechPaused,setSpeechPaused]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
-  const [mode,setMode]=useState("browser-demo");
-  const [onlineApi,setOnlineApi]=useState(false);
+  const [usePersonalAi,setUsePersonalAi]=useState(false);
   const fetchBooks=async()=>{setBooks([...getDemoBooks(),...remoteBooks]);};
   // API health alone never authorizes uploading a child photo or generating a story.
   // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
@@ -225,14 +224,55 @@ function App(){
     setEditingPage(false);
   };
   const generate=async(e:React.FormEvent)=>{
-    e.preventDefault();setError("");setBusy(true);
+    e.preventDefault();
+    if(busy)return;
+    setError("");
+    setBusy(true);
     try{
-      const form=new FormData();form.append("name",name);form.append("other_heroes",secondHero.trim());form.append("age",age);form.append("theme",theme);form.append("style",style);form.append("prompt",prompt);form.append("language",storyLang);form.append("parental_consent",String(consent));if(photo)form.append("photo",photo);
-      if(!onlineApi){const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
-      const response=await fetch(API+"/api/books",{method:"POST",body:form});
-      if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(typeof data.detail==="string"?data.detail :t.generateError);}
-      const book:Book=await response.json();setBooks(previous=>[book,...previous]);openBook(book);
-    }catch(e){setError(e instanceof Error?e.message :t.genericError);}finally{setBusy(false);}
+      if(usePersonalAi){
+        if(!API||!privateToken){
+          throw new Error(({ru:"Войдите в аккаунт родителя для AI-генерации.",uz:"AI ertak yaratish uchun ota-ona akkauntiga kiring.",en:"Sign in to a parent account to generate AI stories."} as const)[lang]);
+        }
+        if(photo){
+          throw new Error(({ru:"AI-генерация пока не принимает фото ребёнка. Удалите фото и повторите.",uz:"AI hozircha bolaning rasmini qabul qilmaydi. Rasmni olib tashlang.",en:"AI generation does not accept child photos yet. Remove the photo first."} as const)[lang]);
+        }
+        const data={
+          name:name.trim(),age:Number(age),language:storyLang,
+          classic_title:activeClassic?.title[storyLang]||"",
+          idea:prompt.trim(),style,other_heroes:secondHero.trim()?[secondHero.trim()]:[],
+          pages_count:8,
+        };
+        const response=await fetch(API+"/api/books/generate",{
+          method:"POST",
+          headers:{"Authorization":"Bearer "+privateToken,"Content-Type":"application/json"},
+          body:JSON.stringify(data),
+          signal:AbortSignal.timeout(120000),
+        });
+        if(!response.ok){
+          if(response.status===403||response.status===503){
+            throw new Error(({ru:"AI-генерация пока не включена для этого аккаунта.",uz:"AI yaratish ushbu akkaunt uchun hali yoqilmagan.",en:"AI generation is not enabled for this account yet."} as const)[lang]);
+          }
+          if(response.status===429){
+            throw new Error(({ru:"Дневной лимит AI-сказок исчерпан.",uz:"Kunlik AI ertaklar limiti tugadi.",en:"Daily AI story limit reached."} as const)[lang]);
+          }
+          throw new Error(t.generateError);
+        }
+        const result=await response.json();
+        if(typeof result.id!=="string")throw new Error(t.generateError);
+        const refreshed=await loadPrivateBooks(API,privateToken);
+        const newBook=refreshed.find(book=>book.id===result.id);
+        setRemoteBooks(refreshed);
+        setBooks([...getDemoBooks(),...refreshed]);
+        if(!newBook)throw new Error(t.generateError);
+        openBook(newBook);
+        return;
+      }
+      const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
+      const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);
+      setBooks(previous=>[book,...previous]);
+      openBook(book);
+    }catch(e){setError(e instanceof Error?e.message:t.genericError);}
+    finally{setBusy(false);}
   };
   const deleteBook=async(book:Book)=>{
     if(!confirm(t.deleteConfirm))return;
@@ -291,11 +331,13 @@ function App(){
           <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
-          {!onlineApi&&<div className="device-save-option">
+          <div className="story-lang-field"><label>{({ru:"Режим создания",uz:"Yaratish rejimi",en:"Creation mode"} as const)[lang]}</label><div className="story-lang-options"><button type="button" className={!usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(false)}>{({ru:"Демо",uz:"Demo",en:"Demo"} as const)[lang]}</button><button type="button" className={usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(true)}>{({ru:"AI (аккаунт)",uz:"AI (akkaunt)",en:"AI (account)"} as const)[lang]}</button></div></div>
+          {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
+          {!usePersonalAi&&<div className="device-save-option">
             <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
           </div>}
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
-          {(mode==="demo"||mode==="browser-demo")&&<p className="notice">{activeClassic?t.classicDemo:t.demo}</p>}
+          {!usePersonalAi&&<p className="notice">{activeClassic?t.classicDemo:t.demo}</p>}
           {error&&<p className="error" role="alert">{error}</p>}
           <button className="primary-button full" disabled={busy||!consent} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button>
         </form>
@@ -305,7 +347,7 @@ function App(){
         {books.length>0&&<div className="library-filters" role="group"><button type="button" className={!favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(false)}>{t.allBooks}</button><button type="button" className={favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(true)}><Heart size={15}/>{t.favorites}</button></div>}
         {(favoritesOnly?books.filter(book=>book.favorite):books).length?<div className="book-grid">{(favoritesOnly?books.filter(book=>book.favorite):books).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{favoritesOnly?t.noFavorites:t.empty}</h3><p>{favoritesOnly?"":t.emptyDesc}</p></div>}</section>}
       {tab==="reader"&&active&&<section className="reader-page">
-        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions">{isDemoBook(active)?<button className="icon-button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>:<a className="icon-button" href={API+"/api/books/"+active.id+"/pdf"} title={t.downloadPdf}><Download size={19}/></a>}{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
+        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions"><button className="icon-button" type="button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
         {error&&<p className="error" role="alert">{error}</p>}
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
