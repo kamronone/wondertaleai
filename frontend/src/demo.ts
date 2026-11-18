@@ -1,10 +1,25 @@
 // Browser-only preview fallback. Photos never leave the browser in this mode.
 import type { Lang } from "./i18n";
 import { classics, type ClassicId } from "./classics";
-export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId};
-const key="wondertale-preview-books-v1";
-export const getDemoBooks=():DemoBook[]=>{try{return JSON.parse(sessionStorage.getItem(key)||"[]")}catch{return []}};
-export const saveDemoBooks=(books:DemoBook[])=>sessionStorage.setItem(key,JSON.stringify(books.slice(0,20)));
+export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean};
+const sessionKey="wondertale-preview-books-v1";
+const deviceKey="wondertale-opt-in-books-v1";
+const readBooks=(store:Storage,key:string):DemoBook[]=>{
+ try{const parsed=JSON.parse(store.getItem(key)||"[]");return Array.isArray(parsed)?parsed.filter(x=>x&&typeof x.id==="string"&&x.id.startsWith("local-")&&Array.isArray(x.pages)).slice(0,20):[];}catch{return []}
+};
+export const getDemoBooks=():DemoBook[]=>{
+ const session=readBooks(sessionStorage,sessionKey);
+ const saved=readBooks(localStorage,deviceKey).map(b=>({...b,savedOnDevice:true}));
+ const found=new Set<string>();
+ return [...saved,...session].filter(book=>{if(found.has(book.id))return false;found.add(book.id);return true;}).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,30);
+};
+export const saveDemoBooks=(books:DemoBook[])=>{
+ const chosen=books.filter(b=>b.savedOnDevice).slice(0,20);
+ const ephemeral=books.filter(b=>!b.savedOnDevice).slice(0,20);
+ // Names and stories stay in this browser; photos are never saved or uploaded in demo.
+ if(chosen.length){localStorage.setItem(deviceKey,JSON.stringify(chosen));}else{localStorage.removeItem(deviceKey);}
+ if(ephemeral.length){sessionStorage.setItem(sessionKey,JSON.stringify(ephemeral));}else{sessionStorage.removeItem(sessionKey);}
+};
 export const isDemoBook=(book:DemoBook)=>book.id.startsWith("local-");
 const illustration=(index:number):string=>{
   const bg=[["#6b55af","#e5b2d9"],["#306c8b","#9cd8da"],["#604e9b","#d5a4b3"],["#657d9c","#f5c6a0"]][index%4];
@@ -44,10 +59,11 @@ const demoStories:Record<Lang,(name:string,theme:string,prompt:string)=>{title:s
  "Back at home, the hero knew that courage and kindness can make any day magical."
  ]})
 };
-export const createDemoBook=(name:string,age:number,theme:string,style:string,prompt:string,language:Lang="ru",classicId?:ClassicId):DemoBook=>{
+export const createDemoBook=(name:string,age:number,theme:string,style:string,prompt:string,language:Lang="ru",classicId?:ClassicId,saveOnDevice=false):DemoBook=>{
  const classic=classics.find(x=>x.id===classicId);
  const story=classic?makeClassicStory(classic.id,name,language):demoStories[language](name,theme,prompt);
- const book:DemoBook={id:"local-"+crypto.randomUUID(),created_at:new Date().toISOString(),name,age,theme,style,prompt,title:story.title,language,mode:"browser-demo",pages:story.pages.map((text,index)=>({number:index+1,text,image_url:illustration(index)}))};
+ const art=classic?"/images/classics/"+classic.id+(["red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(classic.id)?".svg":".webp"):null;
+ const book:DemoBook={id:"local-"+crypto.randomUUID(),created_at:new Date().toISOString(),name,age,theme,style,prompt,title:story.title,language,classicId,savedOnDevice:saveOnDevice,mode:"browser-demo",pages:story.pages.map((text,index)=>({number:index+1,text,image_url:art||illustration(index)}))};
  saveDemoBooks([book,...getDemoBooks()]);
  return book;
 };
