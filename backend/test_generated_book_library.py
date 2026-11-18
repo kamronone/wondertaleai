@@ -310,3 +310,30 @@ def test_parent_registration_login_logout_and_private_story_flow(api, monkeypatc
     assert client.get("/api/me", headers=logged_in_headers).status_code == 401
     # Logout revokes only the active session; the registration session remains valid.
     assert client.get("/api/me", headers=headers).status_code == 200
+
+
+def test_account_deletion_cascades_private_books_profiles_and_sessions(api):
+    client, module, parent_id, headers = api
+    child = client.post("/api/children", headers=headers, json={"nickname": "Sam", "age": 7})
+    assert child.status_code == 201, child.text
+    generated = client.post(
+        "/api/books/generate",
+        headers=headers,
+        json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
+    )
+    assert generated.status_code == 201, generated.text
+    book_id = generated.json()["id"]
+    assert client.post("/api/books/" + book_id + "/favorite", headers=headers).status_code == 200
+    assert client.post(
+        "/api/books/" + book_id + "/progress", headers=headers, json={"page": 1}
+    ).status_code == 200
+
+    deleted = client.delete("/api/me", headers=headers)
+    assert deleted.status_code == 204, deleted.text
+    assert client.get("/api/me", headers=headers).status_code == 401
+    with module.connection() as conn:
+        for table in ("parents", "books", "children", "sessions", "generation_quota",
+                      "book_favorites", "reading_progress"):
+            # All queried table names are fixed constants, not user input.
+            count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            assert count == 0, f"{table} retained data after account deletion"
