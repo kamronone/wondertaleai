@@ -30,7 +30,7 @@ def mail_configured()->bool:
         return False
     # Supports either sender@example.com or Display Name <sender@example.com>.
     address=sender.rsplit("<",1)[-1].rstrip(">").strip()
-    if not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",address):
+    if not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",address):
         return False
     if os.getenv("RESEND_API_KEY"):
         return True
