@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
-import { createDemoBook, getDemoBooks, saveDemoBooks, isDemoBook } from "./demo";
+import { createDemoBook, createDemoSequel, getDemoBooks, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
@@ -140,6 +140,17 @@ function App(){
     if(page===active.pages.length-1){revised.originalEnding=text;revised.endingChoice=undefined;}
     applyLocalBookChange(revised);setEditingPage(false);setError("");
   };
+  const continueAdventure=()=>{
+    if(!active||!isDemoBook(active))return;
+    stopSpeech();
+    try{
+      const sequel=createDemoSequel(active as DemoBook);
+      setBooks(prev=>[sequel,...prev]);
+      openBook(sequel);
+    }catch{
+      setError(t.generateError);
+    }
+  };
   const selectEnding=(choice:EndingId)=>{
     if(!active||!isDemoBook(active))return;
     const last=active.pages.length-1;
@@ -241,6 +252,7 @@ function App(){
         {isDemoBook(active)&&page===active.pages.length-1&&<div className="interactive-endings"><strong>{t.interactiveEnding}</strong>
           <div>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
         </div>}
+        {isDemoBook(active)&&page===active.pages.length-1&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
         {isDemoBook(active)&&<article className="print-book" aria-hidden="true">
           <div className="print-book-cover"><img src={active.pages[0].image_url} alt=""/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
           {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><img src={item.image_url} alt=""/><p>{item.text}</p></section>)}
