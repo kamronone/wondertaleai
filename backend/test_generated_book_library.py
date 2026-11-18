@@ -77,3 +77,27 @@ def test_generation_respects_parent_library_limit(api, monkeypatch):
     )
     assert response.status_code == 409
     assert client.get("/api/books").json() == []
+
+
+def test_generated_book_is_invisible_to_another_parent(api):
+    client, module, first_parent = api
+    generated = client.post(
+        "/api/books/generate",
+        json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
+    )
+    assert generated.status_code == 201
+    book_id = generated.json()["id"]
+    second_parent = str(uuid.uuid4())
+    with module.connection() as conn:
+        module.sql(
+            conn,
+            "INSERT INTO parents(id,email,password_hash,created_at) VALUES(?,?,?,?)",
+            (second_parent, "other@test.invalid", "not-a-real-password-hash", "2026-01-01"),
+        )
+        conn.commit()
+    module.app.dependency_overrides[module.current_parent] = lambda: second_parent
+    assert client.get("/api/books").json() == []
+    assert client.get("/api/books/" + book_id).status_code == 404
+    assert client.delete("/api/books/" + book_id).status_code == 404
+    assert client.post("/api/books/" + book_id + "/favorite").status_code == 404
+    assert client.post("/api/books/" + book_id + "/progress", json={"page": 1}).status_code == 404
