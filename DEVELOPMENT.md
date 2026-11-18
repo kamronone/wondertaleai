@@ -62,3 +62,13 @@ Vercel marked the initial source-file deployment as `production` even though it 
 ## Planned video pipeline
 
 Story -> scene script -> consistent character sheet -> keyframes -> approved video provider -> audio -> timeline -> private delivery. Rendering and media operations must be isolated in workers, never run inside request handlers.
+
+## November 18 update — Classic tales, original art and AI foundation
+
+- 30 public-domain-inspired story choices with Russian, Uzbek Latin and English titles.
+- The first storybook cards now use original, programmatically drawn vector illustration scenes (SVG). This does not yet mean photo-realistic, AI-rendered artwork for each book.
+- Local preview includes longer eight-page original adaptation text. These are *not* full published literary texts, and they should not be represented as exact translations of historical editions.
+- `backend/ai_generation.py` adds eight-page structured AI story text validation and opt-in OpenAI Responses API integration.
+- `backend/secure_main.py` exposes authenticated `POST /api/books/generate`, with a per-parent database quota of 2 per UTC day **only when** `ENABLE_TEXT_AI=true` and `OPENAI_API_KEY` exist. No image uploads are accepted.
+- This backend remains disconnected from the public PWA and has **not** been deployed or live-tested against an AI provider. Frontend remains a local browser demo.
+- Next: dedicated Neon DB, verified parental accounts, auth hardening and rate limiting, private child photo retention, secure media storage, async worker jobs, AI illustration consistency, complete PDF export and commercial review.
