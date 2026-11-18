@@ -219,17 +219,18 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(503,"AI provider is not configured")
     today=datetime.now(timezone.utc).date().isoformat()
+    # Global spending ceiling is separate from the per-parent quota.
+    # The value is deliberately conservative until usage and billing are monitored.
+    daily_cap=max(0,min(200,int(os.getenv("MAX_AI_STORIES_PER_DAY","10"))))
     with connection() as c:
-        # Serialize quota reservation in PostgreSQL using a single atomic upsert.
-        if IS_PG:
-            row=sql(c,"INSERT INTO generation_quota(owner_id,day,used) VALUES(?,?,1) ON CONFLICT(owner_id,day) DO UPDATE SET used=generation_quota.used+1 WHERE generation_quota.used<2 RETURNING used",(owner,today)).fetchone()
-            if row is None:
-                raise HTTPException(429,"Daily AI story limit reached")
-        else:
-            sql(c,"INSERT OR IGNORE INTO generation_quota(owner_id,day,used) VALUES(?,?,0)",(owner,today))
-            result=sql(c,"UPDATE generation_quota SET used=used+1 WHERE owner_id=? AND day=? AND used<2",(owner,today))
-            if result.rowcount==0:
-                raise HTTPException(429,"Daily AI story limit reached")
+        if not IS_PG:
+            c.execute("BEGIN IMMEDIATE")
+        row=sql(c,"INSERT INTO generation_global_quota(day,used) VALUES(?,1) ON CONFLICT(day) DO UPDATE SET used=generation_global_quota.used+1 WHERE generation_global_quota.used<? RETURNING used",(today,daily_cap)).fetchone()
+        if row is None:
+            raise HTTPException(429,"Daily AI service limit reached")
+        row=sql(c,"INSERT INTO generation_quota(owner_id,day,used) VALUES(?,?,1) ON CONFLICT(owner_id,day) DO UPDATE SET used=generation_quota.used+1 WHERE generation_quota.used<2 RETURNING used",(owner,today)).fetchone()
+        if row is None:
+            raise HTTPException(429,"Daily AI story limit reached")
         c.commit()
     try:
         generated=generate_story(body)
