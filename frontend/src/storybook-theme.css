@@ -274,3 +274,49 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
 @media(max-width:380px){
  .classic-cover:has(.classic-generated-image){height:155px}
 }
+
+/* Home footer and empty-state cleanup: mobile reading flow, no oversized placeholders */
+.empty-compact{box-sizing:border-box;display:flex;align-items:center;text-align:left;justify-content:flex-start;gap:15px;min-height:0;padding:18px 20px;margin-top:13px;border:1px solid #e5d9ef;background:#fff;border-radius:19px}
+.empty-compact-icon{display:flex;align-items:center;justify-content:center;flex:none;width:48px;height:48px;color:#824bc1;background:#f1e5fb;border-radius:14px}
+.empty-compact-copy{min-width:0;flex:1}
+.empty-compact h3{margin:0 0 5px;color:#473062;font-size:17px;line-height:1.25;font-weight:800}
+.empty-compact p{margin:0;color:#8c7c9b;font-size:12px;line-height:1.45}
+.empty-compact .secondary-button{display:flex;justify-content:center;align-items:center;gap:7px;flex:none;min-height:42px;white-space:normal;font-size:12px;padding:10px 13px;margin:0;background:#8652c5;color:#fff;border:0;border-radius:12px}
+.compact-install{box-sizing:border-box;display:flex;align-items:flex-start;gap:14px;padding:17px 18px;margin-top:15px;border-radius:17px;border:1px solid #e5d8f0;background:linear-gradient(110deg,#f3edfc,#fff9ff);box-shadow:none}
+.compact-install .install-icon{width:52px;height:52px;flex:none;border-radius:12px}
+.compact-install-body{flex:1;min-width:0}
+.compact-install h3{margin:0 0 4px;color:#452c71;font-size:15px;line-height:1.25}
+.compact-install p{margin:0;color:#82738e;font-size:12px;line-height:1.45}
+.install-guide-trigger{display:inline-flex;align-items:center;gap:6px;min-height:38px;margin-top:6px;padding:4px 0;border:0;background:transparent;color:#794bc1;font-size:12px;font-weight:800;text-align:left}
+.install-guide{display:grid;gap:8px;margin-top:4px;padding:12px;border:1px solid #eadced;border-radius:12px;background:#fffafa}
+.install-guide p{font-size:11.5px;line-height:1.5}
+.coming{box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:15px 18px;margin-top:16px;margin-bottom:0;min-height:76px;border-radius:16px}
+.coming .coming-icon{padding:11px;border-radius:12px;flex:none}
+.coming h3{font-size:14px;line-height:1.3;margin:0 0 3px}
+.coming p{font-size:11.5px;line-height:1.45}
+.coming .soon{font-size:10px;line-height:1.1;white-space:nowrap;padding:7px 10px;flex:none}
+.shell footer{font-size:12px;color:#83738d;text-align:center;margin:0;padding:17px 12px 19px;border-top:1px solid #ece5f1}
+@media(max-width:700px){
+ .empty-compact{margin-left:14px;margin-right:14px;gap:10px;padding:14px}
+ .empty-compact-icon{width:42px;height:42px;border-radius:12px}
+ .empty-compact h3{font-size:14px}
+ .empty-compact p{font-size:11px}
+ .empty-compact .secondary-button{min-height:40px;padding:10px 11px;font-size:11px}
+ .compact-install{padding:14px;gap:12px;margin:14px}
+ .compact-install .install-icon{width:46px;height:46px}
+ .coming{margin:14px 14px 0;padding:12px;min-height:0;gap:10px}
+ .coming .coming-icon{padding:9px}
+ .coming h3{font-size:13px}
+ .coming p{font-size:11px}
+ .coming .soon{padding:6px 9px}
+ .mobile-tabbar{position:relative;left:auto;right:auto;bottom:auto;width:100%;border-radius:0;background:#fffcff;box-shadow:0 3px 14px #24134c13;padding:10px 5px}
+ .mobile-tabbar button{min-height:43px}
+ .shell footer{padding:16px 10px max(17px,env(safe-area-inset-bottom));}
+}
+@media(max-width:480px){
+ .empty-compact{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px 12px;text-align:left}
+ .empty-compact .secondary-button{grid-column:1/-1;width:100%;justify-content:center;margin:1px 0 0}
+ .compact-install h3{font-size:13px}
+ .compact-install p{font-size:11px}
+ .coming .soon{font-size:9px}
+}
