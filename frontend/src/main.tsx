@@ -44,9 +44,9 @@ function App(){
     if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.3)return;
     setOnboardingStep(current=>Math.max(0,Math.min(2,current+(dx<0?1:-1))));
   };
-  const [showOnboarding,setShowOnboarding]=useState(()=>localStorage.getItem("wondertale-onboarding-v1")!=="seen");
+  const [showOnboarding,setShowOnboarding]=useState(()=>{try{return localStorage.getItem("wondertale-onboarding-v1")!=="seen"}catch{return true}});
   const finishOnboarding=(destination:"home"|"account")=>{
-    localStorage.setItem("wondertale-onboarding-v1","seen");
+    try{localStorage.setItem("wondertale-onboarding-v1","seen")}catch{/* Continue even when private browsing blocks storage. */}
     setShowOnboarding(false);setTab(destination);
   };
   const [lang,setLang]=useState<Lang>(getSavedLanguage);
@@ -326,7 +326,7 @@ function App(){
   };
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
   if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
-  if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome" onTouchStart={onWelcomeTouchStart} onTouchEnd={onWelcomeTouchEnd}>
+  if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome" onTouchStart={onWelcomeTouchStart} onTouchEnd={onWelcomeTouchEnd} onKeyDown={event=>{if(event.key==="ArrowRight")setOnboardingStep(current=>Math.min(2,current+1));if(event.key==="ArrowLeft")setOnboardingStep(current=>Math.max(0,current-1));}}>
     <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.png" alt=""/></div>
     <div className="welcome-shade" aria-hidden="true"/>
     <div className="welcome-content">
@@ -336,7 +336,7 @@ function App(){
         {ru:"Волшебные истории каждый день",uz:"Har kuni sehrli hikoyalar",en:"Magical stories every day"},
         {ru:"Создавайте и сохраняйте сказки",uz:"Ertaklar yarating va saqlang",en:"Create and save stories"},
       ][onboardingStep][lang]}</h1>
-      <div className="welcome-dots" role="group" aria-label="Onboarding slides">{[0,1,2].map(n=><button key={n} type="button" className={n===onboardingStep?"active":""} onClick={()=>setOnboardingStep(n)} aria-label={String(n+1)} aria-current={n===onboardingStep?"step":undefined}/>)}</div>
+      <div className="welcome-dots" role="group" aria-label="Onboarding slides">{[0,1,2].map(n=><button key={n} type="button" className={n===onboardingStep?"active":""} onClick={()=>setOnboardingStep(n)} aria-label={({ru:`Экран ${n+1} из 3`,uz:`${n+1}-sahifa, jami 3`,en:`Slide ${n+1} of 3`} as const)[lang]} aria-current={n===onboardingStep?"step":undefined}/>)}</div>
       <button type="button" className="welcome-primary" onClick={()=>onboardingStep<2?setOnboardingStep(n=>n+1):finishOnboarding("home")}>{onboardingStep<2?({ru:"Начать",uz:"Boşlaş",en:"Get started"} as const)[lang]:({ru:"Открыть сказки",uz:"Ertaklarni oçiş",en:"Explore stories"} as const)[lang]} <Sparkles size={18}/></button>
       <button type="button" className="welcome-secondary" onClick={()=>finishOnboarding("account")}>{({ru:"У меня уже есть аккаунт",uz:"Menda akkaunt bor",en:"I already have an account"} as const)[lang]}</button>
     </div>
