@@ -160,3 +160,29 @@ def test_oversized_bearer_token_is_rejected(api):
     response=client.get("/api/me",headers={"Authorization":"Bearer "+"x"*5000})
     assert response.status_code==401
     assert response.headers["cache-control"]=="private, no-store"
+
+
+def test_failed_ai_provider_does_not_consume_parent_or_global_quota(api, monkeypatch):
+    client, module, parent_id, headers = api
+    payload = {"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"}
+
+    def fail_provider(_data):
+        raise RuntimeError("simulated provider outage")
+
+    original_generate = module.generate_story
+    monkeypatch.setattr(module, "generate_story", fail_provider)
+    failed = client.post("/api/books/generate", headers=headers, json=payload)
+    assert failed.status_code == 502
+    assert "simulated provider outage" not in failed.text
+    assert client.get("/api/books", headers=headers).json() == []
+    with module.connection() as conn:
+        assert module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_global_quota").fetchone()[0] == 0
+        assert module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_quota").fetchone()[0] == 0
+
+    # A subsequent healthy request must be able to use the refunded allowance.
+    monkeypatch.setattr(module, "generate_story", original_generate)
+    retry = client.post("/api/books/generate", headers=headers, json=payload)
+    assert retry.status_code == 201, retry.text
+    with module.connection() as conn:
+        assert module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_global_quota").fetchone()[0] == 1
+        assert module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_quota").fetchone()[0] == 1
