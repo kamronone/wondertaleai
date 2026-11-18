@@ -171,3 +171,54 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  "The magical book closed, and "+name+" learned that helping friends is a wonderful kind of magic."
  ]} , "en");
 }
+
+
+/** Creates a new local template sequel to the current demo story (no network requests). */
+export const createDemoSequel=(previous:DemoBook):DemoBook=>{
+ const lang:Lang=previous.language||"ru";
+ const hero=previous.name;
+ const lines:Record<Lang,{suffix:string;pages:string[]}>={
+   ru:{suffix:" — новое приключение",pages:[
+    "На следующее утро "+hero+" проснулся с ощущением, что волшебная история ещё не закончилась. У окна тихо звенел серебряный колокольчик.",
+    "На подоконнике лежало письмо от старых друзей. Они приглашали "+hero+" в долину, где каждую ночь загораются необычные фонарики.",
+    "Герой собрал маленькую сумку и отправился по знакомой тропинке. На развилке его встретил говорящий лисёнок и предложил идти вместе.",
+    "В долине друзья обнаружили мост из разноцветных камней. Каждый камень загорался только после доброго слова.",
+    hero+" вспомнил прошлое приключение и предложил всем по очереди рассказать, за что они благодарны друг другу. Мост засветился ярче луны.",
+    "На другом берегу стоял сад со звёздными деревьями. Один росток нуждался в заботе и немного воды, поэтому друзья принялись за дело.",
+    "В благодарность сад подарил каждому сияющее семечко. Друзья договорились посадить их дома и заботиться о маленьких чудесах.",
+    "Вернувшись домой, "+hero+" улыбнулся: волшебство живёт не только в сказочных замках, но и в простых добрых поступках. А значит, впереди ещё много историй."
+   ]},
+   uz:{suffix:" — yangi sarguzasht",pages:[
+    "Ertasi kuni "+hero+" uyg‘onib, sehrli hikoya hali tugamaganini sezdi. Deraza yonida kumush qo‘ng‘iroqcha ohista jaranglardi.",
+    "Deraza tokchasida eski do‘stlardan maktub bor edi. Ular "+hero+"ni har kecha ajib chiroqlar yonadigan vodiyga taklif qilishgan edi.",
+    "Qahramon kichik sumkasini olib, tanish yo‘ldan ketdi. Yo‘l ayrilishida gapiradigan tulkicha uni kutib turardi.",
+    "Vodiyda do‘stlar rangli toshlardan qurilgan ko‘prikni topishdi. Har bir tosh faqat yaxshi so‘z eshitganda yorishardi.",
+    hero+" oldingi sarguzashtni eslab, do‘stlardan bir-birlariga minnatdorlik bildirishni so‘radi. Ko‘prik oy nuridan ham yorqin porladi.",
+    "Narigi qirg‘oqda yulduzli daraxtlar o‘sadigan bog‘ bor edi. Bir niholga g‘amxo‘rlik va ozgina suv kerak edi.",
+    "Bog‘ minnatdorlik belgisi sifatida hammaga nurli urug‘ sovg‘a qildi. Do‘stlar ularni uyda ekishga kelishishdi.",
+    "Uyiga qaytgan "+hero+" jilmaydi: mo‘jiza faqat qasrlarda emas, oddiy yaxshiliklarda ham yashaydi. Demak, oldinda yana ko‘p ertaklar bor."
+   ]},
+   en:{suffix:" — a New Adventure",pages:[
+    "The next morning, "+hero+" woke up feeling that the magical story was not quite finished. A silver bell chimed softly by the window.",
+    "A letter from old friends lay on the windowsill. They invited "+hero+" to a valley where unusual lanterns lit up every night.",
+    "The hero packed a small bag and walked along the familiar path. A talking fox greeted them at the crossroads and offered to come along.",
+    "In the valley, the friends found a bridge made of colorful stones. Each stone lit up whenever someone spoke a kind word.",
+    hero+" remembered their last adventure and suggested sharing things they appreciated about each other. The bridge glowed brighter than moonlight.",
+    "On the other side lay a garden of starry trees. One little seedling needed some water and care, so the friends got to work.",
+    "To thank them, the garden gave each friend a glowing seed. They promised to plant the seeds at home and care for small wonders.",
+    "Back at home, "+hero+" smiled. Magic did not live only in fairy-tale castles; it lived in everyday acts of kindness, too. Many adventures still awaited."
+   ]}
+ };
+ const story=lines[lang];
+ const art=previous.classicId?previous.pages[0]?.image_url:null;
+ const sequel:DemoBook={
+    id:"local-"+crypto.randomUUID(),
+    created_at:new Date().toISOString(),
+    name:previous.name,age:previous.age,theme:previous.theme,style:previous.style,
+    prompt:previous.prompt,title:previous.title+story.suffix,language:lang,
+    classicId:previous.classicId,mode:"browser-demo",savedOnDevice:Boolean(previous.savedOnDevice),
+    pages:story.pages.map((text,index)=>({number:index+1,text,image_url:art||illustration(index+1)}))
+ };
+ saveDemoBooks([sequel,...getDemoBooks()]);
+ return sequel;
+};
