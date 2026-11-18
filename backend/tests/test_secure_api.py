@@ -9,6 +9,7 @@ os.environ["AUTH_SECRET"]=secrets.token_urlsafe(48)
 os.environ["DATABASE_URL"]="sqlite:///"+str(Path(tempfile.mkdtemp())/"wondertale-test.db")
 os.environ["CORS_ORIGINS"]="http://localhost:5173"
 os.environ["ENABLE_REGISTRATION"]="true"
+os.environ["REQUIRE_EMAIL_VERIFICATION"]="false"
 import secure_main
 from fastapi.testclient import TestClient
 
@@ -175,3 +176,60 @@ def test_book_favorites_and_progress_belong_to_parent():
     assert client.delete("/api/books/"+bid,headers=headers(a)).status_code==204
     assert client.get("/api/books/favorites",headers=headers(a)).json()==[]
     assert client.get("/api/books/progress",headers=headers(a)).json()==[]
+
+
+def test_verified_signup_requires_delivery_and_a_one_time_token(monkeypatch):
+    import uuid
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","true")
+    monkeypatch.setattr(secure_main,"mail_configured",lambda:True)
+    seen=[]
+    monkeypatch.setattr(secure_main,"send_account_email",lambda email,token,kind:seen.append((email,token,kind)))
+    email="verified-"+str(uuid.uuid4())+"@example.com"
+    result=client.post("/api/auth/register",json={"email":email,"password":PASSWORD})
+    assert result.status_code==201,result.text
+    assert result.json()=={"status":"verification_sent"}
+    assert len(seen)==1 and seen[0][2]=="verify"
+    assert client.post("/api/auth/login",json={"email":email,"password":PASSWORD}).status_code==403
+    ok=client.post("/api/auth/verify-email",json={"token":seen[0][1]})
+    assert ok.status_code==200,ok.text
+    assert client.post("/api/auth/verify-email",json={"token":seen[0][1]}).status_code==400
+    logged=client.post("/api/auth/login",json={"email":email,"password":PASSWORD})
+    assert logged.status_code==200,logged.text
+    assert client.get("/api/me",headers=headers(logged.json()["access_token"])).status_code==200
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","false")
+
+def test_unconfigured_mail_rejects_verified_signup(monkeypatch):
+    import uuid
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","true")
+    monkeypatch.setattr(secure_main,"mail_configured",lambda:False)
+    result=client.post("/api/auth/register",json={"email":"no-smtp-"+str(uuid.uuid4())+"@example.com","password":PASSWORD})
+    assert result.status_code==503
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","false")
+
+def test_password_recovery_token_invalidates_existing_sessions(monkeypatch):
+    import uuid
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","false")
+    monkeypatch.setattr(secure_main,"mail_configured",lambda:True)
+    seen=[]
+    monkeypatch.setattr(secure_main,"send_account_email",lambda email,token,kind:seen.append((email,token,kind)))
+    email="recovery-"+str(uuid.uuid4())+"@example.com"
+    old_token=signup(email)
+    started=client.post("/api/auth/forgot-password",json={"email":email})
+    assert started.status_code==200
+    assert len(seen)==1 and seen[0][2]=="recover"
+    new_password="another-strong-password-2026"
+    reset=client.post("/api/auth/reset-password",json={"token":seen[0][1],"new_password":new_password})
+    assert reset.status_code==200,reset.text
+    assert client.post("/api/auth/reset-password",json={"token":seen[0][1],"new_password":new_password}).status_code==400
+    assert client.get("/api/me",headers=headers(old_token)).status_code==401
+    assert client.post("/api/auth/login",json={"email":email,"password":new_password}).status_code==200
+    assert client.post("/api/auth/login",json={"email":email,"password":PASSWORD}).status_code==401
+
+def test_recovery_does_not_reveal_unknown_email(monkeypatch):
+    import uuid
+    monkeypatch.setattr(secure_main,"mail_configured",lambda:True)
+    monkeypatch.setattr(secure_main,"send_account_email",lambda *args: (_ for _ in ()).throw(AssertionError("Unexpected email")))
+    unknown="missing-"+str(uuid.uuid4())+"@example.com"
+    r=client.post("/api/auth/forgot-password",json={"email":unknown})
+    assert r.status_code==200
+    assert r.json()=={"status":"if_account_exists_email_sent"}
