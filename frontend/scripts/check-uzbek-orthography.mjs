@@ -15,6 +15,7 @@ const paths = [
   "src/AccountAction.tsx",
 ];
 const oldLetters = /(?:[OoGg][\u2018\u2019\u02bb\u02bcʻʼ])(?=[A-Za-z])/u;
+const oldDigraphs = /(?:sh|ch)/i;
 const problems = [];
 for (const path of paths) {
   const source = readFileSync(resolve(root, path), "utf8");
@@ -24,10 +25,22 @@ for (const path of paths) {
   }
 }
 const i18n = readFileSync(resolve(root, "src/i18n.ts"), "utf8");
+const uzStart = i18n.indexOf("\\n uz:{");
+const uzEnd = i18n.indexOf("\\n en:{", uzStart);
+if (uzStart < 0 || uzEnd < 0) {
+  problems.push("Could not locate Uzbek localization block");
+} else {
+  const uzBlock = i18n.slice(uzStart, uzEnd);
+  const strings = [...uzBlock.matchAll(/"((?:\\\\.|[^"\\\\])*)"/g)];
+  for (const [, value] of strings) {
+    if (oldLetters.test(value) || oldDigraphs.test(value)) {
+      problems.push(`Legacy Uzbek spelling in localization: ${value}`);
+    }
+  }
+}
 if (!i18n.includes('label:"Özbekça"')) problems.push("Language label must use Özbekça");
-if (!i18n.includes('saved:"uz"') && !i18n.includes('?saved:"uz"')) {
-  // The default branch of the ternary is what matters, not its saved value.
-  if (!i18n.includes('saved:"uz"}catch{return "uz"')) problems.push("New visitors must default to Uzbek");
+if (!/saved==="ru"\\|\\|saved==="uz"\\|\\|saved==="en"\\?saved:"uz"/.test(i18n)) {
+  problems.push("New visitors must default to Uzbek without overriding saved preferences");
 }
 const main = readFileSync(resolve(root, "src/main.tsx"), "utf8");
 if (main.includes('className="welcome-language"')) problems.push("Onboarding must not contain a language selector");
