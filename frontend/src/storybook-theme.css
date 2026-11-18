@@ -363,3 +363,24 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
  .shell{padding-bottom:calc(78px + env(safe-area-inset-bottom, 0px))}
  .shell footer{padding:15px 12px 17px}
 }
+
+/* Complete story printing: Safari "Print -> Save to Files" outputs all pages. */
+.print-book{display:none}
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  html,body,#root,.shell{width:100%!important;height:auto!important;max-width:none!important;overflow:visible!important;background:#fff!important}
+  body *{visibility:hidden!important}
+  .print-book,.print-book *{visibility:visible!important}
+  .print-book{display:block!important;position:absolute!important;top:0;left:0;width:100%;color:#302345;background:#fff}
+  .print-book-cover,.print-book-page{break-after:page;page-break-after:always;box-sizing:border-box;margin:0;padding:10mm 5mm;min-height:252mm;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .print-book-cover img{width:78%;height:148mm;object-fit:contain;display:block;margin:0 auto 12mm}
+  .print-book-cover h1{font-size:30pt;line-height:1.2;font-family:Georgia,serif;margin:0 0 10mm}
+  .print-book-cover p{font-size:17pt;margin:0 0 18mm}
+  .print-book-cover small{font-size:12pt;color:#735c8c}
+  .print-book-page{justify-content:flex-start;gap:9mm}
+  .print-book-page-head{display:flex;width:100%;justify-content:space-between;font-size:10pt;color:#77658a;margin:0 0 2mm}
+  .print-book-page img{width:100%;height:130mm;object-fit:contain;display:block}
+  .print-book-page p{width:100%;font-size:16pt;line-height:1.65;text-align:left;white-space:pre-wrap;margin:0}
+  .print-book-page:last-child{break-after:auto;page-break-after:auto}
+  .mobile-tabbar,.topbar,.reader-toolbar,.reader-title,.story-page,.pager,.shell footer{display:none!important}
+}
