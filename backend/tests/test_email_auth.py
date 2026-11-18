@@ -97,3 +97,55 @@ def test_malformed_smtp_port_rejected(monkeypatch):
         monkeypatch.setenv(key,value)
     with pytest.raises(RuntimeError,match="Invalid SMTP port"):
         send_account_email("parent@example.com",new_code(),"verify")
+
+
+def test_resend_https_delivery_with_mock_provider(monkeypatch):
+    import json
+    monkeypatch.setenv("RESEND_API_KEY","re_mock_not_a_real_key")
+    monkeypatch.setenv("MAIL_FROM","WonderTale AI <stories@example.com>")
+    monkeypatch.setenv("PUBLIC_APP_ORIGIN","https://wondertale.example.com")
+    monkeypatch.delenv("SMTP_HOST",raising=False)
+    observed=[]
+    class FakeResponse:
+        status=200
+        def __enter__(self):return self
+        def __exit__(self,*args):pass
+    def fake_open(request,timeout):
+        observed.append(request)
+        assert timeout==12
+        return FakeResponse()
+    monkeypatch.setattr("email_auth.urlopen",fake_open)
+    assert mail_configured()
+    token=new_code()
+    send_account_email("parent@example.com",token,"verify")
+    assert len(observed)==1
+    request=observed[0]
+    assert request.full_url=="https://api.resend.com/emails"
+    assert request.get_method()=="POST"
+    assert request.get_header("Authorization")=="Bearer re_mock_not_a_real_key"
+    payload=json.loads(request.data.decode("utf-8"))
+    assert payload["from"]=="WonderTale AI <stories@example.com>"
+    assert payload["to"]==["parent@example.com"]
+    assert token in payload["text"]
+    assert "#verify=" in payload["text"]
+
+
+def test_resend_errors_are_sanitized(monkeypatch):
+    from urllib.error import HTTPError
+    monkeypatch.setenv("RESEND_API_KEY","re_mock_not_a_real_key")
+    monkeypatch.setenv("MAIL_FROM","stories@example.com")
+    monkeypatch.setenv("PUBLIC_APP_ORIGIN","https://wondertale.example.com")
+    def fake_failure(request,timeout):
+        raise HTTPError(request.full_url,403,"internal provider token leaked",{},None)
+    monkeypatch.setattr("email_auth.urlopen",fake_failure)
+    with pytest.raises(RuntimeError,match="Email provider delivery request failed") as exc:
+        send_account_email("parent@example.com",new_code(),"recover")
+    assert "internal provider" not in str(exc.value)
+
+
+def test_resend_does_not_enable_delivery_without_sender(monkeypatch):
+    monkeypatch.setenv("RESEND_API_KEY","re_mock_not_a_real_key")
+    monkeypatch.delenv("MAIL_FROM",raising=False)
+    monkeypatch.delenv("SMTP_FROM",raising=False)
+    monkeypatch.setenv("PUBLIC_APP_ORIGIN","https://wondertale.example.com")
+    assert mail_configured() is False
