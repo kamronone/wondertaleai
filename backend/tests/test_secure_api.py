@@ -95,3 +95,32 @@ def test_ai_allowlist_and_global_budget(monkeypatch):
     assert exhausted.status_code==429
     assert len(client.get("/api/books",headers=headers(own)).json())==2
     assert client.get("/api/books/"+first.json()["id"],headers=headers(second)).status_code==404
+
+def test_sessions_logout_and_revoke_all():
+    import uuid
+    email="session-"+str(uuid.uuid4())+"@example.com"
+    first=signup(email)
+    login_result=client.post("/api/auth/login",json={"email":email,"password":PASSWORD})
+    assert login_result.status_code==200,login_result.text
+    second=login_result.json()["access_token"]
+    listed=client.get("/api/auth/sessions",headers=headers(second))
+    assert listed.status_code==200
+    assert len(listed.json())==2
+    assert client.post("/api/auth/logout",headers=headers(first)).status_code==204
+    assert client.get("/api/me",headers=headers(first)).status_code==401
+    assert client.get("/api/me",headers=headers(second)).status_code==200
+    assert client.post("/api/auth/logout-all",headers=headers(second)).status_code==204
+    assert client.get("/api/me",headers=headers(second)).status_code==401
+    assert client.get("/api/auth/sessions",headers=headers(second)).status_code==401
+
+def test_signature_valid_but_unknown_session_is_rejected():
+    import uuid
+    token=signup("session-invalid-"+str(uuid.uuid4())+"@example.com")
+    payload=secure_main.decode(token.split(".")[0])
+    import json
+    decoded=json.loads(payload)
+    decoded["sid"]=str(uuid.uuid4())
+    part=secure_main.encode(json.dumps(decoded,separators=(",",":")).encode())
+    signature=secure_main.encode(__import__("hmac").new(secure_main.SECRET.encode(),part.encode(),__import__("hashlib").sha256).digest())
+    forged=part+"."+signature
+    assert client.get("/api/me",headers=headers(forged)).status_code==401
