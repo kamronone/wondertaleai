@@ -28,6 +28,13 @@ function App(){
     if(accountAction)window.history.replaceState(null,"",window.location.pathname+window.location.search);
   },[]);
   const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account">("home");
+  const [onboardingSeen,setOnboardingSeen]=useState(()=>localStorage.getItem("wondertale-onboarding-v1")==="seen");
+  const [onboardingStep,setOnboardingStep]=useState(0);
+  const [showOnboarding,setShowOnboarding]=useState(()=>localStorage.getItem("wondertale-onboarding-v1")!=="seen");
+  const finishOnboarding=(destination:"home"|"account")=>{
+    localStorage.setItem("wondertale-onboarding-v1","seen");
+    setOnboardingSeen(true);setShowOnboarding(false);setTab(destination);
+  };
   const [lang,setLang]=useState<Lang>(getSavedLanguage);
   const [storyLang,setStoryLang]=useState<Lang>(getSavedLanguage);
   const t=labels[lang];
@@ -305,6 +312,22 @@ function App(){
   };
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
   if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
+  if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome">
+    <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-hero.webp" alt=""/></div>
+    <div className="welcome-shade" aria-hidden="true"/>
+    <div className="welcome-content">
+      <div className="welcome-brand"><Crown size={27} fill="#ffd67a"/><span>WonderTale <strong>AI</strong></span></div>
+      <h1>{[
+        {ru:"Ваш ребёнок — герой собственной сказки",uz:"Farzandingiz o‘z ertagining qahramoni",en:"Your child is the hero of their own story"},
+        {ru:"Волшебные истории каждый день",uz:"Har kuni sehrli hikoyalar",en:"Magical stories every day"},
+        {ru:"Создавайте и сохраняйте сказки",uz:"Ertaklar yarating va saqlang",en:"Create and save stories"},
+      ][onboardingStep][lang]}</h1>
+      <div className="welcome-dots" role="group" aria-label="Onboarding slides">{[0,1,2].map(n=><button key={n} type="button" className={n===onboardingStep?"active":""} onClick={()=>setOnboardingStep(n)} aria-label={String(n+1)} aria-current={n===onboardingStep?"step":undefined}/>)}</div>
+      <button type="button" className="welcome-primary" onClick={()=>onboardingStep<2?setOnboardingStep(n=>n+1):finishOnboarding("home")}>{onboardingStep<2?({ru:"Начать",uz:"Boshlash",en:"Get started"} as const)[lang]:({ru:"Открыть сказки",uz:"Ertaklarni ochish",en:"Explore stories"} as const)[lang]} <Sparkles size={18}/></button>
+      <button type="button" className="welcome-secondary" onClick={()=>finishOnboarding("account")}>{({ru:"У меня уже есть аккаунт",uz:"Menda akkaunt bor",en:"I already have an account"} as const)[lang]}</button>
+      <div className="welcome-language"><label htmlFor="welcome-lang">{({ru:"Язык",uz:"Til",en:"Language"} as const)[lang]}</label><select id="welcome-lang" value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
+    </div>
+  </section>;
   return <div className="shell">
     <header className="topbar">
       <button className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
