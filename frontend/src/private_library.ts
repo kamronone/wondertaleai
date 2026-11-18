@@ -74,13 +74,20 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  // This function must only be called from the explicit parent's transfer button.
  const existingRows=await fetchWithToken(api,"/api/books",token);
  if(!existingRows.ok)throw Error("Private library unavailable");
- const rows=await existingRows.json() as ServerRow[];
+ const responseData:unknown=await existingRows.json();
+ if(!Array.isArray(responseData))throw Error("Invalid private library response");
+ const rows=responseData as ServerRow[];
  const transferred=new Set<string>();
  for(const row of rows){
-  try{const story=JSON.parse(row.story);if(typeof story.source_id==="string")transferred.add(story.source_id);}catch{/* old server books */ }
+  try{
+   const story=JSON.parse(row.story);
+   if(typeof story.source_id==="string")transferred.add(story.source_id);
+  }catch{/* old server books */}
  }
  let uploaded=0,existing=0,failed=0;
- for(const book of localBooks.filter(x=>x.savedOnDevice).slice(0,20)){
+ // Process every locally saved book. A hidden 20-book slice previously
+ // reported success while silently leaving the remaining books behind.
+ for(const book of localBooks.filter(x=>x.savedOnDevice)){
   if(transferred.has(book.id)){existing++;continue;}
   const story:StoredStory={
    version:1,source_id:book.id,language:book.language,theme:book.theme,
