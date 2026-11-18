@@ -23,8 +23,14 @@ function normalizeServerBook(book:ServerRow):RemoteBook|null{
  try{
   const stored=JSON.parse(book.story) as StoredStory;
   if(!Array.isArray(stored.pages)||stored.pages.length<1)return null;
-  const pages=stored.pages.slice(0,30).filter(p=>typeof p.text==="string"&&p.text.length<1600).map((p,index)=>({number:index+1,text:p.text,image_url:cleanImage(typeof p.image_url==="string"?p.image_url:"")}));
-  if(!pages.length)return null;
+  // A malformed page must not silently disappear: filtering it would shift
+  // reading progress and make the remaining pages appear under wrong numbers.
+  if(stored.pages.length>30)return null;
+  if(!stored.pages.every(p=>p&&typeof p.text==="string"&&p.text.trim().length>0&&p.text.length<1600))return null;
+  const pages=stored.pages.map((p,index)=>({
+   number:index+1,text:p.text,
+   image_url:cleanImage(typeof p.image_url==="string"?p.image_url:"")
+  }));
   return {id:book.id,created_at:book.created_at,name:book.child_name,age:book.age,title:book.title,
    theme:stored.theme||"",prompt:stored.prompt||"",style:stored.style||"",
    language:stored.language==="uz"||stored.language==="en"?stored.language:"ru",
