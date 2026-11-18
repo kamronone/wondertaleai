@@ -35,8 +35,20 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
    if(mode==="login"){
     if(typeof data.access_token!=="string"||!await onLogin(data.access_token))throw Error("Invalid session");
     setPassword("");
-   } else {
-    setNotice(mode==="register"?t.registrationSent:t.forgotSent);
+   } else if(mode==="register"){
+    // Registration may return an immediate session when email verification is disabled.
+    // When verification is enabled the API returns {status:"verification_sent"} instead.
+    if(typeof data.access_token==="string"){
+     if(!await onLogin(data.access_token))throw Error("Invalid session");
+    }else if(data.status==="verification_sent"){
+     setNotice(t.registrationSent);
+    }else{
+     throw Error("Unexpected registration response");
+    }
+    setPassword("");
+   }else{
+    if(data.status!=="if_account_exists_email_sent")throw Error("Unexpected recovery response");
+    setNotice(t.forgotSent);
     setPassword("");
    }
   }catch(e){setError(e instanceof Error&&e.message==="Unverified"?t.unverified:t.failed);}finally{setWorking(false);}
