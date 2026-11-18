@@ -4,6 +4,11 @@ import type { Classic } from "./classics";
 // These are editorial cover illustrations, not AI-generated child likenesses.
 export function ClassicCover({item}:{item:Classic}){
  const id=item.id;
+ // These six are genuine generated artwork, stored in this repository.
+ const illustrated=["red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen"];
+ if(illustrated.includes(id)){
+   return <img className="classic-generated-image" src={"/images/classics/"+id+".svg"} alt={item.title.ru} loading="lazy" decoding="async"/>;
+ }
  const isForest=["red-hood","hansel-gretel","kolobok","teremok","snow-white","twelve-months"].includes(id)||item.icon==="forest";
  const isCastle=["cinderella","rapunzel","sleeping-beauty","princess-pea","snow-queen","aladdin","nutcracker"].includes(id)||item.icon==="castle";
  const isWater=["ugly-duckling","little-mermaid","fisherman-fish"].includes(id);
