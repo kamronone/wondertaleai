@@ -21,6 +21,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
+from email_auth import verification_required, mail_configured, new_code, digest_code, send_account_email
 
 SECRET = os.getenv("AUTH_SECRET", "")
 if len(SECRET) < 32:
@@ -59,6 +60,9 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS sessions_owner_idx ON sessions(owner_id)")
         sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
+        sql(c, "CREATE TABLE IF NOT EXISTS parent_email_status (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, verified_at TEXT)")
+        sql(c, "CREATE TABLE IF NOT EXISTS email_action_tokens (token_digest TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, purpose TEXT NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER, issued_at INTEGER NOT NULL)")
+        sql(c, "CREATE INDEX IF NOT EXISTS email_action_owner_idx ON email_action_tokens(owner_id,purpose,issued_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS children (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, nickname TEXT NOT NULL, age INTEGER NOT NULL, created_at TEXT NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS children_owner_idx ON children(owner_id)")
         sql(c, "CREATE TABLE IF NOT EXISTS book_favorites (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, created_at TEXT NOT NULL, PRIMARY KEY(owner_id,book_id))")
@@ -125,6 +129,11 @@ def current_parent(authorization: str | None=Header(default=None)):
         with connection() as c:
             row=sql(c,"SELECT owner_id FROM sessions WHERE id=? AND owner_id=? AND revoked=0 AND expires_at>?",(data["sid"],data["sub"],int(time.time()))).fetchone()
         if row is None:raise ValueError("session revoked or not found")
+        if verification_required():
+            with connection() as c:
+                verified=sql(c,"SELECT verified_at FROM parent_email_status WHERE owner_id=?",(row[0],)).fetchone()
+            if not verified or not verified[0]:
+                raise ValueError("email verification required")
         return row[0]
     except (ValueError,TypeError,KeyError,OverflowError,UnicodeDecodeError,binascii.Error,json.JSONDecodeError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Invalid or expired token")
@@ -158,17 +167,33 @@ def _clear_login_failures(email:str)->None:
         sql(c,"DELETE FROM login_attempts WHERE email_key=?",(_email_key(email),))
         c.commit()
 
-@app.post("/api/auth/register",response_model=Token,status_code=201)
+@app.post("/api/auth/register",status_code=201)
 def register(body:Credentials):
     if os.getenv("ENABLE_REGISTRATION","false").lower()!="true":
         raise HTTPException(503,"Registration is not enabled")
-    email=str(body.email).lower()
+    required=verification_required()
+    if required and not mail_configured():
+        raise HTTPException(503,"Email verification provider is not configured")
+    email=str(body.email).strip().lower()
     uid=str(uuid.uuid4())
     with connection() as c:
         if sql(c,"SELECT id FROM parents WHERE email=?",(email,)).fetchone():
             raise HTTPException(409,"Account already exists")
         sql(c,"INSERT INTO parents(id,email,password_hash,created_at) VALUES(?,?,?,?)",(uid,email,password_hash(body.password),datetime.now(timezone.utc).isoformat()))
+        if required:
+            token=new_code()
+            now=int(time.time())
+            sql(c,"INSERT INTO parent_email_status(owner_id,verified_at) VALUES(?,NULL)",(uid,))
+            sql(c,"INSERT INTO email_action_tokens(token_digest,owner_id,purpose,expires_at,used_at,issued_at) VALUES(?,?,?,?,NULL,?)",(digest_code(token,SECRET),uid,"verify",now+1800,now))
+            try:
+                send_account_email(email,token,"verify")
+            except Exception as exc:
+                raise HTTPException(503,"Email delivery failed") from exc
+        else:
+            sql(c,"INSERT INTO parent_email_status(owner_id,verified_at) VALUES(?,?)",(uid,datetime.now(timezone.utc).isoformat()))
         c.commit()
+    if required:
+        return {"status":"verification_sent"}
     return Token(access_token=make_token(uid))
 
 @app.post("/api/auth/login",response_model=Token)
@@ -181,8 +206,92 @@ def login(body:Credentials):
     if not row or not password_matches(body.password,row[1]):
         _record_login_failure(email)
         raise HTTPException(401,"Invalid email or password")
+    if verification_required():
+        with connection() as c:
+            verified=sql(c,"SELECT verified_at FROM parent_email_status WHERE owner_id=?",(row[0],)).fetchone()
+        if not verified or not verified[0]:
+            raise HTTPException(403,"Email confirmation required")
     _clear_login_failures(email)
     return Token(access_token=make_token(row[0]))
+
+class EmailOnly(BaseModel):
+    email: EmailStr
+
+class EmailAction(BaseModel):
+    token: str=Field(min_length=35,max_length=100)
+
+class PasswordRecovery(EmailAction):
+    new_password: str=Field(min_length=12,max_length=128)
+
+def _consume_email_token(token:str,purpose:str):
+    try:
+        token_digest=digest_code(token,SECRET)
+    except ValueError:
+        raise HTTPException(400,"Invalid or expired link")
+    with connection() as c:
+        result=sql(c,"SELECT owner_id FROM email_action_tokens WHERE token_digest=? AND purpose=? AND used_at IS NULL AND expires_at>?",(token_digest,purpose,int(time.time()))).fetchone()
+    if not result:
+        raise HTTPException(400,"Invalid or expired link")
+    return token_digest,result[0]
+
+@app.post("/api/auth/verify-email")
+def verify_email(body:EmailAction):
+    digest,owner=_consume_email_token(body.token,"verify")
+    now=datetime.now(timezone.utc).isoformat()
+    with connection() as c:
+        updated=sql(c,"UPDATE email_action_tokens SET used_at=? WHERE token_digest=? AND owner_id=? AND used_at IS NULL AND expires_at>?",(int(time.time()),digest,owner,int(time.time())))
+        if updated.rowcount!=1:
+            raise HTTPException(400,"Invalid or expired link")
+        sql(c,"INSERT INTO parent_email_status(owner_id,verified_at) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET verified_at=excluded.verified_at",(owner,now))
+        c.commit()
+    return {"status":"verified"}
+
+def _request_email_action(email:str,purpose:str):
+    if not mail_configured():
+        raise HTTPException(503,"Email delivery provider is not configured")
+    now=int(time.time())
+    with connection() as c:
+        parent=sql(c,"SELECT id FROM parents WHERE email=?",(email,)).fetchone()
+        if not parent:return
+        owner=parent[0]
+        # One live message per purpose every 2 minutes, at most ten in a day.
+        recent=sql(c,"SELECT issued_at FROM email_action_tokens WHERE owner_id=? AND purpose=? ORDER BY issued_at DESC LIMIT 10",(owner,purpose)).fetchall()
+        if any(now-int(r[0])<120 for r in recent) or sum(now-int(r[0])<86400 for r in recent)>=10:
+            return
+        token=new_code()
+        sql(c,"INSERT INTO email_action_tokens(token_digest,owner_id,purpose,expires_at,used_at,issued_at) VALUES(?,?,?,?,NULL,?)",(digest_code(token,SECRET),owner,purpose,now+1800,now))
+        try:
+            send_account_email(email,token,purpose)
+        except Exception as exc:
+            raise HTTPException(503,"Email delivery failed") from exc
+        c.commit()
+
+@app.post("/api/auth/resend-verification")
+def resend_verification(body:EmailOnly):
+    email=str(body.email).strip().lower()
+    with connection() as c:
+        row=sql(c,"SELECT p.id,v.verified_at FROM parents p LEFT JOIN parent_email_status v ON p.id=v.owner_id WHERE p.email=?",(email,)).fetchone()
+    if row and not row[1]:
+        _request_email_action(email,"verify")
+    return {"status":"if_account_exists_email_sent"}
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(body:EmailOnly):
+    _request_email_action(str(body.email).strip().lower(),"recover")
+    return {"status":"if_account_exists_email_sent"}
+
+@app.post("/api/auth/reset-password")
+def reset_password(body:PasswordRecovery):
+    digest,owner=_consume_email_token(body.token,"recover")
+    with connection() as c:
+        updated=sql(c,"UPDATE email_action_tokens SET used_at=? WHERE token_digest=? AND owner_id=? AND used_at IS NULL AND expires_at>?",(int(time.time()),digest,owner,int(time.time())))
+        if updated.rowcount!=1:
+            raise HTTPException(400,"Invalid or expired link")
+        sql(c,"UPDATE parents SET password_hash=? WHERE id=?",(password_hash(body.new_password),owner))
+        sql(c,"UPDATE sessions SET revoked=1 WHERE owner_id=?",(owner,))
+        sql(c,"DELETE FROM email_action_tokens WHERE owner_id=? AND purpose='recover' AND token_digest<>?",(owner,digest))
+        c.commit()
+    return {"status":"password_changed"}
 
 def _authenticated_session(authorization:str|None):
     if not authorization or not authorization.startswith("Bearer "):
