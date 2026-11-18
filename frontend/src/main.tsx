@@ -208,9 +208,17 @@ function App(){
     setError("");
     const utterance=new SpeechSynthesisUtterance(active.pages[page].text);
     utterance.lang=({ru:"ru-RU",uz:"uz-UZ",en:"en-US"} as const)[active.language||storyLang];
+    // Use a matching installed voice when the browser provides one.
+    // Never silently substitute an English voice for Uzbek or Russian.
+    const voice=engine.getVoices().find(v=>v.lang.toLowerCase()===utterance.lang.toLowerCase())
+      ||engine.getVoices().find(v=>v.lang.toLowerCase().split("-")[0]===utterance.lang.toLowerCase().split("-")[0]);
+    if(voice)utterance.voice=voice;
     utterance.rate=0.86;
     utterance.onend=()=>{setSpeaking(false);setSpeechPaused(false);};
-    utterance.onerror=()=>{setSpeaking(false);setSpeechPaused(false);};
+    utterance.onerror=event=>{
+      setSpeaking(false);setSpeechPaused(false);
+      if(event.error!=="canceled"&&event.error!=="interrupted")setError(t.noVoice);
+    };
     setSpeaking(true);setSpeechPaused(false);
     engine.speak(utterance);
   };
