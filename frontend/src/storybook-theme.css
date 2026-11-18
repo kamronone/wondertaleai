@@ -263,3 +263,14 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
 @media(max-width:700px){
  .classic-cover:has(.classic-generated-image){height:160px}
 }
+
+/* Generated covers: fill artwork panel, no miniature illustration or blank gradient. */
+.classic-cover:has(.classic-generated-image){background:#312359;overflow:hidden;isolation:isolate}
+.classic-cover .classic-generated-image{width:100%;height:100%;object-fit:cover;object-position:center 35%;display:block}
+@media(max-width:700px){
+ .classic-cover:has(.classic-generated-image){height:175px}
+ .classic-cover .classic-generated-image{object-position:center 32%}
+}
+@media(max-width:380px){
+ .classic-cover:has(.classic-generated-image){height:155px}
+}
