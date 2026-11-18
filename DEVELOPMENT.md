@@ -138,7 +138,13 @@ Controls: 256-bit tokens; only HMAC-SHA256 token digests stored; 30-minute expir
 
 Important integration blockers:
 - A dedicated Neon database is not available through the connected Vercel-managed Neon organization; **no migrations were applied to any existing project**.
-- SMTP provider/credentials and a verified sending domain have not been configured. The static frontend lacks reset/confirmation screens and API environment configuration.
+- SMTP provider/credentials and a verified sending domain have not been configured. The static frontend now includes RU/UZ/EN reset/confirmation screens, but VITE_API_BASE is unset. With no backend configured, these screens correctly show an unavailable message.
 - Until those prerequisites are met, public registration and text AI must remain disabled.
 - Existing test suite uses `REQUIRE_EMAIL_VERIFICATION=false` in its isolated test environment only. Email-specific test cases verify the new token and reset flow without sending actual messages. Tests were committed but not run end-to-end against the repository in this session.
 - Do not send children's photos to external AI providers or enable real payment methods until privacy/legal, retention, parental verification and provider reviews are complete.
+
+### Email links and test status
+- Email links use `https://<PUBLIC_APP_ORIGIN>/#verify=<token>` or `/#recover=<token>`. The token is in the URL fragment, not an HTTP path/query; React removes the fragment from browser history when it opens the relevant screen.
+- `frontend/src/AccountAction.tsx` posts the token to the private API only when `VITE_API_BASE` is explicitly set. No backend secrets belong in Vite. The public static preview remains functional without a backend.
+- `backend/tests/test_email_auth.py` mocks SMTP and checks HTTPS-origin validation and token handling. `backend/tests/test_secure_api.py` tests confirmation and password recovery with mocked mail delivery.
+- Frontend TypeScript + Vite build passed in Vercel staging. Python tests still require running in a provisioned runtime; no live SMTP delivery was performed.
