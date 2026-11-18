@@ -140,11 +140,7 @@ function App(){
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  return <button type="button" className={"classic-card classic-"+item.color} onClick={onPick} aria-label={action+": "+item.title[lang]}>
-   <span className="classic-cover">{([
-       "red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen",
-       "hansel-gretel","rapunzel","sleeping-beauty","puss-boots","frog-prince",
-       "goldilocks","little-mermaid","aladdin","pinocchio","snow-queen"
-     ].includes(item.id))
+   <span className="classic-cover">{(true)
      ? <img className="classic-generated-image"
          src={"/images/classics/"+item.id+(["red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(item.id)?".svg":".webp")}
          alt={item.title[lang]} loading="lazy" decoding="async"/>
