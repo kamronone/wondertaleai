@@ -221,3 +221,19 @@ Validation performed:
 - No registration, SMTP, external AI provider, or photo uploads were enabled.
 - The full Python test suite has **not** passed yet. An earlier restricted Vercel Sandbox could stage source and compile Python, but could not download pip dependencies due to DNS/network restrictions. This deploy validates build/startup/database readiness only, not application-wide correctness.
 - Authenticated two-parent isolation, concurrent quota tests, and user-facing sync should be verified against an isolated test database after SMTP/onboarding and a supported backend test runner are configured. The existing public Vite app still operates in demo mode.
+
+
+## Verified backend pytest run — 18 November 2026
+
+A temporary isolated Vercel Sandbox (`wondertale-pytest-validation`) was created for a real test run; the test source was copied from GitHub `preview/standalone-demo`. Only local SQLite test files and mocked email/AI providers were used, not the live Neon branch or production service. Required test packages were successfully installed in this sandbox.
+
+Command:
+```bash
+PYTHONPATH=/tmp/wondertale_test python -m pytest -q /tmp/wondertale_test/tests --tb=short
+```
+
+Initial run: **31 passed, 2 failed** due to incorrect test expectations (wrong-password login expected 422 instead of correct 401, and favorites cleanup expected a list instead of the API's `{"ids":[]}` response). The contract assertions were corrected in `backend/tests/test_secure_api.py`, not by weakening authentication or changing the API.
+
+Repeated complete test run: **33 passed in 2.62 seconds** (exit code 0). This covers local API auth/session tests, user isolation, email verification/recovery with mocked SMTP, book quotas, and AI text validation with mocked provider. It does **not** establish verified live SMTP, production PostgreSQL test coverage, or real child-photo processing. No AI or registration feature flag was enabled.
+
+The temporary test sandbox is disposable and should be removed after testing to avoid resource usage.
