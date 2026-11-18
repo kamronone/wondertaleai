@@ -161,3 +161,19 @@ Important integration blockers:
 - 30 classic covers and the PWA remain present in Vercel staging. No private FastAPI, Neon or SMTP credentials were deployed.
 
 Pending: run Python backend security tests, provision a dedicated database, verified SMTP, secure HTTPS API hosting and complete account synchronization. Do not activate registration or external child-photo upload in this configuration.
+
+
+## Neon integration verified — 2026-11-18
+
+Vercel project `wondertaleai-preview` (team `kamronone`) is attached to its own Neon marketplace store `neon-fuchsia-xylophone`, Neon project `sparkling-wind-90682745`. Secrets are Vercel-sensitive and prefixed `WONDERTALE_DB_` in Preview and Production; **do not include these values in client-side Vite variables**.
+
+Created isolated Neon branch `wondertale-preview` (id `br-young-darkness-bbiaw8n5`, parent `main`). Successfully applied the 15 idempotent SQL statements from:
+- `backend/migrations/001_private_foundation.sql`
+- `backend/migrations/002_family_reading.sql`
+- `backend/migrations/003_verified_email.sql`
+
+Verified via Neon SQL and schema listing that these eleven tables exist on `wondertale-preview` in schema `public`: `parents`, `sessions`, `books`, `login_attempts`, `generation_quota`, `generation_global_quota`, `children`, `book_favorites`, `reading_progress`, `parent_email_status`, `email_action_tokens`.
+
+**Integration caveats:** The Vercel marketplace variables were created for Preview/Production, but their target Neon branch was not verified or changed. Do not assume their credentials point to `wondertale-preview`. Before deploying the secure FastAPI backend, explicitly select this branch's connection string through the server-side secret manager and set `APP_ENV=preview`. The backend reads `DATABASE_URL`, `WONDERTALE_DB_DATABASE_URL`, or `WONDERTALE_DB_POSTGRES_URL` and refuses a local SQLite fallback outside development. The current Vercel project is still a static Vite frontend; there is no FastAPI service deployment or confirmed SMTP provider. `ENABLE_REGISTRATION` and `ENABLE_TEXT_AI` must remain disabled until live auth, migrations and SMTP are verified.
+
+The default Neon branch `main` and tables under `neon_auth` were not modified. No children's data was migrated from browsers into this database.
