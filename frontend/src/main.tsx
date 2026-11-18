@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
 import "./style.css";
@@ -36,6 +36,8 @@ function App(){
   const switchLang=(next:Lang)=>{setLang(next);saveLanguage(next);document.documentElement.lang=next;};
   const [books,setBooks]=useState<Book[]>([]);
   const [privateToken,setPrivateToken]=useState<string|null>(null);
+  // Prevent late responses from a previous parent session entering the current account.
+  const sessionEpoch=useRef(0);
   const [remoteBooks,setRemoteBooks]=useState<RemoteBook[]>([]);
   const [syncBusy,setSyncBusy]=useState(false);
   const [syncMessage,setSyncMessage]=useState("");
@@ -80,29 +82,34 @@ function App(){
   // API health alone never authorizes uploading a child photo or generating a story.
   // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
   const loginParent=async(token:string):Promise<boolean>=>{
-    if(!API||!await validateSession(API,token))return false;
+    const epoch=++sessionEpoch.current;
+    if(!API||!await validateSession(API,token)||sessionEpoch.current!==epoch)return false;
     try{
       const remote=await loadPrivateBooks(API,token);
-      setPrivateToken(token);setRemoteBooks(remote);setBooks(remote);setSyncMessage("");
+      if(sessionEpoch.current!==epoch)return false;
+      setPrivateToken(token);setRemoteBooks(remote);setBooks(remote);setActive(null);setSyncMessage("");
       return true;
     }catch{return false;}
   };
   const logoutParent=()=>{
+    ++sessionEpoch.current;
     const token=privateToken;
-    setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
+    setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setSyncMessage("");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
   };
   const syncSaved=async()=>{
     if(!privateToken||!API||syncBusy)return;
+    const epoch=sessionEpoch.current;
     setSyncBusy(true);setSyncMessage("");
     try{
       const report=await transferLocalBooks(API,privateToken,getDemoBooks());
+      if(sessionEpoch.current!==epoch)return;
       setRemoteBooks(report.serverBooks);
       setBooks(report.serverBooks);
       setSyncMessage(({ru:"Перенесено: ",uz:"Ko‘chirildi: ",en:"Transferred: "}[lang])+report.uploaded+
         (report.failed?" · "+({ru:"Ошибок: ",uz:"Xatolar: ",en:"Failed: "}[lang])+report.failed:""));
     }catch{
-      setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni ko‘chirish amalga oshmadi. Keyinroq qayta urinib ko‘ring.",en:"Transfer failed. Please retry later."}[lang]);
+      if(sessionEpoch.current===epoch)setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni ko‘chirish amalga oshmadi. Keyinroq qayta urinib ko‘ring.",en:"Transfer failed. Please retry later."}[lang]);
     }finally{setSyncBusy(false);}
   };
   useEffect(()=>{document.documentElement.lang=lang;},[lang]);
@@ -137,8 +144,10 @@ function App(){
   useEffect(()=>{
     if(tab!=="reader"||!active||isDemoBook(active)||!privateToken||!API)return;
     const bookId=active.id;
+    const epoch=sessionEpoch.current;
     // Never update local reading state as synchronized until the authenticated API confirms it.
     void updatePrivateReadingProgress(API,privateToken,bookId,page).then(()=>{
+      if(sessionEpoch.current!==epoch)return;
       setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
       setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
     }).catch(()=>{ /* Retain the previous persisted position when offline. */ });
@@ -154,8 +163,10 @@ function App(){
       return;
     }
     if(!privateToken||!API)return;
+    const epoch=sessionEpoch.current;
     try{
       const favorite=await updatePrivateFavorite(API,privateToken,active.id);
+      if(sessionEpoch.current!==epoch)return;
       setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
       setRemoteBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
       setActive(prev=>prev?{...prev,favorite}:null);
@@ -230,6 +241,7 @@ function App(){
     setBusy(true);
     try{
       if(usePersonalAi){
+        const epoch=sessionEpoch.current;
         if(prompt.trim().length<12){
           throw new Error(({ru:"Опишите идею сказки минимум 12 символами.",uz:"Ertak g‘oyasini kamida 12 ta belgi bilan yozing.",en:"Describe the story idea in at least 12 characters."} as const)[lang]);
         }
@@ -269,6 +281,7 @@ function App(){
         const result=await response.json();
         if(typeof result.id!=="string")throw new Error(t.generateError);
         const refreshed=await loadPrivateBooks(API,privateToken);
+        if(sessionEpoch.current!==epoch)return;
         const newBook=refreshed.find(book=>book.id===result.id);
         setRemoteBooks(refreshed);
         setBooks(refreshed);
@@ -278,7 +291,9 @@ function App(){
       }
       const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
       const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);
-      setBooks(previous=>[book,...previous]);
+      // When signed in, demo books stay in the browser only and are not shown
+      // in the parent's remote library until explicitly transferred.
+      if(!privateToken)setBooks(previous=>[book,...previous]);
       openBook(book);
     }catch(e){setError(e instanceof Error?e.message:t.genericError);}
     finally{setBusy(false);}
