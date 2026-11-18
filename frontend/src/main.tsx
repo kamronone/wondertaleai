@@ -8,6 +8,8 @@ import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
 import { AccountAction } from "./AccountAction";
+import { ParentAccount } from "./ParentAccount";
+import { loadPrivateBooks, transferLocalBooks, validateSession, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 
 type Page={number:number;text:string;image_url:string};
@@ -24,7 +26,7 @@ function App(){
   useEffect(()=>{
     if(accountAction)window.history.replaceState(null,"",window.location.pathname+window.location.search);
   },[]);
-  const [tab,setTab]=useState<"home"|"create"|"library"|"reader">("home");
+  const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account">("home");
   const [lang,setLang]=useState<Lang>(getSavedLanguage);
   const [storyLang,setStoryLang]=useState<Lang>(getSavedLanguage);
   const t=labels[lang];
@@ -32,6 +34,10 @@ function App(){
   const styles=t.styleOptions;
   const switchLang=(next:Lang)=>{setLang(next);saveLanguage(next);document.documentElement.lang=next;};
   const [books,setBooks]=useState<Book[]>([]);
+  const [privateToken,setPrivateToken]=useState<string|null>(null);
+  const [remoteBooks,setRemoteBooks]=useState<RemoteBook[]>([]);
+  const [syncBusy,setSyncBusy]=useState(false);
+  const [syncMessage,setSyncMessage]=useState("");
   const [active,setActive]=useState<Book|null>(null);
   const [page,setPage]=useState(0);
   const [name,setName]=useState("");
@@ -70,7 +76,35 @@ function App(){
   const [error,setError]=useState("");
   const [mode,setMode]=useState("browser-demo");
   const [onlineApi,setOnlineApi]=useState(false);
-  const fetchBooks=async()=>{setBooks(getDemoBooks());if(!API)return;try{const response=await fetch(API+"/api/books",{signal:AbortSignal.timeout(1800)});if(response.ok){setBooks([...getDemoBooks(),...await response.json()]);setOnlineApi(true);}}catch{/* Local demo */}};
+  const fetchBooks=async()=>{setBooks([...getDemoBooks(),...remoteBooks]);};
+  // API health alone never authorizes uploading a child photo or generating a story.
+  // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
+  const loginParent=async(token:string):Promise<boolean>=>{
+    if(!API||!await validateSession(API,token))return false;
+    try{
+      const remote=await loadPrivateBooks(API,token);
+      setPrivateToken(token);setRemoteBooks(remote);setBooks([...getDemoBooks(),...remote]);setSyncMessage("");
+      return true;
+    }catch{return false;}
+  };
+  const logoutParent=()=>{
+    const token=privateToken;
+    setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
+    if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
+  };
+  const syncSaved=async()=>{
+    if(!privateToken||!API||syncBusy)return;
+    setSyncBusy(true);setSyncMessage("");
+    try{
+      const report=await transferLocalBooks(API,privateToken,getDemoBooks());
+      setRemoteBooks(report.serverBooks);
+      setBooks([...getDemoBooks(),...report.serverBooks]);
+      setSyncMessage(({ru:"Перенесено: ",uz:"Ko‘chirildi: ",en:"Transferred: "}[lang])+report.uploaded+
+        (report.failed?" · "+({ru:"Ошибок: ",uz:"Xatolar: ",en:"Failed: "}[lang])+report.failed:""));
+    }catch{
+      setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni ko‘chirish amalga oshmadi. Keyinroq qayta urinib ko‘ring.",en:"Transfer failed. Please retry later."}[lang]);
+    }finally{setSyncBusy(false);}
+  };
   useEffect(()=>{document.documentElement.lang=lang;},[lang]);
   // Each SPA screen starts from its heading instead of retaining a deep catalog scroll offset.
   useEffect(()=>{
@@ -84,7 +118,7 @@ function App(){
     const offset=pageElement.getBoundingClientRect().top+window.scrollY-12;
     window.scrollTo({top:Math.max(0,offset),left:0,behavior:"instant"});
   },[page,tab,active?.id]);
-  useEffect(()=>{void fetchBooks();if(API)fetch(API+"/api/health",{signal:AbortSignal.timeout(1800)}).then(r=>r.json()).then(data=>{setMode(data.mode);setOnlineApi(true)}).catch(()=>{});},[]);
+  useEffect(()=>{setBooks(getDemoBooks());},[]);
   const openBook=(book:Book)=>{
     setEditingPage(false);setActive(book);setPage(Math.max(0,Math.min(book.lastPage||0,book.pages.length-1)));setTab("reader");setError("");
   };
@@ -173,7 +207,7 @@ function App(){
     e.preventDefault();setError("");setBusy(true);
     try{
       const form=new FormData();form.append("name",name);form.append("other_heroes",secondHero.trim());form.append("age",age);form.append("theme",theme);form.append("style",style);form.append("prompt",prompt);form.append("language",storyLang);form.append("parental_consent",String(consent));if(photo)form.append("photo",photo);
-      if(!onlineApi){const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
+      if(true){const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
       const response=await fetch(API+"/api/books",{method:"POST",body:form});
       if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(typeof data.detail==="string"?data.detail :t.generateError);}
       const book:Book=await response.json();setBooks(previous=>[book,...previous]);openBook(book);
@@ -181,7 +215,7 @@ function App(){
   };
   const deleteBook=async(book:Book)=>{
     if(!confirm(t.deleteConfirm))return;
-    try{if(isDemoBook(book)){saveDemoBooks(getDemoBooks().filter(b=>b.id!==book.id));}else{const r=await fetch(API+"/api/books/"+book.id,{method:"DELETE"});if(!r.ok)throw new Error("Ошибка удаления");}setBooks(prev=>prev.filter(b=>b.id!==book.id));setTab("library");setActive(null);}
+    try{if(isDemoBook(book)){saveDemoBooks(getDemoBooks().filter(b=>b.id!==book.id));}else{if(!privateToken)throw new Error("Parent login required");const r=await fetch(API+"/api/books/"+book.id,{method:"DELETE",headers:{Authorization:"Bearer "+privateToken}});if(!r.ok)throw new Error("Ошибка удаления");setRemoteBooks(prev=>prev.filter(b=>b.id!==book.id));}setBooks(prev=>prev.filter(b=>b.id!==book.id));setTab("library");setActive(null);}
     catch{setError(t.deleteError);}
   };
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
@@ -189,7 +223,7 @@ function App(){
   return <div className="shell">
     <header className="topbar">
       <button className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
-      <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("library")}><Library size={17}/> <span>{t.library}</span></button></div>
+      <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></div>
     </header>
     <main>
       {tab==="home"&&<>
@@ -245,6 +279,7 @@ function App(){
           <button className="primary-button full" disabled={busy||!consent} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button>
         </form>
       </section>}
+      {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}</>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}<button className="primary-button add-book" onClick={()=>setTab("create")}><Plus size={18}/> {t.newStory}</button>{error&&<p className="error">{error}</p>}
         {books.length>0&&<div className="library-filters" role="group"><button type="button" className={!favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(false)}>{t.allBooks}</button><button type="button" className={favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(true)}><Heart size={15}/>{t.favorites}</button></div>}
         {(favoritesOnly?books.filter(book=>book.favorite):books).length?<div className="book-grid">{(favoritesOnly?books.filter(book=>book.favorite):books).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{favoritesOnly?t.noFavorites:t.empty}</h3><p>{favoritesOnly?"":t.emptyDesc}</p></div>}</section>}
@@ -280,7 +315,7 @@ function App(){
         </div>
       </section>}
       {tab==="home"&&<section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>}
-      <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={21}/><span>{t.backHome}</span></button><button type="button" className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={21}/><span>{t.library}</span></button><button type="button" className={tab==="create"?"active":""} onClick={()=>setTab("create")}><Plus size={22}/><span>{t.create}</span></button></nav>
+      <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={21}/><span>{t.backHome}</span></button><button type="button" className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={21}/><span>{t.library}</span></button><button type="button" className={tab==="create"?"active":""} onClick={()=>setTab("create")}><Plus size={22}/><span>{t.create}</span></button><button type="button" className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={21}/><span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></nav>
     </main>
     <footer>© WonderTale AI</footer>
   </div>;
