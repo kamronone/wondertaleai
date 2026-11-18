@@ -469,3 +469,40 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
 .account-action-notice,.account-action-success{background:#fff4ee;border:1px solid #f0d8c8;color:#79563b;border-radius:12px;padding:12px;font-size:12px;line-height:1.5}
 .account-action-success{background:#f4fff5;border-color:#b8dabc;color:#32683e}
 @media(max-width:620px){.account-action-card{padding:22px 18px;border-radius:19px}.account-action-card h1{font-size:22px}}
+
+/* Parent account: genuine login and deliberate private upload, no fake signup on the public demo. */
+.parent-account-page{width:min(680px,100%);margin:0 auto;padding:26px 18px 44px;box-sizing:border-box}
+.parent-account-head{display:flex;align-items:center;gap:14px;margin:0 0 22px}
+.parent-account-symbol{width:53px;height:53px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;background:#e9daf6;color:#8050b5}
+.parent-account-head h2{font-size:24px;line-height:1.23;margin:0 0 5px;color:#49316b}
+.parent-account-head p{margin:0;color:#92829c;font-size:12px;line-height:1.5}
+.parent-account-unavailable,.parent-account-card{border:1px solid #e7d9ee;background:#fff;border-radius:19px;padding:24px;box-shadow:0 9px 26px #40245a12}
+.parent-account-unavailable{display:flex;align-items:center;flex-direction:column;text-align:center;gap:11px}
+.parent-account-unavailable>svg{color:#8b62be}
+.parent-account-unavailable h3{font-size:17px;color:#523678;margin:0}
+.parent-account-unavailable p,.parent-account-muted,.parent-account-footnote{font-size:12px;line-height:1.6;color:#8b7b96;margin:5px 0}
+.parent-account-card{display:grid;gap:15px}
+.parent-account-card label{display:grid;gap:7px;font-size:12px;color:#624979;font-weight:800}
+.parent-account-card label>svg{display:none}
+.parent-account-card input{width:100%;box-sizing:border-box;border:1px solid #ded1e8;border-radius:12px;min-height:46px;padding:11px 13px;background:#fff;color:#4a345d;font-size:15px}
+.parent-account-card input:focus-visible{outline:2px solid #b78ada;outline-offset:1px}
+.parent-account-mode{display:flex;gap:7px;border-radius:13px;padding:4px;background:#f4edf9}
+.parent-account-mode button{flex:1;border:0;border-radius:10px;background:transparent;color:#846397;padding:11px 8px;font-size:12px;font-weight:800}
+.parent-account-mode button.active{background:#fff;color:#7445b3;box-shadow:0 2px 9px #42204e15}
+.parent-account-primary,.parent-account-secondary{display:flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:11px 13px;border-radius:12px;font-size:13px;font-weight:800}
+.parent-account-primary{background:#7947bc;border:1px solid #7947bc;color:#fff}
+.parent-account-primary:disabled{opacity:.55}
+.parent-account-secondary{background:#fff;border:1px solid #e1d1ec;color:#76539b}
+.parent-account-textbtn{background:transparent;border:0;color:#8654bd;font-size:12px;min-height:40px;font-weight:800}
+.parent-account-success{display:flex;align-items:center;gap:9px;color:#4e8260;font-size:14px}
+.parent-account-notice,.parent-account-error{border-radius:12px;padding:12px;font-size:12px;line-height:1.5;background:#f1f9ed;color:#447448}
+.parent-account-error{background:#fff0ec;color:#a44f4b}
+.parent-account-footnote{margin:14px 4px;text-align:center}
+.parent-account-result{margin:0 auto 22px;max-width:650px;padding:12px;border-radius:11px;background:#f6eefb;color:#69428c;text-align:center;font-size:12px}
+@media(max-width:700px){
+ .parent-account-page{padding:18px 14px 24px}
+ .parent-account-head h2{font-size:20px}
+ .parent-account-card,.parent-account-unavailable{padding:17px;border-radius:16px}
+ .mobile-tabbar button{max-width:25%!important;flex:1 1 25%}
+ .mobile-tabbar button span{font-size:9px;line-height:1.2}
+}
