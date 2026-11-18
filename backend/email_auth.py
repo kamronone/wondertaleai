@@ -9,15 +9,22 @@ import os
 import re
 import secrets
 import smtplib
+import json
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 from email.message import EmailMessage
 
 def verification_required()->bool:
     return os.getenv("REQUIRE_EMAIL_VERIFICATION","true").lower()!="false"
 
 def mail_configured()->bool:
+    """Require a verified sender and HTTPS frontend for either delivery transport."""
+    if not os.getenv("PUBLIC_APP_ORIGIN"):
+        return False
+    if os.getenv("RESEND_API_KEY"):
+        return bool(os.getenv("MAIL_FROM") or os.getenv("SMTP_FROM"))
     return bool(os.getenv("SMTP_HOST") and os.getenv("SMTP_USERNAME") and
-                os.getenv("SMTP_PASSWORD") and os.getenv("SMTP_FROM") and
-                os.getenv("PUBLIC_APP_ORIGIN"))
+                os.getenv("SMTP_PASSWORD") and (os.getenv("SMTP_FROM") or os.getenv("MAIL_FROM")))
 
 def new_code()->str:
     # Single-use token, 256 bits of entropy.
@@ -32,7 +39,7 @@ def send_account_email(to:str,token:str,kind:str)->None:
     if kind not in ("verify","recover"):
         raise ValueError("Unknown email purpose")
     if not mail_configured():
-        raise RuntimeError("SMTP is not configured")
+        raise RuntimeError("Email provider is not configured")
     origin=os.environ["PUBLIC_APP_ORIGIN"].strip().rstrip("/")
     if not re.fullmatch(r"https://[A-Za-z0-9.-]+(?::[0-9]{2,5})?",origin):
         raise RuntimeError("PUBLIC_APP_ORIGIN must be an HTTPS origin")
@@ -45,9 +52,26 @@ def send_account_email(to:str,token:str,kind:str)->None:
     )+destination+"\n\nThis link expires in 30 minutes and works only once. If this wasn't you, ignore this message.\n"
     msg=EmailMessage()
     msg["To"]=to
-    msg["From"]=os.environ["SMTP_FROM"]
+    msg["From"]=os.getenv("MAIL_FROM") or os.environ["SMTP_FROM"]
     msg["Subject"]=subject
     msg.set_content(body)
+    if os.getenv("RESEND_API_KEY"):
+        # The Resend API avoids SMTP egress restrictions in serverless environments.
+        # Never include the action token, API key or provider response in raised errors.
+        payload=json.dumps({
+            "from":msg["From"],"to":[to],"subject":subject,"text":body
+        }).encode("utf-8")
+        request=Request("https://api.resend.com/emails",data=payload,method="POST",headers={
+            "Authorization":"Bearer "+os.environ["RESEND_API_KEY"],
+            "Content-Type":"application/json",
+        })
+        try:
+            with urlopen(request,timeout=12) as response:
+                if response.status not in (200,201,202):
+                    raise RuntimeError("Email provider refused the message")
+        except (HTTPError,URLError,TimeoutError,OSError) as exc:
+            raise RuntimeError("Email provider delivery request failed") from None
+        return
     host=os.environ["SMTP_HOST"]
     try:
         port=int(os.getenv("SMTP_PORT","465"))
