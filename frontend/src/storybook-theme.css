@@ -105,3 +105,31 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
  .hero-sky:after{background:linear-gradient(180deg,#160f3600 30%,#25134ab5 61%,#2b155fd9 76%,#2b155ff5 100%)}
  .hero-content{max-width:none}
 }
+
+/* Reference-matched cinematic iPhone home screen */
+@media(max-width:620px){
+  body{background:#f9f2fc}
+  .topbar{background:linear-gradient(105deg,#131c50,#25184f);width:100%;max-width:none;padding:9px 15px;border-bottom:1px solid #9e7be030;height:68px}
+  .brand{color:#fff;font-size:18px}
+  .brandaccent{color:#d887ff}
+  .brand small{color:#ded5ec;letter-spacing:1.55px}
+  .header-actions .language-control select{color:#f9efff;background:#ffffff16;border:1px solid #a58bcb99;box-shadow:none;max-width:113px}
+  .header-actions .small-button{color:#f9ecff;background:#ffffff18;border:1px solid #a58bcb99}
+  main{padding:0 0 106px}
+  .hero{border-radius:0;min-height:690px;box-shadow:none;background:linear-gradient(180deg,#131b4d,#281753 74%,#422063)}
+  .hero:before,.hero:after{display:none}
+  .hero-sky img{width:100%;height:57%;object-fit:cover;object-position:center center}
+  .hero-sky:after{background:linear-gradient(180deg,transparent 20%,#27164a00 46%,#25174fa3 59%,#281752 67%,#281752 100%)}
+  .hero-content{padding:24px 23px 35px;margin-top:auto;background:none}
+  .hero-badge{background:#ffffff29;border:1px solid #ffffff46;backdrop-filter:blur(8px);margin-bottom:16px}
+  .hero-brand{font-size:19px;margin-bottom:14px}
+  .hero h1{font-size:clamp(30px,8.1vw,39px);line-height:1.13;margin-bottom:14px}
+  .hero p{color:#eee2f9;font-size:13px;line-height:1.59;margin-bottom:23px}
+  .hero .primary-button{width:100%;max-width:none;min-height:53px;border-radius:30px;font-size:14px;color:#fff;background:linear-gradient(110deg,#bf63ec,#8d4ae4);border:1px solid #f0b2ff;box-shadow:0 0 18px #cb7af158}
+  .hero .primary-button:hover{color:#fff;background:linear-gradient(110deg,#cb7bf0,#a25cef)}
+  .quick-actions,.features,.section-head,.book-grid,.empty,.install-panel,.coming{margin-left:14px;margin-right:14px}
+  .quick-actions{margin-top:18px}
+  .mobile-tabbar{border-radius:16px 16px 0 0;box-shadow:0 -10px 24px #23104317}
+  .mobile-tabbar button{font-size:10px;line-height:1.1}
+  .create-page,.library-page,.reader-page{padding:20px 14px}
+}
