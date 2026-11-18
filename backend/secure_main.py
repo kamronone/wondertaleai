@@ -156,6 +156,18 @@ def current_parent(authorization: str | None=Header(default=None)):
 def health():
     return {"ok":True}
 
+@app.get("/api/ready")
+def ready():
+    """Check that the private application's database is reachable without exposing details."""
+    try:
+        with connection() as c:
+            value=sql(c,"SELECT 1").fetchone()
+        if not value or int(value[0])!=1:
+            raise RuntimeError("Unexpected database result")
+    except Exception:
+        raise HTTPException(503,"Database is unavailable")
+    return {"ok":True,"database":"connected"}
+
 
 LOGIN_WINDOW_SECONDS=15*60
 MAX_LOGIN_FAILURES=5
