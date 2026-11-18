@@ -198,3 +198,15 @@ Verified remotely through authenticated Vercel-fetch:
 - Preview build and deployment reached `READY`. The current Preview URL is `https://wondertaleai-api-preview-g7pk426xb-kamronones-projects.vercel.app`.
 
 Next required prerequisites for enabling parent accounts: configure verified SMTP delivery, run full backend tests, decide backend accessibility (protect the application using its own auth, CORS and rate limiting before removing Vercel Authentication), and configure the static frontend's `VITE_API_BASE` only after those gates pass. Private photo uploads, AI text costs, and real payments remain disabled.
+
+
+## 2026-11-18 follow-up: private library progress and regression checks
+
+The frontend's authenticated private library now requests `/api/books`, `/api/books/favorites` and `/api/books/progress` together. It displays favorite flags and last-read pages per parent, sends explicit favorite toggles and stores reader progress using the authenticated endpoints. The local browser demo behavior remains unchanged, and no children's photos are synchronized.
+
+Validation performed:
+- New frontend staging deployment `dpl_DGRFWybKXZcuwPkBKYWBLg9q6Bfd` passed TypeScript/Vite and returned Vercel `READY`.
+- Python sources and tests (`secure_main.py`, `ai_generation.py`, `email_auth.py`, and three pytest modules) were copied to a network-restricted temporary Vercel Sandbox and passed `python -m compileall` (exit 0).
+- Full Python pytest execution was attempted, but PyPI dependencies were unavailable due to the Sandbox's outbound DNS/network restrictions. No claims are made that the Python suite passed. Temporary Sandbox was deleted immediately after syntax validation.
+- The private FastAPI staging URL remains behind Vercel Authentication; registration remains disabled until verified email/SMTP and a full authenticated route test are completed.
+- Do not set `VITE_API_BASE` to the protected API until the secure public-auth deployment architecture has been reviewed and tested.
