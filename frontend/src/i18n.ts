@@ -2,7 +2,7 @@ export type Lang = "ru" | "uz" | "en";
 export const languages: {id:Lang;label:string}[] = [{id:"ru",label:"Русский"},{id:"uz",label:"O‘zbekcha"},{id:"en",label:"English"}];
 export const labels = {
  ru:{
- library:"Мои сказки", badge:"Чудеса начинаются здесь", hero1:"Сказка, в которой", hero2:"главный герой",hero3:"— ваш ребёнок",
+ library:"Мои сказки", classicsTitle:"Любимые сказки",classicsDesc:"Выберите знакомую историю и сделайте ребёнка её героем.",classicSelect:"Выбрать",classicSelected:"Выбрана сказка",classicCustom:"Свой сюжет",classicFormTitle:"Готовая сказка или своя идея",classicDemo:"В демоверсии используется бережная адаптация выбранной сказки. Фото ребёнка не используется.", badge:"Чудеса начинаются здесь", hero1:"Сказка, в которой", hero2:"главный герой",hero3:"— ваш ребёнок",
  heroDesc:"Создавайте тёплые, волшебные истории с именем ребёнка, его фотографией и самым необычным сюжетом.",
  create:"Создать свою сказку", recognizable:"Узнаваемый герой",recognizableDesc:"В AI-режиме иллюстрации создаются по фотографии малыша.",
  anyStory:"Любой сюжет",anyStoryDesc:"Космос, драконы или удивительные друзья. Вы решаете!",
@@ -19,7 +19,7 @@ export const labels = {
  cartoons:"AI-мультфильмы",cartoonsDesc:"Следующая глава WonderTale: истории будут оживать.",soon:"Скоро",footer:"для маленьких мечтателей",deleteConfirm:"Удалить эту сказку?",deleteError:"Не удалось удалить сказку",generateError:"Не получилось создать книгу",genericError:"Ошибка генерации",savePdf:"Сохранить PDF через печать",downloadPdf:"Скачать PDF",delete:"Удалить",themeOptions:["Волшебство","Космос","Динозавры","Морские приключения","Дружба","Перед сном"],styleOptions:["Акварель","3D мультфильм","Книжная иллюстрация","Нежная пастель"]
  },
  uz:{
- library:"Ertaklarim",badge:"Mo‘jizalar shu yerda boshlanadi",hero1:"Bu ertakning",hero2:"bosh qahramoni",hero3:"— farzandingiz",
+ library:"Ertaklarim", classicsTitle:"Sevimli ertaklar",classicsDesc:"Tanish ertakni tanlang va farzandingizni uning qahramoniga aylantiring.",classicSelect:"Tanlash",classicSelected:"Tanlangan ertak",classicCustom:"O‘z syujetim",classicFormTitle:"Tayyor ertak yoki o‘z g‘oyangiz",classicDemo:"Demo rejimida tanlangan ertakning moslashtirilgan talqini ishlatiladi. Bola surati ishlatilmaydi.",badge:"Mo‘jizalar shu yerda boshlanadi",hero1:"Bu ertakning",hero2:"bosh qahramoni",hero3:"— farzandingiz",
  heroDesc:"Farzandingizning ismi, surati va ajoyib sarguzashtlari asosida sehrli ertaklar yarating.",
  create:"Ertak yaratish",recognizable:"Tanish qahramon",recognizableDesc:"AI rejimida rasmlar bolaning suratiga asoslanadi.",
  anyStory:"Istalgan syujet",anyStoryDesc:"Koinot, ajdarlar yoki yangi do‘stlar. Tanlov sizniki!",
@@ -36,7 +36,7 @@ export const labels = {
  cartoons:"AI multfilmlar",cartoonsDesc:"WonderTale'ning keyingi bosqichi: ertaklar jonlanadi.",soon:"Tez orada",footer:"kichik xayolparastlar uchun",deleteConfirm:"Bu ertak o‘chirilsinmi?",deleteError:"Ertakni o‘chirib bo‘lmadi",generateError:"Ertak yaratilmadi",genericError:"Yaratishda xatolik",savePdf:"Chop etish orqali PDF saqlash",downloadPdf:"PDF yuklab olish",delete:"O‘chirish",themeOptions:["Sehrli olam","Koinot","Dinozavrlar","Dengiz sarguzashtlari","Do‘stlik","Uyqu oldidan"],styleOptions:["Akvarel","3D multfilm","Kitob illyustratsiyasi","Mayin pastel"]
  },
  en:{
- library:"My stories",badge:"Where magic begins",hero1:"A story where",hero2:"the main character",hero3:"is your child",
+ library:"My stories", classicsTitle:"Beloved fairy tales",classicsDesc:"Choose a classic story and make your child its hero.",classicSelect:"Choose story",classicSelected:"Selected story",classicCustom:"My own story",classicFormTitle:"Classic story or your own idea",classicDemo:"Demo mode uses a gentle adaptation of the chosen classic. Child photos are not used.",badge:"Where magic begins",hero1:"A story where",hero2:"the main character",hero3:"is your child",
  heroDesc:"Create heartwarming adventures starring your child, inspired by their name, photo, and imagination.",
  create:"Create a story",recognizable:"Familiar hero",recognizableDesc:"In AI mode, pictures are inspired by your child's photo.",
  anyStory:"Any adventure",anyStoryDesc:"Space, dragons, or wonderful friends. You decide!",
