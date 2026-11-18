@@ -230,6 +230,9 @@ function App(){
     setBusy(true);
     try{
       if(usePersonalAi){
+        if(prompt.trim().length<12){
+          throw new Error(({ru:"Опишите идею сказки минимум 12 символами.",uz:"Ertak g‘oyasini kamida 12 ta belgi bilan yozing.",en:"Describe the story idea in at least 12 characters."} as const)[lang]);
+        }
         if(!API||!privateToken){
           throw new Error(({ru:"Войдите в аккаунт родителя для AI-генерации.",uz:"AI ertak yaratish uchun ota-ona akkauntiga kiring.",en:"Sign in to a parent account to generate AI stories."} as const)[lang]);
         }
@@ -249,6 +252,12 @@ function App(){
           signal:AbortSignal.timeout(120000),
         });
         if(!response.ok){
+          if(response.status===401){
+            throw new Error(({ru:"Сессия истекла. Войдите в аккаунт родителя снова.",uz:"Sessiya tugadi. Ota-ona akkauntiga qayta kiring.",en:"Your session has expired. Sign in to the parent account again."} as const)[lang]);
+          }
+          if(response.status===409){
+            throw new Error(({ru:"Библиотека заполнена. Удалите ненужную сказку перед созданием новой.",uz:"Kutubxona to‘lgan. Yangi ertakdan oldin keraksizini o‘chiring.",en:"Your library is full. Delete a story before creating another."} as const)[lang]);
+          }
           if(response.status===403||response.status===503){
             throw new Error(({ru:"AI-генерация пока не включена для этого аккаунта.",uz:"AI yaratish ushbu akkaunt uchun hali yoqilmagan.",en:"AI generation is not enabled for this account yet."} as const)[lang]);
           }
@@ -321,7 +330,8 @@ function App(){
           <div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
           <label className="second-hero-field">{t.extraHero}<input maxLength={45} value={secondHero} onChange={e=>setSecondHero(e.target.value)} placeholder={t.extraHeroHint}/></label>
-          <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
+          <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
+          {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib tashlash",en:"Remove photo"} as const)[lang]}</button>}
           <div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
           <div className="classic-choice"><button type="button" className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
           {activeClassic&&<p className="classic-selected"><CheckCircle2 size={16}/> {t.classicSelected}: <strong>{activeClassic.title[lang]}</strong></p>}
