@@ -1,7 +1,7 @@
 // Browser-only preview fallback. Photos never leave the browser in this mode.
 import type { Lang } from "./i18n";
 import { classics, type ClassicId } from "./classics";
-export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number};
+export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
 const readBooks=(store:Storage,key:string):DemoBook[]=>{
