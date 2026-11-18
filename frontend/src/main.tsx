@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles } from "lucide-react";
+import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2 } from "lucide-react";
 import "./style.css";
+import "./storybook-theme.css";
 import { createDemoBook, getDemoBooks, saveDemoBooks, isDemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 
@@ -60,20 +61,20 @@ function App(){
     </header>
     <main>
       {tab==="home"&&<>
-        <div className="hero"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
-          <h1>{t.hero1} <em>{t.hero2}</em> {t.hero3}</h1>
+        <div className="hero"><div className="hero-sky" aria-hidden="true"><div className="hero-castle">🏰</div><div className="hero-moon">☾</div><div className="hero-fox">🦊</div><div className="hero-book">📖</div><span className="sky-star star-a">✦</span><span className="sky-star star-b">✧</span><span className="sky-star star-c">✦</span></div><div className="hero-content"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
+          <div className="hero-brand"><Crown size={26}/><span>WonderTale <strong>AI</strong></span></div><h1>{t.hero1} <em>{t.hero2}</em> {t.hero3}</h1>
           <p>{t.heroDesc}</p>
           <button className="primary-button" onClick={()=>setTab("create")}><WandSparkles size={19}/> {t.create} <ArrowRight size={18}/></button>
-          <div className="hero-art" aria-hidden="true"><div className="moon">☾</div><div className="star big">✦</div><div className="cloud">☁</div><div className="book-shape">📖</div><div className="little-star">✧</div></div>
+          </div>
         </div>
-        <div className="features"><article><span>📷</span><h3>{t.recognizable}</h3><p>{t.recognizableDesc}</p></article><article><span>✨</span><h3>{t.anyStory}</h3><p>{t.anyStoryDesc}</p></article><article><span>📚</span><h3>{t.realBook}</h3><p>{t.realBookDesc}</p></article></div>
-        <div className="section-head"><h2>{t.shelf}</h2><button className="text-link" onClick={()=>setTab("library")}>{t.seeAll} <ArrowRight size={16}/></button></div>
+        <div className="quick-actions"><button type="button" onClick={()=>setTab("create")}><span className="quick-icon"><BookOpen size={22}/></span><strong>{t.create}</strong><ArrowRight size={16}/></button><button type="button" onClick={()=>setTab("library")}><span className="quick-icon"><Library size={22}/></span><strong>{t.library}</strong><ArrowRight size={16}/></button><div className="quick-coming"><span className="quick-icon"><PlayCircle size={22}/></span><strong>{t.cartoons}</strong><span className="mini-soon">{t.soon}</span></div></div><div className="features"><article><span>📷</span><h3>{t.recognizable}</h3><p>{t.recognizableDesc}</p></article><article><span>✨</span><h3>{t.anyStory}</h3><p>{t.anyStoryDesc}</p></article><article><span>📚</span><h3>{t.realBook}</h3><p>{t.realBookDesc}</p></article></div>
+        <div className="section-head"><div><span className="section-eyebrow">✦ WonderTale</span><h2>{t.shelf}</h2></div><button className="text-link" onClick={()=>setTab("library")}>{t.seeAll} <ArrowRight size={16}/></button></div>
         {books.length?<div className="book-grid">{books.slice(0,3).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={32}/><h3>{t.quiet}</h3><p>{t.quietDesc}</p><button className="secondary-button" onClick={()=>setTab("create")}>{t.firstBook}</button></div>}
       </>}
       {tab==="create"&&<section className="create-page">
         <button className="back-button" onClick={()=>setTab("home")}><ArrowLeft size={17}/> {t.backHome}</button>
         {heading(t.magic,t.magicDesc)}
-        <form onSubmit={generate} className="form-card">
+        <div className="wizard-progress" aria-label="Create story"><span className="progress-step active"><span>1</span>{t.heroStep}</span><span className="progress-line"/><span className="progress-step"><span>2</span>{t.storyStep}</span><span className="progress-line"/><span className="progress-step"><span>3</span>{t.createBook}</span></div><form onSubmit={generate} className="form-card">
           <div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
@@ -81,7 +82,7 @@ function App(){
           <label>{t.world}</label><div className="chips">{themes.map((x,i)=><button type="button" key={x} className={"chip "+(themeIndex===i?"selected":"")} onClick={()=>setThemeIndex(i)}>{x}</button>)}</div>
           <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
-          <label>{t.storyLanguage}<select value={storyLang} onChange={e=>setStoryLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label>
+          <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>setStoryLang(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
           {(mode==="demo"||mode==="browser-demo")&&<p className="notice">{t.demo}</p>}
           {error&&<p className="error" role="alert">{error}</p>}
@@ -91,11 +92,12 @@ function App(){
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}<button className="primary-button add-book" onClick={()=>setTab("create")}><Plus size={18}/> {t.newStory}</button>{error&&<p className="error">{error}</p>}{books.length?<div className="book-grid">{books.map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{t.empty}</h3><p>{t.emptyDesc}</p></div>}</section>}
       {tab==="reader"&&active&&<section className="reader-page">
         <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions">{isDemoBook(active)?<button className="icon-button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>:<a className="icon-button" href={API+"/api/books/"+active.id+"/pdf"} title={t.downloadPdf}><Download size={19}/></a>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
-        <div className="reader-title"><span>{t.forChild} {active.name}</span><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
-        <div className="story-page"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /><div className="story-text">{active.pages[page].text}</div></div>
+        <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
+        <div className="story-page"><div className="story-page-image"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span>{active.pages.map((_,i)=><button key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)}/>)}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
       {tab==="home"&&<section className="install-panel"><div className="install-icon"><img src="/icons/icon.svg" alt="WonderTale AI"/></div><div><h3>{t.installTitle}</h3><p>{t.installDesc}</p></div></section>}
+      <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={21}/><span>{t.backHome}</span></button><button type="button" className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={21}/><span>{t.library}</span></button><button type="button" className={tab==="create"?"active":""} onClick={()=>setTab("create")}><Plus size={22}/><span>{t.create}</span></button></nav>
       <section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>
     </main>
     <footer><Heart size={13} fill="currentColor"/> WonderTale AI · {t.footer}</footer>
