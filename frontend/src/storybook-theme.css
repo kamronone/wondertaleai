@@ -166,3 +166,30 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
   .brand small{letter-spacing:.5px}
   .hero-content{padding-left:15px;padding-right:15px}
 }
+
+/* Compact iPhone home v3: retain full-resolution art, show action cards sooner. */
+@media (max-width:620px){
+ .topbar{height:62px;padding-top:8px;padding-bottom:8px}
+ .hero{min-height:0;height:auto}
+ .hero-sky{aspect-ratio:853/535}
+ .hero-sky img{object-fit:cover;object-position:center 42%}
+ .hero-content{padding:11px 16px 17px}
+ .hero-badge{margin-bottom:5px;font-size:10px;padding:5px 9px}
+ .hero-brand{display:none}
+ .hero h1{font-size:clamp(25px,6.9vw,30px);line-height:1.12;letter-spacing:-.35px;margin-bottom:7px}
+ .hero p{font-size:12px;line-height:1.43;margin-bottom:12px;max-width:100%}
+ .hero .primary-button{min-height:45px;padding:9px 11px;font-size:12px;border-radius:18px;gap:7px;box-shadow:0 3px 15px #b369ed4d}
+ .quick-actions{margin:10px 12px 8px;gap:8px}
+ .quick-actions>button,.quick-coming{min-height:94px;padding:10px 5px;gap:6px;border-radius:13px}
+ .quick-icon{width:33px;height:33px;border-radius:10px}
+ .quick-actions strong{font-size:10px;line-height:1.25;overflow-wrap:anywhere}
+ .features{padding-bottom:18px}
+ .section-head h2{font-size:22px}
+ .mobile-tabbar button{min-height:42px}
+}
+@media(max-width:375px){
+ .hero-content{padding:10px 14px 15px}
+ .hero h1{font-size:25px}
+ .hero p{font-size:11.5px}
+ .topbar .brand{font-size:15px}
+}
