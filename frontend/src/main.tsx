@@ -423,9 +423,9 @@ function App(){
           <div>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
         </div>}
         {isDemoBook(active)&&page===active.pages.length-1&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
-        {isDemoBook(active)&&<article className="print-book" aria-hidden="true">
-          <div className="print-book-cover"><img src={active.pages[0].image_url} alt=""/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
-          {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><img src={item.image_url} alt=""/><p>{item.text}</p></section>)}
+        {<article className="print-book" aria-hidden="true">
+          <div className="print-book-cover"><img src={bookImage(active.pages[0].image_url)} alt=""/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
+          {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><img src={bookImage(item.image_url)} alt=""/><p>{item.text}</p></section>)}
         </article>}
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span>{active.pages.map((_,i)=><button key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)}/>)}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
