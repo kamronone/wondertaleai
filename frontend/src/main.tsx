@@ -10,7 +10,7 @@ import { ClassicCover } from "./ClassicCover";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string};
-const API=(import.meta.env.VITE_API_BASE || "http://localhost:8000").replace(/\/$/,"");
+const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
 
 function App(){
   const [tab,setTab]=useState<"home"|"create"|"library"|"reader">("home");
@@ -48,19 +48,20 @@ function App(){
   const [photo,setPhoto]=useState<File|null>(null);
   const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
+  const [saveOnDevice,setSaveOnDevice]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [mode,setMode]=useState("browser-demo");
   const [onlineApi,setOnlineApi]=useState(false);
-  const fetchBooks=async()=>{setBooks(getDemoBooks());try{const response=await fetch(API+"/api/books",{signal:AbortSignal.timeout(1800)});if(response.ok){setBooks([...getDemoBooks(),...await response.json()]);setOnlineApi(true);}}catch{/* Local demo */}};
+  const fetchBooks=async()=>{setBooks(getDemoBooks());if(!API)return;try{const response=await fetch(API+"/api/books",{signal:AbortSignal.timeout(1800)});if(response.ok){setBooks([...getDemoBooks(),...await response.json()]);setOnlineApi(true);}}catch{/* Local demo */}};
   useEffect(()=>{document.documentElement.lang=lang;},[lang]);
-  useEffect(()=>{void fetchBooks();fetch(API+"/api/health",{signal:AbortSignal.timeout(1800)}).then(r=>r.json()).then(data=>{setMode(data.mode);setOnlineApi(true)}).catch(()=>{});},[]);
+  useEffect(()=>{void fetchBooks();if(API)fetch(API+"/api/health",{signal:AbortSignal.timeout(1800)}).then(r=>r.json()).then(data=>{setMode(data.mode);setOnlineApi(true)}).catch(()=>{});},[]);
   const openBook=(book:Book)=>{setActive(book);setPage(0);setTab("reader");setError("");};
   const generate=async(e:React.FormEvent)=>{
     e.preventDefault();setError("");setBusy(true);
     try{
       const form=new FormData();form.append("name",name);form.append("age",age);form.append("theme",theme);form.append("style",style);form.append("prompt",prompt);form.append("language",storyLang);form.append("parental_consent",String(consent));if(photo)form.append("photo",photo);
-      if(!onlineApi){const book=createDemoBook(name,Number(age),theme,style,prompt,storyLang,classicId||undefined);setBooks(previous=>[book,...previous]);openBook(book);return;}
+      if(!onlineApi){const book=createDemoBook(name,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
       const response=await fetch(API+"/api/books",{method:"POST",body:form});
       if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(typeof data.detail==="string"?data.detail :t.generateError);}
       const book:Book=await response.json();setBooks(previous=>[book,...previous]);openBook(book);
@@ -119,6 +120,9 @@ function App(){
           <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
+          {!onlineApi&&<div className="device-save-option">
+            <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
+          </div>}
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
           {(mode==="demo"||mode==="browser-demo")&&<p className="notice">{activeClassic?t.classicDemo:t.demo}</p>}
           {error&&<p className="error" role="alert">{error}</p>}
@@ -128,7 +132,7 @@ function App(){
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}<button className="primary-button add-book" onClick={()=>setTab("create")}><Plus size={18}/> {t.newStory}</button>{error&&<p className="error">{error}</p>}{books.length?<div className="book-grid">{books.map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{t.empty}</h3><p>{t.emptyDesc}</p></div>}</section>}
       {tab==="reader"&&active&&<section className="reader-page">
         <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions">{isDemoBook(active)?<button className="icon-button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>:<a className="icon-button" href={API+"/api/books/"+active.id+"/pdf"} title={t.downloadPdf}><Download size={19}/></a>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
-        <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
+        <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
         <div className="story-page"><div className="story-page-image"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span>{active.pages.map((_,i)=><button key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)}/>)}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
