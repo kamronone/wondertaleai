@@ -3,6 +3,7 @@ import base64
 import io
 import json
 import os
+import secrets
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -170,6 +171,34 @@ def ai_image(path, index, scene, name, style, reference):
     else:
         result = client.images.generate(**options)
     path.write_bytes(base64.b64decode(result.data[0].b64_json))
+
+@app.middleware("http")
+async def protect_private_books(request, call_next):
+    """Fail closed: never serve children's books without a configured secret.
+
+    This is only a temporary single-parent preview gate, NOT per-user auth.
+    Multi-user production must validate session identity and scope every row.
+    """
+    if request.url.path.startswith("/api/books") and request.method != "OPTIONS":
+        token = os.getenv("BOOKS_ACCESS_TOKEN", "").strip()
+        if not token:
+            return Response(
+                content=json.dumps({"detail": "Private book access is not configured"}),
+                status_code=503,
+                media_type="application/json",
+                headers={"Cache-Control": "no-store"},
+            )
+        authorization = request.headers.get("authorization", "")
+        scheme, _, provided = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not secrets.compare_digest(provided, token):
+            return Response(
+                content=json.dumps({"detail": "Unauthorized"}),
+                status_code=401,
+                media_type="application/json",
+                headers={"WWW-Authenticate": "Bearer", "Cache-Control": "no-store"},
+            )
+    return await call_next(request)
+
 
 @app.get("/api/health")
 def health():
