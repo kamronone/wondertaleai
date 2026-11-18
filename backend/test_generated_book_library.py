@@ -107,3 +107,37 @@ def test_generated_book_is_invisible_to_another_parent(api):
     # The original parent still sees the saved story after another parent is denied.
     assert client.get("/api/books/" + book_id, headers=headers).status_code == 200
     assert client.get("/api/books", headers={"Authorization": "Bearer invalid"}).status_code == 401
+
+
+def test_unauthenticated_generation_is_rejected(api):
+    client, module, parent_id, headers = api
+    response = client.post(
+        "/api/books/generate",
+        json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
+    )
+    assert response.status_code == 401
+    assert client.get("/api/books", headers=headers).json() == []
+
+
+def test_unapproved_parent_cannot_spend_ai_quota(api, monkeypatch):
+    client, module, parent_id, headers = api
+    monkeypatch.setenv("AI_ALLOWED_EMAILS", "nobody@test.invalid")
+    response = client.post(
+        "/api/books/generate",
+        headers=headers,
+        json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
+    )
+    assert response.status_code == 403
+    with module.connection() as conn:
+        assert module.sql(conn, "SELECT COUNT(*) FROM generation_global_quota").fetchone()[0] == 0
+        assert module.sql(conn, "SELECT COUNT(*) FROM generation_quota").fetchone()[0] == 0
+
+
+def test_ai_generation_respects_daily_parent_limit(api):
+    client, module, parent_id, headers = api
+    payload={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"}
+    for _ in range(2):
+        assert client.post("/api/books/generate", headers=headers, json=payload).status_code == 201
+    third=client.post("/api/books/generate", headers=headers, json=payload)
+    assert third.status_code == 429
+    assert len(client.get("/api/books", headers=headers).json()) == 2
