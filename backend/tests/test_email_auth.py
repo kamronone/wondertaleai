@@ -49,3 +49,51 @@ def test_reject_insecure_origin(monkeypatch):
     monkeypatch.setenv("PUBLIC_APP_ORIGIN","http://not-secure.example.com")
     with pytest.raises(RuntimeError,match="HTTPS"):
         send_account_email("parent@example.com",new_code(),"recover")
+
+
+def test_starttls_sends_mail_only_after_encryption(monkeypatch):
+    for key,value in {
+        "SMTP_HOST":"smtp.example.com","SMTP_PORT":"587",
+        "SMTP_USERNAME":"wondertale@example.com","SMTP_PASSWORD":"test-no-real-password",
+        "SMTP_FROM":"wondertale@example.com","PUBLIC_APP_ORIGIN":"https://wondertale.example.com",
+    }.items():
+        monkeypatch.setenv(key,value)
+    actions=[]
+    class FakeSMTP:
+        def __init__(self,host,port,timeout):
+            assert host=="smtp.example.com" and port==587 and timeout==10
+        def __enter__(self):return self
+        def __exit__(self,*args):pass
+        def ehlo(self):actions.append("ehlo")
+        def starttls(self):actions.append("tls")
+        def login(self,user,password):
+            assert "tls" in actions
+            actions.append("login")
+        def send_message(self,message):
+            assert "login" in actions
+            actions.append("send")
+    monkeypatch.setattr("email_auth.smtplib.SMTP",FakeSMTP)
+    send_account_email("parent@example.com",new_code(),"recover")
+    assert actions==["ehlo","tls","ehlo","login","send"]
+
+
+def test_plaintext_smtp_port_rejected(monkeypatch):
+    for key,value in {
+        "SMTP_HOST":"smtp.example.com","SMTP_PORT":"25",
+        "SMTP_USERNAME":"wondertale@example.com","SMTP_PASSWORD":"test",
+        "SMTP_FROM":"wondertale@example.com","PUBLIC_APP_ORIGIN":"https://wondertale.example.com",
+    }.items():
+        monkeypatch.setenv(key,value)
+    with pytest.raises(RuntimeError,match="Supported SMTP ports"):
+        send_account_email("parent@example.com",new_code(),"verify")
+
+
+def test_malformed_smtp_port_rejected(monkeypatch):
+    for key,value in {
+        "SMTP_HOST":"smtp.example.com","SMTP_PORT":"not-a-port",
+        "SMTP_USERNAME":"wondertale@example.com","SMTP_PASSWORD":"test",
+        "SMTP_FROM":"wondertale@example.com","PUBLIC_APP_ORIGIN":"https://wondertale.example.com",
+    }.items():
+        monkeypatch.setenv(key,value)
+    with pytest.raises(RuntimeError,match="Invalid SMTP port"):
+        send_account_email("parent@example.com",new_code(),"verify")
