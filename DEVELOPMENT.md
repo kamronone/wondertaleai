@@ -148,3 +148,16 @@ Important integration blockers:
 - `frontend/src/AccountAction.tsx` posts the token to the private API only when `VITE_API_BASE` is explicitly set. No backend secrets belong in Vite. The public static preview remains functional without a backend.
 - `backend/tests/test_email_auth.py` mocks SMTP and checks HTTPS-origin validation and token handling. `backend/tests/test_secure_api.py` tests confirmation and password recovery with mocked mail delivery.
 - Frontend TypeScript + Vite build passed in Vercel staging. Python tests still require running in a provisioned runtime; no live SMTP delivery was performed.
+
+
+## Parent account UI and controlled private-library transfer
+
+- New `frontend/src/ParentAccount.tsx` adds a four-tab mobile navigation entry for an accessible parent account page in RU/UZ/EN.
+- When `VITE_API_BASE` is empty (current public preview), it shows a truthful unavailable state. It does not pretend to create or authenticate a family account.
+- With a reviewed, secured `VITE_API_BASE` configured, the page offers parent login, registration requesting email verification and a recovery-link flow. Bearer tokens are held in React memory, not `localStorage` or the PWA cache; page refresh requires a new login. The existing verification/recovery link screens use URL fragments and explicit POST requests.
+- The secure server's existing `GET /api/books` and `POST /api/books` are used by `frontend/src/private_library.ts` for a **parent-initiated** transfer only. It uploads only saved-on-device demo book text and first names, no uploaded photos, browser data URIs or arbitrary external media. Original local book IDs are included as a source identifier for deduplication.
+- Remote books appear alongside local books only while authenticated, and are removed from the browser state on logout. This is an initial transfer flow, not real-time bidirectional conflict resolution.
+- New public app must continue generating local demo stories until real protected AI endpoints, parent consent and private media storage are ready. `/api/health` must not be interpreted as permission to upload child photos.
+- 30 classic covers and the PWA remain present in Vercel staging. No private FastAPI, Neon or SMTP credentials were deployed.
+
+Pending: run Python backend security tests, provision a dedicated database, verified SMTP, secure HTTPS API hosting and complete account synchronization. Do not activate registration or external child-photo upload in this configuration.
