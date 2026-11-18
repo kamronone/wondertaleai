@@ -376,22 +376,22 @@ MAX_BOOKS_PER_PARENT=100
 
 @app.post("/api/books",status_code=201)
 def create_book(body:BookIn,owner:str=Depends(current_parent)):
-    # Keep uploads deterministic and limited. This endpoint accepts only story text,
-    # never photo blobs, URLs, or arbitrarily large HTML documents.
+    # The endpoint accepts bounded UTF-8 story text, not multipart file uploads.
     if not body.title.strip() or not body.child_name.strip() or not body.story.strip():
         raise HTTPException(422,"Book title, child name, and story must not be blank")
     book_id=str(uuid.uuid4())
     created=datetime.now(timezone.utc).isoformat()
     with connection() as c:
-        # A single guarded INSERT avoids check-then-insert races on PostgreSQL.
-        row=sql(c,
-            "INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) "
-            "SELECT ?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM books WHERE owner_id=?)<? "
-            "RETURNING id",
-            (book_id,owner,body.title.strip(),body.child_name.strip(),body.age,body.story,created,owner,MAX_BOOKS_PER_PARENT)
-        ).fetchone()
-        if row is None:
+        if IS_PG:
+            # Serialize inserts from concurrent requests belonging to one parent.
+            sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        count=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
+        if count>=MAX_BOOKS_PER_PARENT:
             raise HTTPException(409,"Library limit reached")
+        sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",
+            (book_id,owner,body.title.strip(),body.child_name.strip(),body.age,body.story,created))
         c.commit()
     return {"id":book_id,"created_at":created}
 
