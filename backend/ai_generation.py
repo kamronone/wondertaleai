@@ -13,7 +13,7 @@ Language=Literal["ru","uz","en"]
 class GenerateStoryInput(BaseModel):
     name: str=Field(min_length=1,max_length=60)
     age: int=Field(ge=2,le=14)
-    language: Language="ru"
+    language: Language="uz"
     classic_title: str=Field(min_length=0,max_length=120,default="")
     idea: str=Field(min_length=12,max_length=1200)
     style: str=Field(min_length=1,max_length=60,default="Watercolor")
@@ -50,7 +50,7 @@ def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
         from openai import OpenAI
         client=OpenAI(timeout=75,max_retries=1)
 
-    lng={"ru":"Russian","uz":"Uzbek Latin (use ch, sh, oʻ and gʻ)","en":"English"}[data.language]
+    lng={"ru":"Russian","uz":"Uzbek in the reformed 2026 Latin alphabet (Ş ş, Ç ç, Ö ö, Ğ ğ; never write old sh, ch, oʻ, gʻ letter forms)","en":"English"}[data.language]
     other=[name.strip() for name in data.other_heroes if name.strip()]
     if any(len(name)>45 for name in other):
         raise ValueError("Hero names must be 45 characters or shorter")
