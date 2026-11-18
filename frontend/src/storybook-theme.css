@@ -133,3 +133,36 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
   .mobile-tabbar button{font-size:10px;line-height:1.1}
   .create-page,.library-page,.reader-page{padding:20px 14px}
 }
+
+/* iPhone layout fix v2: no cropped illustration, no covered CTA, no overflow */
+@media(max-width:620px){
+  html,body,#root,.shell{max-width:100%;overflow-x:clip}
+  .topbar{box-sizing:border-box;min-width:0;gap:8px}
+  .brand{flex-shrink:0;min-width:0;font-size:clamp(14px,4.2vw,18px)}
+  .brandmark{flex-shrink:0}
+  .header-actions{margin-left:auto;flex-shrink:0}
+  .header-actions .language-control select{max-width:110px;font-size:11px}
+  .hero{display:block;min-height:0;height:auto;padding:0;background:#251750;overflow:hidden}
+  .hero-sky{position:relative;inset:auto;width:100%;height:auto;aspect-ratio:853/562;overflow:hidden;display:block;background:#191d50}
+  .hero-sky img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;max-width:100%;filter:none;transform:none}
+  .hero-sky:after{display:none}
+  .hero-content{display:block;position:relative;margin:0;padding:16px 20px 26px;background:linear-gradient(180deg,#251750,#362062);max-width:none;width:100%}
+  .hero-decor{display:none}
+  .hero-badge{margin:0 0 9px;font-size:11px}
+  .hero-brand{font-size:17px;margin:0 0 8px}
+  .hero h1{font-size:clamp(27px,7vw,33px);line-height:1.12;margin:0 0 10px;letter-spacing:-.5px;text-wrap:balance}
+  .hero p{font-size:12px;line-height:1.48;margin:0 0 15px}
+  .hero .primary-button{display:flex;max-width:100%;min-height:50px;font-size:13px;padding:10px 13px}
+  .mobile-tabbar{position:relative;bottom:auto;left:auto;right:auto;z-index:2;width:100%;border-radius:0;background:#fffcff;padding:11px 5px 13px;box-shadow:0 6px 20px #24134c13}
+  .mobile-tabbar button{font-size:10px;max-width:33.33%;overflow:hidden;line-height:1.2}
+  .mobile-tabbar button span{text-overflow:ellipsis;overflow:hidden;display:block;white-space:nowrap;max-width:100%}
+  main{padding:0 0 28px}
+  .quick-actions{margin-top:17px}
+  .coming{margin-top:24px}
+  .create-page,.reader-page,.library-page{padding:18px 14px}
+}
+@media(max-width:360px){
+  .header-actions .language-control select{max-width:92px}
+  .brand small{letter-spacing:.5px}
+  .hero-content{padding-left:15px;padding-right:15px}
+}
