@@ -53,5 +53,5 @@ export const labels = {
  cartoons:"AI cartoons",cartoonsDesc:"Soon your stories could come to life as animated adventures.",soon:"Coming soon",footer:"for little dreamers",deleteConfirm:"Delete this story?",deleteError:"Couldn't delete the story",generateError:"Couldn't create the story",genericError:"Generation failed",savePdf:"Save PDF via Print",downloadPdf:"Download PDF",delete:"Delete",themeOptions:["Magic","Space","Dinosaurs","Ocean adventures","Friendship","Bedtime"],styleOptions:["Watercolor","3D cartoon","Storybook illustration","Soft pastel"]
  }
 } as const;
-export const getSavedLanguage=():Lang=>{try{const saved=localStorage.getItem("wondertale-ui-lang");return saved==="ru"||saved==="uz"||saved==="en"?saved:"ru"}catch{return "ru"}};
+export const getSavedLanguage=():Lang=>{try{const saved=localStorage.getItem("wondertale-ui-lang");return saved==="ru"||saved==="uz"||saved==="en"?saved:"uz"}catch{return "uz"}};
 export const saveLanguage=(lang:Lang)=>{try{localStorage.setItem("wondertale-ui-lang",lang)}catch{/* storage can be unavailable */}};
