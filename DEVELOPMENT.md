@@ -121,3 +121,24 @@ Remaining high-priority requirements, in dependency order:
 9. Video/storyboard pipeline, provider connection, moderation, asset retention, queue workers, MP4 export and safe playback. AI cartoons remain a coming-soon card.
 
 Testing: Vercel TypeScript / Vite build runs for each frontend deployment. Python regression tests were added for backend paths but have not been executed in this environment. Do not claim backend production readiness without running tests and provider integrations.
+
+
+## Parent email confirmation and recovery (private API only)
+
+Added `backend/email_auth.py` and migration `backend/migrations/003_verified_email.sql`.
+
+New API routes:
+- `POST /api/auth/register` returns `{"status":"verification_sent"}` when `REQUIRE_EMAIL_VERIFICATION=true` and sends a one-time link; no bearer token is granted until verification. Registration remains disabled by `ENABLE_REGISTRATION=false` unless an operator explicitly enables it.
+- `POST /api/auth/verify-email` with `{"token":"..."}` confirms the parent's email and consumes the token.
+- `POST /api/auth/resend-verification` with `{"email":"..."}` asks for another verification message, with a throttled and non-enumerating response.
+- `POST /api/auth/forgot-password` with `{"email":"..."}` requests a recovery message.
+- `POST /api/auth/reset-password` with `{"token":"...","new_password":"..."}` changes the password and revokes previous sessions.
+
+Controls: 256-bit tokens; only HMAC-SHA256 token digests stored; 30-minute expiry; single-use database updates; max one message per 120 seconds per parent per action and max ten per day; no tokens returned in HTTP responses. Email content uses an operator-configured HTTPS application origin. SMTP secrets are server-only.
+
+Important integration blockers:
+- A dedicated Neon database is not available through the connected Vercel-managed Neon organization; **no migrations were applied to any existing project**.
+- SMTP provider/credentials and a verified sending domain have not been configured. The static frontend lacks reset/confirmation screens and API environment configuration.
+- Until those prerequisites are met, public registration and text AI must remain disabled.
+- Existing test suite uses `REQUIRE_EMAIL_VERIFICATION=false` in its isolated test environment only. Email-specific test cases verify the new token and reset flow without sending actual messages. Tests were committed but not run end-to-end against the repository in this session.
+- Do not send children's photos to external AI providers or enable real payment methods until privacy/legal, retention, parental verification and provider reviews are complete.
