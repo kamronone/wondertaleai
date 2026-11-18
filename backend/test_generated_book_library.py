@@ -342,3 +342,34 @@ def test_account_deletion_cascades_private_books_profiles_and_sessions(api):
             # All queried table names are fixed constants, not user input.
             count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             assert count == 0, f"{table} retained data after account deletion"
+
+
+def test_ai_quota_refunded_if_library_fills_during_generation(api, monkeypatch):
+    client, module, parent_id, headers = api
+    payload = {"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"}
+    original_generate = module.generate_story
+
+    def fill_library_then_generate(data):
+        with module.connection() as conn:
+            module.sql(
+                conn,
+                "INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",
+                (str(uuid.uuid4()), parent_id, "Another story", "Sam", 7,
+                 "A previously saved story", "2026-01-01"),
+            )
+            conn.commit()
+        return original_generate(data)
+
+    monkeypatch.setattr(module, "MAX_BOOKS_PER_PARENT", 1)
+    monkeypatch.setattr(module, "generate_story", fill_library_then_generate)
+    response = client.post("/api/books/generate", headers=headers, json=payload)
+    assert response.status_code == 409, response.text
+
+    with module.connection() as conn:
+        global_used = module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_global_quota").fetchone()[0]
+        parent_used = module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_quota").fetchone()[0]
+    assert global_used == 0
+    assert parent_used == 0
+    books = client.get("/api/books", headers=headers).json()
+    assert len(books) == 1
+    assert books[0]["title"] == "Another story"
