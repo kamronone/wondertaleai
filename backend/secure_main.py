@@ -550,6 +550,14 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
     try:
         generated=generate_story(body)
     except Exception:
+        # A failed provider call must not exhaust the parent's daily allowance.
+        # Keep the quota reservation transactionally consistent for concurrent calls.
+        with connection() as c:
+            if not IS_PG:
+                c.execute("BEGIN IMMEDIATE")
+            sql(c,"UPDATE generation_quota SET used=used-1 WHERE owner_id=? AND day=? AND used>0",(owner,today))
+            sql(c,"UPDATE generation_global_quota SET used=used-1 WHERE day=? AND used>0",(today,))
+            c.commit()
         # Never return internal API errors or provider details to a parent.
         raise HTTPException(502,"Unable to generate this story. Please try later.")
     bid=str(uuid.uuid4())
