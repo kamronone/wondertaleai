@@ -55,6 +55,18 @@ function App(){
   const [onlineApi,setOnlineApi]=useState(false);
   const fetchBooks=async()=>{setBooks(getDemoBooks());if(!API)return;try{const response=await fetch(API+"/api/books",{signal:AbortSignal.timeout(1800)});if(response.ok){setBooks([...getDemoBooks(),...await response.json()]);setOnlineApi(true);}}catch{/* Local demo */}};
   useEffect(()=>{document.documentElement.lang=lang;},[lang]);
+  // Each SPA screen starts from its heading instead of retaining a deep catalog scroll offset.
+  useEffect(()=>{
+    window.scrollTo({top:0,left:0,behavior:"instant"});
+  },[tab]);
+  // While reading, a page-turn scrolls to the start of the page instead of leaving the new text offscreen.
+  useEffect(()=>{
+    if(tab!=="reader"||!active)return;
+    const pageElement=document.querySelector(".reader-title");
+    if(!pageElement)return;
+    const offset=pageElement.getBoundingClientRect().top+window.scrollY-12;
+    window.scrollTo({top:Math.max(0,offset),left:0,behavior:"instant"});
+  },[page,tab,active?.id]);
   useEffect(()=>{void fetchBooks();if(API)fetch(API+"/api/health",{signal:AbortSignal.timeout(1800)}).then(r=>r.json()).then(data=>{setMode(data.mode);setOnlineApi(true)}).catch(()=>{});},[]);
   const openBook=(book:Book)=>{setActive(book);setPage(0);setTab("reader");setError("");};
   const generate=async(e:React.FormEvent)=>{
