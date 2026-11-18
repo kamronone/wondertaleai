@@ -328,12 +328,17 @@ def test_account_deletion_cascades_private_books_profiles_and_sessions(api):
         "/api/books/" + book_id + "/progress", headers=headers, json={"page": 1}
     ).status_code == 200
 
+    # A failed login leaves an email-keyed throttle row, not linked by FK.
+    module._record_login_failure("parent@test.invalid")
+    with module.connection() as conn:
+        assert module.sql(conn, "SELECT COUNT(*) FROM login_attempts").fetchone()[0] == 1
+
     deleted = client.delete("/api/me", headers=headers)
     assert deleted.status_code == 204, deleted.text
     assert client.get("/api/me", headers=headers).status_code == 401
     with module.connection() as conn:
         for table in ("parents", "books", "children", "sessions", "generation_quota",
-                      "book_favorites", "reading_progress"):
+                      "book_favorites", "reading_progress", "login_attempts"):
             # All queried table names are fixed constants, not user input.
             count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             assert count == 0, f"{table} retained data after account deletion"
