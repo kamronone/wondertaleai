@@ -6,6 +6,7 @@ import "./storybook-theme.css";
 import { createDemoBook, getDemoBooks, saveDemoBooks, isDemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
+import { ClassicCover } from "./ClassicCover";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string};
@@ -138,9 +139,8 @@ function App(){
   </div>;
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
- const Icon={forest:Trees,castle:Castle,houses:House,apple:Apple,swan:Bird,music:Music2}[item.icon];
  return <button type="button" className={"classic-card classic-"+item.color} onClick={onPick} aria-label={action+": "+item.title[lang]}>
-   <span className="classic-cover"><span className="classic-halo"/><Icon size={72} strokeWidth={1.3}/><span className="classic-spark">✦</span></span>
+   <span className="classic-cover"><ClassicCover item={item}/></span>
    <span className="classic-info"><strong>{item.title[lang]}</strong><small>{item.summary[lang]}</small><span className="classic-link">{action} <ArrowRight size={15}/></span></span>
  </button>;
 }
