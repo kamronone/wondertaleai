@@ -149,3 +149,29 @@ def test_resend_does_not_enable_delivery_without_sender(monkeypatch):
     monkeypatch.delenv("SMTP_FROM",raising=False)
     monkeypatch.setenv("PUBLIC_APP_ORIGIN","https://wondertale.example.com")
     assert mail_configured() is False
+
+
+def test_email_readiness_requires_https_and_valid_sender(monkeypatch):
+    for key in ("SMTP_HOST","SMTP_USERNAME","SMTP_PASSWORD","SMTP_FROM"):
+        monkeypatch.delenv(key,raising=False)
+    monkeypatch.setenv("RESEND_API_KEY","re_test_mock_key_only")
+    monkeypatch.setenv("PUBLIC_APP_ORIGIN","https://wondertaleai-preview-kamronones-projects.vercel.app")
+    monkeypatch.setenv("MAIL_FROM","onboarding@resend.dev")
+    assert mail_configured() is True
+    monkeypatch.setenv("MAIL_FROM","WonderTale AI <onboarding@resend.dev>")
+    assert mail_configured() is True
+    monkeypatch.setenv("MAIL_FROM","not-an-email")
+    assert mail_configured() is False
+    monkeypatch.setenv("MAIL_FROM","onboarding@resend.dev\\nBcc:someone@example.com")
+    assert mail_configured() is False
+    monkeypatch.setenv("MAIL_FROM","onboarding@resend.dev")
+    monkeypatch.setenv("PUBLIC_APP_ORIGIN","http://example.com")
+    assert mail_configured() is False
+
+
+def test_email_readiness_with_credentials_does_not_call_provider(monkeypatch):
+    monkeypatch.setenv("RESEND_API_KEY","re_fake_test_key")
+    monkeypatch.setenv("MAIL_FROM","onboarding@resend.dev")
+    monkeypatch.setenv("PUBLIC_APP_ORIGIN","https://wondertale.example.com")
+    monkeypatch.setattr("email_auth.urlopen",lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError("No network during readiness")))
+    assert mail_configured() is True
