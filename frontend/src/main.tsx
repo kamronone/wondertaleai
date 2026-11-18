@@ -7,6 +7,7 @@ import { createDemoBook, createDemoSequel, getDemoBooks, saveDemoBooks, isDemoBo
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
+import { AccountAction } from "./AccountAction";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 
 type Page={number:number;text:string;image_url:string};
@@ -14,6 +15,15 @@ type Book={id:string;created_at:string;name:string;age:number;theme:string;promp
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
 
 function App(){
+  const [accountAction,setAccountAction]=useState<{kind:"verify"|"recover";token:string}|null>(()=>{
+    const fragment=window.location.hash.slice(1);
+    const [kind,token]=fragment.split("=",2);
+    if((kind==="verify"||kind==="recover")&&token&&/^[A-Za-z0-9_-]{35,100}$/.test(token))return {kind,token};
+    return null;
+  });
+  useEffect(()=>{
+    if(accountAction)window.history.replaceState(null,"",window.location.pathname+window.location.search);
+  },[]);
   const [tab,setTab]=useState<"home"|"create"|"library"|"reader">("home");
   const [lang,setLang]=useState<Lang>(getSavedLanguage);
   const [storyLang,setStoryLang]=useState<Lang>(getSavedLanguage);
@@ -175,6 +185,7 @@ function App(){
     catch{setError(t.deleteError);}
   };
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
+  if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
   return <div className="shell">
     <header className="topbar">
       <button className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
