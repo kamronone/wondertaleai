@@ -46,6 +46,7 @@ function App(){
   const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);setTab("create");};
   const changeStoryLanguage=(next:Lang)=>{setStoryLang(next);if(activeClassic)setPrompt(activeClassic.prompt[next]);};
   const [photo,setPhoto]=useState<File|null>(null);
+  const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
@@ -102,7 +103,7 @@ function App(){
         </section>
         <div className="features"><article><span>📷</span><h3>{t.recognizable}</h3><p>{t.recognizableDesc}</p></article><article><span>✨</span><h3>{t.anyStory}</h3><p>{t.anyStoryDesc}</p></article><article><span>📚</span><h3>{t.realBook}</h3><p>{t.realBookDesc}</p></article></div>
         <div className="section-head"><div><span className="section-eyebrow">✦ WonderTale</span><h2>{t.shelf}</h2></div><button className="text-link" onClick={()=>setTab("library")}>{t.seeAll} <ArrowRight size={16}/></button></div>
-        {books.length?<div className="book-grid">{books.slice(0,3).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={32}/><h3>{t.quiet}</h3><p>{t.quietDesc}</p><button className="secondary-button" onClick={()=>setTab("create")}>{t.firstBook}</button></div>}
+        {books.length?<div className="book-grid">{books.slice(0,3).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty empty-compact"><span className="empty-compact-icon"><BookOpen size={23}/></span><div className="empty-compact-copy"><h3>{t.quiet}</h3><p>{t.quietDesc}</p></div><button className="secondary-button" onClick={()=>setTab("create")}>{t.firstBook} <ArrowRight size={16}/></button></div>}
       </>}
       {tab==="create"&&<section className="create-page">
         <button className="back-button" onClick={()=>setTab("home")}><ArrowLeft size={17}/> {t.backHome}</button>
@@ -131,11 +132,19 @@ function App(){
         <div className="story-page"><div className="story-page-image"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span>{active.pages.map((_,i)=><button key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)}/>)}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
-      {tab==="home"&&<section className="install-panel"><div className="install-icon"><img src="/icons/icon-192.png" alt="WonderTale AI"/></div><div><h3>{t.installTitle}</h3><p>{t.installDesc}</p></div></section>}
+      {tab==="home"&&<section className="install-panel compact-install">
+        <div className="install-icon"><img src="/icons/icon-192.png" alt="WonderTale AI"/></div>
+        <div className="compact-install-body"><h3>{t.installTitle}</h3><p>{t.installDesc}</p>
+          <button className="install-guide-trigger" type="button" aria-expanded={showInstallGuide} onClick={()=>setShowInstallGuide(v=>!v)}>
+            {t.installHow} {showInstallGuide?<ChevronUp size={16}/>:<ChevronDown size={16}/>}
+          </button>
+          {showInstallGuide&&<div className="install-guide"><p>{t.installIos}</p><p>{t.installAndroid}</p></div>}
+        </div>
+      </section>}
+      {tab==="home"&&<section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>}
       <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={21}/><span>{t.backHome}</span></button><button type="button" className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={21}/><span>{t.library}</span></button><button type="button" className={tab==="create"?"active":""} onClick={()=>setTab("create")}><Plus size={22}/><span>{t.create}</span></button></nav>
-      <section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>
     </main>
-    <footer><Heart size={13} fill="currentColor"/> WonderTale AI · {t.footer}</footer>
+    <footer>© WonderTale AI</footer>
   </div>;
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
