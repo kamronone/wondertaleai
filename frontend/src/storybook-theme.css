@@ -384,3 +384,22 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
   .print-book-page:last-child{break-after:auto;page-break-after:auto}
   .mobile-tabbar,.topbar,.reader-toolbar,.reader-title,.story-page,.pager,.shell footer{display:none!important}
 }
+
+/* WonderTale original illustrated feature PNGs, replacing emoji stickers */
+.features article{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.features .feature-art{width:104px;height:104px;object-fit:contain;display:block;flex-shrink:0;filter:drop-shadow(0 5px 9px #64438a21)}
+.features .feature-copy{min-width:0}
+.features .feature-copy h3{margin:0 0 6px}
+.features .feature-copy p{margin:0;overflow-wrap:break-word}
+@media(max-width:850px){
+ .features article{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;gap:12px;padding:13px 15px}
+ .features .feature-art{grid-row:auto;width:72px;height:72px;max-width:100%}
+ .features .feature-copy h3{font-size:14px;line-height:1.25;margin:0 0 4px}
+ .features .feature-copy p{font-size:12px;line-height:1.5}
+}
+@media(max-width:420px){
+ .features article{grid-template-columns:62px minmax(0,1fr);gap:10px;padding:12px}
+ .features .feature-art{width:62px;height:62px}
+ .features .feature-copy h3{font-size:13px}
+ .features .feature-copy p{font-size:11px}
+}
