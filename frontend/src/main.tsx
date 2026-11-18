@@ -207,7 +207,7 @@ function App(){
     e.preventDefault();setError("");setBusy(true);
     try{
       const form=new FormData();form.append("name",name);form.append("other_heroes",secondHero.trim());form.append("age",age);form.append("theme",theme);form.append("style",style);form.append("prompt",prompt);form.append("language",storyLang);form.append("parental_consent",String(consent));if(photo)form.append("photo",photo);
-      if(true){const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
+      if(!onlineApi){const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
       const response=await fetch(API+"/api/books",{method:"POST",body:form});
       if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(typeof data.detail==="string"?data.detail :t.generateError);}
       const book:Book=await response.json();setBooks(previous=>[book,...previous]);openBook(book);
