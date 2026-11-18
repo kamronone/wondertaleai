@@ -139,3 +139,39 @@ def test_password_change_invalidates_all_previous_tokens():
     assert client.get("/api/me",headers=headers(next_token)).status_code==200
     assert client.post("/api/auth/login",json={"email":email,"password":PASSWORD}).status_code==401
     assert client.post("/api/auth/login",json={"email":email,"password":new_password}).status_code==200
+
+
+def test_parent_child_profiles_are_private():
+    import uuid
+    a=signup("family-a-"+str(uuid.uuid4())+"@example.com")
+    b=signup("family-b-"+str(uuid.uuid4())+"@example.com")
+    child=client.post("/api/children",headers=headers(a),json={"nickname":"Little Hero","age":6})
+    assert child.status_code==201,child.text
+    cid=child.json()["id"]
+    assert len(client.get("/api/children",headers=headers(a)).json())==1
+    assert client.get("/api/children",headers=headers(b)).json()==[]
+    assert client.delete("/api/children/"+cid,headers=headers(b)).status_code==404
+    assert client.delete("/api/children/"+cid,headers=headers(a)).status_code==204
+    assert client.get("/api/children",headers=headers(a)).json()==[]
+
+def test_book_favorites_and_progress_belong_to_parent():
+    import uuid
+    a=signup("reading-a-"+str(uuid.uuid4())+"@example.com")
+    b=signup("reading-b-"+str(uuid.uuid4())+"@example.com")
+    story='{"language":"en","pages":["A","B","C"]}'
+    created=client.post("/api/books",headers=headers(a),json={"title":"A friendly tale","child_name":"Mira","age":6,"story":story})
+    assert created.status_code==201
+    bid=created.json()["id"]
+    assert client.post("/api/books/"+bid+"/favorite",headers=headers(b)).status_code==404
+    assert client.post("/api/books/"+bid+"/progress",headers=headers(b),json={"page":1}).status_code==404
+    assert client.get("/api/books/favorites",headers=headers(b)).json()=={"ids":[]}
+    assert client.get("/api/books/progress",headers=headers(b)).json()==[]
+    assert client.post("/api/books/"+bid+"/favorite",headers=headers(a)).json()["favorite"] is True
+    assert client.get("/api/books/favorites",headers=headers(a)).json()["ids"]==[bid]
+    assert client.post("/api/books/"+bid+"/progress",headers=headers(a),json={"page":2}).status_code==200
+    assert client.post("/api/books/"+bid+"/progress",headers=headers(a),json={"page":3}).status_code==422
+    assert client.get("/api/books/progress",headers=headers(a)).json()[0]["page"]==2
+    assert client.post("/api/books/"+bid+"/favorite",headers=headers(a)).json()["favorite"] is False
+    assert client.delete("/api/books/"+bid,headers=headers(a)).status_code==204
+    assert client.get("/api/books/favorites",headers=headers(a)).json()==[]
+    assert client.get("/api/books/progress",headers=headers(a)).json()==[]
