@@ -138,7 +138,7 @@ Controls: 256-bit tokens; only HMAC-SHA256 token digests stored; 30-minute expir
 
 Important integration blockers:
 - A dedicated Neon database is not available through the connected Vercel-managed Neon organization; **no migrations were applied to any existing project**.
-- SMTP provider/credentials and a verified sending domain have not been configured. The static frontend now includes RU/UZ/EN reset/confirmation screens, but VITE_API_BASE is unset. With no backend configured, these screens correctly show an unavailable message.
+- SMTP provider/credentials and a verified sending domain have not been configured. The static frontend includes RU/UZ/EN reset/confirmation screens, but VITE_API_BASE is unset. With no backend configured, these screens correctly show an unavailable message.
 - Until those prerequisites are met, public registration and text AI must remain disabled.
 - Existing test suite uses `REQUIRE_EMAIL_VERIFICATION=false` in its isolated test environment only. Email-specific test cases verify the new token and reset flow without sending actual messages. Tests were committed but not run end-to-end against the repository in this session.
 - Do not send children's photos to external AI providers or enable real payment methods until privacy/legal, retention, parental verification and provider reviews are complete.
@@ -177,3 +177,24 @@ Verified via Neon SQL and schema listing that these eleven tables exist on `wond
 **Integration caveats:** The Vercel marketplace variables were created for Preview/Production, but their target Neon branch was not verified or changed. Do not assume their credentials point to `wondertale-preview`. Before deploying the secure FastAPI backend, explicitly select this branch's connection string through the server-side secret manager and set `APP_ENV=preview`. The backend reads `DATABASE_URL`, `WONDERTALE_DB_DATABASE_URL`, or `WONDERTALE_DB_POSTGRES_URL` and refuses a local SQLite fallback outside development. The current Vercel project is still a static Vite frontend; there is no FastAPI service deployment or confirmed SMTP provider. `ENABLE_REGISTRATION` and `ENABLE_TEXT_AI` must remain disabled until live auth, migrations and SMTP are verified.
 
 The default Neon branch `main` and tables under `neon_auth` were not modified. No children's data was migrated from browsers into this database.
+
+
+## Private FastAPI deployment verified — 2026-11-18
+
+A standalone Vercel project `wondertaleai-api-preview` (Vercel ID `prj_bJm3Fu2CyvN3GyrDsma26kJihRLO`) now hosts `backend/app.py` under the FastAPI framework. Its **Preview deployment** uses the dedicated Neon branch `wondertale-preview` from Neon project `sparkling-wind-90682745`; the branch connection URL is a sensitive Vercel environment variable named `DATABASE_URL`. Additional Preview-only environment settings:
+- `APP_ENV=preview`
+- `ENABLE_REGISTRATION=false`
+- `REQUIRE_EMAIL_VERIFICATION=true`
+- `ENABLE_TEXT_AI=false`
+- `AUTH_SECRET`: cryptographically generated server-side credential, never put in client-side bundles
+- `CORS_ORIGINS`: the WonderTale static frontend's canonical host
+
+The API project has **Vercel Authentication for all deployments**. It was deliberately not connected to the public frontend: protected Preview deployment URLs are not directly consumable by an unauthenticated visitor. The first Vercel deployment of the new project was automatically assigned a Production target despite an attempted staging target. Production has no database or auth secret and remains fail-closed; Vercel Authentication also protects that target. **Do not treat that production deployment as an active backend.**
+
+Verified remotely through authenticated Vercel-fetch:
+- `GET /api/health` returned 200 and `{"ok":true}` on the Preview API.
+- `GET /api/ready` returned 200 and `{"ok":true,"database":"connected"}` after a real `SELECT 1` against Neon.
+- Anonymous `GET /api/books` and `/api/me` couldn't be validated at the FastAPI layer through protected deployment fetch: Vercel Authentication intercepted the requests. Must still test those API routes with HTTP-level integration tests after choosing the release architecture.
+- Preview build and deployment reached `READY`. The current Preview URL is `https://wondertaleai-api-preview-g7pk426xb-kamronones-projects.vercel.app`.
+
+Next required prerequisites for enabling parent accounts: configure verified SMTP delivery, run full backend tests, decide backend accessibility (protect the application using its own auth, CORS and rate limiting before removing Vercel Authentication), and configure the static frontend's `VITE_API_BASE` only after those gates pass. Private photo uploads, AI text costs, and real payments remain disabled.
