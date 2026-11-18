@@ -210,3 +210,14 @@ Validation performed:
 - Full Python pytest execution was attempted, but PyPI dependencies were unavailable due to the Sandbox's outbound DNS/network restrictions. No claims are made that the Python suite passed. Temporary Sandbox was deleted immediately after syntax validation.
 - The private FastAPI staging URL remains behind Vercel Authentication; registration remains disabled until verified email/SMTP and a full authenticated route test are completed.
 - Do not set `VITE_API_BASE` to the protected API until the secure public-auth deployment architecture has been reviewed and tested.
+
+
+## API storage quota hardening — 2026-11-18
+
+- `POST /api/books` now rejects blank title, child name, and story, and caps each parent at 100 stored books.
+- Concurrent writes are serialized within each parent: PostgreSQL obtains `SELECT ... FOR UPDATE` on the parent's row before counting books and inserting, while SQLite test mode uses `BEGIN IMMEDIATE`. This avoids basic simultaneous-request over-quota races and keeps unrelated parents isolated.
+- Added test cases for quota enforcement, validation and independence between two parent identities in `backend/tests/test_secure_api.py`.
+- Deployed private FastAPI Preview as `dpl_9L8Ci8KDqLb4MqydrR6YrrKndNVx`. Vercel reported `READY`; `GET /api/ready` returned HTTP 200 and `{"ok":true,"database":"connected"}`.
+- No registration, SMTP, external AI provider, or photo uploads were enabled.
+- The full Python test suite has **not** passed yet. An earlier restricted Vercel Sandbox could stage source and compile Python, but could not download pip dependencies due to DNS/network restrictions. This deploy validates build/startup/database readiness only, not application-wide correctness.
+- Authenticated two-parent isolation, concurrent quota tests, and user-facing sync should be verified against an isolated test database after SMTP/onboarding and a supported backend test runner are configured. The existing public Vite app still operates in demo mode.
