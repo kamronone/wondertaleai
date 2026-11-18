@@ -40,7 +40,7 @@ PASSWORD="a-strong-private-password-2026"
 def parents():
     """Two distinct synthetic parents; cleanup is limited to exact generated email IDs."""
     suffix=uuid.uuid4().hex
-    emails=[f"pg-int-a-{suffix}@example.invalid",f"pg-int-b-{suffix}@example.invalid"]
+    emails=[f"pg-int-a-{suffix}@example.com",f"pg-int-b-{suffix}@example.com"]
     tokens=[]
     try:
         for email in emails:
@@ -127,7 +127,7 @@ def test_sessions_are_revoked_with_postgresql(parents):
 def test_registration_stays_fail_closed_without_smtp(monkeypatch):
     monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","true")
     monkeypatch.setattr(secure_main,"mail_configured",lambda:False)
-    new_email=f"pg-denied-{uuid.uuid4().hex}@example.invalid"
+    new_email=f"pg-denied-{uuid.uuid4().hex}@example.com"
     denied=client.post("/api/auth/register",json={"email":new_email,"password":PASSWORD})
     assert denied.status_code==503
     with secure_main.connection() as c:
