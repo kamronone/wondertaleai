@@ -97,3 +97,27 @@ Important blockers **remain**: email confirmation and recovery, centralized IP/n
 - **Neon provisioning blocker:** the Neon integration returned `action restricted; organization is managed by Vercel` when attempting to create a dedicated `wondertale-ai-private` project. Do not reuse another application's Neon project/database. Create a dedicated database via the owning Vercel-managed integration or attach an independent writable Neon organization before deployment.
 - Keep `ENABLE_REGISTRATION=false` and `ENABLE_TEXT_AI=false` until verified-email signup, global network abuse prevention, safe photo handling and private API hosting are validated.
 - No change to the public Vercel demo deployment was needed for these backend-only updates.
+
+
+## 18 November 2026 — ordered feature delivery and integration gates
+
+Requested product: private personalized books, familiar classic stories, several child protagonists, narrated bedtime stories, interactive stories, printed books/PDF, child profiles, favorites, family library, daily episodes, gifts, AI video, and paid plans.
+
+Implemented in this working branch:
+- Browser-only demos: 30 illustrated classics, original templates in Russian/Uzbek/English; optional local persistence; PDF print of all pages; browser speech-synthesis read-aloud with voice availability depending on device; favorite flag; saved reading position; extra protagonist name; four occasion prompts; page text editing; two predefined ending variants; local sequels with eight new pages.
+- Private FastAPI (NOT exposed to public site): parent-bound books and sessions; logout everywhere; password change; login throttling; opt-in bounded AI story requests; dedicated schema/migrations for up to five child nicknames, favorite IDs, reading progress. Parent email verification and full account onboarding are NOT implemented.
+- Text-generation adapter now supports 8/12/20 pages and up to three additional named heroes with typed validation. It remains disabled by default and is not connected to the public frontend.
+- Only the static frontend has been deployed to the public Vercel preview.
+
+Remaining high-priority requirements, in dependency order:
+1. Provision an isolated Neon PostgreSQL database for WonderTale. Direct Neon creation is blocked because the available organization is Vercel-managed. Do not use another app's project or credentials.
+2. Authenticated parent onboarding with verified emails, recovery, real account/sync UX, parental approvals, and production abuse controls.
+3. Private image/media storage and consent-aware handling of children's photographs; retention/deletion controls, verified parental rights and privacy/legal review. Do NOT upload children's photos to the public PWA's unverified backend.
+4. Real child-consistent illustrated pages using a reviewed model/provider and quality/regeneration pipeline, async jobs, moderation and billing limits.
+5. Real AI text/story generator integration; backend requires protected `AUTH_SECRET`, `DATABASE_URL`, and `OPENAI_API_KEY` plus explicit flags and pilot allowlist.
+6. Better editor/print-grade PDF, natural neural speech synthesis and optionally parent-provided voice with documented consent and revocation. Current speech uses *device speechSynthesis*, not cloud voices.
+7. Interactive multi-path story engine and generation jobs, educational stories, birthday campaigns, collaborative sharing and daily scheduled stories. Current interactions are LOCAL templates, not AI.
+8. Provider-verified billing for real payments, idempotent webhooks, refunds, plan enforcement and cost dashboards. No real checkout or subscription is connected.
+9. Video/storyboard pipeline, provider connection, moderation, asset retention, queue workers, MP4 export and safe playback. AI cartoons remain a coming-soon card.
+
+Testing: Vercel TypeScript / Vite build runs for each frontend deployment. Python regression tests were added for backend paths but have not been executed in this environment. Do not claim backend production readiness without running tests and provider integrations.
