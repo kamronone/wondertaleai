@@ -18,13 +18,25 @@ def verification_required()->bool:
     return os.getenv("REQUIRE_EMAIL_VERIFICATION","true").lower()!="false"
 
 def mail_configured()->bool:
-    """Require a verified sender and HTTPS frontend for either delivery transport."""
-    if not os.getenv("PUBLIC_APP_ORIGIN"):
+    """Validate that server-side delivery settings are present and structurally safe.
+
+    This does not prove API-key validity or actual inbox delivery.
+    """
+    origin=os.getenv("PUBLIC_APP_ORIGIN","").strip().rstrip("/")
+    if not re.fullmatch(r"https://[A-Za-z0-9.-]+(?::[0-9]{2,5})?",origin):
+        return False
+    sender=(os.getenv("MAIL_FROM") or os.getenv("SMTP_FROM") or "").strip()
+    if not sender or len(sender)>254 or "\\r" in sender or "\\n" in sender:
+        return False
+    # Supports either sender@example.com or Display Name <sender@example.com>.
+    address=sender.rsplit("<",1)[-1].rstrip(">").strip()
+    if not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",address):
         return False
     if os.getenv("RESEND_API_KEY"):
-        return bool(os.getenv("MAIL_FROM") or os.getenv("SMTP_FROM"))
+        return True
     return bool(os.getenv("SMTP_HOST") and os.getenv("SMTP_USERNAME") and
-                os.getenv("SMTP_PASSWORD") and (os.getenv("SMTP_FROM") or os.getenv("MAIL_FROM")))
+                os.getenv("SMTP_PASSWORD") and os.getenv("SMTP_FROM") and
+                os.getenv("SMTP_PORT","465") in ("465","587"))
 
 def new_code()->str:
     # Single-use token, 256 bits of entropy.
