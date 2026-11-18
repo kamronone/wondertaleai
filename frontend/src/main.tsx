@@ -312,7 +312,7 @@ function App(){
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
   if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
   if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome">
-    <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.svg" alt=""/></div>
+    <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.png" alt=""/></div>
     <div className="welcome-shade" aria-hidden="true"/>
     <div className="welcome-content">
       <div className="welcome-brand"><Crown size={27} fill="#ffd67a"/><span>WonderTale <strong>AI</strong></span></div>
