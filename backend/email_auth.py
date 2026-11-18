@@ -26,7 +26,7 @@ def mail_configured()->bool:
     if not re.fullmatch(r"https://[A-Za-z0-9.-]+(?::[0-9]{2,5})?",origin):
         return False
     sender=(os.getenv("MAIL_FROM") or os.getenv("SMTP_FROM") or "").strip()
-    if not sender or len(sender)>254 or "\\r" in sender or "\\n" in sender:
+    if not sender or len(sender)>254 or chr(13) in sender or chr(10) in sender:
         return False
     # Supports either sender@example.com or Display Name <sender@example.com>.
     address=sender.rsplit("<",1)[-1].rstrip(">").strip()
