@@ -339,7 +339,6 @@ function App(){
       <div className="welcome-dots" role="group" aria-label="Onboarding slides">{[0,1,2].map(n=><button key={n} type="button" className={n===onboardingStep?"active":""} onClick={()=>setOnboardingStep(n)} aria-label={String(n+1)} aria-current={n===onboardingStep?"step":undefined}/>)}</div>
       <button type="button" className="welcome-primary" onClick={()=>onboardingStep<2?setOnboardingStep(n=>n+1):finishOnboarding("home")}>{onboardingStep<2?({ru:"Начать",uz:"Boshlash",en:"Get started"} as const)[lang]:({ru:"Открыть сказки",uz:"Ertaklarni ochish",en:"Explore stories"} as const)[lang]} <Sparkles size={18}/></button>
       <button type="button" className="welcome-secondary" onClick={()=>finishOnboarding("account")}>{({ru:"У меня уже есть аккаунт",uz:"Menda akkaunt bor",en:"I already have an account"} as const)[lang]}</button>
-      <div className="welcome-language"><label htmlFor="welcome-lang">{({ru:"Язык",uz:"Til",en:"Language"} as const)[lang]}</label><select id="welcome-lang" value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
     </div>
   </section>;
   return <div className="shell">
