@@ -9,9 +9,9 @@ type Props={
  onSync:()=>Promise<void>;
 };
 const copy={
- ru:{title:"Аккаунт родителя",subtitle:"Семейная библиотека с защищённым доступом",notReady:"Личный кабинет пока недоступен: отдельная база и почтовый сервис не подключены. Ваши демосказки остаются в этом браузере.",demo:"Демонстрационный режим",email:"Электронная почта",password:"Пароль (не менее 12 символов)",login:"Войти",register:"Создать аккаунт",forgot:"Забыли пароль?",sendLink:"Отправить ссылку",back:"Назад ко входу",registerInfo:"После регистрации нужно подтвердить email по ссылке из письма.",registrationSent:"Проверьте почту: ссылка для подтверждения отправлена.",forgotSent:"Если аккаунт существует, на почту отправлена ссылка.",failed:"Не удалось выполнить запрос. Проверьте данные и подключение к серверу.",welcome:"Вы вошли в семейный аккаунт",sync:"Перенести мои сохранённые демосказки",syncDescription:"Копирование запускается только по вашему нажатию. Имя ребёнка и текст выбранных книг будут переданы в приватный аккаунт. Фото не передаётся.",syncNotice:"Для переноса используйте только собственное доверенное устройство.",syncDone:"Книг на сервере",logout:"Выйти",loading:"Выполняется…",privacy:"Демоистории не синхронизируются автоматически."},
- uz:{title:"Ota-ona akkaunti",subtitle:"Oilaviy ertaklar kutubxonasi",notReady:"Akkaunt hozircha mavjud emas: alohida baza va pochta xizmati ulanmagan. Demo ertaklar brauzeringizda saqlanadi.",demo:"Demo rejimi",email:"Elektron pochta",password:"Parol (kamida 12 belgi)",login:"Kirish",register:"Akkaunt yaratish",forgot:"Parolni unutdingizmi?",sendLink:"Havola yuborish",back:"Kirishga qaytish",registerInfo:"Ro‘yxatdan o‘tgandan so‘ng email manzilni xatdagi havola orqali tasdiqlang.",registrationSent:"Emailni tekshiring: tasdiqlash havolasi yuborildi.",forgotSent:"Akkaunt mavjud bo‘lsa, emailga havola yuboriladi.",failed:"So‘rov bajarilmadi. Ma’lumotlar va serverni tekshiring.",welcome:"Oilaviy akkauntga kirdingiz",sync:"Saqlangan demo ertaklarimni ko‘chirish",syncDescription:"Faqat siz bosganda nusxa olinadi. Bola ismi va ertak matni shaxsiy akkauntga yuboriladi. Surat yuborilmaydi.",syncNotice:"Faqat o‘zingizning ishonchli qurilmangizdan foydalaning.",syncDone:"Serverdagi kitoblar",logout:"Chiqish",loading:"Bajarilmoqda…",privacy:"Demo ertaklar avtomatik sinxronlanmaydi."},
- en:{title:"Parent account",subtitle:"Your private family story library",notReady:"Parent accounts are not available yet: a separate database and email provider are not connected. Demo stories remain in your browser.",demo:"Demo mode",email:"Email address",password:"Password (at least 12 characters)",login:"Sign in",register:"Create account",forgot:"Forgot password?",sendLink:"Send recovery link",back:"Back to sign in",registerInfo:"After registration, confirm your email using the link sent to your inbox.",registrationSent:"Check your email for the confirmation link.",forgotSent:"If the account exists, a recovery link has been sent.",failed:"Unable to complete the request. Check your details and connection.",welcome:"You are signed in to your family account",sync:"Transfer saved demo stories",syncDescription:"Transfer happens only when you choose it. Child names and story text are copied to your private account. Photos are never sent.",syncNotice:"Only transfer from your own trusted device.",syncDone:"Books on server",logout:"Sign out",loading:"Working…",privacy:"Demo stories never sync automatically."}
+ ru:{title:"Аккаунт родителя",subtitle:"Семейная библиотека с защищённым доступом",notReady:"Личный кабинет пока недоступен: отдельная база и почтовый сервис не подключены. Ваши демосказки остаются в этом браузере.",demo:"Демонстрационный режим",email:"Электронная почта",password:"Пароль (не менее 12 символов)",login:"Войти",register:"Создать аккаунт",forgot:"Забыли пароль?",sendLink:"Отправить ссылку",back:"Назад ко входу",registerInfo:"После регистрации нужно подтвердить email по ссылке из письма.",registrationSent:"Проверьте почту: ссылка для подтверждения отправлена.",forgotSent:"Если аккаунт существует, на почту отправлена ссылка.",resend:"Отправить подтверждение ещё раз",resendSent:"Если email ожидает подтверждения, ссылка отправлена повторно.",unverified:"Сначала подтвердите email. Проверьте входящие или отправьте ссылку снова.",failed:"Не удалось выполнить запрос. Проверьте данные и подключение к серверу.",welcome:"Вы вошли в семейный аккаунт",sync:"Перенести мои сохранённые демосказки",syncDescription:"Копирование запускается только по вашему нажатию. Имя ребёнка и текст выбранных книг будут переданы в приватный аккаунт. Фото не передаётся.",syncNotice:"Для переноса используйте только собственное доверенное устройство.",syncDone:"Книг на сервере",logout:"Выйти",loading:"Выполняется…",privacy:"Демоистории не синхронизируются автоматически."},
+ uz:{title:"Ota-ona akkaunti",subtitle:"Oilaviy ertaklar kutubxonasi",notReady:"Akkaunt hozircha mavjud emas: alohida baza va pochta xizmati ulanmagan. Demo ertaklar brauzeringizda saqlanadi.",demo:"Demo rejimi",email:"Elektron pochta",password:"Parol (kamida 12 belgi)",login:"Kirish",register:"Akkaunt yaratish",forgot:"Parolni unutdingizmi?",sendLink:"Havola yuborish",back:"Kirishga qaytish",registerInfo:"Ro‘yxatdan o‘tgandan so‘ng email manzilni xatdagi havola orqali tasdiqlang.",registrationSent:"Emailni tekshiring: tasdiqlash havolasi yuborildi.",forgotSent:"Akkaunt mavjud bo‘lsa, emailga havola yuboriladi.",resend:"Tasdiqlash xatini qayta yuborish",resendSent:"Email hali tasdiqlanmagan bo‘lsa, havola qayta yuborildi.",unverified:"Avval emailni tasdiqlang. Pochtangizni tekshiring yoki havolani qayta yuboring.",failed:"So‘rov bajarilmadi. Ma’lumotlar va serverni tekshiring.",welcome:"Oilaviy akkauntga kirdingiz",sync:"Saqlangan demo ertaklarimni ko‘chirish",syncDescription:"Faqat siz bosganda nusxa olinadi. Bola ismi va ertak matni shaxsiy akkauntga yuboriladi. Surat yuborilmaydi.",syncNotice:"Faqat o‘zingizning ishonchli qurilmangizdan foydalaning.",syncDone:"Serverdagi kitoblar",logout:"Chiqish",loading:"Bajarilmoqda…",privacy:"Demo ertaklar avtomatik sinxronlanmaydi."},
+ en:{title:"Parent account",subtitle:"Your private family story library",notReady:"Parent accounts are not available yet: a separate database and email provider are not connected. Demo stories remain in your browser.",demo:"Demo mode",email:"Email address",password:"Password (at least 12 characters)",login:"Sign in",register:"Create account",forgot:"Forgot password?",sendLink:"Send recovery link",back:"Back to sign in",registerInfo:"After registration, confirm your email using the link sent to your inbox.",registrationSent:"Check your email for the confirmation link.",forgotSent:"If the account exists, a recovery link has been sent.",resend:"Resend confirmation email",resendSent:"If the email awaits confirmation, another link has been sent.",unverified:"Confirm your email first. Check your inbox or request another link.",failed:"Unable to complete the request. Check your details and connection.",welcome:"You are signed in to your family account",sync:"Transfer saved demo stories",syncDescription:"Transfer happens only when you choose it. Child names and story text are copied to your private account. Photos are never sent.",syncNotice:"Only transfer from your own trusted device.",syncDone:"Books on server",logout:"Sign out",loading:"Working…",privacy:"Demo stories never sync automatically."}
 };
 export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onLogout,onSync}:Props){
  const t=copy[lang];
@@ -21,15 +21,16 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  const [working,setWorking]=useState(false);
  const [notice,setNotice]=useState("");
  const [error,setError]=useState("");
+ const [unverified,setUnverified]=useState(false);
  const submit=async(e:FormEvent)=>{
   e.preventDefault();
   if(!api||working)return;
-  setWorking(true);setError("");setNotice("");
+  setWorking(true);setError("");setNotice("");setUnverified(false);
   try{
    const endpoint=mode==="login"?"/api/auth/login":mode==="register"?"/api/auth/register":"/api/auth/forgot-password";
    const payload=mode==="forgot"?{email}:{email,password};
    const res=await fetch(api+endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal:AbortSignal.timeout(12000)});
-   if(!res.ok)throw Error("Request failed");
+   if(!res.ok){if(mode==="login"&&res.status===403){setUnverified(true);throw Error("Unverified");}throw Error("Request failed");}
    const data=await res.json();
    if(mode==="login"){
     if(typeof data.access_token!=="string"||!await onLogin(data.access_token))throw Error("Invalid session");
@@ -38,6 +39,18 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
     setNotice(mode==="register"?t.registrationSent:t.forgotSent);
     setPassword("");
    }
+  }catch(e){setError(e instanceof Error&&e.message==="Unverified"?t.unverified:t.failed);}finally{setWorking(false);}
+ };
+ const resend=async()=>{
+  if(!api||working||!email.trim())return;
+  setWorking(true);setError("");setNotice("");
+  try{
+   const response=await fetch(api+"/api/auth/resend-verification",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email:email.trim()}),signal:AbortSignal.timeout(12000)
+   });
+   if(!response.ok)throw Error("Delivery request rejected");
+   setNotice(t.resendSent);setUnverified(false);
   }catch{setError(t.failed);}finally{setWorking(false);}
  };
  return <section className="parent-account-page">
@@ -59,6 +72,8 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
       {mode==="register"&&<p className="parent-account-muted">{t.registerInfo}</p>}
       {notice&&<p className="parent-account-notice" role="status">{notice}</p>}
       {error&&<p className="parent-account-error" role="alert">{error}</p>}
+      {unverified&&<button type="button" className="parent-account-secondary" disabled={working} onClick={()=>void resend()}>{t.resend}</button>}
+      {mode==="register"&&notice&&<button type="button" className="parent-account-textbtn" disabled={working} onClick={()=>void resend()}>{t.resend}</button>}
       <button type="submit" className="parent-account-primary" disabled={working}>{working?t.loading:mode==="forgot"?t.sendLink:mode==="register"?t.register:t.login}</button>
       {mode==="login"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("forgot");setError("");setNotice("");}}>{t.forgot}</button>:mode==="forgot"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.back}</button>:null}
     </form>}
