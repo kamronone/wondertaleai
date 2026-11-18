@@ -127,10 +127,10 @@ function App(){
       if(sessionEpoch.current!==epoch)return;
       setRemoteBooks(report.serverBooks);
       setBooks(report.serverBooks);
-      setSyncMessage(({ru:"Перенесено: ",uz:"Ko‘chirildi: ",en:"Transferred: "}[lang])+report.uploaded+
+      setSyncMessage(({ru:"Перенесено: ",uz:"Köçirildi: ",en:"Transferred: "}[lang])+report.uploaded+
         (report.failed?" · "+({ru:"Ошибок: ",uz:"Xatolar: ",en:"Failed: "}[lang])+report.failed:""));
     }catch{
-      if(sessionEpoch.current===epoch)setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni ko‘chirish amalga oshmadi. Keyinroq qayta urinib ko‘ring.",en:"Transfer failed. Please retry later."}[lang]);
+      if(sessionEpoch.current===epoch)setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni köçiriş amalga oşmadi. Keyinroq qayta urinib köring.",en:"Transfer failed. Please retry later."}[lang]);
     }finally{setSyncBusy(false);}
   };
   useEffect(()=>{document.documentElement.lang=lang;},[lang]);
@@ -264,13 +264,13 @@ function App(){
       if(usePersonalAi){
         const epoch=sessionEpoch.current;
         if(prompt.trim().length<12){
-          throw new Error(({ru:"Опишите идею сказки минимум 12 символами.",uz:"Ertak g‘oyasini kamida 12 ta belgi bilan yozing.",en:"Describe the story idea in at least 12 characters."} as const)[lang]);
+          throw new Error(({ru:"Опишите идею сказки минимум 12 символами.",uz:"Ertak ğoyasini kamida 12 ta belgi bilan yozing.",en:"Describe the story idea in at least 12 characters."} as const)[lang]);
         }
         if(!API||!privateToken){
-          throw new Error(({ru:"Войдите в аккаунт родителя для AI-генерации.",uz:"AI ertak yaratish uchun ota-ona akkauntiga kiring.",en:"Sign in to a parent account to generate AI stories."} as const)[lang]);
+          throw new Error(({ru:"Войдите в аккаунт родителя для AI-генерации.",uz:"AI ertak yaratiş uçun ota-ona akkauntiga kiring.",en:"Sign in to a parent account to generate AI stories."} as const)[lang]);
         }
         if(photo){
-          throw new Error(({ru:"AI-генерация пока не принимает фото ребёнка. Удалите фото и повторите.",uz:"AI hozircha bolaning rasmini qabul qilmaydi. Rasmni olib tashlang.",en:"AI generation does not accept child photos yet. Remove the photo first."} as const)[lang]);
+          throw new Error(({ru:"AI-генерация пока не принимает фото ребёнка. Удалите фото и повторите.",uz:"AI hozirça bolaning rasmini qabul qilmaydi. Rasmni olib taşlang.",en:"AI generation does not accept child photos yet. Remove the photo first."} as const)[lang]);
         }
         const data={
           name:name.trim(),age:Number(age),language:storyLang,
@@ -289,10 +289,10 @@ function App(){
             throw new Error(({ru:"Сессия истекла. Войдите в аккаунт родителя снова.",uz:"Sessiya tugadi. Ota-ona akkauntiga qayta kiring.",en:"Your session has expired. Sign in to the parent account again."} as const)[lang]);
           }
           if(response.status===409){
-            throw new Error(({ru:"Библиотека заполнена. Удалите ненужную сказку перед созданием новой.",uz:"Kutubxona to‘lgan. Yangi ertakdan oldin keraksizini o‘chiring.",en:"Your library is full. Delete a story before creating another."} as const)[lang]);
+            throw new Error(({ru:"Библиотека заполнена. Удалите ненужную сказку перед созданием новой.",uz:"Kutubxona tölgan. Yangi ertakdan oldin keraksizini öçiring.",en:"Your library is full. Delete a story before creating another."} as const)[lang]);
           }
           if(response.status===403||response.status===503){
-            throw new Error(({ru:"AI-генерация пока не включена для этого аккаунта.",uz:"AI yaratish ushbu akkaunt uchun hali yoqilmagan.",en:"AI generation is not enabled for this account yet."} as const)[lang]);
+            throw new Error(({ru:"AI-генерация пока не включена для этого аккаунта.",uz:"AI yaratiş uşbu akkaunt uçun hali yoqilmagan.",en:"AI generation is not enabled for this account yet."} as const)[lang]);
           }
           if(response.status===429){
             throw new Error(({ru:"Дневной лимит AI-сказок исчерпан.",uz:"Kunlik AI ertaklar limiti tugadi.",en:"Daily AI story limit reached."} as const)[lang]);
@@ -332,12 +332,12 @@ function App(){
     <div className="welcome-content">
       <div className="welcome-brand"><Crown size={27} fill="#ffd67a"/><span>WonderTale <strong>AI</strong></span></div>
       <h1>{[
-        {ru:"Ваш ребёнок — герой собственной сказки",uz:"Farzandingiz o‘z ertagining qahramoni",en:"Your child is the hero of their own story"},
+        {ru:"Ваш ребёнок — герой собственной сказки",uz:"Farzandingiz öz ertagining qahramoni",en:"Your child is the hero of their own story"},
         {ru:"Волшебные истории каждый день",uz:"Har kuni sehrli hikoyalar",en:"Magical stories every day"},
         {ru:"Создавайте и сохраняйте сказки",uz:"Ertaklar yarating va saqlang",en:"Create and save stories"},
       ][onboardingStep][lang]}</h1>
       <div className="welcome-dots" role="group" aria-label="Onboarding slides">{[0,1,2].map(n=><button key={n} type="button" className={n===onboardingStep?"active":""} onClick={()=>setOnboardingStep(n)} aria-label={String(n+1)} aria-current={n===onboardingStep?"step":undefined}/>)}</div>
-      <button type="button" className="welcome-primary" onClick={()=>onboardingStep<2?setOnboardingStep(n=>n+1):finishOnboarding("home")}>{onboardingStep<2?({ru:"Начать",uz:"Boshlash",en:"Get started"} as const)[lang]:({ru:"Открыть сказки",uz:"Ertaklarni ochish",en:"Explore stories"} as const)[lang]} <Sparkles size={18}/></button>
+      <button type="button" className="welcome-primary" onClick={()=>onboardingStep<2?setOnboardingStep(n=>n+1):finishOnboarding("home")}>{onboardingStep<2?({ru:"Начать",uz:"Boşlaş",en:"Get started"} as const)[lang]:({ru:"Открыть сказки",uz:"Ertaklarni oçiş",en:"Explore stories"} as const)[lang]} <Sparkles size={18}/></button>
       <button type="button" className="welcome-secondary" onClick={()=>finishOnboarding("account")}>{({ru:"У меня уже есть аккаунт",uz:"Menda akkaunt bor",en:"I already have an account"} as const)[lang]}</button>
     </div>
   </section>;
@@ -382,7 +382,7 @@ function App(){
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
           <label className="second-hero-field">{t.extraHero}<input maxLength={45} value={secondHero} onChange={e=>setSecondHero(e.target.value)} placeholder={t.extraHeroHint}/></label>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
-          {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib tashlash",en:"Remove photo"} as const)[lang]}</button>}
+          {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
           <div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
           <div className="classic-choice"><button type="button" className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
           {activeClassic&&<p className="classic-selected"><CheckCircle2 size={16}/> {t.classicSelected}: <strong>{activeClassic.title[lang]}</strong></p>}
@@ -392,7 +392,7 @@ function App(){
           <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
-          <div className="story-lang-field"><label>{({ru:"Режим создания",uz:"Yaratish rejimi",en:"Creation mode"} as const)[lang]}</label><div className="story-lang-options"><button type="button" className={!usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(false)}>{({ru:"Демо",uz:"Demo",en:"Demo"} as const)[lang]}</button><button type="button" className={usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(true)}>{({ru:"AI (аккаунт)",uz:"AI (akkaunt)",en:"AI (account)"} as const)[lang]}</button></div></div>
+          <div className="story-lang-field"><label>{({ru:"Режим создания",uz:"Yaratiş rejimi",en:"Creation mode"} as const)[lang]}</label><div className="story-lang-options"><button type="button" className={!usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(false)}>{({ru:"Демо",uz:"Demo",en:"Demo"} as const)[lang]}</button><button type="button" className={usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(true)}>{({ru:"AI (аккаунт)",uz:"AI (akkaunt)",en:"AI (account)"} as const)[lang]}</button></div></div>
           {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
           {!usePersonalAi&&<div className="device-save-option">
             <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
