@@ -72,3 +72,17 @@ Story -> scene script -> consistent character sheet -> keyframes -> approved vid
 - `backend/secure_main.py` exposes authenticated `POST /api/books/generate`, with a per-parent database quota of 2 per UTC day **only when** `ENABLE_TEXT_AI=true` and `OPENAI_API_KEY` exist. No image uploads are accepted.
 - This backend remains disconnected from the public PWA and has **not** been deployed or live-tested against an AI provider. Frontend remains a local browser demo.
 - Next: dedicated Neon DB, verified parental accounts, auth hardening and rate limiting, private child photo retention, secure media storage, async worker jobs, AI illustration consistency, complete PDF export and commercial review.
+
+## November 18 — hardening for a controlled private backend pilot
+
+The public WonderTale site is still a browser-only demo. The secure API is **not deployed**.
+
+Additional controls in `backend/secure_main.py`:
+- Account registration disabled by default (`ENABLE_REGISTRATION=false`); still **no verified-email flow**, so never enable open public signup.
+- Password login: 5 failed attempts per normalized email per 15-minute window, stored by HMAC-hashed email, and cleared on a successful login.
+- Text AI: default-off feature flag, explicit parent email allowlist (`AI_ALLOWED_EMAILS`), 2 successful reservations per parent per UTC day, plus a **global** daily reservation cap (`MAX_AI_STORIES_PER_DAY`, default 10, up to 200). SQLite reserves quotas under `BEGIN IMMEDIATE`; PostgreSQL uses atomic conditional upserts. Reserved quota is not returned on provider failure, deliberately reducing retry-based spending.
+- Existing parent/child book isolation continues to use per-owner SQL filtering; account deletion cascades associated quota rows.
+- Automated regression scenarios added for registration gating, login throttling, AI allowlist and global budget; **these tests are committed but not yet executed against the full repository in this session**.
+- Manually validated the new quota SQL on isolated in-memory SQLite.
+
+Important blockers **remain**: email confirmation and recovery, centralized IP/network abuse controls, account session management, private photo processing, asynchronous generation queue, storage, billing, secure deletion and jurisdictional/legal review for children's personal information. Do not deploy the secure API with `ENABLE_REGISTRATION=true` for the public.
