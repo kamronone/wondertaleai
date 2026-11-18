@@ -271,3 +271,31 @@ def test_personal_library_limit_does_not_affect_other_parents(monkeypatch):
         assert result.status_code==201,result.text
     assert len(client.get("/api/books",headers=headers(a)).json())==1
     assert len(client.get("/api/books",headers=headers(b)).json())==1
+
+
+def test_resend_verification_remains_single_use_and_throttled(monkeypatch):
+    import uuid
+    email="resend-"+str(uuid.uuid4())+"@example.com"
+    sent=[]
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION","true")
+    monkeypatch.setattr(secure_main,"mail_configured",lambda:True)
+    monkeypatch.setattr(secure_main,"send_account_email",lambda address,token,kind:sent.append((address,token,kind)))
+    registered=client.post("/api/auth/register",json={"email":email,"password":PASSWORD})
+    assert registered.status_code==201,registered.text
+    assert len(sent)==1
+    # Registration issues a confirmation token, so an immediate repeat is throttled.
+    immediate=client.post("/api/auth/resend-verification",json={"email":email})
+    assert immediate.status_code==200
+    assert immediate.json()=={"status":"if_account_exists_email_sent"}
+    assert len(sent)==1
+    # Move only the synthetic test token's issued_at into the past.
+    with secure_main.connection() as c:
+        owner=secure_main.sql(c,"SELECT id FROM parents WHERE email=?",(email,)).fetchone()[0]
+        secure_main.sql(c,"UPDATE email_action_tokens SET issued_at=issued_at-130 WHERE owner_id=?",(owner,))
+        c.commit()
+    again=client.post("/api/auth/resend-verification",json={"email":email})
+    assert again.status_code==200
+    assert len(sent)==2 and sent[-1][2]=="verify"
+    assert client.post("/api/auth/verify-email",json={"token":sent[-1][1]}).status_code==200
+    assert client.post("/api/auth/resend-verification",json={"email":email}).status_code==200
+    assert len(sent)==2
