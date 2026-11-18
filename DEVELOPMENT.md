@@ -237,3 +237,35 @@ Initial run: **31 passed, 2 failed** due to incorrect test expectations (wrong-p
 Repeated complete test run: **33 passed in 2.62 seconds** (exit code 0). This covers local API auth/session tests, user isolation, email verification/recovery with mocked SMTP, book quotas, and AI text validation with mocked provider. It does **not** establish verified live SMTP, production PostgreSQL test coverage, or real child-photo processing. No AI or registration feature flag was enabled.
 
 The temporary test sandbox is disposable and should be removed after testing to avoid resource usage.
+
+
+## Live Neon PostgreSQL integration checks — 18 November 2026
+
+Created `backend/tests/test_postgres_integration.py` with explicit safety gates:
+- `ALLOW_WONDERTALE_PG_INTEGRATION_TESTS=1`
+- `PG_TEST_BRANCH_NAME=wondertale-preview`
+- `PG_TEST_DATABASE_URL` provided securely at execution time from the **WonderTale-only** Neon branch `br-young-darkness-bbiaw8n5`, never committed.
+- Test login and registration have local process-only flags; deployed Vercel API remains registration-disabled and protected with Vercel Authentication.
+- Test data uses random `@example.com` synthetic emails. The module-scoped fixture and additional tests delete created parents in `finally`; database cascading FKs remove dependent books/sessions/children/tokens. Email delivery and AI requests are mocked/off.
+
+Tests executed on real PostgreSQL via a temporary Vercel Sandbox with packages installed from PyPI. The first run revealed that `@example.invalid` addresses were refused by the Pydantic email validator; test names were adjusted to `@example.com`, with no change to production validation.
+
+Final command in isolated sandbox:
+
+```bash
+PYTHONPATH=/tmp/wondertale_pg python -m pytest -q /tmp/wondertale_pg/tests/test_postgres_integration.py --tb=short
+```
+
+Results: **7 passed in 3.34 seconds** (one non-failing Starlette TestClient/httpx deprecation warning).
+The scenarios cover:
+1. Live DB health and readiness.
+2. Two-parent book, favorites, reading progress and child-profile isolation.
+3. Per-parent book quotas and blank text rejection.
+4. Session revocation through PostgreSQL.
+5. Rejection of verified signup without SMTP.
+6. Single-use email verification and recovery token lifecycle, session revocation (SMTP mocked).
+7. Two parallel book inserts with a parent quota of one: expected HTTP 201 and 409.
+
+Neon SQL counts verified after the tests: `parents=0`, `books=0`, `sessions=0`, `children=0`, `book_favorites=0`, `reading_progress=0`, `email_action_tokens=0`. No real users or children's photos participated.
+
+Backend tests are now verified across SQLite (33 passed) and dedicated Neon PostgreSQL (7 passed), but no live SMTP or real account frontend E2E test was performed. Remaining release gate: configure a verified email delivery provider, integrate protected API access with the public app, and test the full user flow.
