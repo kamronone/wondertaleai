@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
 import { createDemoBook, getDemoBooks, saveDemoBooks, isDemoBook } from "./demo";
@@ -9,7 +9,7 @@ import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
 
 type Page={number:number;text:string;image_url:string};
-type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string};
+type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
 
 function App(){
@@ -24,6 +24,7 @@ function App(){
   const [active,setActive]=useState<Book|null>(null);
   const [page,setPage]=useState(0);
   const [name,setName]=useState("");
+  const [secondHero,setSecondHero]=useState("");
   const [age,setAge]=useState("5");
   const [themeIndex,setThemeIndex]=useState(0);
   const theme=themes[themeIndex];
@@ -49,6 +50,9 @@ function App(){
   const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
   const [saveOnDevice,setSaveOnDevice]=useState(false);
+  const [favoritesOnly,setFavoritesOnly]=useState(false);
+  const [speaking,setSpeaking]=useState(false);
+  const [speechPaused,setSpeechPaused]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [mode,setMode]=useState("browser-demo");
@@ -68,12 +72,58 @@ function App(){
     window.scrollTo({top:Math.max(0,offset),left:0,behavior:"instant"});
   },[page,tab,active?.id]);
   useEffect(()=>{void fetchBooks();if(API)fetch(API+"/api/health",{signal:AbortSignal.timeout(1800)}).then(r=>r.json()).then(data=>{setMode(data.mode);setOnlineApi(true)}).catch(()=>{});},[]);
-  const openBook=(book:Book)=>{setActive(book);setPage(0);setTab("reader");setError("");};
+  const openBook=(book:Book)=>{
+    setActive(book);setPage(Math.max(0,Math.min(book.lastPage||0,book.pages.length-1)));setTab("reader");setError("");
+  };
+  useEffect(()=>{
+    if("speechSynthesis" in window)window.speechSynthesis.cancel();
+    setSpeaking(false);setSpeechPaused(false);
+  },[tab,page,active?.id]);
+  useEffect(()=>{
+    if(tab!=="reader"||!active||!isDemoBook(active))return;
+    const saved=getDemoBooks();
+    const original=saved.find(book=>book.id===active.id);
+    if(!original||original.lastPage===page)return;
+    saveDemoBooks(saved.map(book=>book.id===active.id?{...book,lastPage:page}:book));
+    setBooks(previous=>previous.map(book=>book.id===active.id?{...book,lastPage:page}:book));
+  },[page,active?.id,tab]);
+  const toggleFavorite=()=>{
+    if(!active||!isDemoBook(active))return;
+    const favorite=!active.favorite;
+    const saved=getDemoBooks();
+    saveDemoBooks(saved.map(book=>book.id===active.id?{...book,favorite}:book));
+    setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
+    setActive(prev=>prev?{...prev,favorite}:null);
+  };
+  const speakPage=()=>{
+    if(!active||!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){
+      setError(t.noVoice);return;
+    }
+    const engine=window.speechSynthesis;
+    if(speaking){
+      if(speechPaused){engine.resume();setSpeechPaused(false);}
+      else{engine.pause();setSpeechPaused(true);}
+      return;
+    }
+    engine.cancel();
+    setError("");
+    const utterance=new SpeechSynthesisUtterance(active.pages[page].text);
+    utterance.lang=({ru:"ru-RU",uz:"uz-UZ",en:"en-US"} as const)[active.language||storyLang];
+    utterance.rate=0.86;
+    utterance.onend=()=>{setSpeaking(false);setSpeechPaused(false);};
+    utterance.onerror=()=>{setSpeaking(false);setSpeechPaused(false);};
+    setSpeaking(true);setSpeechPaused(false);
+    engine.speak(utterance);
+  };
+  const stopSpeech=()=>{
+    if("speechSynthesis" in window)window.speechSynthesis.cancel();
+    setSpeaking(false);setSpeechPaused(false);
+  };
   const generate=async(e:React.FormEvent)=>{
     e.preventDefault();setError("");setBusy(true);
     try{
-      const form=new FormData();form.append("name",name);form.append("age",age);form.append("theme",theme);form.append("style",style);form.append("prompt",prompt);form.append("language",storyLang);form.append("parental_consent",String(consent));if(photo)form.append("photo",photo);
-      if(!onlineApi){const book=createDemoBook(name,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
+      const form=new FormData();form.append("name",name);form.append("other_heroes",secondHero.trim());form.append("age",age);form.append("theme",theme);form.append("style",style);form.append("prompt",prompt);form.append("language",storyLang);form.append("parental_consent",String(consent));if(photo)form.append("photo",photo);
+      if(!onlineApi){const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);setBooks(previous=>[book,...previous]);openBook(book);return;}
       const response=await fetch(API+"/api/books",{method:"POST",body:form});
       if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(typeof data.detail==="string"?data.detail :t.generateError);}
       const book:Book=await response.json();setBooks(previous=>[book,...previous]);openBook(book);
@@ -124,6 +174,7 @@ function App(){
         <div className="wizard-progress" aria-label="Create story"><span className="progress-step active"><span>1</span>{t.heroStep}</span><span className="progress-line"/><span className="progress-step"><span>2</span>{t.storyStep}</span><span className="progress-line"/><span className="progress-step"><span>3</span>{t.createBook}</span></div><form onSubmit={generate} className="form-card">
           <div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
+          <label className="second-hero-field">{t.extraHero}<input maxLength={45} value={secondHero} onChange={e=>setSecondHero(e.target.value)} placeholder={t.extraHeroHint}/></label>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
           <div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
           <div className="classic-choice"><button type="button" className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
@@ -141,10 +192,14 @@ function App(){
           <button className="primary-button full" disabled={busy||!consent} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button>
         </form>
       </section>}
-      {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}<button className="primary-button add-book" onClick={()=>setTab("create")}><Plus size={18}/> {t.newStory}</button>{error&&<p className="error">{error}</p>}{books.length?<div className="book-grid">{books.map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{t.empty}</h3><p>{t.emptyDesc}</p></div>}</section>}
+      {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}<button className="primary-button add-book" onClick={()=>setTab("create")}><Plus size={18}/> {t.newStory}</button>{error&&<p className="error">{error}</p>}
+        {books.length>0&&<div className="library-filters" role="group"><button type="button" className={!favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(false)}>{t.allBooks}</button><button type="button" className={favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(true)}><Heart size={15}/>{t.favorites}</button></div>}
+        {(favoritesOnly?books.filter(book=>book.favorite):books).length?<div className="book-grid">{(favoritesOnly?books.filter(book=>book.favorite):books).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{favoritesOnly?t.noFavorites:t.empty}</h3><p>{favoritesOnly?"":t.emptyDesc}</p></div>}</section>}
       {tab==="reader"&&active&&<section className="reader-page">
-        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions">{isDemoBook(active)?<button className="icon-button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>:<a className="icon-button" href={API+"/api/books/"+active.id+"/pdf"} title={t.downloadPdf}><Download size={19}/></a>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
+        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions">{isDemoBook(active)?<button className="icon-button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>:<a className="icon-button" href={API+"/api/books/"+active.id+"/pdf"} title={t.downloadPdf}><Download size={19}/></a>}{isDemoBook(active)&&<button className="icon-button" onClick={toggleFavorite} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
+        {error&&<p className="error" role="alert">{error}</p>}
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
+        <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         <div className="story-page"><div className="story-page-image"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<article className="print-book" aria-hidden="true">
           <div className="print-book-cover"><img src={active.pages[0].image_url} alt=""/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
@@ -178,7 +233,7 @@ function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()
  </button>;
 }
 function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
-  return <button className="book-tile" onClick={open}><img src={isDemoBook(book)?book.pages[0].image_url:API+book.pages[0].image_url} alt={labels[lang].cover}/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small></span></button>;
+  return <button className="book-tile" onClick={open}><img src={isDemoBook(book)?book.pages[0].image_url:API+book.pages[0].image_url} alt={labels[lang].cover}/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>{(book.lastPage||0)>0&&<small className="read-progress">{labels[lang].continueReading}: {labels[lang].page} {(book.lastPage||0)+1}</small>}{book.favorite&&<span className="book-favorite-badge"><Heart size={14} fill="currentColor"/></span>}</span></button>;
 }
 createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
 
