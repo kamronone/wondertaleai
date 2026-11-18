@@ -82,7 +82,13 @@ const classicBeats:Record<ClassicId,Record<Lang,[string,string,string,string]>>=
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  const classic=classics.find(c=>c.id===id);
  if(!classic)throw Error("Unknown classic");
- const beats=classicBeats[id][language];
+ const beats=classicBeats[id]?.[language] ?? (
+   language==="ru"
+    ? ["попал в историю «"+classic.title.ru+"»","оказался в приключении: "+classic.summary.ru.toLowerCase(),"помог сказочным друзьям решить загадку","вместе с друзьями отпраздновал счастливое завершение"]
+    : language==="uz"
+    ? ["«"+classic.title.uz+"» ertagiga tushib qoldi","sarguzashtni boshladi: "+classic.summary.uz.toLowerCase(),"ertakdagi do‘stlariga jumboqni yechishda yordam berdi","do‘stlari bilan quvonchli yakunni nishonladi"]
+    : ["entered the story of "+classic.title.en,"began an adventure: "+classic.summary.en.toLowerCase(),"helped the fairy tale friends solve a puzzle","celebrated the happy ending with new friends"]
+ );
  const title=classic.title[language];
  if(language==="ru") return {title:name+" и сказка «"+title+"»",pages:[
  "Однажды "+name+" открыл волшебную книгу. На её страницах сияла знакомая сказка «"+title+"».",
