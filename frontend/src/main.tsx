@@ -76,14 +76,14 @@ function App(){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [usePersonalAi,setUsePersonalAi]=useState(false);
-  const fetchBooks=async()=>{setBooks([...getDemoBooks(),...remoteBooks]);};
+
   // API health alone never authorizes uploading a child photo or generating a story.
   // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
   const loginParent=async(token:string):Promise<boolean>=>{
     if(!API||!await validateSession(API,token))return false;
     try{
       const remote=await loadPrivateBooks(API,token);
-      setPrivateToken(token);setRemoteBooks(remote);setBooks([...getDemoBooks(),...remote]);setSyncMessage("");
+      setPrivateToken(token);setRemoteBooks(remote);setBooks(remote);setSyncMessage("");
       return true;
     }catch{return false;}
   };
@@ -98,7 +98,7 @@ function App(){
     try{
       const report=await transferLocalBooks(API,privateToken,getDemoBooks());
       setRemoteBooks(report.serverBooks);
-      setBooks([...getDemoBooks(),...report.serverBooks]);
+      setBooks(report.serverBooks);
       setSyncMessage(({ru:"Перенесено: ",uz:"Ko‘chirildi: ",en:"Transferred: "}[lang])+report.uploaded+
         (report.failed?" · "+({ru:"Ошибок: ",uz:"Xatolar: ",en:"Failed: "}[lang])+report.failed:""));
     }catch{
@@ -118,7 +118,7 @@ function App(){
     const offset=pageElement.getBoundingClientRect().top+window.scrollY-12;
     window.scrollTo({top:Math.max(0,offset),left:0,behavior:"instant"});
   },[page,tab,active?.id]);
-  useEffect(()=>{setBooks(getDemoBooks());},[]);
+  useEffect(()=>{if(!privateToken)setBooks(getDemoBooks());},[privateToken]);
   const openBook=(book:Book)=>{
     setEditingPage(false);setActive(book);setPage(Math.max(0,Math.min(book.lastPage||0,book.pages.length-1)));setTab("reader");setError("");
   };
@@ -271,7 +271,7 @@ function App(){
         const refreshed=await loadPrivateBooks(API,privateToken);
         const newBook=refreshed.find(book=>book.id===result.id);
         setRemoteBooks(refreshed);
-        setBooks([...getDemoBooks(),...refreshed]);
+        setBooks(refreshed);
         if(!newBook)throw new Error(t.generateError);
         openBook(newBook);
         return;
