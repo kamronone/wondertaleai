@@ -1,6 +1,6 @@
 """Email identity verification utilities. No email addresses or tokens are logged.
 
-The secure API must be privately hosted with an SMTP provider configured.
+The secure API requires a trusted SMTP provider using port 465 (SSL) or 587 (STARTTLS).
 The frontend static Vercel preview MUST NOT receive these credentials.
 """
 import hashlib
@@ -49,7 +49,22 @@ def send_account_email(to:str,token:str,kind:str)->None:
     msg["Subject"]=subject
     msg.set_content(body)
     host=os.environ["SMTP_HOST"]
-    port=int(os.getenv("SMTP_PORT","465"))
-    with smtplib.SMTP_SSL(host,port,timeout=10) as smtp:
-        smtp.login(os.environ["SMTP_USERNAME"],os.environ["SMTP_PASSWORD"])
-        smtp.send_message(msg)
+    try:
+        port=int(os.getenv("SMTP_PORT","465"))
+    except ValueError as exc:
+        raise RuntimeError("Invalid SMTP port") from exc
+    if port==465:
+        # Implicit TLS is established before any SMTP credentials are sent.
+        with smtplib.SMTP_SSL(host,port,timeout=10) as smtp:
+            smtp.login(os.environ["SMTP_USERNAME"],os.environ["SMTP_PASSWORD"])
+            smtp.send_message(msg)
+    elif port==587:
+        # Require STARTTLS before authentication. Never allow plaintext SMTP.
+        with smtplib.SMTP(host,port,timeout=10) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.ehlo()
+            smtp.login(os.environ["SMTP_USERNAME"],os.environ["SMTP_PASSWORD"])
+            smtp.send_message(msg)
+    else:
+        raise RuntimeError("Supported SMTP ports are 465 (SSL) and 587 (STARTTLS)")
