@@ -26,7 +26,21 @@ from email_auth import verification_required, mail_configured, new_code, digest_
 SECRET = os.getenv("AUTH_SECRET", "")
 if len(SECRET) < 32:
     raise RuntimeError("AUTH_SECRET must be set to a random 32+ character secret")
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./secure_dev.sqlite3")
+# Vercel Neon installs prefixed secrets; never expose these to Vite.
+DATABASE_URL = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("WONDERTALE_DB_DATABASE_URL")
+    or os.getenv("WONDERTALE_DB_POSTGRES_URL")
+)
+APP_ENV = os.getenv("APP_ENV", "development").lower()
+if not DATABASE_URL:
+    if APP_ENV in ("production", "preview", "staging"):
+        raise RuntimeError("A dedicated WonderTale PostgreSQL DATABASE_URL is required")
+    DATABASE_URL = "sqlite:///./secure_dev.sqlite3"
+if APP_ENV in ("production", "preview", "staging") and not (
+    DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")
+):
+    raise RuntimeError("Production and preview must use dedicated PostgreSQL")
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
 IS_PG = DATABASE_URL.startswith("postgresql://")
