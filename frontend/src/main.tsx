@@ -9,7 +9,7 @@ import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
 import { AccountAction } from "./AccountAction";
 import { ParentAccount } from "./ParentAccount";
-import { loadPrivateBooks, transferLocalBooks, validateSession, type RemoteBook } from "./private_library";
+import { loadPrivateBooks, transferLocalBooks, validateSession, updatePrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 
 type Page={number:number;text:string;image_url:string};
@@ -135,13 +135,33 @@ function App(){
     saveDemoBooks(saved.map(book=>book.id===active.id?{...book,lastPage:page}:book));
     setBooks(previous=>previous.map(book=>book.id===active.id?{...book,lastPage:page}:book));
   },[page,active?.id,tab]);
-  const toggleFavorite=()=>{
-    if(!active||!isDemoBook(active))return;
-    const favorite=!active.favorite;
-    const saved=getDemoBooks();
-    saveDemoBooks(saved.map(book=>book.id===active.id?{...book,favorite}:book));
-    setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
-    setActive(prev=>prev?{...prev,favorite}:null);
+  useEffect(()=>{
+    if(tab!=="reader"||!active||isDemoBook(active)||!privateToken||!API)return;
+    const bookId=active.id;
+    // Never update local reading state as synchronized until the authenticated API confirms it.
+    void updatePrivateReadingProgress(API,privateToken,bookId,page).then(()=>{
+      setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
+      setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
+    }).catch(()=>{ /* Retain the previous persisted position when offline. */ });
+  },[page,tab,active?.id,privateToken]);
+  const toggleFavorite=async()=>{
+    if(!active)return;
+    if(isDemoBook(active)){
+      const favorite=!active.favorite;
+      const saved=getDemoBooks();
+      saveDemoBooks(saved.map(book=>book.id===active.id?{...book,favorite}:book));
+      setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
+      setActive(prev=>prev?{...prev,favorite}:null);
+      return;
+    }
+    if(!privateToken||!API)return;
+    try{
+      const favorite=await updatePrivateFavorite(API,privateToken,active.id);
+      setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
+      setRemoteBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
+      setActive(prev=>prev?{...prev,favorite}:null);
+      setError("");
+    }catch{setError(t.genericError);}
   };
   const speakPage=()=>{
     if(!active||!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){
@@ -285,7 +305,7 @@ function App(){
         {books.length>0&&<div className="library-filters" role="group"><button type="button" className={!favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(false)}>{t.allBooks}</button><button type="button" className={favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(true)}><Heart size={15}/>{t.favorites}</button></div>}
         {(favoritesOnly?books.filter(book=>book.favorite):books).length?<div className="book-grid">{(favoritesOnly?books.filter(book=>book.favorite):books).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{favoritesOnly?t.noFavorites:t.empty}</h3><p>{favoritesOnly?"":t.emptyDesc}</p></div>}</section>}
       {tab==="reader"&&active&&<section className="reader-page">
-        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions">{isDemoBook(active)?<button className="icon-button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>:<a className="icon-button" href={API+"/api/books/"+active.id+"/pdf"} title={t.downloadPdf}><Download size={19}/></a>}{isDemoBook(active)&&<button className="icon-button" onClick={toggleFavorite} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
+        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions">{isDemoBook(active)?<button className="icon-button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>:<a className="icon-button" href={API+"/api/books/"+active.id+"/pdf"} title={t.downloadPdf}><Download size={19}/></a>}{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
         {error&&<p className="error" role="alert">{error}</p>}
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
