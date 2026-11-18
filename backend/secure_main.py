@@ -372,12 +372,26 @@ def books(owner:str=Depends(current_parent)):
         rows=sql(c,"SELECT id,title,child_name,age,story,created_at FROM books WHERE owner_id=? ORDER BY created_at DESC LIMIT 100",(owner,)).fetchall()
     return [{"id":r[0],"title":r[1],"child_name":r[2],"age":r[3],"story":r[4],"created_at":r[5]} for r in rows]
 
+MAX_BOOKS_PER_PARENT=100
+
 @app.post("/api/books",status_code=201)
 def create_book(body:BookIn,owner:str=Depends(current_parent)):
+    # Keep uploads deterministic and limited. This endpoint accepts only story text,
+    # never photo blobs, URLs, or arbitrarily large HTML documents.
+    if not body.title.strip() or not body.child_name.strip() or not body.story.strip():
+        raise HTTPException(422,"Book title, child name, and story must not be blank")
     book_id=str(uuid.uuid4())
     created=datetime.now(timezone.utc).isoformat()
     with connection() as c:
-        sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(book_id,owner,body.title,body.child_name,body.age,body.story,created))
+        # A single guarded INSERT avoids check-then-insert races on PostgreSQL.
+        row=sql(c,
+            "INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) "
+            "SELECT ?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM books WHERE owner_id=?)<? "
+            "RETURNING id",
+            (book_id,owner,body.title.strip(),body.child_name.strip(),body.age,body.story,created,owner,MAX_BOOKS_PER_PARENT)
+        ).fetchone()
+        if row is None:
+            raise HTTPException(409,"Library limit reached")
         c.commit()
     return {"id":book_id,"created_at":created}
 
