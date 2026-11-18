@@ -79,6 +79,40 @@ const classicBeats:Record<ClassicId,Record<Lang,[string,string,string,string]>>=
  uz:["eshak, it, mushuk va xo‘rozni uchratdi","do‘stlarga quvnoq qo‘shiq o‘ylab topishda yordam berdi","konsert uchun musiqa asboblarini tayyorladi","do‘stlari bilan tomoshabinlar oldida kuyladi"],
  en:["met a donkey, dog, cat, and rooster","helped the friends compose a joyful song","gathered musical instruments for a concert","performed with friends for a delighted audience"]}
 };
+// Longer original prose for the interactive preview; still a DEMO, not a complete literary edition.
+const sceneDetail:Record<Lang,string[]>={
+ ru:[
+ "На обложке сияли золотые звёзды, а в воздухе пахло свежими цветами. Казалось, что чудо вот-вот произойдёт.",
+ "Вокруг шелестели деревья, и кто-то приветливо махнул рукой. Герой огляделся и понял, что ему здесь рады.",
+ "Вместо спешки друзья остановились, познакомились и договорились помогать друг другу. Теперь они были настоящей командой.",
+ "Даже маленькое доброе дело оказалось важным. Каждый помог так, как умел, и путь стал намного легче.",
+ "Сначала задача казалась сложной, но никто не потерял надежду. Они прислушались друг к другу и нашли новую идею.",
+ "Друзья вместе улыбнулись: у каждой загадки есть решение, если действовать честно и спокойно. От этого приключение стало ещё интереснее.",
+ "На празднике звучали смех и добрые слова. Все поняли, что самое ценное в этой истории — дружба.",
+ "Перед сном герой вспомнил самые яркие моменты путешествия. Волшебная история навсегда осталась в его сердце."
+ ],
+ uz:[
+ "Kitob muqovasida oltin yulduzlar porlardi, havodan gullarning xushbo‘y isi kelardi. Go‘yo mo‘jiza boshlanayotgandek edi.",
+ "Atrofdagi daraxtlar ohista shivirlardi, kimdir esa quvonib qo‘l silkitdi. Qahramon bu olamda uni kutishganini sezdi.",
+ "Do‘stlar shoshilmadi, bir-biri bilan tanishib, hamkorlik qilishga kelishib olishdi. Ular endi haqiqiy jamoa edi.",
+ "Hatto kichkina yaxshilik ham muhim bo‘lib chiqdi. Har kim qo‘lidan kelgancha yordam berdi.",
+ "Avvaliga vazifa qiyin tuyuldi, ammo hech kim umidini yo‘qotmadi. Ular bir-birini tinglab, yangi fikr topishdi.",
+ "Do‘stlar birgalikda kulishdi: halollik va sabr bilan har qanday jumboq yechilishi mumkin. Sarguzasht yanada qiziqarli bo‘ldi.",
+ "Bayramda kulgu va samimiy so‘zlar yangradi. Hamma bu hikoyaning eng katta boyligi do‘stlik ekanini tushundi.",
+ "Uyqu oldidan qahramon sarguzashtning eng go‘zal damlarini esladi. Sehrli ertak uning qalbida abadiy qoldi."
+ ],
+ en:[
+ "Golden stars shimmered on the book cover, and the air smelled of flowers. Something wonderful was about to begin.",
+ "The trees rustled softly, and a friendly stranger waved hello. Our hero could already tell this world was welcoming.",
+ "Instead of rushing, the friends introduced themselves and promised to help one another. They had become a wonderful team.",
+ "Even a small act of kindness made a difference. Everyone offered what they could, and the journey felt easier.",
+ "The task seemed difficult at first, but no one lost hope. They listened to one another and came up with a new idea.",
+ "The friends smiled together: every puzzle can be solved with honesty and patience. The adventure grew more exciting.",
+ "Warm laughter and kind words filled the celebration. Everyone knew friendship was the most precious treasure of all.",
+ "Before bed, our hero remembered the brightest moments of the journey. The magical story stayed in their heart forever."
+ ]
+};
+const enrich=(story:Story,lang:Lang):Story=>({...story,pages:story.pages.map((text,i)=>text+" "+sceneDetail[lang][i])});
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  const classic=classics.find(c=>c.id===id);
  if(!classic)throw Error("Unknown classic");
@@ -90,7 +124,7 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
     : ["entered the story of "+classic.title.en,"began an adventure: "+classic.summary.en.toLowerCase(),"helped the fairy tale friends solve a puzzle","celebrated the happy ending with new friends"]
  );
  const title=classic.title[language];
- if(language==="ru") return {title:name+" и сказка «"+title+"»",pages:[
+ if(language==="ru") return enrich({title:name+" и сказка «"+title+"»",pages:[
  "Однажды "+name+" открыл волшебную книгу. На её страницах сияла знакомая сказка «"+title+"».",
  "Книга тихонько зашептала, и "+name+" оказался прямо внутри этой истории.",
  name+" "+beats[0]+".",
@@ -99,8 +133,8 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  name+" "+beats[2]+". Доброта и смекалка помогли всем.",
  "В конце приключения "+name+" "+beats[3]+".",
  "Волшебная книга закрылась. "+name+" понял, что помогать друзьям можно в любой сказке."
- ]};
- if(language==="uz") return {title:name+" va «"+title+"» ertagi",pages:[
+ ]} , "ru");
+ if(language==="uz") return enrich({title:name+" va «"+title+"» ertagi",pages:[
  "Bir kuni "+name+" sehrli kitobni ochdi. Uning sahifalarida «"+title+"» ertagi porlab turardi.",
  "Kitob ohista shivirlagach, "+name+" ertak olamiga tushib qoldi.",
  name+" "+beats[0]+".",
@@ -109,8 +143,8 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  name+" "+beats[2]+". Mehr va aql yordam berdi.",
  "Sarguzasht oxirida "+name+" "+beats[3]+".",
  "Sehrli kitob yopildi. "+name+" do‘stlarga yordam berish eng katta mo‘jiza ekanini tushundi."
- ]};
- return {title:name+" in "+title,pages:[
+ ]} , "uz");
+ return enrich({title:name+" in "+title,pages:[
  "One day, "+name+" opened a magical book. Its pages glowed with the story of "+title+".",
  "The book whispered softly, and "+name+" stepped inside the fairy tale.",
  name+" "+beats[0]+".",
@@ -119,5 +153,5 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  name+" "+beats[2]+". Kindness and clever thinking helped everyone.",
  "At the end of the adventure, "+name+" "+beats[3]+".",
  "The magical book closed, and "+name+" learned that helping friends is a wonderful kind of magic."
- ]};
+ ]} , "en");
 }
