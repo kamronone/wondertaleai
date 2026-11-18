@@ -206,6 +206,23 @@ def list_sessions(owner:str=Depends(current_parent)):
         rows=sql(c,"SELECT id,issued_at,expires_at FROM sessions WHERE owner_id=? AND revoked=0 AND expires_at>? ORDER BY issued_at DESC",(owner,int(time.time()))).fetchall()
     return [{"id":row[0],"created_at":row[1],"expires_at":row[2]} for row in rows]
 
+class ChangePassword(BaseModel):
+    current_password: str=Field(min_length=12,max_length=128)
+    new_password: str=Field(min_length=12,max_length=128)
+
+@app.post("/api/auth/change-password",response_model=Token)
+def change_password(body:ChangePassword,owner:str=Depends(current_parent)):
+    if body.current_password==body.new_password:
+        raise HTTPException(400,"New password must differ from old password")
+    with connection() as c:
+        row=sql(c,"SELECT password_hash FROM parents WHERE id=?",(owner,)).fetchone()
+        if row is None or not password_matches(body.current_password,row[0]):
+            raise HTTPException(401,"Invalid current password")
+        sql(c,"UPDATE parents SET password_hash=? WHERE id=?",(password_hash(body.new_password),owner))
+        sql(c,"UPDATE sessions SET revoked=1 WHERE owner_id=?",(owner,))
+        c.commit()
+    return Token(access_token=make_token(owner))
+
 @app.get("/api/me")
 def me(owner: str=Depends(current_parent)):
     return {"id":owner}
