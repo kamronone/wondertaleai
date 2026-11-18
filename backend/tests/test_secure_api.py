@@ -52,7 +52,7 @@ def test_login_and_tampered_token():
     assert client.get("/api/me",headers=headers(token)).status_code==200
     tampered=token[:-2]+("ab" if token[-2:]!="ab" else "cd")
     assert client.get("/api/me",headers=headers(tampered)).status_code==401
-    assert client.post("/api/auth/login",json={"email":"parent-c@example.com","password":"not-my-password"}).status_code==422
+    assert client.post("/api/auth/login",json={"email":"parent-c@example.com","password":"not-my-password"}).status_code==401
 
 
 def test_registration_is_disabled_by_default(monkeypatch):
@@ -174,7 +174,7 @@ def test_book_favorites_and_progress_belong_to_parent():
     assert client.get("/api/books/progress",headers=headers(a)).json()[0]["page"]==2
     assert client.post("/api/books/"+bid+"/favorite",headers=headers(a)).json()["favorite"] is False
     assert client.delete("/api/books/"+bid,headers=headers(a)).status_code==204
-    assert client.get("/api/books/favorites",headers=headers(a)).json()==[]
+    assert client.get("/api/books/favorites",headers=headers(a)).json()=={"ids":[]}
     assert client.get("/api/books/progress",headers=headers(a)).json()==[]
 
 
