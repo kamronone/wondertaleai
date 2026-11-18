@@ -454,3 +454,18 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
 .sequel-action:focus-visible{outline:3px solid #d7aaf4;outline-offset:3px}
 @media(max-width:620px){.sequel-action{width:calc(100% - 28px);margin:14px}}
 @media print{.sequel-action{display:none!important}}
+
+/* Family account email confirmation / recovery, only active with a configured private API. */
+.account-action-page{min-height:100dvh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 48% 12%,#634ba4,#281951 65%,#1c133d);padding:24px 16px;box-sizing:border-box}
+.account-action-card{width:100%;max-width:460px;box-sizing:border-box;background:#fff;border:1px solid #ecdff2;border-radius:24px;padding:29px 25px;box-shadow:0 24px 65px #10051a69;text-align:center}
+.account-action-card>img{border-radius:18px}
+.account-action-card h1{color:#432968;font-size:25px;line-height:1.2;margin:15px 0 9px}
+.account-action-card>p{color:#7b6b8a;font-size:13px;line-height:1.6;margin:0 0 19px}
+.account-action-card form{display:grid;gap:15px;text-align:left}
+.account-action-card label{display:grid;gap:8px;color:#51316d;font-size:13px;font-weight:700}
+.account-action-card input{box-sizing:border-box;min-height:49px;border:1px solid #d9c8eb;border-radius:12px;padding:10px 13px;width:100%;font-size:15px;color:#3d285a;background:#fff}
+.account-action-card .primary-button{width:100%;min-height:48px;justify-content:center}
+.account-action-back{display:inline-flex;margin:15px auto 0;padding:9px 15px;min-height:42px;align-items:center;background:transparent;color:#7b4ab2;border:0;font-size:13px;font-weight:800}
+.account-action-notice,.account-action-success{background:#fff4ee;border:1px solid #f0d8c8;color:#79563b;border-radius:12px;padding:12px;font-size:12px;line-height:1.5}
+.account-action-success{background:#f4fff5;border-color:#b8dabc;color:#32683e}
+@media(max-width:620px){.account-action-card{padding:22px 18px;border-radius:19px}.account-action-card h1{font-size:22px}}
