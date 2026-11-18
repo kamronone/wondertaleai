@@ -319,3 +319,12 @@ The backend now validates structurally correct sender email identity and HTTPS s
 - `ENABLE_REGISTRATION=false`, `ENABLE_TEXT_AI=false`, and Vercel Authentication for all API deployment targets remain intact. Public parent login is **not enabled**.
 - The actual Resend inbox delivery has **not** been tested: the user has not provided or selected an authorized destination email. The sandbox sender `onboarding@resend.dev` typically only sends to the account owner, subject to the provider's current restrictions.
 - Before releasing parent registration, run a controlled one-message real-delivery test to the user's own Resend-registered address, verify sender/domain policy, CORS, abuse limits, token single-use, and browser login flow. Never echo or put email credentials in the frontend.
+
+
+## Resend one-off smoke test — 2026-11-18
+
+- Confirmed private Vercel Preview has Sensitive `RESEND_API_KEY`, Sensitive `MAIL_FROM`, canonical `PUBLIC_APP_ORIGIN`, and registration still disabled.
+- For the explicitly supplied account-owner inbox only, made **one** email delivery attempt via a short-lived, Vercel-Authentication-protected temporary Preview route (not committed to the repository). The email contained only a harmless smoke-test message, without token or child data.
+- Resend HTTPS API **rejected the request with HTTP 403**, so **no accepted or delivered email can be claimed**. The exact reason was deliberately not logged. Possible causes include Resend sandbox recipient restrictions, invalid sending identity or key permissions; inspect Resend's own email/API logs to identify the actual error.
+- The temporary route was removed by redeploying the unmodified repository app as `dpl_5NaLY5sHNeTJvuzeX7y9mCDZsxkY` (READY). Verified `GET /api/ready` returned HTTP 200 and `{"ok":true,"database":"connected","email_configured":true}`, and `/api/internal/mail-smoke-20261118` returned HTTP 404 on the current deployment. An immutable previous deployment retains a one-use guard keyed in the isolated Neon preview database; the temporary endpoint is not in the current app or GitHub.
+- No public registration, provider authentication, main branch or user data was changed. Do not enable accounts until Resend returns an accepted send and the inbox delivery is verified.
