@@ -55,6 +55,8 @@ def init_schema():
     with connection() as c:
         sql(c, "CREATE TABLE IF NOT EXISTS parents (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TEXT NOT NULL)")
         sql(c, "CREATE TABLE IF NOT EXISTS books (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, title TEXT NOT NULL, child_name TEXT NOT NULL, age INTEGER NOT NULL, story TEXT NOT NULL, created_at TEXT NOT NULL)")
+        sql(c, "CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, issued_at TEXT NOT NULL, expires_at INTEGER NOT NULL, revoked INTEGER NOT NULL DEFAULT 0)")
+        sql(c, "CREATE INDEX IF NOT EXISTS sessions_owner_idx ON sessions(owner_id)")
         sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
         c.commit()
@@ -95,7 +97,12 @@ def password_matches(password: str, hashed: str):
         return False
 
 def make_token(parent_id: str):
-    payload=encode(json.dumps({"sub":parent_id,"exp":int(time.time())+3600*12},separators=(",",":")).encode())
+    expiry=int(time.time())+3600*12
+    session_id=str(uuid.uuid4())
+    with connection() as c:
+        sql(c,"INSERT INTO sessions(id,owner_id,issued_at,expires_at,revoked) VALUES(?,?,?,?,0)",(session_id,parent_id,datetime.now(timezone.utc).isoformat(),expiry))
+        c.commit()
+    payload=encode(json.dumps({"sub":parent_id,"sid":session_id,"exp":expiry},separators=(",",":")).encode())
     signature=encode(hmac.new(SECRET.encode(),payload.encode(),hashlib.sha256).digest())
     return payload+"."+signature
 
@@ -109,11 +116,11 @@ def current_parent(authorization: str | None=Header(default=None)):
         if not hmac.compare_digest(signature,expected):
             raise ValueError("signature")
         data=json.loads(decode(payload))
-        if int(data["exp"])<=int(time.time()) or not re.fullmatch(r"[0-9a-f-]{36}",data["sub"]):
-            raise ValueError("expired")
+        if int(data["exp"])<=int(time.time()) or not re.fullmatch(r"[0-9a-f-]{36}",data["sub"]) or not re.fullmatch(r"[0-9a-f-]{36}",data["sid"]):
+            raise ValueError("expired or invalid session")
         with connection() as c:
-            row=sql(c,"SELECT id FROM parents WHERE id=?",(data["sub"],)).fetchone()
-        if row is None:raise ValueError("not found")
+            row=sql(c,"SELECT owner_id FROM sessions WHERE id=? AND owner_id=? AND revoked=0 AND expires_at>?",(data["sid"],data["sub"],int(time.time()))).fetchone()
+        if row is None:raise ValueError("session revoked or not found")
         return row[0]
     except (ValueError,TypeError,KeyError,OverflowError,UnicodeDecodeError,binascii.Error,json.JSONDecodeError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Invalid or expired token")
@@ -172,6 +179,32 @@ def login(body:Credentials):
         raise HTTPException(401,"Invalid email or password")
     _clear_login_failures(email)
     return Token(access_token=make_token(row[0]))
+
+def _authenticated_session(authorization:str|None):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401,"Authentication required")
+    current_parent(authorization)
+    payload=authorization[7:].split(".",1)[0]
+    return json.loads(decode(payload))["sid"]
+
+@app.post("/api/auth/logout",status_code=204)
+def logout(owner:str=Depends(current_parent),authorization:str|None=Header(default=None)):
+    sid=_authenticated_session(authorization)
+    with connection() as c:
+        sql(c,"UPDATE sessions SET revoked=1 WHERE id=? AND owner_id=?",(sid,owner))
+        c.commit()
+
+@app.post("/api/auth/logout-all",status_code=204)
+def logout_all(owner:str=Depends(current_parent)):
+    with connection() as c:
+        sql(c,"UPDATE sessions SET revoked=1 WHERE owner_id=?",(owner,))
+        c.commit()
+
+@app.get("/api/auth/sessions")
+def list_sessions(owner:str=Depends(current_parent)):
+    with connection() as c:
+        rows=sql(c,"SELECT id,issued_at,expires_at FROM sessions WHERE owner_id=? AND revoked=0 AND expires_at>? ORDER BY issued_at DESC",(owner,int(time.time()))).fetchall()
+    return [{"id":row[0],"created_at":row[1],"expires_at":row[2]} for row in rows]
 
 @app.get("/api/me")
 def me(owner: str=Depends(current_parent)):
