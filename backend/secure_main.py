@@ -535,10 +535,31 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         raise HTTPException(502,"Unable to generate this story. Please try later.")
     bid=str(uuid.uuid4())
     now=datetime.now(timezone.utc).isoformat()
+    # The private library expects objects with number/text/image_url, not raw strings.
+    # Do not imply that custom AI illustrations exist until a private image pipeline ships.
+    story_document={
+        "version": 1,
+        "source_id": bid,
+        "language": generated.language,
+        "theme": body.classic_title,
+        "style": body.style,
+        "prompt": body.idea,
+        "pages": [
+            {"number": index + 1, "text": text, "image_url": ""}
+            for index, text in enumerate(generated.pages)
+        ],
+    }
     with connection() as c:
-        sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps({"language":generated.language,"pages":generated.pages},ensure_ascii=False),now))
+        if IS_PG:
+            sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        current_count=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
+        if current_count>=MAX_BOOKS_PER_PARENT:
+            raise HTTPException(409,"Library limit reached")
+        sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps(story_document,ensure_ascii=False),now))
         c.commit()
-    return {"id":bid,"title":generated.title,"language":generated.language,"pages":generated.pages,"created_at":now}
+    return {"id":bid,"title":generated.title,"language":generated.language,"pages":story_document["pages"],"created_at":now}
 
 @app.delete("/api/me",status_code=204)
 def delete_account(owner:str=Depends(current_parent)):
