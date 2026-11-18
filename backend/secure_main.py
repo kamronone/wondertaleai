@@ -149,6 +149,8 @@ def _clear_login_failures(email:str)->None:
 
 @app.post("/api/auth/register",response_model=Token,status_code=201)
 def register(body:Credentials):
+    if os.getenv("ENABLE_REGISTRATION","false").lower()!="true":
+        raise HTTPException(503,"Registration is not enabled")
     email=str(body.email).lower()
     uid=str(uuid.uuid4())
     with connection() as c:
@@ -218,10 +220,19 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         raise HTTPException(503,"AI generation is not enabled")
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(503,"AI provider is not configured")
+    # Until verified parent email accounts ship, access requires a manually
+    # authorized pilot email (the token alone does not grant paid AI access).
+    allowed={x.strip().lower() for x in os.getenv("AI_ALLOWED_EMAILS","").split(",") if x.strip()}
+    with connection() as c:
+        parent=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
+    if not parent or parent[0].lower() not in allowed:
+        raise HTTPException(403,"AI access is not enabled for this account")
     today=datetime.now(timezone.utc).date().isoformat()
     # Global spending ceiling is separate from the per-parent quota.
     # The value is deliberately conservative until usage and billing are monitored.
     daily_cap=max(0,min(200,int(os.getenv("MAX_AI_STORIES_PER_DAY","10"))))
+    if daily_cap==0:
+        raise HTTPException(503,"AI generation is temporarily unavailable")
     with connection() as c:
         if not IS_PG:
             c.execute("BEGIN IMMEDIATE")
