@@ -15,6 +15,7 @@ import { endings, storyPresets, type EndingId } from "./story_interactions";
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
+const bookImage=(url:string)=>url.startsWith("/images/")?url:API+url;
 
 function App(){
   const [accountAction,setAccountAction]=useState<{kind:"verify"|"recover";token:string}|null>(()=>{
@@ -288,7 +289,7 @@ function App(){
         {error&&<p className="error" role="alert">{error}</p>}
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
-        <div className="story-page"><div className="story-page-image"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
+        <div className="story-page"><div className="story-page-image"><img src={bookImage(active.pages[page].image_url)} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
             <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
@@ -331,7 +332,7 @@ function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()
  </button>;
 }
 function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
-  return <button className="book-tile" onClick={open}><img src={isDemoBook(book)?book.pages[0].image_url:API+book.pages[0].image_url} alt={labels[lang].cover}/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>{(book.lastPage||0)>0&&<small className="read-progress">{labels[lang].continueReading}: {labels[lang].page} {(book.lastPage||0)+1}</small>}{book.favorite&&<span className="book-favorite-badge"><Heart size={14} fill="currentColor"/></span>}</span></button>;
+  return <button className="book-tile" onClick={open}><img src={bookImage(book.pages[0].image_url)} alt={labels[lang].cover}/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>{(book.lastPage||0)>0&&<small className="read-progress">{labels[lang].continueReading}: {labels[lang].page} {(book.lastPage||0)+1}</small>}{book.favorite&&<span className="book-favorite-badge"><Heart size={14} fill="currentColor"/></span>}</span></button>;
 }
 createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
 
