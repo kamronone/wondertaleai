@@ -48,6 +48,16 @@ app = FastAPI(title="WonderTale Secure API", docs_url=None, redoc_url=None)
 origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,allow_methods=["GET","POST","DELETE"],allow_headers=["Authorization","Content-Type"])
 
+@app.middleware("http")
+async def protect_private_responses(request, call_next):
+    """Prevent private books, sessions and account responses from being cached."""
+    response=await call_next(request)
+    if request.url.path.startswith(("/api/books", "/api/auth", "/api/me", "/api/children")):
+        response.headers["Cache-Control"]="private, no-store"
+        response.headers["Pragma"]="no-cache"
+        response.headers["X-Content-Type-Options"]="nosniff"
+    return response
+
 @contextmanager
 def connection():
     if IS_PG:
@@ -132,6 +142,9 @@ def current_parent(authorization: str | None=Header(default=None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Authentication required")
     token=authorization[7:]
+    # Signed sessions are small; reject oversized values before decoding and hashing.
+    if not token or len(token)>4096 or not token.isascii():
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Invalid or expired token")
     try:
         payload,signature=token.split(".")
         expected=encode(hmac.new(SECRET.encode(),payload.encode(),hashlib.sha256).digest())
