@@ -33,7 +33,8 @@ def api(tmp_path, monkeypatch):
             (parent_id, "parent@test.invalid", "not-a-real-password-hash", "2026-01-01"),
         )
         conn.commit()
-    module.app.dependency_overrides[module.current_parent] = lambda: parent_id
+    token = module.make_token(parent_id)
+    headers = {"Authorization": "Bearer " + token}
 
     class FakeStory:
         title = "The Friendly Star"
@@ -41,20 +42,20 @@ def api(tmp_path, monkeypatch):
         pages = ["A gentle story about a friendly star." * 4] * 8
 
     monkeypatch.setattr(module, "generate_story", lambda _input: FakeStory())
-    yield TestClient(module.app), module, parent_id
-    module.app.dependency_overrides.clear()
+    yield TestClient(module.app), module, parent_id, headers
     sys.modules.pop("secure_main", None)
 
 
 def test_generated_pages_are_readable_by_private_library(api):
-    client, module, parent_id = api
+    client, module, parent_id, headers = api
     response = client.post(
         "/api/books/generate",
+        headers=headers,
         json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
     )
     assert response.status_code == 201, response.text
     book_id = response.json()["id"]
-    listed = client.get("/api/books")
+    listed = client.get("/api/books", headers=headers)
     assert listed.status_code == 200
     books = listed.json()
     book = next(book for book in books if book["id"] == book_id)
@@ -69,20 +70,22 @@ def test_generated_pages_are_readable_by_private_library(api):
 
 
 def test_generation_respects_parent_library_limit(api, monkeypatch):
-    client, module, parent_id = api
+    client, module, parent_id, headers = api
     monkeypatch.setattr(module, "MAX_BOOKS_PER_PARENT", 0)
     response = client.post(
         "/api/books/generate",
+        headers=headers,
         json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
     )
     assert response.status_code == 409
-    assert client.get("/api/books").json() == []
+    assert client.get("/api/books", headers=headers).json() == []
 
 
 def test_generated_book_is_invisible_to_another_parent(api):
-    client, module, first_parent = api
+    client, module, first_parent, headers = api
     generated = client.post(
         "/api/books/generate",
+        headers=headers,
         json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
     )
     assert generated.status_code == 201
@@ -95,9 +98,12 @@ def test_generated_book_is_invisible_to_another_parent(api):
             (second_parent, "other@test.invalid", "not-a-real-password-hash", "2026-01-01"),
         )
         conn.commit()
-    module.app.dependency_overrides[module.current_parent] = lambda: second_parent
-    assert client.get("/api/books").json() == []
-    assert client.get("/api/books/" + book_id).status_code == 404
-    assert client.delete("/api/books/" + book_id).status_code == 404
-    assert client.post("/api/books/" + book_id + "/favorite").status_code == 404
-    assert client.post("/api/books/" + book_id + "/progress", json={"page": 1}).status_code == 404
+    second_headers = {"Authorization": "Bearer " + module.make_token(second_parent)}
+    assert client.get("/api/books", headers=second_headers).json() == []
+    assert client.get("/api/books/" + book_id, headers=second_headers).status_code == 404
+    assert client.delete("/api/books/" + book_id, headers=second_headers).status_code == 404
+    assert client.post("/api/books/" + book_id + "/favorite", headers=second_headers).status_code == 404
+    assert client.post("/api/books/" + book_id + "/progress", headers=second_headers, json={"page": 1}).status_code == 404
+    # The original parent still sees the saved story after another parent is denied.
+    assert client.get("/api/books/" + book_id, headers=headers).status_code == 200
+    assert client.get("/api/books", headers={"Authorization": "Bearer invalid"}).status_code == 401
