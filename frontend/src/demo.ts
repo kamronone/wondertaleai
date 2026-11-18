@@ -39,14 +39,14 @@ const demoStories:Record<Lang,(name:string,theme:string,prompt:string)=>{title:s
  "Вернувшись домой, герой понял: смелость и доброта превращают обычный день в сказку."
  ]}),
  uz:(name,theme,prompt)=>({title:name+" va sehrli yulduz",pages:[
- "Bir kuni "+name+" deraza yonida yordamga muhtoj kichkina yulduzni ko‘rib qoldi.",
- "Yulduz «"+theme+"» olamidagi kamalakning barcha ranglari yo‘qolganini aytib berdi.",
- name+" quvnoq tulkicha bilan yo‘lga chiqdi. Ularni ajoyib sarguzasht kutardi.",
- "Do‘stlar sehrli daraxtga boradigan yo‘lni ko‘rsatgan mehribon ajdarni uchratishdi.",
- "Qahramon o‘z orzusini esladi: "+prompt.trim().replace(/[.!?]+$/,"")+".",
- "Birgalikda ular nur sochib turgan gullar orasidan kichkina kalitni topishdi.",
- name+" kalitni burdi va olam yana ranglar, qo‘shiqlar hamda tabassumlarga to‘ldi.",
- "Uyga qaytgan qahramon jasorat va mehr oddiy kunni ham ertakka aylantirishini tushundi."
+ "Bir kuni "+name+" deraza yonida yordamga muhtoj kiçkina yulduzni körib qoldi.",
+ "Yulduz «"+theme+"» olamidagi kamalakning barça ranglari yöqolganini aytib berdi.",
+ name+" quvnoq tulkiça bilan yölga çiqdi. Ularni ajoyib sarguzaşt kutardi.",
+ "Döstlar sehrli daraxtga boradigan yölni körsatgan mehribon ajdarni uçratişdi.",
+ "Qahramon öz orzusini esladi: "+prompt.trim().replace(/[.!?]+$/,"")+".",
+ "Birgalikda ular nur soçib turgan gullar orasidan kiçkina kalitni topişdi.",
+ name+" kalitni burdi va olam yana ranglar, qöşiqlar hamda tabassumlarga töldi.",
+ "Uyga qaytgan qahramon jasorat va mehr oddiy kunni ham ertakka aylantirişini tuşundi."
  ]}),
  en:(name,theme,prompt)=>({title:name+" and the Magic Star",pages:[
  "One day, "+name+" spotted a little star outside the window. It needed help.",
@@ -72,27 +72,27 @@ type Story={title:string;pages:string[]};
 const classicBeats:Record<ClassicId,Record<Lang,[string,string,string,string]>>={
  "red-hood":{
  ru:["встретил Красную Шапочку на лесной тропинке","понёс вместе с ней пирожки бабушке","помог не поверить хитрым словам волка","встретил бабушку и устроил семейное чаепитие"],
- uz:["o‘rmon yo‘lida Qizil qalpoqchani uchratdi","u bilan buvisiga shirinlik olib bordi","ayyor bo‘rining gaplariga aldanmadi","buvijon bilan quvonchli choy ichdi"],
+ uz:["örmon yölida Qizil qalpoqçani uçratdi","u bilan buvisiga şirinlik olib bordi","ayyor börining gaplariga aldanmadi","buvijon bilan quvonçli çoy içdi"],
  en:["met Little Red Riding Hood on a forest path","helped carry treats to Grandma","noticed the wolf's misleading directions","enjoyed a happy tea party with Grandma"]},
  "cinderella":{
  ru:["познакомился с доброй Золушкой","помог украсить её платье звёздочками","увидел великолепный дворец и танцевальный зал","нашёл потерянную туфельку и вернул её подруге"],
- uz:["mehribon Zolushka bilan tanishdi","uning ko‘ylagini yulduzchalar bilan bezadi","ajoyib saroy va raqs zalini ko‘rdi","yo‘qolgan tuflichani topib do‘stiga qaytardi"],
+ uz:["mehribon Zoluşka bilan tanişdi","uning köylagini yulduzçalar bilan bezadi","ajoyib saroy va raqs zalini kördi","yöqolgan tufliçani topib döstiga qaytardi"],
  en:["met kind Cinderella","helped decorate her dress with stars","visited the beautiful palace ballroom","found the lost slipper and returned it to a friend"]},
  "three-pigs":{
  ru:["подружился с тремя поросятами","вместе с ними собирал кирпичи и строил уютный дом","придумал умный способ защитить домик от сильного ветра","пригласил волка поговорить по-доброму"],
- uz:["uchta cho‘chqacha bilan do‘stlashdi","ular bilan g‘isht yig‘ib qulay uy qurdi","uyni kuchli shamoldan asrash usulini topdi","bo‘rini do‘stona suhbatga taklif qildi"],
+ uz:["uçta çöçqaça bilan döstlaşdi","ular bilan ğişt yiğib qulay uy qurdi","uyni kuçli şamoldan asraş usulini topdi","börini döstona suhbatga taklif qildi"],
  en:["befriended three little pigs","collected bricks and built a cozy house together","found a clever way to make it strong against wind","invited the wolf to talk peacefully"]},
  "snow-white":{
  ru:["встретил Белоснежку в лесу","помог семерым друзьям навести порядок в домике","собрал корзинку вкусных лесных ягод","устроил праздник дружбы с Белоснежкой"],
- uz:["o‘rmonda Oppog‘oyni uchratdi","yetti do‘stga uyni yig‘ishtirishda yordam berdi","o‘rmon mevalaridan savat to‘ldirdi","Oppog‘oy bilan do‘stlik bayramini uyushtirdi"],
+ uz:["örmonda Oppoğoyni uçratdi","yetti döstga uyni yiğiştirişda yordam berdi","örmon mevalaridan savat töldirdi","Oppoğoy bilan döstlik bayramini uyuştirdi"],
  en:["met Snow White in the forest","helped seven friends tidy their cozy cottage","collected a basket of delicious berries","celebrated friendship with Snow White"]},
  "ugly-duckling":{
  ru:["увидел грустного утёнка у пруда","помог ему познакомиться с другими птицами","напомнил ему, что каждый по-своему прекрасен","увидел, как утёнок вырос в прекрасного лебедя"],
- uz:["ko‘l yonida xafa o‘rdakchani ko‘rdi","unga boshqa qushlar bilan do‘stlashishda yordam berdi","har kim o‘ziga xos go‘zal ekanini eslatdi","o‘rdakcha chiroyli oqqushga aylanganini ko‘rdi"],
+ uz:["köl yonida xafa ördakçani kördi","unga boşqa quşlar bilan döstlaşişda yordam berdi","har kim öziga xos gözal ekanini eslatdi","ördakça çiroyli oqquşga aylanganini kördi"],
  en:["met a sad duckling by a pond","helped it make friends with other birds","reminded it that everyone is beautiful in their own way","watched the duckling grow into a graceful swan"]},
  "bremen":{
  ru:["встретил осла, собаку, кота и петуха","помог друзьям придумать весёлую песню","собрал музыкальные инструменты для концерта","выступил с друзьями перед благодарными слушателями"],
- uz:["eshak, it, mushuk va xo‘rozni uchratdi","do‘stlarga quvnoq qo‘shiq o‘ylab topishda yordam berdi","konsert uchun musiqa asboblarini tayyorladi","do‘stlari bilan tomoshabinlar oldida kuyladi"],
+ uz:["eşak, it, muşuk va xörozni uçratdi","döstlarga quvnoq qöşiq öylab topişda yordam berdi","konsert uçun musiqa asboblarini tayyorladi","döstlari bilan tomoşabinlar oldida kuyladi"],
  en:["met a donkey, dog, cat, and rooster","helped the friends compose a joyful song","gathered musical instruments for a concert","performed with friends for a delighted audience"]}
 };
 // Longer original prose for the interactive preview; still a DEMO, not a complete literary edition.
@@ -108,14 +108,14 @@ const sceneDetail:Record<Lang,string[]>={
  "Перед сном герой вспомнил самые яркие моменты путешествия. Волшебная история навсегда осталась в его сердце."
  ],
  uz:[
- "Kitob muqovasida oltin yulduzlar porlardi, havodan gullarning xushbo‘y isi kelardi. Go‘yo mo‘jiza boshlanayotgandek edi.",
- "Atrofdagi daraxtlar ohista shivirlardi, kimdir esa quvonib qo‘l silkitdi. Qahramon bu olamda uni kutishganini sezdi.",
- "Do‘stlar shoshilmadi, bir-biri bilan tanishib, hamkorlik qilishga kelishib olishdi. Ular endi haqiqiy jamoa edi.",
- "Hatto kichkina yaxshilik ham muhim bo‘lib chiqdi. Har kim qo‘lidan kelgancha yordam berdi.",
- "Avvaliga vazifa qiyin tuyuldi, ammo hech kim umidini yo‘qotmadi. Ular bir-birini tinglab, yangi fikr topishdi.",
- "Do‘stlar birgalikda kulishdi: halollik va sabr bilan har qanday jumboq yechilishi mumkin. Sarguzasht yanada qiziqarli bo‘ldi.",
- "Bayramda kulgu va samimiy so‘zlar yangradi. Hamma bu hikoyaning eng katta boyligi do‘stlik ekanini tushundi.",
- "Uyqu oldidan qahramon sarguzashtning eng go‘zal damlarini esladi. Sehrli ertak uning qalbida abadiy qoldi."
+ "Kitob muqovasida oltin yulduzlar porlardi, havodan gullarning xuşböy isi kelardi. Göyo möjiza boşlanayotgandek edi.",
+ "Atrofdagi daraxtlar ohista şivirlardi, kimdir esa quvonib qöl silkitdi. Qahramon bu olamda uni kutişganini sezdi.",
+ "Döstlar şoşilmadi, bir-biri bilan tanişib, hamkorlik qilişga kelişib olişdi. Ular endi haqiqiy jamoa edi.",
+ "Hatto kiçkina yaxşilik ham muhim bölib çiqdi. Har kim qölidan kelgança yordam berdi.",
+ "Avvaliga vazifa qiyin tuyuldi, ammo heç kim umidini yöqotmadi. Ular bir-birini tinglab, yangi fikr topişdi.",
+ "Döstlar birgalikda kulişdi: halollik va sabr bilan har qanday jumboq yeçilişi mumkin. Sarguzaşt yanada qiziqarli böldi.",
+ "Bayramda kulgu va samimiy sözlar yangradi. Hamma bu hikoyaning eng katta boyligi döstlik ekanini tuşundi.",
+ "Uyqu oldidan qahramon sarguzaştning eng gözal damlarini esladi. Sehrli ertak uning qalbida abadiy qoldi."
  ],
  en:[
  "Golden stars shimmered on the book cover, and the air smelled of flowers. Something wonderful was about to begin.",
@@ -188,15 +188,15 @@ export const createDemoSequel=(previous:DemoBook):DemoBook=>{
     "В благодарность сад подарил каждому сияющее семечко. Друзья договорились посадить их дома и заботиться о маленьких чудесах.",
     "Вернувшись домой, "+hero+" улыбнулся: волшебство живёт не только в сказочных замках, но и в простых добрых поступках. А значит, впереди ещё много историй."
    ]},
-   uz:{suffix:" — yangi sarguzasht",pages:[
-    "Ertasi kuni "+hero+" uyg‘onib, sehrli hikoya hali tugamaganini sezdi. Deraza yonida kumush qo‘ng‘iroqcha ohista jaranglardi.",
-    "Deraza tokchasida eski do‘stlardan maktub bor edi. Ular "+hero+"ni har kecha ajib chiroqlar yonadigan vodiyga taklif qilishgan edi.",
-    "Qahramon kichik sumkasini olib, tanish yo‘ldan ketdi. Yo‘l ayrilishida gapiradigan tulkicha uni kutib turardi.",
-    "Vodiyda do‘stlar rangli toshlardan qurilgan ko‘prikni topishdi. Har bir tosh faqat yaxshi so‘z eshitganda yorishardi.",
-    hero+" oldingi sarguzashtni eslab, do‘stlardan bir-birlariga minnatdorlik bildirishni so‘radi. Ko‘prik oy nuridan ham yorqin porladi.",
-    "Narigi qirg‘oqda yulduzli daraxtlar o‘sadigan bog‘ bor edi. Bir niholga g‘amxo‘rlik va ozgina suv kerak edi.",
-    "Bog‘ minnatdorlik belgisi sifatida hammaga nurli urug‘ sovg‘a qildi. Do‘stlar ularni uyda ekishga kelishishdi.",
-    "Uyiga qaytgan "+hero+" jilmaydi: mo‘jiza faqat qasrlarda emas, oddiy yaxshiliklarda ham yashaydi. Demak, oldinda yana ko‘p ertaklar bor."
+   uz:{suffix:" — yangi sarguzaşt",pages:[
+    "Ertasi kuni "+hero+" uyğonib, sehrli hikoya hali tugamaganini sezdi. Deraza yonida kumuş qönğiroqça ohista jaranglardi.",
+    "Deraza tokçasida eski döstlardan maktub bor edi. Ular "+hero+"ni har keça ajib çiroqlar yonadigan vodiyga taklif qilişgan edi.",
+    "Qahramon kiçik sumkasini olib, taniş yöldan ketdi. Yöl ayrilişida gapiradigan tulkiça uni kutib turardi.",
+    "Vodiyda döstlar rangli toşlardan qurilgan köprikni topişdi. Har bir toş faqat yaxşi söz eşitganda yorişardi.",
+    hero+" oldingi sarguzaştni eslab, döstlardan bir-birlariga minnatdorlik bildirişni söradi. Köprik oy nuridan ham yorqin porladi.",
+    "Narigi qirğoqda yulduzli daraxtlar ösadigan bog‘ bor edi. Bir niholga ğamxörlik va ozgina suv kerak edi.",
+    "Bog‘ minnatdorlik belgisi sifatida hammaga nurli urug‘ sovğa qildi. Döstlar ularni uyda ekişga kelişişdi.",
+    "Uyiga qaytgan "+hero+" jilmaydi: möjiza faqat qasrlarda emas, oddiy yaxşiliklarda ham yaşaydi. Demak, oldinda yana köp ertaklar bor."
    ]},
    en:{suffix:" — a New Adventure",pages:[
     "The next morning, "+hero+" woke up feeling that the magical story was not quite finished. A silver bell chimed softly by the window.",
