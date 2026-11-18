@@ -269,3 +269,14 @@ The scenarios cover:
 Neon SQL counts verified after the tests: `parents=0`, `books=0`, `sessions=0`, `children=0`, `book_favorites=0`, `reading_progress=0`, `email_action_tokens=0`. No real users or children's photos participated.
 
 Backend tests are now verified across SQLite (33 passed) and dedicated Neon PostgreSQL (7 passed), but no live SMTP or real account frontend E2E test was performed. Remaining release gate: configure a verified email delivery provider, integrate protected API access with the public app, and test the full user flow.
+
+
+## Email onboarding polish — 2026-11-18
+
+- SMTP delivery supports **TLS-only** modes: port `465` via `smtplib.SMTP_SSL` and port `587` via `SMTP.starttls()` *before* authenticating. Port 25 and invalid values fail closed; no unencrypted fallback was added.
+- `frontend/src/ParentAccount.tsx` now distinguishes unverified login (`403`) and presents a localized **resend confirmation email** action in RU/UZ/EN. Following registration, the parent can request another link. Server-side limits still apply: no more than one email per 120 seconds for a known parent/purpose and no more than ten in a day; unknown addresses receive the same generic acknowledgement.
+- Regression coverage was extended for SMTP STARTTLS, plaintext port rejection, invalid SMTP configuration, and email-verification resend throttling.
+- Vercel Sandbox pytest: **37 passed, one non-failing deprecation warning** (`pytest -q tests` on local SQLite + mocks).
+- Updated protected FastAPI Preview: `dpl_GetiYohKTgJpj27rZCyoKDn3Zsa6`, `READY`, and `GET /api/ready` returned `200 {"ok":true,"database":"connected"}` against the isolated WonderTale Neon branch.
+- Updated public static Vite Preview: `dpl_FVx2pXx4kdRCjcmeNXegeRHSHDHM`, `READY`, TypeScript/Vite build passed; existing demo app and 30 classic covers remain.
+- No SMTP host, username, password, sender domain, or verified delivery service is configured on `wondertaleai-api-preview`. `ENABLE_REGISTRATION=false`, `ENABLE_TEXT_AI=false`, and full Vercel Authentication remain enforced. Do **not** expose signup to the public frontend until a sending provider, abuse-protection review, and actual email delivery checks are completed.
