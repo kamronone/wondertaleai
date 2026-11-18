@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2 } from "lucide-react";
+import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2 } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
 import { createDemoBook, getDemoBooks, saveDemoBooks, isDemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
+import { classics, type ClassicId, type Classic } from "./classics";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string};
@@ -28,6 +29,10 @@ function App(){
   const [styleIndex,setStyleIndex]=useState(0);
   const style=styles[styleIndex];
   const [prompt,setPrompt]=useState("");
+  const [classicId,setClassicId]=useState<ClassicId|null>(null);
+  const activeClassic=classics.find(x=>x.id===classicId);
+  const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);setTab("create");};
+  const changeStoryLanguage=(next:Lang)=>{setStoryLang(next);if(activeClassic)setPrompt(activeClassic.prompt[next]);};
   const [photo,setPhoto]=useState<File|null>(null);
   const [consent,setConsent]=useState(false);
   const [busy,setBusy]=useState(false);
@@ -42,7 +47,7 @@ function App(){
     e.preventDefault();setError("");setBusy(true);
     try{
       const form=new FormData();form.append("name",name);form.append("age",age);form.append("theme",theme);form.append("style",style);form.append("prompt",prompt);form.append("language",storyLang);form.append("parental_consent",String(consent));if(photo)form.append("photo",photo);
-      if(!onlineApi){const book=createDemoBook(name,Number(age),theme,style,prompt,storyLang);setBooks(previous=>[book,...previous]);openBook(book);return;}
+      if(!onlineApi){const book=createDemoBook(name,Number(age),theme,style,prompt,storyLang,classicId||undefined);setBooks(previous=>[book,...previous]);openBook(book);return;}
       const response=await fetch(API+"/api/books",{method:"POST",body:form});
       if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(typeof data.detail==="string"?data.detail :t.generateError);}
       const book:Book=await response.json();setBooks(previous=>[book,...previous]);openBook(book);
@@ -67,7 +72,12 @@ function App(){
           <button className="primary-button" onClick={()=>setTab("create")}><WandSparkles size={19}/> {t.create} <ArrowRight size={18}/></button>
           </div>
         </div>
-        <div className="quick-actions"><button type="button" onClick={()=>setTab("create")}><span className="quick-icon"><BookOpen size={22}/></span><strong>{t.create}</strong><ArrowRight size={16}/></button><button type="button" onClick={()=>setTab("library")}><span className="quick-icon"><Library size={22}/></span><strong>{t.library}</strong><ArrowRight size={16}/></button><div className="quick-coming"><span className="quick-icon"><PlayCircle size={22}/></span><strong>{t.cartoons}</strong><span className="mini-soon">{t.soon}</span></div></div><div className="features"><article><span>📷</span><h3>{t.recognizable}</h3><p>{t.recognizableDesc}</p></article><article><span>✨</span><h3>{t.anyStory}</h3><p>{t.anyStoryDesc}</p></article><article><span>📚</span><h3>{t.realBook}</h3><p>{t.realBookDesc}</p></article></div>
+        <div className="quick-actions"><button type="button" onClick={()=>setTab("create")}><span className="quick-icon"><BookOpen size={22}/></span><strong>{t.create}</strong><ArrowRight size={16}/></button><button type="button" onClick={()=>setTab("library")}><span className="quick-icon"><Library size={22}/></span><strong>{t.library}</strong><ArrowRight size={16}/></button><div className="quick-coming"><span className="quick-icon"><PlayCircle size={22}/></span><strong>{t.cartoons}</strong><span className="mini-soon">{t.soon}</span></div></div>
+        <section className="classic-section">
+          <div className="section-head"><div><span className="section-eyebrow">✦ WonderTale</span><h2>{t.classicsTitle}</h2><p className="classic-intro">{t.classicsDesc}</p></div></div>
+          <div className="classic-grid">{classics.map(item=><ClassicTile key={item.id} item={item} lang={lang} onPick={()=>pickClassic(item.id)} action={t.classicSelect}/>)}</div>
+        </section>
+        <div className="features"><article><span>📷</span><h3>{t.recognizable}</h3><p>{t.recognizableDesc}</p></article><article><span>✨</span><h3>{t.anyStory}</h3><p>{t.anyStoryDesc}</p></article><article><span>📚</span><h3>{t.realBook}</h3><p>{t.realBookDesc}</p></article></div>
         <div className="section-head"><div><span className="section-eyebrow">✦ WonderTale</span><h2>{t.shelf}</h2></div><button className="text-link" onClick={()=>setTab("library")}>{t.seeAll} <ArrowRight size={16}/></button></div>
         {books.length?<div className="book-grid">{books.slice(0,3).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={32}/><h3>{t.quiet}</h3><p>{t.quietDesc}</p><button className="secondary-button" onClick={()=>setTab("create")}>{t.firstBook}</button></div>}
       </>}
@@ -78,13 +88,15 @@ function App(){
           <div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
-          <div className="step-title next"><span>02</span><div><h3>{t.storyStep}</h3><p>{t.storyStepDesc}</p></div></div>
+          <div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
+          <div className="classic-choice"><button type="button" className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
+          {activeClassic&&<p className="classic-selected"><CheckCircle2 size={16}/> {t.classicSelected}: <strong>{activeClassic.title[lang]}</strong></p>}
           <label>{t.world}</label><div className="chips">{themes.map((x,i)=><button type="button" key={x} className={"chip "+(themeIndex===i?"selected":"")} onClick={()=>setThemeIndex(i)}>{x}</button>)}</div>
           <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
-          <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>setStoryLang(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
+          <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
-          {(mode==="demo"||mode==="browser-demo")&&<p className="notice">{t.demo}</p>}
+          {(mode==="demo"||mode==="browser-demo")&&<p className="notice">{activeClassic?t.classicDemo:t.demo}</p>}
           {error&&<p className="error" role="alert">{error}</p>}
           <button className="primary-button full" disabled={busy||!consent} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button>
         </form>
@@ -102,6 +114,13 @@ function App(){
     </main>
     <footer><Heart size={13} fill="currentColor"/> WonderTale AI · {t.footer}</footer>
   </div>;
+}
+function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
+ const Icon={forest:Trees,castle:Castle,houses:House,apple:Apple,swan:Bird,music:Music2}[item.icon];
+ return <button type="button" className={"classic-card classic-"+item.color} onClick={onPick} aria-label={action+": "+item.title[lang]}>
+   <span className="classic-cover"><span className="classic-halo"/><Icon size={72} strokeWidth={1.3}/><span className="classic-spark">✦</span></span>
+   <span className="classic-info"><strong>{item.title[lang]}</strong><small>{item.summary[lang]}</small><span className="classic-link">{action} <ArrowRight size={15}/></span></span>
+ </button>;
 }
 function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
   return <button className="book-tile" onClick={open}><img src={isDemoBook(book)?book.pages[0].image_url:API+book.pages[0].image_url} alt={labels[lang].cover}/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small></span></button>;
