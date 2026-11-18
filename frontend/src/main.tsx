@@ -85,6 +85,7 @@ function App(){
         <div className="story-page"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={"Иллюстрация страницы "+(page+1)} /><div className="story-text">{active.pages[page].text}</div></div>
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> Назад</button><span>{active.pages.map((_,i)=><button key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={"Страница "+(i+1)}/>)}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>Далее <ArrowRight size={18}/></button></div>
       </section>}
+      {tab==="home"&&<section className="install-panel"><div className="install-icon"><img src="/icons/icon.svg" alt="Логотип WonderTale AI"/></div><div><h3>Сказки всегда под рукой</h3><p>Установите WonderTale AI на экран телефона. На iPhone откройте сайт в Safari, нажмите «Поделиться», затем «На экран Домой». На Android откройте меню браузера и выберите «Установить приложение».</p></div></section>}
       <section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>AI-мультфильмы</h3><p>Следующая глава WonderTale: истории будут оживать.</p></div><span className="soon">Скоро</span></section>
     </main>
     <footer>Сделано с <Heart size={13} fill="currentColor"/> для маленьких мечтателей · WonderTale AI</footer>
@@ -94,3 +95,5 @@ function BookTile({book,open}:{book:Book;open:()=>void}){
   return <button className="book-tile" onClick={open}><img src={isDemoBook(book)?book.pages[0].image_url:API+book.pages[0].image_url} alt="Обложка сказки"/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} страниц</small></span></button>;
 }
 createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
+
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").catch(()=>{/* PWA remains usable online */});});}
