@@ -59,6 +59,10 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS sessions_owner_idx ON sessions(owner_id)")
         sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
+        sql(c, "CREATE TABLE IF NOT EXISTS children (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, nickname TEXT NOT NULL, age INTEGER NOT NULL, created_at TEXT NOT NULL)")
+        sql(c, "CREATE INDEX IF NOT EXISTS children_owner_idx ON children(owner_id)")
+        sql(c, "CREATE TABLE IF NOT EXISTS book_favorites (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, created_at TEXT NOT NULL, PRIMARY KEY(owner_id,book_id))")
+        sql(c, "CREATE TABLE IF NOT EXISTS reading_progress (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page INTEGER NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(owner_id,book_id))")
         c.commit()
 
 init_schema()
@@ -241,6 +245,88 @@ def create_book(body:BookIn,owner:str=Depends(current_parent)):
         sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(book_id,owner,body.title,body.child_name,body.age,body.story,created))
         c.commit()
     return {"id":book_id,"created_at":created}
+
+# Family profiles store a nickname and approximate age only. No photos or birth dates.
+class ChildIn(BaseModel):
+    nickname: str=Field(min_length=1,max_length=45)
+    age: int=Field(ge=2,le=14)
+
+@app.get("/api/children")
+def list_children(owner:str=Depends(current_parent)):
+    with connection() as c:
+        rows=sql(c,"SELECT id,nickname,age,created_at FROM children WHERE owner_id=? ORDER BY created_at DESC",(owner,)).fetchall()
+    return [{"id":r[0],"nickname":r[1],"age":r[2],"created_at":r[3]} for r in rows]
+
+@app.post("/api/children",status_code=201)
+def add_child(body:ChildIn,owner:str=Depends(current_parent)):
+    if not body.nickname.strip():
+        raise HTTPException(422,"Child nickname cannot be blank")
+    now=datetime.now(timezone.utc).isoformat()
+    cid=str(uuid.uuid4())
+    with connection() as c:
+        count=sql(c,"SELECT COUNT(*) FROM children WHERE owner_id=?",(owner,)).fetchone()[0]
+        if count>=5:
+            raise HTTPException(409,"Maximum five child profiles")
+        sql(c,"INSERT INTO children(id,owner_id,nickname,age,created_at) VALUES(?,?,?,?,?)",(cid,owner,body.nickname.strip(),body.age,now))
+        c.commit()
+    return {"id":cid,"nickname":body.nickname.strip(),"age":body.age,"created_at":now}
+
+@app.delete("/api/children/{child_id}",status_code=204)
+def remove_child(child_id:str,owner:str=Depends(current_parent)):
+    with connection() as c:
+        deleted=sql(c,"DELETE FROM children WHERE id=? AND owner_id=?",(child_id,owner))
+        if deleted.rowcount==0:
+            raise HTTPException(404,"Child profile not found")
+        c.commit()
+
+@app.get("/api/books/favorites")
+def list_favorites(owner:str=Depends(current_parent)):
+    with connection() as c:
+        rows=sql(c,"SELECT book_id FROM book_favorites WHERE owner_id=? ORDER BY created_at DESC",(owner,)).fetchall()
+    return {"ids":[r[0] for r in rows]}
+
+@app.post("/api/books/{book_id}/favorite")
+def toggle_favorite(book_id:str,owner:str=Depends(current_parent)):
+    with connection() as c:
+        if not sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone():
+            raise HTTPException(404,"Book not found")
+        existing=sql(c,"SELECT book_id FROM book_favorites WHERE owner_id=? AND book_id=?",(owner,book_id)).fetchone()
+        if existing:
+            sql(c,"DELETE FROM book_favorites WHERE owner_id=? AND book_id=?",(owner,book_id))
+            favorite=False
+        else:
+            sql(c,"INSERT INTO book_favorites(owner_id,book_id,created_at) VALUES(?,?,?)",(owner,book_id,datetime.now(timezone.utc).isoformat()))
+            favorite=True
+        c.commit()
+    return {"id":book_id,"favorite":favorite}
+
+class ProgressIn(BaseModel):
+    page: int=Field(ge=0,le=99)
+
+@app.get("/api/books/progress")
+def list_reading_progress(owner:str=Depends(current_parent)):
+    with connection() as c:
+        rows=sql(c,"SELECT book_id,page,updated_at FROM reading_progress WHERE owner_id=? ORDER BY updated_at DESC",(owner,)).fetchall()
+    return [{"book_id":r[0],"page":r[1],"updated_at":r[2]} for r in rows]
+
+@app.post("/api/books/{book_id}/progress")
+def save_reading_progress(book_id:str,body:ProgressIn,owner:str=Depends(current_parent)):
+    with connection() as c:
+        row=sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
+        if not row:
+            raise HTTPException(404,"Book not found")
+        # Guard against nonsensical page numbers when the story is stored as JSON.
+        try:
+            parsed=json.loads(row[0])
+            pages=parsed.get("pages") if isinstance(parsed,dict) else None
+            if isinstance(pages,list) and body.page>=len(pages):
+                raise HTTPException(422,"Page is outside the story")
+        except (json.JSONDecodeError,TypeError):
+            pass
+        now=datetime.now(timezone.utc).isoformat()
+        sql(c,"INSERT INTO reading_progress(owner_id,book_id,page,updated_at) VALUES(?,?,?,?) ON CONFLICT(owner_id,book_id) DO UPDATE SET page=excluded.page,updated_at=excluded.updated_at",(owner,book_id,body.page,now))
+        c.commit()
+    return {"book_id":book_id,"page":body.page,"updated_at":now}
 
 @app.get("/api/books/{book_id}")
 def read_book(book_id:str,owner:str=Depends(current_parent)):
