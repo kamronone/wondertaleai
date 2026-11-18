@@ -86,3 +86,14 @@ Additional controls in `backend/secure_main.py`:
 - Manually validated the new quota SQL on isolated in-memory SQLite.
 
 Important blockers **remain**: email confirmation and recovery, centralized IP/network abuse controls, account session management, private photo processing, asynchronous generation queue, storage, billing, secure deletion and jurisdictional/legal review for children's personal information. Do not deploy the secure API with `ENABLE_REGISTRATION=true` for the public.
+
+## November 18 — account sessions and Neon preparation
+
+- Added persistent session records for bearer tokens. Newly issued tokens contain a database-backed `sid`; revoked or expired sessions fail authorization. Legacy tokens without `sid` cease to work, intentionally requiring fresh login.
+- New account endpoints: `POST /api/auth/logout`, `POST /api/auth/logout-all`, `GET /api/auth/sessions`, and `POST /api/auth/change-password`. Changing passwords revokes all old sessions and creates a new token.
+- Added regression tests for session revocation, forged session identifiers and password change. Tests have not yet been run against the complete codebase.
+- Added `backend/migrations/001_private_foundation.sql`, a non-destructive, idempotent schema for a **dedicated** WonderTale PostgreSQL database. No existing Neon project has been modified.
+- Verified session create/read/revoke SQL on an isolated in-memory SQLite database, not against Neon.
+- **Neon provisioning blocker:** the Neon integration returned `action restricted; organization is managed by Vercel` when attempting to create a dedicated `wondertale-ai-private` project. Do not reuse another application's Neon project/database. Create a dedicated database via the owning Vercel-managed integration or attach an independent writable Neon organization before deployment.
+- Keep `ENABLE_REGISTRATION=false` and `ENABLE_TEXT_AI=false` until verified-email signup, global network abuse prevention, safe photo handling and private API hosting are validated.
+- No change to the public Vercel demo deployment was needed for these backend-only updates.
