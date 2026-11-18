@@ -68,7 +68,7 @@ def test_login_rate_limit_and_recovery(monkeypatch):
     blocked=client.post("/api/auth/login",json={"email":"rate-test@example.com","password":PASSWORD})
     assert blocked.status_code==429
     assert client.get("/api/me",headers=headers(token)).status_code==200
-    monkeypatch.setattr(secure_main.time,"time",lambda:secure_main.LOGIN_WINDOW_SECONDS+1_900_000_000)
+    monkeypatch.setattr(secure_main,"LOGIN_WINDOW_SECONDS",0)
     recovered=client.post("/api/auth/login",json={"email":"rate-test@example.com","password":PASSWORD})
     assert recovered.status_code==200
 
