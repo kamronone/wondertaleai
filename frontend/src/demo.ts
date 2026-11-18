@@ -1,6 +1,7 @@
 // Browser-only preview fallback. Photos never leave the browser in this mode.
 import type { Lang } from "./i18n";
-export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang};
+import { classics, type ClassicId } from "./classics";
+export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId};
 const key="wondertale-preview-books-v1";
 export const getDemoBooks=():DemoBook[]=>{try{return JSON.parse(sessionStorage.getItem(key)||"[]")}catch{return []}};
 export const saveDemoBooks=(books:DemoBook[])=>sessionStorage.setItem(key,JSON.stringify(books.slice(0,20)));
@@ -43,9 +44,74 @@ const demoStories:Record<Lang,(name:string,theme:string,prompt:string)=>{title:s
  "Back at home, the hero knew that courage and kindness can make any day magical."
  ]})
 };
-export const createDemoBook=(name:string,age:number,theme:string,style:string,prompt:string,language:Lang="ru"):DemoBook=>{
- const story=demoStories[language](name,theme,prompt);
+export const createDemoBook=(name:string,age:number,theme:string,style:string,prompt:string,language:Lang="ru",classicId?:ClassicId):DemoBook=>{
+ const classic=classics.find(x=>x.id===classicId);
+ const story=classic?makeClassicStory(classic.id,name,language):demoStories[language](name,theme,prompt);
  const book:DemoBook={id:"local-"+crypto.randomUUID(),created_at:new Date().toISOString(),name,age,theme,style,prompt,title:story.title,language,mode:"browser-demo",pages:story.pages.map((text,index)=>({number:index+1,text,image_url:illustration(index)}))};
  saveDemoBooks([book,...getDemoBooks()]);
  return book;
 };
+
+type Story={title:string;pages:string[]};
+const classicBeats:Record<ClassicId,Record<Lang,[string,string,string,string]>>={
+ "red-hood":{
+ ru:["встретил Красную Шапочку на лесной тропинке","понёс вместе с ней пирожки бабушке","помог не поверить хитрым словам волка","встретил бабушку и устроил семейное чаепитие"],
+ uz:["o‘rmon yo‘lida Qizil qalpoqchani uchratdi","u bilan buvisiga shirinlik olib bordi","ayyor bo‘rining gaplariga aldanmadi","buvijon bilan quvonchli choy ichdi"],
+ en:["met Little Red Riding Hood on a forest path","helped carry treats to Grandma","noticed the wolf's misleading directions","enjoyed a happy tea party with Grandma"]},
+ "cinderella":{
+ ru:["познакомился с доброй Золушкой","помог украсить её платье звёздочками","увидел великолепный дворец и танцевальный зал","нашёл потерянную туфельку и вернул её подруге"],
+ uz:["mehribon Zolushka bilan tanishdi","uning ko‘ylagini yulduzchalar bilan bezadi","ajoyib saroy va raqs zalini ko‘rdi","yo‘qolgan tuflichani topib do‘stiga qaytardi"],
+ en:["met kind Cinderella","helped decorate her dress with stars","visited the beautiful palace ballroom","found the lost slipper and returned it to a friend"]},
+ "three-pigs":{
+ ru:["подружился с тремя поросятами","вместе с ними собирал кирпичи и строил уютный дом","придумал умный способ защитить домик от сильного ветра","пригласил волка поговорить по-доброму"],
+ uz:["uchta cho‘chqacha bilan do‘stlashdi","ular bilan g‘isht yig‘ib qulay uy qurdi","uyni kuchli shamoldan asrash usulini topdi","bo‘rini do‘stona suhbatga taklif qildi"],
+ en:["befriended three little pigs","collected bricks and built a cozy house together","found a clever way to make it strong against wind","invited the wolf to talk peacefully"]},
+ "snow-white":{
+ ru:["встретил Белоснежку в лесу","помог семерым друзьям навести порядок в домике","собрал корзинку вкусных лесных ягод","устроил праздник дружбы с Белоснежкой"],
+ uz:["o‘rmonda Oppog‘oyni uchratdi","yetti do‘stga uyni yig‘ishtirishda yordam berdi","o‘rmon mevalaridan savat to‘ldirdi","Oppog‘oy bilan do‘stlik bayramini uyushtirdi"],
+ en:["met Snow White in the forest","helped seven friends tidy their cozy cottage","collected a basket of delicious berries","celebrated friendship with Snow White"]},
+ "ugly-duckling":{
+ ru:["увидел грустного утёнка у пруда","помог ему познакомиться с другими птицами","напомнил ему, что каждый по-своему прекрасен","увидел, как утёнок вырос в прекрасного лебедя"],
+ uz:["ko‘l yonida xafa o‘rdakchani ko‘rdi","unga boshqa qushlar bilan do‘stlashishda yordam berdi","har kim o‘ziga xos go‘zal ekanini eslatdi","o‘rdakcha chiroyli oqqushga aylanganini ko‘rdi"],
+ en:["met a sad duckling by a pond","helped it make friends with other birds","reminded it that everyone is beautiful in their own way","watched the duckling grow into a graceful swan"]},
+ "bremen":{
+ ru:["встретил осла, собаку, кота и петуха","помог друзьям придумать весёлую песню","собрал музыкальные инструменты для концерта","выступил с друзьями перед благодарными слушателями"],
+ uz:["eshak, it, mushuk va xo‘rozni uchratdi","do‘stlarga quvnoq qo‘shiq o‘ylab topishda yordam berdi","konsert uchun musiqa asboblarini tayyorladi","do‘stlari bilan tomoshabinlar oldida kuyladi"],
+ en:["met a donkey, dog, cat, and rooster","helped the friends compose a joyful song","gathered musical instruments for a concert","performed with friends for a delighted audience"]}
+};
+function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ const classic=classics.find(c=>c.id===id);
+ if(!classic)throw Error("Unknown classic");
+ const beats=classicBeats[id][language];
+ const title=classic.title[language];
+ if(language==="ru") return {title:name+" и сказка «"+title+"»",pages:[
+ "Однажды "+name+" открыл волшебную книгу. На её страницах сияла знакомая сказка «"+title+"».",
+ "Книга тихонько зашептала, и "+name+" оказался прямо внутри этой истории.",
+ name+" "+beats[0]+".",
+ "Впереди ждало важное дело: "+name+" "+beats[1]+".",
+ "На пути возникла небольшая трудность, но друзья решили не сдаваться.",
+ name+" "+beats[2]+". Доброта и смекалка помогли всем.",
+ "В конце приключения "+name+" "+beats[3]+".",
+ "Волшебная книга закрылась. "+name+" понял, что помогать друзьям можно в любой сказке."
+ ]};
+ if(language==="uz") return {title:name+" va «"+title+"» ertagi",pages:[
+ "Bir kuni "+name+" sehrli kitobni ochdi. Uning sahifalarida «"+title+"» ertagi porlab turardi.",
+ "Kitob ohista shivirlagach, "+name+" ertak olamiga tushib qoldi.",
+ name+" "+beats[0]+".",
+ "Oldinda muhim vazifa bor edi: "+name+" "+beats[1]+".",
+ "Yo‘lda kichkina qiyinchilik tug‘ildi, ammo do‘stlar taslim bo‘lishmadi.",
+ name+" "+beats[2]+". Mehr va aql yordam berdi.",
+ "Sarguzasht oxirida "+name+" "+beats[3]+".",
+ "Sehrli kitob yopildi. "+name+" do‘stlarga yordam berish eng katta mo‘jiza ekanini tushundi."
+ ]};
+ return {title:name+" in "+title,pages:[
+ "One day, "+name+" opened a magical book. Its pages glowed with the story of "+title+".",
+ "The book whispered softly, and "+name+" stepped inside the fairy tale.",
+ name+" "+beats[0]+".",
+ "A special task awaited: "+name+" "+beats[1]+".",
+ "A little challenge appeared, but the friends did not give up.",
+ name+" "+beats[2]+". Kindness and clever thinking helped everyone.",
+ "At the end of the adventure, "+name+" "+beats[3]+".",
+ "The magical book closed, and "+name+" learned that helping friends is a wonderful kind of magic."
+ ]};
+}
