@@ -46,3 +46,30 @@ def test_ai_adapter_uses_no_child_photo(monkeypatch):
     fake=SimpleNamespace(responses=FakeResponses())
     request=GenerateStoryInput(name="Amir",age=5,language="en",idea="A gentle journey to a hidden garden")
     assert len(generate_story(request,client=fake).pages)==8
+
+
+@pytest.mark.parametrize("pages",[8,12,20])
+def test_expected_book_lengths(pages):
+    payload=json.loads(valid_story("en"))
+    payload["pages"]=payload["pages"][:1]*pages
+    result=validate_generated_story(json.dumps(payload),"en",pages)
+    assert len(result.pages)==pages
+
+def test_wrong_page_count_rejected_for_requested_length():
+    with pytest.raises(ValueError):
+        validate_generated_story(valid_story("en"),"en",12)
+
+def test_multiple_heroes_and_requested_length_in_ai_prompt(monkeypatch):
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    class FakeResponses:
+        def create(self,**kwargs):
+            parsed=json.loads(kwargs["input"])
+            assert parsed["other_heroes"]==["Aliya","Omar"]
+            assert parsed["pages_count"]==12
+            assert kwargs["store"] is False
+            output=json.loads(valid_story("en"))
+            output["pages"]=output["pages"][:1]*12
+            return SimpleNamespace(output_text=json.dumps(output))
+    client=SimpleNamespace(responses=FakeResponses())
+    data=GenerateStoryInput(name="Amir",age=5,language="en",idea="A magical forest journey with friends",other_heroes=["Aliya","Omar"],pages_count=12)
+    assert len(generate_story(data,client=client).pages)==12
