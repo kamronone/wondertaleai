@@ -73,7 +73,7 @@ function App(){
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
   return <div className="shell">
     <header className="topbar">
-      <button className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon.svg" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
+      <button className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
       <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("library")}><Library size={17}/> <span>{t.library}</span></button></div>
     </header>
     <main>
@@ -131,7 +131,7 @@ function App(){
         <div className="story-page"><div className="story-page-image"><img src={isDemoBook(active)?active.pages[page].image_url:API+active.pages[page].image_url} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span>{active.pages.map((_,i)=><button key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)}/>)}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
-      {tab==="home"&&<section className="install-panel"><div className="install-icon"><img src="/icons/icon.svg" alt="WonderTale AI"/></div><div><h3>{t.installTitle}</h3><p>{t.installDesc}</p></div></section>}
+      {tab==="home"&&<section className="install-panel"><div className="install-icon"><img src="/icons/icon-192.png" alt="WonderTale AI"/></div><div><h3>{t.installTitle}</h3><p>{t.installDesc}</p></div></section>}
       <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={21}/><span>{t.backHome}</span></button><button type="button" className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={21}/><span>{t.library}</span></button><button type="button" className={tab==="create"?"active":""} onClick={()=>setTab("create")}><Plus size={22}/><span>{t.create}</span></button></nav>
       <section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>
     </main>
