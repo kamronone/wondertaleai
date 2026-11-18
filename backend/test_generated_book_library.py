@@ -270,3 +270,43 @@ def test_concurrent_child_creation_never_exceeds_family_limit(api):
     children = client.get("/api/children", headers=headers)
     assert children.status_code == 200
     assert len(children.json()) == 5
+
+
+def test_parent_registration_login_logout_and_private_story_flow(api, monkeypatch):
+    client, module, existing_parent, existing_headers = api
+    monkeypatch.setenv("ENABLE_REGISTRATION", "true")
+    monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION", "false")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS", "new-parent@test.invalid")
+
+    credentials = {"email": "new-parent@test.invalid", "password": "long-test-password-2026"}
+    registration = client.post("/api/auth/register", json=credentials)
+    assert registration.status_code == 201, registration.text
+    token = registration.json()["access_token"]
+    headers = {"Authorization": "Bearer " + token}
+
+    assert client.get("/api/me", headers=headers).status_code == 200
+    assert client.post("/api/auth/register", json=credentials).status_code == 409
+    assert client.post("/api/auth/login", json={**credentials, "password": "wrong-password-2026"}).status_code == 401
+
+    login = client.post("/api/auth/login", json=credentials)
+    assert login.status_code == 200, login.text
+    logged_in_headers = {"Authorization": "Bearer " + login.json()["access_token"]}
+
+    child = client.post("/api/children", headers=logged_in_headers, json={"nickname": "Sam", "age": 7})
+    assert child.status_code == 201, child.text
+    generated = client.post(
+        "/api/books/generate",
+        headers=logged_in_headers,
+        json={"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"},
+    )
+    assert generated.status_code == 201, generated.text
+    book_id = generated.json()["id"]
+    assert client.get("/api/books/" + book_id, headers=logged_in_headers).status_code == 200
+    assert client.get("/api/books", headers=existing_headers).json() == []
+    assert client.get("/api/children", headers=existing_headers).json() == []
+
+    logout = client.post("/api/auth/logout", headers=logged_in_headers)
+    assert logout.status_code == 204, logout.text
+    assert client.get("/api/me", headers=logged_in_headers).status_code == 401
+    # Logout revokes only the active session; the registration session remains valid.
+    assert client.get("/api/me", headers=headers).status_code == 200
