@@ -222,3 +222,51 @@ def test_child_profiles_are_private_and_limited_to_five(api):
     assert client.delete("/api/children/" + created[0], headers=headers).status_code == 204
     assert client.post("/api/children", headers=headers, json={"nickname": "New child", "age": 7}).status_code == 201
     assert len(client.get("/api/children", headers=headers).json()) == 5
+
+
+def test_parent_quota_denial_does_not_consume_global_capacity(api):
+    client, module, parent_id, headers = api
+    payload = {"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"}
+    for _ in range(2):
+        response = client.post("/api/books/generate", headers=headers, json=payload)
+        assert response.status_code == 201, response.text
+
+    denied = client.post("/api/books/generate", headers=headers, json=payload)
+    assert denied.status_code == 429
+    with module.connection() as conn:
+        global_used = module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_global_quota").fetchone()[0]
+        parent_used = module.sql(conn, "SELECT COALESCE(SUM(used),0) FROM generation_quota").fetchone()[0]
+    assert global_used == 2
+    assert parent_used == 2
+
+
+def test_database_readiness_and_authentication_boundaries(api):
+    client, module, parent_id, headers = api
+    readiness = client.get("/api/ready")
+    assert readiness.status_code == 200, readiness.text
+    assert readiness.json()["database"] == "connected"
+    assert client.get("/api/me").status_code == 401
+    assert client.get("/api/me", headers=headers).status_code == 200
+
+
+def test_concurrent_child_creation_never_exceeds_family_limit(api):
+    from concurrent.futures import ThreadPoolExecutor
+
+    client, module, parent_id, headers = api
+
+    def create_child(index):
+        response = client.post(
+            "/api/children",
+            headers=headers,
+            json={"nickname": f"Child {index}", "age": 7},
+        )
+        return response.status_code
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(create_child, range(12)))
+
+    assert results.count(201) == 5
+    assert results.count(409) == 7
+    children = client.get("/api/children", headers=headers)
+    assert children.status_code == 200
+    assert len(children.json()) == 5
