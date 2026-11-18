@@ -25,21 +25,22 @@ for (const path of paths) {
   }
 }
 const i18n = readFileSync(resolve(root, "src/i18n.ts"), "utf8");
-const uzStart = i18n.indexOf("\\n uz:{");
-const uzEnd = i18n.indexOf("\\n en:{", uzStart);
+const uzStart = i18n.indexOf(" uz:{");
+const uzEnd = i18n.indexOf(" en:{", uzStart);
 if (uzStart < 0 || uzEnd < 0) {
   problems.push("Could not locate Uzbek localization block");
 } else {
   const uzBlock = i18n.slice(uzStart, uzEnd);
-  const strings = [...uzBlock.matchAll(/"((?:\\\\.|[^"\\\\])*)"/g)];
-  for (const [, value] of strings) {
+  const strings = uzBlock.match(/"[^"]*"/g) || [];
+  for (const quoted of strings) {
+    const value = quoted.slice(1, -1);
     if (oldLetters.test(value) || oldDigraphs.test(value)) {
       problems.push(`Legacy Uzbek spelling in localization: ${value}`);
     }
   }
 }
 if (!i18n.includes('label:"Özbekça"')) problems.push("Language label must use Özbekça");
-if (!/saved==="ru"\\|\\|saved==="uz"\\|\\|saved==="en"\\?saved:"uz"/.test(i18n)) {
+if (!i18n.includes('saved==="en"?saved:"uz"')) {
   problems.push("New visitors must default to Uzbek without overriding saved preferences");
 }
 const main = readFileSync(resolve(root, "src/main.tsx"), "utf8");
