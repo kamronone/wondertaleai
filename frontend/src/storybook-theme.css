@@ -448,3 +448,9 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
 @media print{
  .story-edit-zone,.interactive-endings,.reader-audio-toolbar{display:none!important}
 }
+
+/* New chapter after the last page of a local demo book. */
+.sequel-action{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;margin:12px 0 20px;border:1px solid #d8b6e8;border-radius:14px;background:linear-gradient(110deg,#955ad1,#7047bc);color:#fff;font-size:13px;font-weight:800;box-shadow:0 7px 22px #7554b227}
+.sequel-action:focus-visible{outline:3px solid #d7aaf4;outline-offset:3px}
+@media(max-width:620px){.sequel-action{width:calc(100% - 28px);margin:14px}}
+@media print{.sequel-action{display:none!important}}
