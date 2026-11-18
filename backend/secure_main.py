@@ -426,6 +426,12 @@ def add_child(body:ChildIn,owner:str=Depends(current_parent)):
     now=datetime.now(timezone.utc).isoformat()
     cid=str(uuid.uuid4())
     with connection() as c:
+        # Serialize profile creation per parent: concurrent requests must not
+        # bypass the five-child limit by reading the same previous count.
+        if IS_PG:
+            sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+        else:
+            c.execute("BEGIN IMMEDIATE")
         count=sql(c,"SELECT COUNT(*) FROM children WHERE owner_id=?",(owner,)).fetchone()[0]
         if count>=5:
             raise HTTPException(409,"Maximum five child profiles")
