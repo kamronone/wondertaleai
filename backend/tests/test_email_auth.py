@@ -39,7 +39,7 @@ def test_links_use_https_and_no_external_network(monkeypatch):
     code=new_code()
     send_account_email("parent@example.com",code,"verify")
     assert len(messages)==1
-    assert "https://wondertale.example.com/verify-email?" in messages[0].get_content()
+    assert "https://wondertale.example.com/#verify=" in messages[0].get_content()
     assert code in messages[0].get_content()
     assert messages[0]["To"]=="parent@example.com"
 
