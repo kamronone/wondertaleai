@@ -582,16 +582,28 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             for index, text in enumerate(generated.pages)
         ],
     }
-    with connection() as c:
-        if IS_PG:
-            sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
-        else:
-            c.execute("BEGIN IMMEDIATE")
-        current_count=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
-        if current_count>=MAX_BOOKS_PER_PARENT:
-            raise HTTPException(409,"Library limit reached")
-        sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps(story_document,ensure_ascii=False),now))
-        c.commit()
+    try:
+        with connection() as c:
+            if IS_PG:
+                sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+            else:
+                c.execute("BEGIN IMMEDIATE")
+            current_count=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
+            if current_count>=MAX_BOOKS_PER_PARENT:
+                raise HTTPException(409,"Library limit reached")
+            sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps(story_document,ensure_ascii=False),now))
+            c.commit()
+    except Exception:
+        # A successfully generated story can still fail to save, for example
+        # when another request fills the library while the provider is running.
+        # Refund the reserved allowance only after the insert has rolled back.
+        with connection() as c:
+            if not IS_PG:
+                c.execute("BEGIN IMMEDIATE")
+            sql(c,"UPDATE generation_quota SET used=used-1 WHERE owner_id=? AND day=? AND used>0",(owner,today))
+            sql(c,"UPDATE generation_global_quota SET used=used-1 WHERE day=? AND used>0",(today,))
+            c.commit()
+        raise
     return {"id":bid,"title":generated.title,"language":generated.language,"pages":story_document["pages"],"created_at":now}
 
 @app.delete("/api/me",status_code=204)
