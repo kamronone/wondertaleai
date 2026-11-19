@@ -210,6 +210,44 @@ function App(){
       if(progressWrites.current.get(bookId)===write)progressWrites.current.delete(bookId);
     });
   },[page,tab,active?.id,privateToken]);
+  // Reconnect only refreshes the authenticated library. Importing device books
+  // still requires an explicit parent action, so no child data uploads silently.
+  useEffect(()=>{
+    if(!privateToken||!API||tab!=="library"||syncBusy)return;
+    let disposed=false;
+    let refreshing=false;
+    const epoch=sessionEpoch.current;
+    const refresh=async()=>{
+      if(refreshing||!navigator.onLine)return;
+      refreshing=true;
+      try{
+        const remote=await loadPrivateBooks(API,privateToken);
+        if(disposed||sessionEpoch.current!==epoch)return;
+        setRemoteBooks(remote);
+        setBooks(remote);
+      }catch(error){
+        if(disposed||sessionEpoch.current!==epoch)return;
+        if(error instanceof Error&&error.message==="Private account authorization expired"){
+          ++sessionEpoch.current;
+          setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
+          setSyncMessage({
+            ru:"Сессия истекла. Войдите снова.",
+            uz:"Sessiya tugadi. Qayta kiring.",
+            en:"Your session expired. Sign in again."
+          }[lang]);
+        }
+        // Keep the last loaded library visible during temporary network errors.
+      }finally{refreshing=false;}
+    };
+    window.addEventListener("online",refresh);
+    const onVisible=()=>{if(document.visibilityState==="visible")void refresh();};
+    document.addEventListener("visibilitychange",onVisible);
+    return ()=>{
+      disposed=true;
+      window.removeEventListener("online",refresh);
+      document.removeEventListener("visibilitychange",onVisible);
+    };
+  },[privateToken,tab,syncBusy,lang]);
   const toggleFavorite=async()=>{
     if(!active)return;
     if(isDemoBook(active)){
