@@ -95,13 +95,30 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  // reported success while silently leaving the remaining books behind.
  for(const book of localBooks.filter(x=>x.savedOnDevice)){
   if(transferred.has(book.id)){existing++;continue;}
-  const story:StoredStory={
-   version:1,source_id:book.id,language:book.language,theme:book.theme,
-   style:book.style,prompt:book.prompt.slice(0,800),
-   pages:book.pages.map((p,index)=>({number:index+1,text:p.text.slice(0,1500),image_url:cleanImage(p.image_url,book.classicId)}))
-  };
-  const encoded=JSON.stringify(story);
-  if(encoded.length>12000){failed++;continue;}
+  // Invalid local records should fail individually, not abort every book.
+  // This matters when an old PWA version left partially written data.
+  let encoded:string;
+  try{
+   if(!book||typeof book.id!=="string"||!book.id.trim()||
+      typeof book.title!=="string"||!book.title.trim()||
+      typeof book.name!=="string"||!book.name.trim()||
+      !Number.isInteger(book.age)||book.age<1||
+      typeof book.prompt!=="string"||
+      !Array.isArray(book.pages)||book.pages.length<1||book.pages.length>30||
+      !book.pages.every(p=>p&&typeof p.text==="string"&&p.text.trim().length>0)){
+    failed++;continue;
+   }
+   const story:StoredStory={
+    version:1,source_id:book.id,language:book.language,theme:book.theme,
+    style:book.style,prompt:book.prompt.slice(0,800),
+    pages:book.pages.map((p,index)=>({
+     number:index+1,text:p.text.slice(0,1500),
+     image_url:cleanImage(typeof p.image_url==="string"?p.image_url:"",book.classicId)
+    }))
+   };
+   encoded=JSON.stringify(story);
+   if(encoded.length>12000){failed++;continue;}
+  }catch{failed++;continue;}
   try{
    const response=await fetchWithToken(api,"/api/books",token,{
     method:"POST",body:JSON.stringify({title:book.title,child_name:book.name,age:book.age,story:encoded})
