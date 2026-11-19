@@ -61,6 +61,8 @@ function App(){
   const sessionEpoch=useRef(0);
   // Serialize writes per book so rapid page turns cannot overwrite newer progress.
   const progressWrites=useRef(new Map<string,Promise<void>>());
+  // A favorite endpoint toggles its state, so never overlap requests for one book.
+  const favoriteWrites=useRef(new Set<string>());
   const [remoteBooks,setRemoteBooks]=useState<RemoteBook[]>([]);
   const [syncBusy,setSyncBusy]=useState(false);
   const [syncMessage,setSyncMessage]=useState("");
@@ -219,15 +221,23 @@ function App(){
       return;
     }
     if(!privateToken||!API)return;
+    const bookId=active.id;
     const epoch=sessionEpoch.current;
+    const writeKey=epoch+":"+bookId;
+    if(favoriteWrites.current.has(writeKey))return;
+    favoriteWrites.current.add(writeKey);
     try{
-      const favorite=await updatePrivateFavorite(API,privateToken,active.id);
+      const favorite=await updatePrivateFavorite(API,privateToken,bookId);
       if(sessionEpoch.current!==epoch)return;
-      setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
-      setRemoteBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
-      setActive(prev=>prev?{...prev,favorite}:null);
+      setBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
+      setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
+      setActive(prev=>prev?.id===bookId?{...prev,favorite}:prev);
       setError("");
-    }catch{setError(t.genericError);}
+    }catch{
+      if(sessionEpoch.current===epoch)setError(t.genericError);
+    }finally{
+      favoriteWrites.current.delete(writeKey);
+    }
   };
   const speakPage=()=>{
     if(!active||!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){
