@@ -1,7 +1,7 @@
 import type { DemoBook } from "./demo";
 
 export type RemoteBook=DemoBook & {mode:"private-account"};
-export type TransferReport={uploaded:number;existing:number;failed:number;serverBooks:RemoteBook[]};
+export type TransferReport={uploaded:number;existing:number;failed:number;metadataFailed:number;serverBooks:RemoteBook[]};
 
 type ServerRow={id:string;title:string;child_name:string;age:number;story:string;created_at:string};
 type StoredStory={
@@ -186,23 +186,23 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
   }catch{/* legacy book */}
  }
  const byId=new Map(serverBooks.map(book=>[book.id,book]));
+ let metadataFailed=0;
  for(const local of localBooks.filter(book=>book?.savedOnDevice)){
   const id=bySource.get(local.id);
   const remote=id?byId.get(id):undefined;
   if(!remote)continue;
-  try{
-   if(local.favorite&&!remote.favorite){
+  if(local.favorite&&!remote.favorite){
+   try{
     remote.favorite=await updatePrivateFavorite(api,token,id!);
-   }
-   if(typeof local.lastPage==="number"&&Number.isInteger(local.lastPage)&&local.lastPage>(remote.lastPage??0)&&remote.pages.length){
+   }catch{metadataFailed++;}
+  }
+  if(typeof local.lastPage==="number"&&Number.isInteger(local.lastPage)&&local.lastPage>(remote.lastPage??0)&&remote.pages.length){
+   try{
     const position=Math.min(local.lastPage,remote.pages.length-1);
     await updatePrivateReadingProgress(api,token,id!,position);
     remote.lastPage=position;
-   }
-  }catch{
-   // Keep imported books even if optional metadata cannot be synchronized.
-   // The device copy remains available for a later explicit retry.
+   }catch{metadataFailed++;}
   }
  }
- return {uploaded,existing,failed,serverBooks};
+ return {uploaded,existing,failed,metadataFailed,serverBooks};
 }
