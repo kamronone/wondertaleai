@@ -126,7 +126,13 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
    const response=await fetchWithToken(api,"/api/books",token,{
     method:"POST",body:JSON.stringify({title:book.title,child_name:book.name,age:book.age,story:encoded})
    });
-   if(!response.ok){failed++;continue;}
+   if(!response.ok){
+    // A 5xx response can occur after the database committed the import.
+    // Reconcile it just like a lost response instead of risking duplicates.
+    if(response.status>=500)uncertainIds.add(book.id);
+    else failed++;
+    continue;
+   }
    transferred.add(book.id);uploaded++;
   }catch{
    // Network failure is ambiguous: the server may have committed the book.
