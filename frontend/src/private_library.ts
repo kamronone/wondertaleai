@@ -206,7 +206,10 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
     const position=Math.min(local.lastPage,remote.pages.length-1);
     await updatePrivateReadingProgress(api,token,id!,position);
     remote.lastPage=position;
-   }catch{metadataFailed++;}
+   }catch(error){
+    if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
+    metadataFailed++;
+   }
   }
  }
  return {uploaded,existing,failed,metadataFailed,serverBooks};
