@@ -472,6 +472,22 @@ def list_favorites(owner:str=Depends(current_parent)):
         rows=sql(c,"SELECT book_id FROM book_favorites WHERE owner_id=? ORDER BY created_at DESC",(owner,)).fetchall()
     return {"ids":[r[0] for r in rows]}
 
+class FavoriteIn(BaseModel):
+    favorite: bool
+
+@app.put("/api/books/{book_id}/favorite")
+def set_favorite(book_id:str,body:FavoriteIn,owner:str=Depends(current_parent)):
+    # Idempotent setter for reconnect retries and ambiguous network responses.
+    with connection() as c:
+        if not sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone():
+            raise HTTPException(404,"Book not found")
+        if body.favorite:
+            sql(c,"INSERT INTO book_favorites(owner_id,book_id,created_at) VALUES(?,?,?) ON CONFLICT(owner_id,book_id) DO NOTHING",(owner,book_id,datetime.now(timezone.utc).isoformat()))
+        else:
+            sql(c,"DELETE FROM book_favorites WHERE owner_id=? AND book_id=?",(owner,book_id))
+        c.commit()
+    return {"book_id":book_id,"favorite":body.favorite}
+
 @app.post("/api/books/{book_id}/favorite")
 def toggle_favorite(book_id:str,owner:str=Depends(current_parent)):
     with connection() as c:
