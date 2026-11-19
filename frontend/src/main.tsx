@@ -9,7 +9,7 @@ import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
 import { AccountAction } from "./AccountAction";
 import { ParentAccount } from "./ParentAccount";
-import { loadPrivateBooks, transferLocalBooks, validateSession, updatePrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
+import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 
 type Page={number:number;text:string;image_url:string};
@@ -63,6 +63,11 @@ function App(){
   const progressWrites=useRef(new Map<string,Promise<void>>());
   // A favorite endpoint toggles its state, so never overlap requests for one book.
   const favoriteWrites=useRef(new Set<string>());
+  // Session-scoped offline changes. Never replay a previous parent's changes
+  // into a different account, and never persist bearer tokens on the device.
+  const pendingProgress=useRef(new Map<string,number>());
+  const pendingFavorites=useRef(new Map<string,boolean>());
+  const flushing=useRef(false);
   const [remoteBooks,setRemoteBooks]=useState<RemoteBook[]>([]);
   const [syncBusy,setSyncBusy]=useState(false);
   const [syncMessage,setSyncMessage]=useState("");
@@ -108,6 +113,7 @@ function App(){
   // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
   const loginParent=async(token:string):Promise<boolean>=>{
     const epoch=++sessionEpoch.current;
+    pendingProgress.current.clear();pendingFavorites.current.clear();
     if(!API||!await validateSession(API,token)||sessionEpoch.current!==epoch)return false;
     try{
       const remote=await loadPrivateBooks(API,token);
@@ -118,6 +124,7 @@ function App(){
   };
   const logoutParent=()=>{
     ++sessionEpoch.current;
+    pendingProgress.current.clear();pendingFavorites.current.clear();
     const token=privateToken;
     setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setSyncMessage("");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
@@ -200,7 +207,14 @@ function App(){
     const next=progressWrites.current.get(bookId)??Promise.resolve();
     const write=next.catch(()=>{}).then(async()=>{
       if(sessionEpoch.current!==epoch)return;
-      await updatePrivateReadingProgress(API,token,bookId,page);
+      try{
+        await updatePrivateReadingProgress(API,token,bookId,page);
+        if(pendingProgress.current.get(bookId)===page)pendingProgress.current.delete(bookId);
+      }catch(error){
+        if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired"))
+          pendingProgress.current.set(bookId,page);
+        throw error;
+      }
       if(sessionEpoch.current!==epoch)return;
       setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
       setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
@@ -210,6 +224,41 @@ function App(){
       if(progressWrites.current.get(bookId)===write)progressWrites.current.delete(bookId);
     });
   },[page,tab,active?.id,privateToken]);
+  useEffect(()=>{
+    if(!privateToken||!API)return;
+    let disposed=false;
+    const epoch=sessionEpoch.current;
+    const flush=async()=>{
+      if(flushing.current||!navigator.onLine||disposed)return;
+      flushing.current=true;
+      try{
+        for(const [id,position] of [...pendingProgress.current]){
+          if(disposed||sessionEpoch.current!==epoch)break;
+          try{
+            await updatePrivateReadingProgress(API,privateToken,id,position);
+            if(pendingProgress.current.get(id)===position)pendingProgress.current.delete(id);
+          }catch{break;}
+        }
+        for(const [id,favorite] of [...pendingFavorites.current]){
+          if(disposed||sessionEpoch.current!==epoch)break;
+          try{
+            await setPrivateFavorite(API,privateToken,id,favorite);
+            if(pendingFavorites.current.get(id)===favorite)pendingFavorites.current.delete(id);
+          }catch{break;}
+        }
+      }finally{flushing.current=false;}
+    };
+    const onOnline=()=>{void flush();};
+    window.addEventListener("online",onOnline);
+    const onVisible=()=>{if(document.visibilityState==="visible")void flush();};
+    document.addEventListener("visibilitychange",onVisible);
+    void flush();
+    return ()=>{
+      disposed=true;
+      window.removeEventListener("online",onOnline);
+      document.removeEventListener("visibilitychange",onVisible);
+    };
+  },[privateToken]);
   // Reconnect only refreshes the authenticated library. Importing device books
   // still requires an explicit parent action, so no child data uploads silently.
   useEffect(()=>{
@@ -265,7 +314,16 @@ function App(){
     if(favoriteWrites.current.has(writeKey))return;
     favoriteWrites.current.add(writeKey);
     try{
-      const favorite=await updatePrivateFavorite(API,privateToken,bookId);
+      const favorite=!active.favorite;
+      try{
+        await setPrivateFavorite(API,privateToken,bookId,favorite);
+        pendingFavorites.current.delete(bookId);
+      }catch(error){
+        if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
+          pendingFavorites.current.set(bookId,favorite);
+        }
+        throw error;
+      }
       if(sessionEpoch.current!==epoch)return;
       setBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
       setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
