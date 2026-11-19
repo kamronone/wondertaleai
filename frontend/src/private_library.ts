@@ -44,6 +44,7 @@ export async function loadPrivateBooks(api:string,token:string):Promise<RemoteBo
   fetchWithToken(api,"/api/books/favorites",token),
   fetchWithToken(api,"/api/books/progress",token)
  ]);
+ if([bookRes,favoriteRes,progressRes].some(response=>response.status===401||response.status===403))throw Error("Private account authorization expired");
  if(!bookRes.ok||!favoriteRes.ok||!progressRes.ok)throw Error("Unable to fetch private library");
  const [rows,favorites,progress]:[unknown,unknown,unknown]=await Promise.all([
   bookRes.json(),favoriteRes.json(),progressRes.json()
@@ -79,6 +80,7 @@ export async function validateSession(api:string,token:string):Promise<boolean>{
 export async function transferLocalBooks(api:string,token:string,localBooks:DemoBook[]):Promise<TransferReport>{
  // This function must only be called from the explicit parent's transfer button.
  const existingRows=await fetchWithToken(api,"/api/books",token);
+ if(existingRows.status===401||existingRows.status===403)throw Error("Private account authorization expired");
  if(!existingRows.ok)throw Error("Private library unavailable");
  const responseData:unknown=await existingRows.json();
  if(!Array.isArray(responseData))throw Error("Invalid private library response");
@@ -146,6 +148,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  if(uncertainIds.size){
   try{
    const check=await fetchWithToken(api,"/api/books",token);
+   if(check.status===401||check.status===403)throw Error("Private account authorization expired");
    if(!check.ok)throw Error("Unable to reconcile transfer");
    const finalRows:unknown=await check.json();
    if(!Array.isArray(finalRows))throw Error("Invalid transfer reconciliation");
@@ -160,7 +163,8 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
     if(confirmed.has(id))uploaded++;
     else failed++;
    }
-  }catch{
+  }catch(error){
+   if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
    // Never claim success when the follow-up server check is unavailable.
    failed+=uncertainIds.size;
   }
