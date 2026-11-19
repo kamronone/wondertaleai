@@ -1,0 +1,38 @@
+name: WonderTale frontend checks
+
+on:
+  push:
+    branches:
+      - fix/private-book-access
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-checks.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test story transfer and retry
+        run: npm test
+      - name: Typecheck, orthography and production build
+        run: npm run build
