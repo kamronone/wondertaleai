@@ -127,3 +127,27 @@ test("HTTP 400 validation error is not treated as an uncertain commit", async ()
     assert.equal(bookGets, 2); // initial listing and final library load, no reconciliation
   });
 });
+
+
+test("rejects malformed IDs and out-of-range ages before sending private data", async () => {
+  let posts = 0;
+  await withFetch(async (url, options) => {
+    if (options?.method === "POST") {
+      posts++;
+      throw Error("Invalid book was sent");
+    }
+    return server([])(url);
+  }, async () => {
+    const books = [
+      book("foreign-1"),
+      book("local-../../invalid"),
+      { ...book("local-too-young"), age: 1 },
+      { ...book("local-too-old"), age: 15 },
+      { ...book("local-title-too-long"), title: "T".repeat(121) },
+      { ...book("local-name-too-long"), name: "N".repeat(61) },
+    ];
+    const result = await transferLocalBooks("https://api.test", "token", books);
+    assert.deepEqual([result.uploaded, result.existing, result.failed], [0, 0, books.length]);
+    assert.equal(posts, 0);
+  });
+});
