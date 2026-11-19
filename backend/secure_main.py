@@ -400,6 +400,25 @@ def create_book(body:BookIn,owner:str=Depends(current_parent)):
             sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
         else:
             c.execute("BEGIN IMMEDIATE")
+        # Idempotent device-library import. Serialize by parent before checking
+        # source_id so concurrent retries cannot create duplicate books.
+        source_id=None
+        try:
+            imported=json.loads(body.story)
+            if isinstance(imported,dict) and isinstance(imported.get("source_id"),str):
+                candidate=imported["source_id"]
+                if re.fullmatch(r"local-[A-Za-z0-9_-]{1,120}",candidate):
+                    source_id=candidate
+        except (ValueError,TypeError):
+            pass
+        if source_id:
+            existing=sql(c,"SELECT id,created_at,story FROM books WHERE owner_id=?",(owner,)).fetchall()
+            for old_id,old_created,old_story in existing:
+                try:
+                    if json.loads(old_story).get("source_id")==source_id:
+                        return {"id":old_id,"created_at":old_created}
+                except (ValueError,TypeError,AttributeError):
+                    continue
         count=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
         if count>=MAX_BOOKS_PER_PARENT:
             raise HTTPException(409,"Library limit reached")
