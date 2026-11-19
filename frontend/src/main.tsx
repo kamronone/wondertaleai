@@ -132,15 +132,16 @@ function App(){
       // Show all outcomes: already transferred books are not new uploads,
       // and partial failures must never look like a complete successful sync.
       const labels={
-        ru:{uploaded:"Перенесено",existing:"Уже в аккаунте",failed:"Не перенесено",retry:"Повторите перенос для оставшихся книг"},
-        uz:{uploaded:"Köçirildi",existing:"Akkauntda mavjud",failed:"Köçirilmadi",retry:"Qolgan kitoblar uçun qayta urinib köring"},
-        en:{uploaded:"Transferred",existing:"Already in account",failed:"Not transferred",retry:"Retry to transfer the remaining books"}
+        ru:{uploaded:"Перенесено",existing:"Уже в аккаунте",failed:"Не перенесено",retry:"Повторите перенос для оставшихся книг",metadata:"Не синхронизированы отметки или прогресс"},
+        uz:{uploaded:"Köçirildi",existing:"Akkauntda mavjud",failed:"Köçirilmadi",retry:"Qolgan kitoblar uçun qayta urinib köring",metadata:"Belgilar yoki öqiş jarayoni sinxronlanmadi"},
+        en:{uploaded:"Transferred",existing:"Already in account",failed:"Not transferred",retry:"Retry to transfer the remaining books",metadata:"Favorites or reading progress not synced"}
       }[lang];
       setSyncMessage(
         labels.uploaded+": "+report.uploaded+" · "+
         labels.existing+": "+report.existing+" · "+
         labels.failed+": "+report.failed+
-        (report.failed?" · "+labels.retry:"")
+        (report.metadataFailed?" · "+labels.metadata+": "+report.metadataFailed:"")+
+        (report.failed||report.metadataFailed?" · "+labels.retry:"")
       );
     }catch(error){
       if(sessionEpoch.current!==epoch)return;
