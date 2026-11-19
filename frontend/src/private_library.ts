@@ -91,6 +91,9 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
   }catch{/* old server books */}
  }
  let uploaded=0,existing=0,failed=0;
+ // A timed-out POST may have reached the server. Reconcile its outcome
+ // before telling the parent that a book was lost or should be retried.
+ const uncertainIds=new Set<string>();
  // Process every locally saved book. A hidden 20-book slice previously
  // reported success while silently leaving the remaining books behind.
  for(const book of localBooks.filter(x=>x.savedOnDevice)){
@@ -125,7 +128,32 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
    });
    if(!response.ok){failed++;continue;}
    transferred.add(book.id);uploaded++;
-  }catch{failed++;}
+  }catch{
+   // Network failure is ambiguous: the server may have committed the book.
+   uncertainIds.add(book.id);
+  }
+ }
+ if(uncertainIds.size){
+  try{
+   const check=await fetchWithToken(api,"/api/books",token);
+   if(!check.ok)throw Error("Unable to reconcile transfer");
+   const finalRows:unknown=await check.json();
+   if(!Array.isArray(finalRows))throw Error("Invalid transfer reconciliation");
+   const confirmed=new Set<string>();
+   for(const row of finalRows as ServerRow[]){
+    try{
+     const stored=JSON.parse(row.story);
+     if(typeof stored.source_id==="string")confirmed.add(stored.source_id);
+    }catch{/* legacy book */}
+   }
+   for(const id of uncertainIds){
+    if(confirmed.has(id))uploaded++;
+    else failed++;
+   }
+  }catch{
+   // Never claim success when the follow-up server check is unavailable.
+   failed+=uncertainIds.size;
+  }
  }
  return {uploaded,existing,failed,serverBooks:await loadPrivateBooks(api,token)};
 }
