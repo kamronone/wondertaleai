@@ -102,10 +102,10 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
   // This matters when an old PWA version left partially written data.
   let encoded:string;
   try{
-   if(!book||typeof book.id!=="string"||!book.id.trim()||
-      typeof book.title!=="string"||!book.title.trim()||
-      typeof book.name!=="string"||!book.name.trim()||
-      !Number.isInteger(book.age)||book.age<1||
+   if(!book||typeof book.id!=="string"||!/^local-[A-Za-z0-9_-]{1,120}$/.test(book.id)||
+      typeof book.title!=="string"||!book.title.trim()||book.title.length>120||
+      typeof book.name!=="string"||!book.name.trim()||book.name.length>60||
+      !Number.isInteger(book.age)||book.age<2||book.age>14||
       typeof book.prompt!=="string"||
       !Array.isArray(book.pages)||book.pages.length<1||book.pages.length>30||
       !book.pages.every(p=>p&&typeof p.text==="string"&&p.text.trim().length>0)){
