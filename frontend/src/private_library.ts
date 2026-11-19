@@ -137,7 +137,8 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
     continue;
    }
    transferred.add(book.id);uploaded++;
-  }catch{
+  }catch(error){
+   if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
    // Network failure is ambiguous: the server may have committed the book.
    uncertainIds.add(book.id);
   }
