@@ -151,3 +151,42 @@ test("rejects malformed IDs and out-of-range ages before sending private data", 
     assert.equal(posts, 0);
   });
 });
+
+
+test("expired session stops transfer without sending remaining books", async () => {
+  let posts = 0;
+  await withFetch(async (url, options) => {
+    if (options?.method === "POST") {
+      posts++;
+      return json({ detail: "Expired token" }, 401);
+    }
+    return server([])(url);
+  }, async () => {
+    await assert.rejects(
+      transferLocalBooks("https://api.test", "expired-token", [
+        book("local-first"), book("local-second")
+      ]),
+      /authorization expired/
+    );
+    assert.equal(posts, 1);
+  });
+});
+
+test("forbidden account stops transfer rather than treating denial as network timeout", async () => {
+  let posts = 0;
+  await withFetch(async (url, options) => {
+    if (options?.method === "POST") {
+      posts++;
+      return json({ detail: "Forbidden" }, 403);
+    }
+    return server([])(url);
+  }, async () => {
+    await assert.rejects(
+      transferLocalBooks("https://api.test", "forbidden-token", [
+        book("local-first"), book("local-second")
+      ]),
+      /authorization expired/
+    );
+    assert.equal(posts, 1);
+  });
+});
