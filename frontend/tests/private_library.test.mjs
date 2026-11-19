@@ -85,3 +85,45 @@ test("transfer handles more than twenty saved stories", async () => {
     assert.deepEqual([result.uploaded, result.existing, result.failed], [21, 0, 0]);
   });
 });
+
+
+test("HTTP 500 after committed import is reconciled as uploaded", async () => {
+  const ids = new Set();
+  let posts = 0;
+  await withFetch(async (url, options) => {
+    if (options?.method === "POST") {
+      posts++;
+      ids.add(JSON.parse(JSON.parse(options.body).story).source_id);
+      return json({ detail: "Server error after commit" }, 500);
+    }
+    return server([...ids])(url);
+  }, async () => {
+    const first = await transferLocalBooks("https://api.test", "token", [book("local-server-500")]);
+    assert.deepEqual([first.uploaded, first.existing, first.failed], [1, 0, 0]);
+    const retry = await transferLocalBooks("https://api.test", "token", [book("local-server-500")]);
+    assert.deepEqual([retry.uploaded, retry.existing, retry.failed], [0, 1, 0]);
+    assert.equal(posts, 1);
+  });
+});
+
+test("HTTP 500 without committed import is reported as failed", async () => {
+  await withFetch(async (url, options) => (
+    options?.method === "POST" ? json({ detail: "Server unavailable" }, 503) : server([])(url)
+  ), async () => {
+    const result = await transferLocalBooks("https://api.test", "token", [book("local-server-503")]);
+    assert.deepEqual([result.uploaded, result.existing, result.failed], [0, 0, 1]);
+  });
+});
+
+test("HTTP 400 validation error is not treated as an uncertain commit", async () => {
+  let bookGets = 0;
+  await withFetch(async (url, options) => {
+    if (options?.method === "POST") return json({ detail: "Invalid story" }, 422);
+    if (url.endsWith("/api/books")) bookGets++;
+    return server([])(url);
+  }, async () => {
+    const result = await transferLocalBooks("https://api.test", "token", [book("local-rejected")]);
+    assert.deepEqual([result.uploaded, result.existing, result.failed], [0, 0, 1]);
+    assert.equal(bookGets, 2); // initial listing and final library load, no reconciliation
+  });
+});
