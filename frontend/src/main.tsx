@@ -127,8 +127,19 @@ function App(){
       if(sessionEpoch.current!==epoch)return;
       setRemoteBooks(report.serverBooks);
       setBooks(report.serverBooks);
-      setSyncMessage(({ru:"Перенесено: ",uz:"Köçirildi: ",en:"Transferred: "}[lang])+report.uploaded+
-        (report.failed?" · "+({ru:"Ошибок: ",uz:"Xatolar: ",en:"Failed: "}[lang])+report.failed:""));
+      // Show all outcomes: already transferred books are not new uploads,
+      // and partial failures must never look like a complete successful sync.
+      const labels={
+        ru:{uploaded:"Перенесено",existing:"Уже в аккаунте",failed:"Не перенесено",retry:"Повторите перенос для оставшихся книг"},
+        uz:{uploaded:"Köçirildi",existing:"Akkauntda mavjud",failed:"Köçirilmadi",retry:"Qolgan kitoblar uçun qayta urinib köring"},
+        en:{uploaded:"Transferred",existing:"Already in account",failed:"Not transferred",retry:"Retry to transfer the remaining books"}
+      }[lang];
+      setSyncMessage(
+        labels.uploaded+": "+report.uploaded+" · "+
+        labels.existing+": "+report.existing+" · "+
+        labels.failed+": "+report.failed+
+        (report.failed?" · "+labels.retry:"")
+      );
     }catch{
       if(sessionEpoch.current===epoch)setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni köçiriş amalga oşmadi. Keyinroq qayta urinib köring.",en:"Transfer failed. Please retry later."}[lang]);
     }finally{setSyncBusy(false);}
