@@ -59,6 +59,8 @@ function App(){
   const [privateToken,setPrivateToken]=useState<string|null>(null);
   // Prevent late responses from a previous parent session entering the current account.
   const sessionEpoch=useRef(0);
+  // Serialize writes per book so rapid page turns cannot overwrite newer progress.
+  const progressWrites=useRef(new Map<string,Promise<void>>());
   const [remoteBooks,setRemoteBooks]=useState<RemoteBook[]>([]);
   const [syncBusy,setSyncBusy]=useState(false);
   const [syncMessage,setSyncMessage]=useState("");
@@ -189,12 +191,21 @@ function App(){
     if(tab!=="reader"||!active||isDemoBook(active)||!privateToken||!API)return;
     const bookId=active.id;
     const epoch=sessionEpoch.current;
-    // Never update local reading state as synchronized until the authenticated API confirms it.
-    void updatePrivateReadingProgress(API,privateToken,bookId,page).then(()=>{
+    // Serialize writes for each book: a slow response for page 1 must not
+    // overwrite a newer page 3 on the server or in the interface.
+    const token=privateToken;
+    const next=progressWrites.current.get(bookId)??Promise.resolve();
+    const write=next.catch(()=>{}).then(async()=>{
+      if(sessionEpoch.current!==epoch)return;
+      await updatePrivateReadingProgress(API,token,bookId,page);
       if(sessionEpoch.current!==epoch)return;
       setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
       setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
-    }).catch(()=>{ /* Retain the previous persisted position when offline. */ });
+    });
+    progressWrites.current.set(bookId,write);
+    void write.catch(()=>{ /* Keep last confirmed position if offline. */ }).finally(()=>{
+      if(progressWrites.current.get(bookId)===write)progressWrites.current.delete(bookId);
+    });
   },[page,tab,active?.id,privateToken]);
   const toggleFavorite=async()=>{
     if(!active)return;
