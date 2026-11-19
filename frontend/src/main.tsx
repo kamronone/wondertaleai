@@ -211,8 +211,11 @@ function App(){
         await updatePrivateReadingProgress(API,token,bookId,page);
         if(pendingProgress.current.get(bookId)===page)pendingProgress.current.delete(bookId);
       }catch(error){
-        if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired"))
+        if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
           pendingProgress.current.set(bookId,page);
+          setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
+          setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
+        }
         throw error;
       }
       if(sessionEpoch.current!==epoch)return;
@@ -327,6 +330,10 @@ function App(){
       }catch(error){
         if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
           pendingFavorites.current.set(bookId,favorite);
+          setBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
+          setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
+          setActive(prev=>prev?.id===bookId?{...prev,favorite}:prev);
+          return;
         }
         throw error;
       }
