@@ -272,8 +272,14 @@ function App(){
       try{
         const remote=await loadPrivateBooks(API,privateToken);
         if(disposed||sessionEpoch.current!==epoch)return;
-        setRemoteBooks(remote);
-        setBooks(remote);
+        // Do not replace optimistic offline state with an older server snapshot.
+        const merged=remote.map(book=>({
+          ...book,
+          favorite:pendingFavorites.current.get(book.id)??book.favorite,
+          lastPage:pendingProgress.current.get(book.id)??book.lastPage
+        }));
+        setRemoteBooks(merged);
+        setBooks(merged);
       }catch(error){
         if(disposed||sessionEpoch.current!==epoch)return;
         if(error instanceof Error&&error.message==="Private account authorization expired"){
