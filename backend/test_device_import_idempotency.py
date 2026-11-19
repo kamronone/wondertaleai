@@ -70,3 +70,27 @@ def test_non_imported_stories_are_not_deduplicated(api):
     assert first.status_code == 201
     assert second.status_code == 201
     assert first.json()["id"] != second.json()["id"]
+
+
+def test_ready_checks_database_without_exposing_connection_details(api):
+    client, _, _, _ = api
+    response = client.get("/api/ready")
+    assert response.status_code == 200
+    assert response.json()["database"] == "connected"
+    assert response.json()["ok"] is True
+    assert "DATABASE_URL" not in response.text
+    assert "password" not in response.text.lower()
+
+
+def test_ready_fails_closed_when_database_is_unavailable(api, monkeypatch):
+    client, module, _, _ = api
+
+    def unavailable():
+        raise OSError("database password and hostname must stay private")
+
+    monkeypatch.setattr(module, "connection", unavailable)
+    response = client.get("/api/ready")
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Database is unavailable"
+    assert "password" not in response.text.lower()
+    assert "hostname" not in response.text.lower()
