@@ -127,6 +127,9 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
     method:"POST",body:JSON.stringify({title:book.title,child_name:book.name,age:book.age,story:encoded})
    });
    if(!response.ok){
+    // A session can expire during a multi-book transfer. Stop immediately:
+    // subsequent requests must not be sent with a rejected bearer token.
+    if(response.status===401||response.status===403)throw new Error("Private account authorization expired");
     // A 5xx response can occur after the database committed the import.
     // Reconcile it just like a lost response instead of risking duplicates.
     if(response.status>=500)uncertainIds.add(book.id);
