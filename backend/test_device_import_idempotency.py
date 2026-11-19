@@ -94,3 +94,20 @@ def test_ready_fails_closed_when_database_is_unavailable(api, monkeypatch):
     assert response.json()["detail"] == "Database is unavailable"
     assert "password" not in response.text.lower()
     assert "hostname" not in response.text.lower()
+
+
+def test_concurrent_import_retries_create_one_book(api):
+    from concurrent.futures import ThreadPoolExecutor
+
+    client, _, _, headers = api
+    book = payload("local-concurrent-1")
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        responses = list(pool.map(
+            lambda _: client.post("/api/books", headers=headers, json=book),
+            range(4),
+        ))
+    assert all(response.status_code == 201 for response in responses), [
+        (response.status_code, response.text) for response in responses
+    ]
+    assert len({response.json()["id"] for response in responses}) == 1
+    assert len(client.get("/api/books", headers=headers).json()) == 1
