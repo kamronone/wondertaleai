@@ -237,6 +237,10 @@ function App(){
       try{
         for(const [id,position] of [...pendingProgress.current]){
           if(disposed||sessionEpoch.current!==epoch)break;
+          // A queued write must not overtake an in-flight reader update.
+          await (progressWrites.current.get(id)??Promise.resolve()).catch(()=>{});
+          if(disposed||sessionEpoch.current!==epoch)break;
+          if(pendingProgress.current.get(id)!==position)continue;
           try{
             await updatePrivateReadingProgress(API,privateToken,id,position);
             if(pendingProgress.current.get(id)===position)pendingProgress.current.delete(id);
@@ -244,6 +248,7 @@ function App(){
         }
         for(const [id,favorite] of [...pendingFavorites.current]){
           if(disposed||sessionEpoch.current!==epoch)break;
+          if(pendingFavorites.current.get(id)!==favorite)continue;
           try{
             await setPrivateFavorite(API,privateToken,id,favorite);
             if(pendingFavorites.current.get(id)===favorite)pendingFavorites.current.delete(id);
@@ -252,12 +257,15 @@ function App(){
       }finally{flushing.current=false;}
     };
     const onOnline=()=>{void flush();};
+    // Retry transient server failures even when the browser never fires an online event.
+    const retryInterval=window.setInterval(()=>{if(pendingProgress.current.size||pendingFavorites.current.size)void flush();},30000);
     window.addEventListener("online",onOnline);
     const onVisible=()=>{if(document.visibilityState==="visible")void flush();};
     document.addEventListener("visibilitychange",onVisible);
     void flush();
     return ()=>{
       disposed=true;
+      window.clearInterval(retryInterval);
       window.removeEventListener("online",onOnline);
       document.removeEventListener("visibilitychange",onVisible);
     };
