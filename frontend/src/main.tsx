@@ -140,8 +140,20 @@ function App(){
         labels.failed+": "+report.failed+
         (report.failed?" · "+labels.retry:"")
       );
-    }catch{
-      if(sessionEpoch.current===epoch)setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni köçiriş amalga oşmadi. Keyinroq qayta urinib köring.",en:"Transfer failed. Please retry later."}[lang]);
+    }catch(error){
+      if(sessionEpoch.current!==epoch)return;
+      if(error instanceof Error&&error.message==="Private account authorization expired"){
+        // Never leave private books on screen after the server rejects the session.
+        ++sessionEpoch.current;
+        setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
+        setSyncMessage({
+          ru:"Сессия истекла. Войдите снова, чтобы перенести сохранённые книги.",
+          uz:"Sessiya tugadi. Saqlangan kitoblarni köçiriş uçun qayta kiring.",
+          en:"Your session expired. Sign in again to transfer saved books."
+        }[lang]);
+      }else{
+        setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni köçiriş amalga oşmadi. Keyinroq qayta urinib köring.",en:"Transfer failed. Please retry later."}[lang]);
+      }
     }finally{setSyncBusy(false);}
   };
   useEffect(()=>{document.documentElement.lang=lang;},[lang]);
