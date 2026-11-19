@@ -65,10 +65,12 @@ export async function updatePrivateReadingProgress(api:string,token:string,bookI
  const response=await fetchWithToken(api,"/api/books/"+encodeURIComponent(bookId)+"/progress",token,{
   method:"POST",body:JSON.stringify({page})
  });
+ if(response.status===401||response.status===403)throw Error("Private account authorization expired");
  if(!response.ok)throw Error("Unable to synchronize reading position");
 }
 export async function updatePrivateFavorite(api:string,token:string,bookId:string):Promise<boolean>{
  const response=await fetchWithToken(api,"/api/books/"+encodeURIComponent(bookId)+"/favorite",token,{method:"POST"});
+ if(response.status===401||response.status===403)throw Error("Private account authorization expired");
  if(!response.ok)throw Error("Unable to update private favorite");
  const data=await response.json();
  if(typeof data.favorite!=="boolean")throw Error("Invalid favorite response");
@@ -98,7 +100,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  const uncertainIds=new Set<string>();
  // Process every locally saved book. A hidden 20-book slice previously
  // reported success while silently leaving the remaining books behind.
- for(const book of localBooks.filter(x=>x.savedOnDevice)){
+ for(const book of localBooks.filter(x=>x&&x.savedOnDevice)){
   if(transferred.has(book.id)){existing++;continue;}
   // Invalid local records should fail individually, not abort every book.
   // This matters when an old PWA version left partially written data.
@@ -194,7 +196,10 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
   if(local.favorite&&!remote.favorite){
    try{
     remote.favorite=await updatePrivateFavorite(api,token,id!);
-   }catch{metadataFailed++;}
+   }catch(error){
+    if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
+    metadataFailed++;
+   }
   }
   if(typeof local.lastPage==="number"&&Number.isInteger(local.lastPage)&&local.lastPage>(remote.lastPage??0)&&remote.pages.length){
    try{
