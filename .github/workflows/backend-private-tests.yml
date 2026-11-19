@@ -37,7 +37,7 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q .
       - name: Test private API without external providers
-        run: python -m pytest -q test_generated_book_library.py test_ai_generation.py
+        run: python -m pytest -q test_generated_book_library.py test_device_import_idempotency.py test_ai_generation.py
         env:
           APP_ENV: development
           REQUIRE_EMAIL_VERIFICATION: 'false'
