@@ -169,5 +169,40 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
    failed+=uncertainIds.size;
   }
  }
- return {uploaded,existing,failed,serverBooks:await loadPrivateBooks(api,token)};
+ // Restore explicitly saved local favorites and reading positions after import.
+ // Resolve server IDs through source_id; local IDs are never valid remote book IDs.
+ // Only add a favorite when absent because the API endpoint toggles its state.
+ const serverBooks=await loadPrivateBooks(api,token);
+ const latest=await fetchWithToken(api,"/api/books",token);
+ if(latest.status===401||latest.status===403)throw Error("Private account authorization expired");
+ if(!latest.ok)throw Error("Unable to map imported books");
+ const raw:unknown=await latest.json();
+ if(!Array.isArray(raw))throw Error("Invalid imported book listing");
+ const bySource=new Map<string,string>();
+ for(const row of raw as ServerRow[]){
+  try{
+   const stored=JSON.parse(row.story);
+   if(typeof stored.source_id==="string")bySource.set(stored.source_id,row.id);
+  }catch{/* legacy book */}
+ }
+ const byId=new Map(serverBooks.map(book=>[book.id,book]));
+ for(const local of localBooks.filter(book=>book?.savedOnDevice)){
+  const id=bySource.get(local.id);
+  const remote=id?byId.get(id):undefined;
+  if(!remote)continue;
+  try{
+   if(local.favorite&&!remote.favorite){
+    remote.favorite=await updatePrivateFavorite(api,token,id!);
+   }
+   if(Number.isInteger(local.lastPage)&&local.lastPage!>remote.lastPage!&&remote.pages.length){
+    const position=Math.min(local.lastPage!,remote.pages.length-1);
+    await updatePrivateReadingProgress(api,token,id!,position);
+    remote.lastPage=position;
+   }
+  }catch{
+   // Keep imported books even if optional metadata cannot be synchronized.
+   // The device copy remains available for a later explicit retry.
+  }
+ }
+ return {uploaded,existing,failed,serverBooks};
 }
