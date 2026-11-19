@@ -76,6 +76,13 @@ export async function updatePrivateFavorite(api:string,token:string,bookId:strin
  if(typeof data.favorite!=="boolean")throw Error("Invalid favorite response");
  return data.favorite;
 }
+export async function setPrivateFavorite(api:string,token:string,bookId:string,favorite:boolean):Promise<void>{
+ const response=await fetchWithToken(api,"/api/books/"+encodeURIComponent(bookId)+"/favorite",token,{
+  method:"PUT",body:JSON.stringify({favorite})
+ });
+ if(response.status===401||response.status===403)throw Error("Private account authorization expired");
+ if(!response.ok)throw Error("Unable to synchronize favorite");
+}
 export async function validateSession(api:string,token:string):Promise<boolean>{
  try{const response=await fetchWithToken(api,"/api/me",token);return response.ok;}catch{return false;}
 }
@@ -195,7 +202,8 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
   if(!remote)continue;
   if(local.favorite&&!remote.favorite){
    try{
-    remote.favorite=await updatePrivateFavorite(api,token,id!);
+    await setPrivateFavorite(api,token,id!,true);
+    remote.favorite=true;
    }catch(error){
     if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
     metadataFailed++;
