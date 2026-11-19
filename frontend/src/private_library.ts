@@ -194,8 +194,8 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
    if(local.favorite&&!remote.favorite){
     remote.favorite=await updatePrivateFavorite(api,token,id!);
    }
-   if(Number.isInteger(local.lastPage)&&local.lastPage!>remote.lastPage!&&remote.pages.length){
-    const position=Math.min(local.lastPage!,remote.pages.length-1);
+   if(typeof local.lastPage==="number"&&Number.isInteger(local.lastPage)&&local.lastPage>(remote.lastPage??0)&&remote.pages.length){
+    const position=Math.min(local.lastPage,remote.pages.length-1);
     await updatePrivateReadingProgress(api,token,id!,position);
     remote.lastPage=position;
    }
