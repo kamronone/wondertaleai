@@ -389,14 +389,18 @@ def billing_status(owner:str=Depends(current_parent)):
     allowed={email.strip().lower() for email in os.getenv("AI_ALLOWED_EMAILS","").split(",") if email.strip()}
     pilot=bool(parent and parent[0].lower() in allowed)
     ai_ready=(os.getenv("ENABLE_TEXT_AI","false").lower()=="true" and bool(os.getenv("OPENAI_API_KEY")))
+    used=max(0,int(row[0])) if row else 0
+    limit=2 if pilot and ai_ready else 0
     return {
         "plan":"free",
         "subscription_status":"not_available",
         "payments_enabled":False,
         "ai_pilot_access":pilot and ai_ready,
-        "ai_daily_limit":2 if pilot and ai_ready else 0,
-        "ai_used_today":int(row[0]) if row else 0,
+        "ai_daily_limit":limit,
+        "ai_used_today":used,
+        "ai_remaining_today":max(0,limit-used),
         "quota_period":"daily",
+        "quota_timezone":"UTC",
         "pricing_is_proposed":True,
     }
 
