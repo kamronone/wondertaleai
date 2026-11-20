@@ -85,3 +85,33 @@ test("Deleting one book keeps all other 39 stories intact", () => withStorage(()
   assert.ok(found.some(book => book.id === "local-book-0"));
   assert.ok(found.some(book => book.id === "local-book-39"));
 }));
+
+test("Safari storage getter SecurityError does not crash offline library", () => {
+  const savedLocal = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  const savedSession = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+  try {
+    Object.defineProperty(globalThis, "localStorage", { configurable: true, get() { throw new Error("SecurityError"); } });
+    Object.defineProperty(globalThis, "sessionStorage", { configurable: true, get() { throw new Error("SecurityError"); } });
+    assert.deepEqual(getDemoBooks(), []);
+  } finally {
+    if (savedLocal) Object.defineProperty(globalThis, "localStorage", savedLocal);
+    else delete globalThis.localStorage;
+    if (savedSession) Object.defineProperty(globalThis, "sessionStorage", savedSession);
+    else delete globalThis.sessionStorage;
+  }
+});
+
+test("If session storage is blocked, saved device books remain visible", () => withStorage(({ device }) => {
+  const books = [story(0, true), story(1, true)];
+  device.setItem("wondertale-opt-in-books-v1", JSON.stringify(books));
+  const previous = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+  try {
+    Object.defineProperty(globalThis, "sessionStorage", { configurable: true, get() { throw new Error("SecurityError"); } });
+    const found = getDemoBooks();
+    assert.equal(found.length, 2);
+    assert.ok(found.every(book => book.savedOnDevice));
+  } finally {
+    if (previous) Object.defineProperty(globalThis, "sessionStorage", previous);
+    else delete globalThis.sessionStorage;
+  }
+}));
