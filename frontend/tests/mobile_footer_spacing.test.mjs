@@ -48,3 +48,9 @@ test("reader toolbar anchors back button left and action icons right on mobile",
 test("reading session timer is absent from the visible reader layout",()=>{
   assert.doesNotMatch(app,/<ReadingSessionTimer\b/);
 });
+
+test("reader page removes the legacy 100px bottom padding on iPhone",()=>{
+  assert.match(polish,/\.shell\s*>\s*main\s*>\s*\.reader-page\s*\{[^}]*padding-bottom:8px!important/s);
+  assert.match(polish,/\.shell\s*>\s*main\s*>\s*\.reader-page\s*\{[^}]*min-height:0!important/s);
+  assert.match(polish,/\.shell\s*>\s*main\s*>\s*\.reader-page \.pager\s*\{[^}]*margin-bottom:0!important/s);
+});
