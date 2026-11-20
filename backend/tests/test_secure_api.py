@@ -362,3 +362,34 @@ def test_family_profile_age_and_name_validation():
         response=client.post("/api/children",headers=headers(parent),json={"nickname":nickname,"age":6})
         assert response.status_code==422,response.text
     assert client.get("/api/children",headers=headers(parent)).json()==[]
+
+
+def test_failed_ai_provider_refunds_both_daily_quotas(monkeypatch):
+    """A provider failure must not charge the parent or exhaust the service budget."""
+    import uuid
+    from datetime import datetime, timezone
+    email="provider-failure-"+str(uuid.uuid4())+"@example.com"
+    token=signup(email)
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    monkeypatch.setenv("OPENAI_API_KEY","test-injected-no-network")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("MAX_AI_STORIES_PER_DAY","200")
+    def unavailable(_body):
+        raise RuntimeError("Simulated upstream outage")
+    monkeypatch.setattr(secure_main,"generate_story",unavailable)
+    day=datetime.now(timezone.utc).date().isoformat()
+    with secure_main.connection() as connection:
+        before=secure_main.sql(connection,"SELECT used FROM generation_global_quota WHERE day=?",(day,)).fetchone()
+        global_before=before[0] if before else 0
+    body={"name":"Amir","age":5,"language":"en","idea":"A friendly adventure in a magical garden"}
+    for _ in range(2):
+        response=client.post("/api/books/generate",headers=headers(token),json=body)
+        assert response.status_code==502,response.text
+        assert "Simulated upstream outage" not in response.text
+    with secure_main.connection() as connection:
+        after=secure_main.sql(connection,"SELECT used FROM generation_global_quota WHERE day=?",(day,)).fetchone()
+        owner=secure_main.sql(connection,"SELECT id FROM parents WHERE email=?",(email,)).fetchone()[0]
+        parent=secure_main.sql(connection,"SELECT used FROM generation_quota WHERE owner_id=? AND day=?",(owner,day)).fetchone()
+    assert (after[0] if after else 0)==global_before
+    assert (parent[0] if parent else 0)==0
+    assert client.get("/api/books",headers=headers(token)).json()==[]
