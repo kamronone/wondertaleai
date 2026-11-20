@@ -177,6 +177,8 @@ function App(){
     }catch{return false;}
   };
   const logoutParent=()=>{
+    // Preserve unsynced reader progress for this parent before clearing in-memory state.
+    persistPending();
     ++sessionEpoch.current;
     pendingProgress.current.clear();pendingFavorites.current.clear();
     offlineOwner.current=null;
