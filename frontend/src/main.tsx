@@ -170,7 +170,20 @@ function App(){
   const shownClassics=showAllClassics||classicQuery.trim()||classicCategory!=="all"||classicAge!=="all"?visibleClassics:visibleClassics.slice(0,6);
   const activeClassic=classics.find(x=>x.id===classicId);
   const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);openCreate(true);};
-  const changeStoryLanguage=(next:Lang)=>{setStoryLang(next);if(activeClassic)setPrompt(activeClassic.prompt[next]);};
+  const changeStoryLanguage=(next:Lang)=>{
+    if(next===storyLang)return;
+    // Switch only a selected, unedited template. Custom writing must survive.
+    if(activeClassic){
+      if(prompt===activeClassic.prompt[storyLang])setPrompt(activeClassic.prompt[next]);
+    }else{
+      const selectedPreset=storyPresets[storyLang].find(preset=>preset.idea===prompt);
+      if(selectedPreset){
+        const translated=storyPresets[next].find(preset=>preset.id===selectedPreset.id);
+        if(translated)setPrompt(translated.idea);
+      }
+    }
+    setStoryLang(next);
+  };
   const combinedHeroName=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
   const heroNameTooLong=combinedHeroName.length>60;
   const heroNameLengthError=({ru:"Имена двух героев вместе должны содержать не более 60 символов.",uz:"Ikki qahramon ismi birga 60 belgidan oshmasligi kerak.",en:"Both hero names together must be 60 characters or fewer."} as const)[lang];
