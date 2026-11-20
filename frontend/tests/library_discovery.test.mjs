@@ -35,3 +35,21 @@ test("Empty results and whitespace query are safe",()=>{
   assert.deepEqual(discoverBooks(entries,"nonexistent",false,"newest"),[]);
   assert.equal(discoverBooks(entries,"  ",false,"newest").length,3);
 });
+
+
+test("Reading progress sorting compares relative position rather than page number",()=>{
+  const long={...entries[1],id:"long",title:"Long",pages:Array.from({length:20},(_,i)=>i),lastPage:5};
+  const short={...entries[2],id:"short",title:"Short",pages:Array.from({length:5},(_,i)=>i),lastPage:4};
+  assert.deepEqual(discoverBooks([long,short],"",false,"continue").map(book=>book.id),["short","long"]);
+});
+
+test("Invalid or oversized saved positions never break progress sorting",()=>{
+  const weird=[
+    {...entries[0],id:"no-pages",pages:[],lastPage:999},
+    {...entries[1],id:"negative",lastPage:-20},
+    {...entries[2],id:"finished",lastPage:1}
+  ];
+  const found=discoverBooks(weird,"",false,"continue");
+  assert.equal(found[0].id,"finished");
+  assert.equal(found.length,3);
+});
