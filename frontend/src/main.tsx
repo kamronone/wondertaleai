@@ -89,6 +89,18 @@ function App(){
       favorites:Object.fromEntries(pendingFavorites.current)
     });
   };
+  // iOS may suspend a PWA without completing outstanding network requests.
+  // Flush the per-parent offline metadata when the page is hidden or closed.
+  useEffect(()=>{
+    const saveOnExit=()=>persistPending();
+    const saveOnHidden=()=>{if(document.visibilityState==="hidden")persistPending();};
+    window.addEventListener("pagehide",saveOnExit);
+    document.addEventListener("visibilitychange",saveOnHidden);
+    return ()=>{
+      window.removeEventListener("pagehide",saveOnExit);
+      document.removeEventListener("visibilitychange",saveOnHidden);
+    };
+  },[]);
   const [remoteBooks,setRemoteBooks]=useState<RemoteBook[]>([]);
   const [syncBusy,setSyncBusy]=useState(false);
   const [syncMessage,setSyncMessage]=useState("");
