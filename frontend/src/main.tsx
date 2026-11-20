@@ -789,7 +789,7 @@ function App(){
           </div>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>setReaderNightMode(v=>!v)}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>
-        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":"")}><div className="story-page-image"><img src={bookImage(active.pages[page].image_url)} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
+        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":"")}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
             <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
@@ -821,6 +821,22 @@ function App(){
     <footer>© WonderTale AI</footer>
   </div>;
 }
+function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boolean}){
+ const [failed,setFailed]=useState(false);
+ const src=bookImage(url);
+ useEffect(()=>setFailed(false),[src]);
+ if(failed)return <svg className="story-image-fallback" viewBox="0 0 640 420" role="img" aria-label={alt} xmlns="http://www.w3.org/2000/svg">
+   <defs><linearGradient id="story-fallback-sky" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#eadcff"/><stop offset="1" stopColor="#ffe9c9"/></linearGradient></defs>
+   <rect width="640" height="420" fill="url(#story-fallback-sky)"/>
+   <circle cx="490" cy="105" r="53" fill="#fff8dc"/>
+   <path d="M0 285 Q120 180 255 287 Q390 180 640 278 V420 H0Z" fill="#a6a0cf"/>
+   <path d="M0 355 Q165 265 340 352 Q480 285 640 335 V420 H0Z" fill="#7e78b3"/>
+   <path d="M190 320 Q320 230 450 320 L450 378 Q320 310 190 378Z" fill="#fff9ef" stroke="#7757aa" strokeWidth="10"/>
+   <path d="M320 275 V355" stroke="#7757aa" strokeWidth="9"/>
+   <g fill="#fff8dc"><circle cx="108" cy="95" r="7"/><circle cx="175" cy="150" r="5"/><circle cx="360" cy="77" r="6"/><circle cx="565" cy="185" r="5"/></g>
+ </svg>;
+ return <img src={src} alt={alt} loading={lazy?"lazy":"eager"} decoding="async" onError={()=>setFailed(true)}/>;
+}
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  const [coverFailed,setCoverFailed]=useState(false);
  const imageExtension=["red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(item.id)?".svg":".webp";
@@ -834,7 +850,7 @@ function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()
  </button>;
 }
 function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
-  return <button className="book-tile" onClick={open}><img src={bookImage(book.pages[0].image_url)} alt={labels[lang].cover}/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>{(book.lastPage||0)>0&&<small className="read-progress">{labels[lang].continueReading}: {labels[lang].page} {(book.lastPage||0)+1}</small>}{book.favorite&&<span className="book-favorite-badge"><Heart size={14} fill="currentColor"/></span>}</span></button>;
+  return <button className="book-tile" onClick={open}><StoryIllustration url={book.pages[0]?.image_url||""} alt={labels[lang].cover} lazy/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>{(book.lastPage||0)>0&&<small className="read-progress">{labels[lang].continueReading}: {labels[lang].page} {(book.lastPage||0)+1}</small>}{book.favorite&&<span className="book-favorite-badge"><Heart size={14} fill="currentColor"/></span>}</span></button>;
 }
 createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
 
