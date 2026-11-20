@@ -218,3 +218,51 @@ test("A partially applied browser-storage write is restored after throwing",()=>
  assert.equal(device.getItem("wondertale-opt-in-books-v1"),previousDevice);
  assert.equal(session.getItem("wondertale-preview-books-v1"),previousSession);
 }));
+
+
+test("A silently ignored persistent write is reported as failure without changing the saved book",()=>withBrowserStores(({device})=>{
+ const saved=create(true);
+ const before=device.getItem("wondertale-opt-in-books-v1");
+ const original=device.setItem;
+ device.setItem=()=>{}; // Embedded Safari storage wrapper silently drops writes.
+ try{
+  assert.throws(()=>saveDemoBooks(getDemoBooks().map(book=>
+   book.id===saved.id?{...book,lastPage:3}:book
+  )),/LOCAL_LIBRARY_SAVE_FAILED/);
+ }finally{device.setItem=original;}
+ assert.equal(device.getItem("wondertale-opt-in-books-v1"),before);
+ assert.equal(getDemoBooks().find(book=>book.id===saved.id)?.lastPage,0);
+}));
+
+test("A silently ignored session write rolls back an earlier persistent book update",()=>withBrowserStores(({device,session})=>{
+ const saved=create(true);
+ const ephemeral=create(false);
+ const beforeDevice=device.getItem("wondertale-opt-in-books-v1");
+ const beforeSession=session.getItem("wondertale-preview-books-v1");
+ const original=session.setItem;
+ session.setItem=()=>{}; // No exception, but the browser did not persist the change.
+ try{
+  assert.throws(()=>saveDemoBooks(getDemoBooks().map(book=>
+   book.id===saved.id?{...book,lastPage:2}:
+   book.id===ephemeral.id?{...book,lastPage:3}:book
+  )),/LOCAL_LIBRARY_SAVE_FAILED/);
+ }finally{session.setItem=original;}
+ assert.equal(device.getItem("wondertale-opt-in-books-v1"),beforeDevice);
+ assert.equal(session.getItem("wondertale-preview-books-v1"),beforeSession);
+}));
+
+test("Legacy saved stories with absent optional metadata do not trigger redundant writes",()=>withBrowserStores(({device})=>{
+ const book=create(true);
+ const raw=JSON.parse(device.getItem("wondertale-opt-in-books-v1"));
+ delete raw[0].favorite;
+ delete raw[0].lastPage;
+ device.setItem("wondertale-opt-in-books-v1",JSON.stringify(raw));
+ let writes=0;
+ const original=device.setItem;
+ device.setItem=()=>{writes++;throw Error("No free storage");};
+ try{
+  saveDemoBooks(getDemoBooks());
+ }finally{device.setItem=original;}
+ assert.equal(writes,0);
+ assert.equal(getDemoBooks().find(item=>item.id===book.id)?.lastPage,0);
+}));
