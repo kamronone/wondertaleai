@@ -330,3 +330,33 @@ def test_parent_ai_quota_rejection_does_not_consume_global_budget(monkeypatch):
     assert after==before,"Rejected parent quota must not consume global quota"
     other=client.post("/api/books/generate",headers=headers(second),json=body)
     assert other.status_code==201,other.text
+
+
+def test_family_profile_limit_and_owner_isolation():
+    import uuid
+    first=signup("family-limit-a-"+str(uuid.uuid4())+"@example.com")
+    second=signup("family-limit-b-"+str(uuid.uuid4())+"@example.com")
+    created=[]
+    for index in range(5):
+        response=client.post("/api/children",headers=headers(first),json={"nickname":f"Child {index+1}","age":index+4})
+        assert response.status_code==201,response.text
+        created.append(response.json()["id"])
+    assert len(client.get("/api/children",headers=headers(first)).json())==5
+    assert client.post("/api/children",headers=headers(first),json={"nickname":"Sixth","age":6}).status_code==409
+    assert client.get("/api/children",headers=headers(second)).json()==[]
+    assert client.delete("/api/children/"+created[0],headers=headers(second)).status_code==404
+    assert client.delete("/api/children/"+created[0],headers=headers(first)).status_code==204
+    assert client.post("/api/children",headers=headers(first),json={"nickname":"Replacement","age":7}).status_code==201
+    assert len(client.get("/api/children",headers=headers(first)).json())==5
+
+
+def test_family_profile_age_and_name_validation():
+    import uuid
+    parent=signup("family-validation-"+str(uuid.uuid4())+"@example.com")
+    for age in (1,15):
+        response=client.post("/api/children",headers=headers(parent),json={"nickname":"Child","age":age})
+        assert response.status_code==422,response.text
+    for nickname in ("   ","x"*46):
+        response=client.post("/api/children",headers=headers(parent),json={"nickname":nickname,"age":6})
+        assert response.status_code==422,response.text
+    assert client.get("/api/children",headers=headers(parent)).json()==[]
