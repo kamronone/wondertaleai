@@ -832,6 +832,9 @@ function App(){
             <small>{({ru:"Продолжить чтение",uz:"Öqişni davom ettiriş",en:"Continue reading"} as const)[lang]}</small>
             <strong>{continueBook.title}</strong>
             <small>{t.page} {(continueBook.lastPage??0)+1} {t.of} {continueBook.pages.length}</small>
+            <span className="continue-story-progress" role="progressbar" aria-label={t.page+" "+((continueBook.lastPage??0)+1)+" "+t.of+" "+continueBook.pages.length} aria-valuemin={0} aria-valuemax={continueBook.pages.length} aria-valuenow={(continueBook.lastPage??0)+1}>
+              <span style={{width:(((continueBook.lastPage??0)+1)/Math.max(1,continueBook.pages.length)*100)+"%"}}/>
+            </span>
           </span>
           <ArrowRight size={19} aria-hidden="true"/>
         </button>}
@@ -1035,7 +1038,7 @@ function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
   return <button type="button" className="book-tile" onClick={open} aria-label={book.title+" · "+book.name+(reading?" · "+progress:"")}>
     <span className="book-cover-art"><StoryIllustration url={book.pages[0]?.image_url||""} alt={book.title+" · "+labels[lang].cover} lazy/><span className="book-cover-age" aria-hidden="true">{book.age}+</span></span>
     <span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>
-      {reading&&<small className="read-progress">{progress}</small>}
+      {reading&&<><small className="read-progress">{progress}</small><span className="book-progress-track" role="progressbar" aria-label={labels[lang].page+" "+Math.min((book.lastPage??0)+1,book.pages.length)+" "+labels[lang].of+" "+book.pages.length} aria-valuemin={0} aria-valuemax={book.pages.length} aria-valuenow={Math.min((book.lastPage??0)+1,book.pages.length)}><span style={{width:(Math.min((book.lastPage??0)+1,book.pages.length)/Math.max(1,book.pages.length)*100)+"%"}}/></span></>}
       {book.favorite&&<span className="book-favorite-badge" aria-label={({ru:"В избранном",uz:"Sevimlilarda",en:"Favorite"} as const)[lang]}><Heart size={14} fill="currentColor"/></span>}
     </span>
   </button>;
