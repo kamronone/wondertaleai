@@ -4,9 +4,9 @@ import { test } from "node:test";
 import { transform } from "esbuild";
 
 const source = await readFile(new URL("../src/demo.ts", import.meta.url), "utf8");
-const start = source.indexOf("export const saveDemoBooks=");
+const start = source.indexOf("export const isValidLocalBook=");
 const end = source.indexOf("export const isDemoBook=", start);
-assert.ok(start >= 0 && end > start, "Local storage writer exists");
+assert.ok(start >= 0 && end > start, "Local storage validator and writer exist");
 const isolated = 'const deviceKey="wondertale-opt-in-books-v1"; const sessionKey="wondertale-preview-books-v1";\n' +
   source.slice(start, end);
 const { code } = await transform(isolated, { loader: "ts", format: "esm", target: "es2022" });
@@ -32,7 +32,11 @@ function withStores(run) {
 }
 function makeBooks(count, savedOnDevice = true) {
   return Array.from({ length: count }, (_, i) => ({
-    id: "local-" + i, savedOnDevice, name: "Hero " + i
+    id: "local-" + i, savedOnDevice, name: "Hero " + i,
+    title: "Story " + i, age: 7, theme: "forest", prompt: "Find the key",
+    style: "dreamy", mode: "browser-demo",
+    created_at: new Date(Date.UTC(2026, 10, 20, 0, 0, i)).toISOString(),
+    pages: [{ number: 1, text: "Once upon a time", image_url: "/images/cover.webp" }]
   }));
 }
 
