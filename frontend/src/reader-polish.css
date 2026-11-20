@@ -93,9 +93,9 @@
 @media print{
   .print-book-cover,.print-book-page{
     padding:7mm 5mm!important;
-    min-height:0!important;
-    height:265mm;
-    overflow:hidden;
+    min-height:265mm!important;
+    height:auto;
+    overflow:visible;
     box-sizing:border-box;
     break-after:page;
     page-break-after:always;
