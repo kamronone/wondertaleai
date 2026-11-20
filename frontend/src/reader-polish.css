@@ -273,3 +273,53 @@
 .create-page .classic-choice>button[aria-pressed="true"]{
   font-weight:800;
 }
+
+
+/* WonderTale 2.0: coherent compact controls on phone and tablet. */
+.shell main,.shell .topbar{min-width:0}
+.shell button,.shell select,.shell input,.shell textarea{font:inherit}
+.shell button{transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.shell button:focus-visible,.shell select:focus-visible,.shell input:focus-visible,.shell textarea:focus-visible{
+  outline:3px solid #8355b9;outline-offset:3px;
+}
+.shell button:disabled{cursor:not-allowed;opacity:.55}
+.shell .book-caption strong,.shell .classic-info strong{overflow-wrap:anywhere}
+.shell .book-tile,.shell .classic-card{min-width:0}
+.shell .book-tile:focus-visible,.shell .classic-card:focus-visible{outline-offset:4px}
+.create-page .wizard-progress .progress-step[aria-current="step"]{font-weight:800}
+.create-page .story-character-counter{display:block;margin:-8px 0 14px;text-align:right;color:#766584;font-size:11px;font-variant-numeric:tabular-nums}
+.create-page .story-character-counter[data-invalid="true"]{color:#9c3350;font-weight:750}
+.library-page .library-discovery{display:grid;grid-template-columns:minmax(0,1fr) minmax(142px,200px);gap:10px;margin:0 0 14px}
+.library-page .library-discovery label{display:block;margin:0;color:#584670;font-size:12px}
+.library-page .library-discovery input,.library-page .library-discovery select{width:100%;min-width:0;box-sizing:border-box;min-height:44px;margin-top:5px;border-radius:12px;padding:10px 12px;font-size:16px}
+.library-page .library-results-note{margin:-3px 0 14px;color:#7a7086;font-size:12px}
+.library-page .library-empty-results{padding:26px 12px;text-align:center;color:#6f5d7e}
+.library-page .library-empty-results button{min-height:44px;margin-top:8px;padding:9px 16px;border-radius:10px;border:1px solid #d8c2e8;background:#fff;color:#63458d;font-weight:700}
+.reader-page .reader-actions button{touch-action:manipulation}
+.welcome-screen .welcome-language{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px}
+.welcome-screen .welcome-language label{margin:0;color:#fff;font-size:12px}
+.welcome-screen .welcome-language select{min-height:44px;width:auto;max-width:180px;background:#fff;color:#32204f;border:1px solid #b7a5db;border-radius:12px;font-size:14px}
+@media(max-width:620px){
+  .shell .hero{min-height:0}
+  .shell .hero-content{padding:20px 17px 24px}
+  .shell .hero h1{font-size:clamp(25px,7.1vw,33px);line-height:1.14}
+  .shell .hero p{font-size:13px;line-height:1.5}
+  .shell .hero .primary-button{max-width:100%;min-height:44px;padding:10px 14px;font-size:12px;white-space:normal}
+  .shell .book-grid{gap:10px}
+  .shell .book-caption{padding:10px}
+  .shell .book-caption strong{font-size:12px;line-height:1.35}
+  .shell .section-head h2,.shell .section-heading h2{font-size:clamp(21px,6vw,25px)}
+  .shell .mobile-tabbar button{min-width:0}
+  .shell .mobile-tabbar button span{overflow-wrap:anywhere;font-size:10px;line-height:1.2}
+  .library-page .library-discovery{grid-template-columns:minmax(0,1fr)}
+  .create-page .wizard-progress{overflow:hidden}
+  .create-page .progress-step{min-width:0;font-size:11px;overflow-wrap:anywhere}
+  .create-page .wizard-step-actions>button{min-height:44px;font-size:12px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .shell .book-tile:hover,.shell .classic-card:hover{transform:translateY(-2px)}
+  .shell .primary-button:not(:disabled):active{transform:scale(.985)}
+}
+@media(prefers-reduced-motion:reduce){
+  .shell button,.shell .book-tile,.shell .classic-card{transition:none!important;animation:none!important;transform:none!important}
+}
