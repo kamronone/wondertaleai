@@ -27,15 +27,18 @@ export function PricingPlans({lang,api,session}:{lang:Lang;api:string;session:st
   return ()=>controller.abort();
  },[api,session]);
  const t=copy[lang];
+ const activePlan=status&&(["free","plus","family"].includes(status.plan.toLowerCase())?status.plan.toUpperCase():"Unknown");
+ const billingSummary=({ru:"Текущий план",uz:"Joriy tarif",en:"Current plan"} as const)[lang];
+ const pendingLabel=({ru:"Планируемая функция",uz:"Rejalashtirilgan imkoniyat",en:"Planned feature"} as const)[lang];
  return <section className="pricing-section" aria-labelledby="pricing-heading">
   <div className="pricing-heading"><h2 id="pricing-heading">{t.title}</h2><p>{t.subtitle}</p></div>
   <div className="pricing-grid">{plans.map(plan=><article className={"pricing-card pricing-"+plan.id} key={plan.id}>
-   <h3>{t.names[plan.id]}</h3><p>{plan.description[lang]}</p>
+   <h3>{t.names[plan.id]}</h3>{plan.id==="plus"&&<span className="pricing-featured">{({ru:"Популярный вариант",uz:"Ommabop variant",en:"Popular option"} as const)[lang]}</span>}<p>{plan.description[lang]}</p>
    <div className="pricing-price">{plan.price?plan.price.toLocaleString("ru-RU"):t.free}{plan.price>0&&<small> {t.month}</small>}</div>
    <ul>{plan.features[lang].map(feature=><li key={feature}>{feature}</li>)}</ul>
-   <span className="pricing-status">{plan.id==="free"?t.free:t.planned}</span>
+   <span className="pricing-status" aria-label={plan.id==="free"?t.free:pendingLabel}>{plan.id==="free"?t.free:t.planned}</span>
   </article>)}</div>
-  {status&&<p className="pricing-note" role="status">{({ru:"Ваш тариф: Free",uz:"Sizning tarifingiz: Free",en:"Your plan: Free"} as const)[lang]} · {status.ai_pilot_access?({ru:"Пилотный AI-доступ",uz:"Sinov AI ruxsati",en:"Pilot AI access"} as const)[lang]+": "+status.ai_used_today+"/"+status.ai_daily_limit+" · "+({ru:"Осталось сегодня",uz:"Bugun qolgan",en:"Remaining today"} as const)[lang]+": "+Math.max(0,status.ai_remaining_today)+" (UTC)":({ru:"AI-доступ пока не активирован",uz:"AI ruxsati hali faol emas",en:"AI access is not active yet"} as const)[lang]}</p>}
-  <p className="pricing-note">{t.note}</p>
+  {status&&<p className="pricing-note" role="status">{billingSummary+": "+activePlan} · {status.ai_pilot_access?({ru:"Пилотный AI-доступ",uz:"Sinov AI ruxsati",en:"Pilot AI access"} as const)[lang]+": "+status.ai_used_today+"/"+status.ai_daily_limit+" · "+({ru:"Осталось сегодня",uz:"Bugun qolgan",en:"Remaining today"} as const)[lang]+": "+Math.max(0,status.ai_remaining_today)+" (UTC)":({ru:"AI-доступ пока не активирован",uz:"AI ruxsati hali faol emas",en:"AI access is not active yet"} as const)[lang]}</p>}
+  <p className="pricing-note">{t.note}</p><p className="pricing-note pricing-disclaimer">{({ru:"Цены и лимиты показаны для ознакомления. Кнопок оплаты нет: это не предложение действующей подписки.",uz:"Narxlar va limitlar faqat tanişuv uçun. Tölov tugmalari yöq: obuna hali işlamaydi.",en:"Prices and limits are illustrative. There are no payment buttons and subscriptions are not yet offered."} as const)[lang]}</p>
  </section>;
 }
