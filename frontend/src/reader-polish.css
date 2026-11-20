@@ -826,3 +826,29 @@
     justify-self:end!important;
   }
 }
+
+/* Keep the expanded reader settings visible directly below their trigger. */
+.reader-page .reader-mode-controls + .reader-display-settings{
+  display:flex!important;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 12px;
+  padding:12px;
+  border:1px solid #e4d7ed;
+  border-radius:13px;
+  background:#fffafc;
+}
+.reader-page .reader-mode-controls button[aria-expanded="true"]{
+  background:#f0e5fa;
+  border-color:#9c74c6;
+  color:#513779;
+}
+@media(max-width:620px){
+  .reader-page .reader-mode-controls + .reader-display-settings{
+    padding:11px;
+    gap:8px;
+  }
+}
