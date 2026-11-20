@@ -1026,3 +1026,72 @@
   .reader-page .bedtime-controls > button{padding:7px 7px;font-size:10px}
   .reader-page .reader-mode-controls > button{font-size:11px;padding:8px 5px}
 }
+
+/* Parent profile refresh: one clear status, secondary tips behind disclosure.
+   Keep account authentication and family management behavior unchanged. */
+.parent-account-page .parent-account-unavailable{
+  display:grid;gap:11px;align-items:stretch;text-align:left;
+  padding:15px;box-shadow:none;
+}
+.parent-account-page .parent-account-status{
+  display:flex;gap:11px;align-items:center;min-width:0;
+}
+.parent-account-page .parent-account-status>svg{
+  flex:0 0 36px;width:36px;height:36px;padding:8px;
+  border-radius:11px;background:#f2eaf9;color:#7c54a8;
+}
+.parent-account-page .parent-account-status>div{display:grid;gap:4px;min-width:0}
+.parent-account-page .parent-account-status strong{font-size:14px;line-height:1.25;color:#4e376c}
+.parent-account-page .parent-account-status span{font-size:12px;line-height:1.45;color:#756783}
+.parent-account-page .parent-account-help{min-width:0;border-top:1px solid #eee6f3;padding-top:7px}
+.parent-account-page .parent-account-help summary{
+  display:flex;align-items:center;min-height:44px;
+  font-size:12px;font-weight:700;color:#8057a8;cursor:pointer;
+}
+.parent-account-page .parent-account-help p{margin:0 0 8px;font-size:12px;line-height:1.5;text-align:left}
+.parent-account-page .parent-account-unavailable>.parent-account-secondary{
+  justify-self:start;width:auto;min-height:44px;
+  padding:9px 13px;font-size:12px;
+}
+.parent-account-page .parent-account-reading-section{
+  margin:14px 0 0;border:1px solid #e3d7ec;
+  border-radius:15px;background:#fff;overflow:hidden;
+}
+.parent-account-page .parent-account-reading-section>summary{
+  display:flex;align-items:center;gap:10px;list-style:none;
+  min-height:54px;padding:13px 15px;cursor:pointer;
+  font-size:13px;font-weight:750;color:#624483;
+}
+.parent-account-page .parent-account-reading-section>summary::-webkit-details-marker{display:none}
+.parent-account-page .parent-account-reading-section>summary svg{flex:0 0 18px}
+.parent-account-page .parent-account-reading-section .parent-account-expand{
+  margin-left:auto;font-size:20px;line-height:1;transition:transform .15s ease;
+}
+.parent-account-page .parent-account-reading-section[open] .parent-account-expand{transform:rotate(180deg)}
+.parent-account-page .parent-account-reading-section .parent-reading-guide{
+  margin:0;padding:14px;border:0;border-top:1px solid #eee7f4;
+  border-radius:0;background:#fdfaff;
+}
+.parent-account-page .parent-account-footnote{
+  margin:10px 2px 0;font-size:10px;line-height:1.45;color:#82748e;
+}
+@media screen and (max-width:620px){
+  .parent-account-page{
+    width:100%;max-width:100%;padding:12px 14px 12px;margin:0 auto;
+  }
+  .parent-account-page .parent-account-head{gap:10px;margin:0 0 14px}
+  .parent-account-page .parent-account-symbol{
+    width:43px;height:43px;border-radius:13px;
+  }
+  .parent-account-page .parent-account-head h2{font-size:19px;line-height:1.25;margin-bottom:3px}
+  .parent-account-page .parent-account-head p{font-size:11px}
+  .parent-account-page .parent-account-card,
+  .parent-account-page .parent-account-unavailable{
+    padding:14px;border-radius:15px;margin:0;
+  }
+  .parent-account-page .parent-account-card{gap:11px}
+  .parent-account-page .parent-account-reading-section{margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .parent-account-page .parent-account-reading-section .parent-account-expand{transition:none}
+}
