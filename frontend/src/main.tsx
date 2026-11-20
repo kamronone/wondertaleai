@@ -358,6 +358,9 @@ function App(){
       }finally{refreshing=false;}
     };
     window.addEventListener("online",refresh);
+    // Fetch a fresh snapshot as soon as the library opens, not only when
+    // connectivity or visibility changes.
+    void refresh();
     const onVisible=()=>{if(document.visibilityState==="visible")void refresh();};
     document.addEventListener("visibilitychange",onVisible);
     return ()=>{
