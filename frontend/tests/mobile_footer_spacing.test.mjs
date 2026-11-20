@@ -32,3 +32,10 @@ test("empty mobile library does not reserve a second fixed-nav height",()=>{
   assert.match(polish,/\.library-page\s*>\s*\.empty\s*\{[^}]*height:auto!important/s);
   assert.match(polish,/\.library-page\s*>\s*\.empty\s*\{[^}]*padding:28px 16px!important/s);
 });
+
+test("creation wizard leaves no duplicate bottom tab bar gap",()=>{
+  assert.match(polish,/\.shell\s*>\s*main\s*>\s*\.create-page\s*\{[^}]*padding-bottom:8px!important/s);
+  assert.match(polish,/\.create-page\s*>\s*\.form-card\s*\{[^}]*min-height:0!important/s);
+  assert.match(polish,/\.create-page\s*>\s*\.form-card\s*\{[^}]*margin-bottom:0!important/s);
+  assert.match(polish,/\.create-page \.wizard-step-actions\{margin-bottom:0!important\}/);
+});
