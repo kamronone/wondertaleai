@@ -171,6 +171,9 @@ function App(){
   const activeClassic=classics.find(x=>x.id===classicId);
   const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);openCreate(true);};
   const changeStoryLanguage=(next:Lang)=>{setStoryLang(next);if(activeClassic)setPrompt(activeClassic.prompt[next]);};
+  const combinedHeroName=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
+  const heroNameTooLong=combinedHeroName.length>60;
+  const heroNameLengthError=({ru:"Имена двух героев вместе должны содержать не более 60 символов.",uz:"Ikki qahramon ismi birga 60 belgidan oshmasligi kerak.",en:"Both hero names together must be 60 characters or fewer."} as const)[lang];
   const [photo,setPhoto]=useState<File|null>(null);
   const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
@@ -593,10 +596,9 @@ function App(){
       setError(({ru:"Подтвердите согласие перед созданием сказки.",uz:"Ertak yaratişdan oldin rozilikni tasdiqlang.",en:"Confirm your consent before creating a story."} as const)[lang]);
       return;
     }
-    const combinedHeroName=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
-    if(!usePersonalAi&&combinedHeroName.length>60){
+    if(!usePersonalAi&&heroNameTooLong){
       setCreateStep(1);
-      setError(({ru:"Имена двух героев вместе должны содержать не более 60 символов.",uz:"Ikki qahramon ismi birga 60 belgidan oşmasligi kerak.",en:"Both hero names together must be 60 characters or fewer."} as const)[lang]);
+      setError(heroNameLengthError);
       return;
     }
 
@@ -782,10 +784,10 @@ function App(){
           {createStep===1&&<><div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           {privateToken&&API&&<StoryChildPicker key={privateToken} api={API} session={privateToken} lang={lang} onSelect={child=>{if(child){setName(child.nickname);setAge(String(child.age));}}}/>}
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
-          <label className="second-hero-field">{t.extraHero}<input maxLength={45} value={secondHero} onChange={e=>setSecondHero(e.target.value)} placeholder={t.extraHeroHint}/></label>
+          <label className="second-hero-field">{t.extraHero}<input maxLength={45} aria-invalid={heroNameTooLong} aria-describedby={heroNameTooLong?"hero-name-limit":undefined} value={secondHero} onChange={e=>{setSecondHero(e.target.value);if(error===heroNameLengthError)setError("");}} placeholder={t.extraHeroHint}/></label>{heroNameTooLong&&<p className="wizard-inline-error" id="hero-name-limit" role="status">{heroNameLengthError}</p>}
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
           {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
-          <div className="wizard-step-actions"><button type="button" className="primary-button" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
+          <div className="wizard-step-actions"><button type="button" className="primary-button" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}if(heroNameTooLong){setError(heroNameLengthError);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
           {createStep===2&&<><div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
           <div className="classic-choice"><button type="button" className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
           {activeClassic&&<p className="classic-selected"><CheckCircle2 size={16}/> {t.classicSelected}: <strong>{activeClassic.title[lang]}</strong></p>}
