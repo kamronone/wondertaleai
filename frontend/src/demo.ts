@@ -32,8 +32,13 @@ export const getDemoBooks=():DemoBook[]=>{
  return [...saved,...session].filter(book=>{if(found.has(book.id))return false;found.add(book.id);return true;}).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,30);
 };
 export const saveDemoBooks=(books:DemoBook[])=>{
- const chosen=books.filter(b=>b.savedOnDevice).slice(0,20);
- const ephemeral=books.filter(b=>!b.savedOnDevice).slice(0,20);
+ const chosen=books.filter(b=>b.savedOnDevice);
+ const ephemeral=books.filter(b=>!b.savedOnDevice);
+ // Never silently evict an older book when the local library fills up.
+ // Explicit deletion is the only way to free a saved-book slot.
+ if(chosen.length>20||ephemeral.length>20){
+   throw new Error("LOCAL_LIBRARY_FULL");
+ }
  // Names and stories stay in this browser; photos are never saved or uploaded in demo.
  if(chosen.length){localStorage.setItem(deviceKey,JSON.stringify(chosen));}else{localStorage.removeItem(deviceKey);}
  if(ephemeral.length){sessionStorage.setItem(sessionKey,JSON.stringify(ephemeral));}else{sessionStorage.removeItem(sessionKey);}
