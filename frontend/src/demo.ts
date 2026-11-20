@@ -4,7 +4,6 @@ import { classics, type ClassicId } from "./classics";
 export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
-const hasDuplicateLocalIds=(ids:readonly string[]):boolean=>new Set(ids).size!==ids.length;
 export const isValidLocalBook=(value:unknown):value is DemoBook=>{
  if(!value||typeof value!=="object")return false;
  const book=value as Partial<DemoBook>;
@@ -20,6 +19,7 @@ export const isValidLocalBook=(value:unknown):value is DemoBook=>{
      typeof p.image_url==="string"&&p.image_url.length<=40000&&
      Number.isInteger(p.number)&&p.number===index+1);
 };
+const hasDuplicateLocalIds=(ids:readonly string[]):boolean=>new Set(ids).size!==ids.length;
 const readBooks=(getStore:()=>Storage,key:string,persistent:boolean):DemoBook[]=>{
  try{
    // Safari may throw SecurityError even when accessing the storage getter.
