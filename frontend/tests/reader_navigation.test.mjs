@@ -83,3 +83,17 @@ test("Offline page turns remain queued without attempting a network write",async
   assert.match(app,/await replayPendingChanges\(\{/);
   assert.match(app,/progress:pendingProgress\.current/);
 });
+
+
+test("Mobile reader replaces tiny page dots with a readable current-page indicator",async()=>{
+  const [app,css]=await Promise.all([
+    readFile(new URL("../src/main.tsx",import.meta.url),"utf8"),
+    readFile(new URL("../src/reader-polish.css",import.meta.url),"utf8")
+  ]);
+  assert.match(app,/className="pager-mobile-current" aria-live="polite">\{page\+1\} \/ \{active\.pages\.length\}/);
+  assert.match(css,/\.reader-page \.pager-mobile-current\{display:none\}/);
+  assert.match(css,/@media\(max-width:620px\)\{[\s\S]*?\.reader-page \.pager-mobile-current\{[\s\S]*?display:block/);
+  assert.match(css,/\.reader-page \.pager-indicators>\.dot,[\s\S]*?\.pager-indicators>\.pager-current\{display:none\}/);
+  assert.match(css,/\.reader-page \.pager>button\{min-height:44px\}/);
+  assert.match(css,/\.reader-page \.reader-actions \.icon-button\{[\s\S]*?min-width:44px/);
+});
