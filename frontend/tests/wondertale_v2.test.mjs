@@ -52,10 +52,11 @@ test("Home, creator, reader and library use compact and accessible controls",()=
   assert.match(app,/readingStats\.unlocked/);
 });
 
-test("Parents can choose the interface language during onboarding",()=>{
-  assert.match(app,/id="welcome-language-select"/);
-  assert.match(app,/onChange=\{event=>switchLang\(event\.target\.value as Lang\)\}/);
-  assert.match(uzCheck,/Onboarding must provide a language selector/);
+test("Welcome screen stays uncluttered while the header retains language selection",()=>{
+  assert.doesNotMatch(app,/id="welcome-language-select"/);
+  assert.match(app,/className="language-control"/);
+  assert.match(app,/onChange=\{e=>switchLang\(e\.target\.value as Lang\)\}/);
+  assert.match(uzCheck,/Onboarding must not show the language selector/);
 });
 
 test("Honest illustrations copy does not promise unavailable photo-based generation",()=>{
@@ -92,7 +93,7 @@ test("Home offers one-tap reading continuation only for unfinished multi-page bo
 });
 
 
-test("Onboarding arrows do not intercept keyboard use of language selector",()=>{
+test("Onboarding arrows do not intercept focused controls",()=>{
   assert.match(app,/target\.closest\("button, select, input, textarea, \[role='button'\]"\)\)return;/);
   assert.match(app,/event\.key==="ArrowRight"\)\{event\.preventDefault\(\);setOnboardingStep/);
   assert.match(app,/event\.key==="ArrowLeft"\)\{event\.preventDefault\(\);setOnboardingStep/);
@@ -109,7 +110,7 @@ test("Onboarding ignores pinch zoom, simultaneous releases and cancelled touch s
   assert.match(app,/onTouchCancel=\{onWelcomeTouchCancel\}/);
 });
 
-test("Onboarding slides can receive keyboard focus without hijacking language controls",()=>{
+test("Onboarding slides can receive keyboard focus without hijacking controls",()=>{
   assert.match(app,/className="welcome-screen"[^>]*tabIndex=\{0\}/);
   assert.match(app,/target\.closest\("button, select, input, textarea, \[role='button'\]"\)/);
 });
