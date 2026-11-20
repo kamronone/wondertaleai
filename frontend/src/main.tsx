@@ -14,7 +14,7 @@ import { ParentAccount } from "./ParentAccount";
 import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
-import { translateSelectedStoryPrompt } from "./story_language";
+import { translateSelectedStoryPrompt, leaveClassicStoryPrompt } from "./story_language";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
@@ -794,7 +794,7 @@ function App(){
           {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
           <div className="wizard-step-actions"><button type="button" className="primary-button" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}if(heroNameTooLong){setError(heroNameLengthError);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
           {createStep===2&&<><div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
-          <div className="classic-choice" role="group" aria-label={t.classicFormTitle}><button type="button" aria-pressed={!classicId} className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" aria-pressed={classicId===item.id} className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
+          <div className="classic-choice" role="group" aria-label={t.classicFormTitle}><button type="button" aria-pressed={!classicId} className={!classicId?"active":""} onClick={()=>{setPrompt(previous=>leaveClassicStoryPrompt(previous,storyLang,activeClassic?.prompt));setClassicId(null);}}>{t.classicCustom}</button>{classics.map(item=><button type="button" aria-pressed={classicId===item.id} className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
           {activeClassic&&<p className="classic-selected"><CheckCircle2 size={16}/> {t.classicSelected}: <strong>{activeClassic.title[lang]}</strong></p>}
           <label>{t.world}</label><div className="chips">{themes.map((x,i)=><button type="button" key={x} className={"chip "+(themeIndex===i?"selected":"")} onClick={()=>setThemeIndex(i)}>{x}</button>)}</div>
           <label className="story-preset-label">{t.storyIdeas}</label>
