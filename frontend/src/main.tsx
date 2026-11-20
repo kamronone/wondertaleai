@@ -521,8 +521,11 @@ function App(){
               favorite:pendingFavorites.current.get(book.id)??book.favorite,
               lastPage:pendingProgress.current.get(book.id)??book.lastPage
             }));
-            setRemoteBooks(merged);
-            setBooks(merged);
+            // A lagging read replica may not expose the newly committed book yet.
+            // Keep it visible until the server includes it in a later snapshot.
+            const visible=merged.some(book=>book.id===created.id)?merged:[created,...merged];
+            setRemoteBooks(visible);
+            setBooks(visible);
           }
         }catch{
           // Keep the committed story on screen until a later library refresh.
