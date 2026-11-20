@@ -15,7 +15,7 @@ const fragment = [
   source.slice(start, end)
 ].join("\n");
 const { code } = await transform(fragment, { loader: "ts", format: "esm", target: "es2022" });
-const { getDemoBooks, saveDemoBooks } = await import(
+const { getDemoBooks, getLocalLibraryHealth, saveDemoBooks } = await import(
   "data:text/javascript;base64," + Buffer.from(code).toString("base64")
 );
 
@@ -148,4 +148,32 @@ test("Invalid progress and favorite flags cannot corrupt reading state", () => w
   assert.equal(loaded.find(book => book.id === "local-book-1").favorite, true);
   assert.equal(loaded.find(book => book.id === "local-book-2").lastPage, 0);
   assert.equal(loaded.find(book => book.id === "local-book-2").language, undefined);
+}));
+
+test("Health is ok for an empty or valid local library", () => withStorage(({ device }) => {
+  assert.equal(getLocalLibraryHealth(), "ok");
+  device.setItem("wondertale-opt-in-books-v1", JSON.stringify([story(0, true)]));
+  assert.equal(getLocalLibraryHealth(), "ok");
+}));
+
+test("Health reports damaged JSON and invalid book entries without deleting them", () => withStorage(({ device }) => {
+  device.setItem("wondertale-opt-in-books-v1", "{broken");
+  assert.equal(getLocalLibraryHealth(), "corrupt");
+  assert.equal(device.getItem("wondertale-opt-in-books-v1"), "{broken");
+  device.setItem("wondertale-opt-in-books-v1", JSON.stringify([story(1, true), {id:"local-broken"}]));
+  assert.equal(getLocalLibraryHealth(), "corrupt");
+  assert.equal(getDemoBooks().length, 1);
+}));
+
+test("Health distinguishes disabled Safari storage from damaged data", () => withStorage(() => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+  try {
+    Object.defineProperty(globalThis, "sessionStorage", {
+      configurable:true, get(){throw new Error("SecurityError");}
+    });
+    assert.equal(getLocalLibraryHealth(), "unavailable");
+  }finally{
+    if(previous)Object.defineProperty(globalThis,"sessionStorage",previous);
+    else delete globalThis.sessionStorage;
+  }
 }));
