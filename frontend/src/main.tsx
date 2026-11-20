@@ -770,7 +770,20 @@ function App(){
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
           <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(1)}><ArrowLeft size={16}/>{t.back}</button><button type="button" className="primary-button" onClick={()=>{if(prompt.trim().length<8){setError(({ru:"Опишите сюжет минимум 8 символами.",uz:"Syujetni kamida 8 ta belgi bilan yozing.",en:"Describe the plot in at least 8 characters."} as const)[lang]);return;}setError("");setCreateStep(3);}}>{t.next}<ArrowRight size={17}/></button></div></>}
           {createStep===3&&<><div className="step-title next"><span>03</span><div><h3>{t.createBook}</h3><p>{t.storyStepDesc}</p></div></div><div className="story-lang-field"><label>{({ru:"Режим создания",uz:"Yaratiş rejimi",en:"Creation mode"} as const)[lang]}</label><div className="story-lang-options"><button type="button" className={!usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(false)}>{({ru:"Демо",uz:"Demo",en:"Demo"} as const)[lang]}</button><button type="button" className={usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(true)}>{({ru:"AI (аккаунт)",uz:"AI (akkaunt)",en:"AI (account)"} as const)[lang]}</button></div></div>
-          {usePersonalAi&&<label>{({ru:"Длина AI-сказки",uz:"AI ertak uzunligi",en:"AI story length"} as const)[lang]}<select value={aiPagesCount} onChange={e=>setAiPagesCount(Number(e.target.value) as 8|12|20)}><option value={8}>8 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={12}>12 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={20}>20 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option></select></label>}
+          <div className="wizard-review" aria-label={({ru:"Проверка перед созданием",uz:"Yaratişdan oldingi tekşiruv",en:"Review before creating"} as const)[lang]}>
+             <strong>{({ru:"Проверьте детали сказки",uz:"Ertak ma’lumotlarini tekşiring",en:"Review your story"} as const)[lang]}</strong>
+             <dl>
+               <div><dt>{t.childName}</dt><dd>{name.trim()}</dd></div>
+               <div><dt>{t.age}</dt><dd>{age} {t.years}</dd></div>
+               {secondHero.trim()&&<div><dt>{t.extraHero}</dt><dd>{secondHero.trim()}</dd></div>}
+               <div><dt>{t.world}</dt><dd>{activeClassic?activeClassic.title[lang]:theme}</dd></div>
+               <div><dt>{t.storyLanguage}</dt><dd>{languages.find(item=>item.id===storyLang)?.label||storyLang}</dd></div>
+               <div><dt>{t.style}</dt><dd>{style}</dd></div>
+             </dl>
+             <p>{prompt}</p>
+             <button type="button" onClick={()=>setCreateStep(2)}>{({ru:"Изменить сюжет",uz:"Syujetni özgartiriş",en:"Edit story"} as const)[lang]}</button>
+           </div>
+           {usePersonalAi&&<label>{({ru:"Длина AI-сказки",uz:"AI ertak uzunligi",en:"AI story length"} as const)[lang]}<select value={aiPagesCount} onChange={e=>setAiPagesCount(Number(e.target.value) as 8|12|20)}><option value={8}>8 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={12}>12 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={20}>20 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option></select></label>}
           {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
           {!usePersonalAi&&<div className="device-save-option">
             <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
