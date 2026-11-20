@@ -40,8 +40,33 @@ export const saveDemoBooks=(books:DemoBook[])=>{
    throw new Error("LOCAL_LIBRARY_FULL");
  }
  // Names and stories stay in this browser; photos are never saved or uploaded in demo.
- if(chosen.length){localStorage.setItem(deviceKey,JSON.stringify(chosen));}else{localStorage.removeItem(deviceKey);}
- if(ephemeral.length){sessionStorage.setItem(sessionKey,JSON.stringify(ephemeral));}else{sessionStorage.removeItem(sessionKey);}
+ // A browser storage exception can occur halfway through the two writes.
+ // Keep the previous values and report failure instead of silently losing books.
+ let oldDevice:string|null;
+ let oldSession:string|null;
+ try{
+   oldDevice=localStorage.getItem(deviceKey);
+   oldSession=sessionStorage.getItem(sessionKey);
+ }catch{
+   throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
+ }
+ try{
+   if(chosen.length)localStorage.setItem(deviceKey,JSON.stringify(chosen));
+   else localStorage.removeItem(deviceKey);
+   if(ephemeral.length)sessionStorage.setItem(sessionKey,JSON.stringify(ephemeral));
+   else sessionStorage.removeItem(sessionKey);
+ }catch{
+   // Browser storage has no cross-storage transaction. Roll back what we can.
+   try{
+     if(oldDevice===null)localStorage.removeItem(deviceKey);
+     else localStorage.setItem(deviceKey,oldDevice);
+   }catch{/* Restore may also fail if storage is unavailable. */}
+   try{
+     if(oldSession===null)sessionStorage.removeItem(sessionKey);
+     else sessionStorage.setItem(sessionKey,oldSession);
+   }catch{/* Never claim the write succeeded after a storage failure. */}
+   throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
+ }
 };
 export const isDemoBook=(book:DemoBook)=>book.id.startsWith("local-");
 const illustration=(index:number):string=>{
