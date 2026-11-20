@@ -106,3 +106,10 @@ def test_whitespace_only_title_rejected():
     payload["title"]="   "
     with pytest.raises(ValueError):
         validate_generated_story(json.dumps(payload),"en")
+
+
+def test_generated_title_is_trimmed_before_storage():
+    payload=json.loads(valid_story("en"))
+    payload["title"]="  Amir and the Magical Night  "
+    parsed=validate_generated_story(json.dumps(payload),"en")
+    assert parsed.title=="Amir and the Magical Night"
