@@ -5,7 +5,7 @@ import { transform } from "esbuild";
 
 const source = await readFile(new URL("../src/private_library.ts", import.meta.url), "utf8");
 const { code } = await transform(source, { loader: "ts", format: "esm", target: "es2022" });
-const { transferLocalBooks } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
+const { transferLocalBooks, updatePrivateReadingProgress, setPrivateFavorite, PrivateBookNotFoundError } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
 
 const book = (id) => ({
   id, savedOnDevice: true, title: "A story", name: "Alex", age: 7,
@@ -188,5 +188,35 @@ test("forbidden account stops transfer rather than treating denial as network ti
       /authorization expired/
     );
     assert.equal(posts, 1);
+  });
+});
+
+test("A missing progress record is distinguishable from a temporary server failure",async()=>{
+  await withFetch(async()=>json({detail:"Not found"},404),async()=>{
+    await assert.rejects(
+      updatePrivateReadingProgress("https://api.test","token","book-missing",3),
+      error=>error instanceof PrivateBookNotFoundError
+    );
+  });
+  await withFetch(async()=>json({detail:"Server unavailable"},503),async()=>{
+    await assert.rejects(
+      updatePrivateReadingProgress("https://api.test","token","book-other",3),
+      error=>!(error instanceof PrivateBookNotFoundError)
+    );
+  });
+});
+
+test("A missing favorite record is distinguishable from expired authorization",async()=>{
+  await withFetch(async()=>json({detail:"Not found"},404),async()=>{
+    await assert.rejects(
+      setPrivateFavorite("https://api.test","token","book-missing",true),
+      error=>error instanceof PrivateBookNotFoundError
+    );
+  });
+  await withFetch(async()=>json({detail:"Forbidden"},403),async()=>{
+    await assert.rejects(
+      setPrivateFavorite("https://api.test","token","book-other",true),
+      /authorization expired/
+    );
   });
 });
