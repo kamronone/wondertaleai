@@ -349,3 +349,33 @@
   .continue-story-card .continue-story-copy strong{font-size:12px}
   .continue-story-card .continue-story-copy small{font-size:10px}
 }
+
+
+/* iPhone reader: use a legible page counter instead of tiny page dots.
+   Wide screens retain the existing direct page-jump controls. */
+.reader-page .pager-mobile-current{display:none}
+@media(max-width:620px){
+  .reader-page .pager-indicators{min-width:48px;flex:0 1 auto}
+  .reader-page .pager-mobile-current{
+    display:block;
+    font-size:12px;
+    font-weight:750;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+    color:#63468c
+  }
+  .reader-page .pager-indicators>.dot,
+  .reader-page .pager-indicators>.pager-jump,
+  .reader-page .pager-indicators>.pager-current{display:none}
+  .reader-page .pager>button{min-height:44px}
+  .reader-page .reader-actions .icon-button{
+    min-width:44px;
+    width:44px;
+    height:44px;
+    flex-basis:44px;
+  }
+}
+@media(max-width:420px){
+  .reader-page .pager{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+  .reader-page .pager-indicators{justify-content:center}
+}
