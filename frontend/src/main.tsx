@@ -13,6 +13,7 @@ import { AccountAction } from "./AccountAction";
 import { PricingPlans } from "./PricingPlans";
 import { ParentAccount } from "./ParentAccount";
 import { LegalCenter, type LegalDocument } from "./LegalCenter";
+import { ProfileLegalMenu } from "./ProfileLegalMenu";
 import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, PrivateBookNotFoundError, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
@@ -971,7 +972,7 @@ function App(){
         </form>
       </section>}
       {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab(legalReturnTab)}/>}
-      {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<details className="account-plans-disclosure"><summary><Star size={16}/>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}<ChevronDown size={16}/></summary><PricingPlans lang={lang} api={API} session={privateToken}/></details></>}
+      {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/><ProfileLegalMenu lang={lang} onOpen={openLegal}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<details className="account-plans-disclosure"><summary><Star size={16}/>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}<ChevronDown size={16}/></summary><PricingPlans lang={lang} api={API} session={privateToken}/></details></>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
         {!isOnline&&<div className="library-sync-warning" role="status">
           <span>{privateToken?({ru:"Нет интернета. Серверная библиотека может быть недоступна после перезапуска. Для офлайн-чтения используйте сохранённые на устройстве демосказки; приватные книги не кешируются PWA.",uz:"Internet yoq. Server kutubxonasi qayta ochilganda mavjud bolmasligi mumkin. Oflayn oqish uchun qurilmada saqlangan demo ertaklardan foydalaning; shaxsiy kitoblar PWA keshiga yozilmaydi.",en:"You are offline. Server books may be unavailable after restarting. Use stories saved on this device for offline reading; private books are never stored in the PWA cache."} as const)[lang]:({ru:"Нет интернета. Доступны только сказки, уже сохранённые на этом устройстве.",uz:"Internet yoq. Faqat qurilmada saqlangan ertaklar mavjud.",en:"You are offline. Only stories already saved on this device are available."} as const)[lang]}</span>
@@ -1115,12 +1116,6 @@ function App(){
     </main>
     <footer className="site-legal-footer">
       <span>© {new Date().getFullYear()} WonderTale AI · Komron Giyosov</span>
-      <nav aria-label={({ru:"Правовая информация",uz:"Huquqiy malumot",en:"Legal information"} as const)[lang]}>
-        <button type="button" onClick={()=>openLegal("terms")}>{({ru:"Условия",uz:"Shartlar",en:"Terms"} as const)[lang]}</button>
-        <button type="button" onClick={()=>openLegal("privacy")}>{({ru:"Конфиденциальность",uz:"Maxfiylik",en:"Privacy"} as const)[lang]}</button>
-        <button type="button" onClick={()=>openLegal("copyright")}>{({ru:"Авторские права",uz:"Mualliflik huquqi",en:"Copyright"} as const)[lang]}</button>
-        <button type="button" onClick={()=>openLegal("parents")}>{({ru:"Для родителей",uz:"Ota-onalar",en:"Parents"} as const)[lang]}</button>
-      </nav>
     </footer>
   </div>;
 }
