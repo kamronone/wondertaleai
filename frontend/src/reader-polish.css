@@ -1,0 +1,72 @@
+/* WonderTale mobile navigation and reader polish.
+   Scoped overrides follow the legacy theme to avoid cascade regressions. */
+@media (max-width:620px){
+  .shell main {padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+  .shell .mobile-tabbar{
+    position:fixed!important;
+    inset:auto 0 0 0!important;
+    z-index:80!important;
+    display:flex;
+    align-items:stretch;
+    width:100%;
+    min-height:57px;
+    padding:7px 8px calc(8px + env(safe-area-inset-bottom))!important;
+    background:rgba(255,252,255,.97);
+    border-top:1px solid #e5d5ef;
+    border-radius:15px 15px 0 0;
+    box-shadow:0 -6px 23px rgba(40,21,76,.13);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+  }
+  .shell .mobile-tabbar button{
+    flex:1 1 25%;
+    max-width:none!important;
+    min-width:0;
+    min-height:44px;
+    padding:4px 2px;
+    border-radius:10px;
+    font-size:clamp(9px,2.8vw,11px);
+    line-height:1.2;
+    gap:3px;
+  }
+  .shell .mobile-tabbar button span{
+    display:block;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-overflow:clip;
+    text-align:center;
+  }
+  .shell .mobile-tabbar button.active{background:#f4ecff}
+  .reader-page .reader-toolbar{gap:8px}
+  .reader-page .reader-actions{flex-wrap:nowrap}
+  .reader-page .reader-display-settings{margin-bottom:13px}
+  .reader-page .pager{margin-bottom:18px}
+}
+.reader-page .story-page{
+  touch-action:pan-y pinch-zoom;
+  overscroll-behavior-x:contain;
+}
+.reader-page .story-text{
+  white-space:pre-wrap;
+  hyphens:auto;
+}
+.reader-page button:focus-visible,
+.create-page button:focus-visible,
+.mobile-tabbar button:focus-visible,
+.classic-card:focus-visible{
+  outline:3px solid #ad75d9;
+  outline-offset:3px;
+}
+@media print {
+  .shell .mobile-tabbar{display:none!important}
+  .print-book-cover,.print-book-page{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .print-book-page p{
+    overflow-wrap:anywhere;
+    max-height:none;
+    orphans:3;
+    widows:3;
+  }
+}
