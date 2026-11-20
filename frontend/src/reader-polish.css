@@ -525,3 +525,10 @@
   .shell .book-tile .book-cover-age{top:7px;right:7px;font-size:10px;min-width:27px;min-height:23px}
   .shell .book-tile .book-cover-art{aspect-ratio:4/3}
 }
+
+
+/* Print/export must not include the fixed app navigation or reading controls. */
+@media print{
+  .shell .mobile-tabbar,
+  .reader-page .reader-mode-controls{display:none!important}
+}
