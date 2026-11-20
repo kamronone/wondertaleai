@@ -6,7 +6,7 @@ Run only from secure_main.py after authenticated parental access.
 import json
 import os
 from typing import Literal
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 Language=Literal["ru","uz","en"]
 
@@ -19,6 +19,19 @@ class GenerateStoryInput(BaseModel):
     style: str=Field(min_length=1,max_length=60,default="Watercolor")
     pages_count: Literal[8,12,20]=8
     other_heroes: list[str]=Field(default_factory=list,max_length=3)
+
+    @field_validator("name","idea","style","classic_title")
+    @classmethod
+    def normalize_story_input(cls,value:str)->str:
+        return value.strip()
+
+    @field_validator("other_heroes")
+    @classmethod
+    def validate_heroes(cls,heroes:list[str])->list[str]:
+        cleaned=[hero.strip() for hero in heroes]
+        if any(not hero or len(hero)>45 for hero in cleaned):
+            raise ValueError("Each additional hero must have a name of at most 45 characters")
+        return cleaned
 
 class GeneratedStory(BaseModel):
     title: str=Field(min_length=3,max_length=120)
