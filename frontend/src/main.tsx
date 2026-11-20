@@ -183,7 +183,7 @@ function App(){
     recentlyCreated.current.clear();
     const token=privateToken;
     clearChildDraft();
-    setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setSyncMessage("");
+    setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setPage(0);setEditingPage(false);setPageDraft("");setError("");setSyncMessage("");setTab("home");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
   };
   const syncSaved=async()=>{
