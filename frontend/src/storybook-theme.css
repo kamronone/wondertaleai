@@ -800,3 +800,8 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
  .reader-page .pager-current{font-size:11px}
  .reader-page .pager>button{padding:8px 7px;min-height:42px}
 }
+
+/* Reader progress is based on the current book, not a cross-account counter. */
+.reader-title .reader-progress-track{height:6px;width:min(100%,320px);margin:12px auto 4px;overflow:hidden;border-radius:999px;background:#e9def1}
+.reader-title .reader-progress-track>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#9467d0,#d48bc3);transition:width .2s ease}
+@media(prefers-reduced-motion:reduce){.reader-title .reader-progress-track>span{transition:none}}
