@@ -35,11 +35,11 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
             raise ValueError("Language mismatch")
         if len(parsed.pages)!=pages_expected:
             raise ValueError("Unexpected page count")
-        if any(len(text.strip())<70 or len(text)>1200 for text in parsed.pages):
+        if not parsed.title.strip() or any(len(text.strip())<70 or len(text)>1200 for text in parsed.pages):
             raise ValueError("Page length out of bounds")
         return parsed
     except (ValueError,ValidationError,IndexError,KeyError) as exc:
-        raise ValueError("Model did not return a valid 8-page story") from exc
+        raise ValueError("Model did not return a valid story") from exc
 
 def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
     if os.getenv("ENABLE_TEXT_AI","false").lower()!="true":
