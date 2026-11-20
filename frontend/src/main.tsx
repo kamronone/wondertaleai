@@ -19,7 +19,7 @@ import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
-const bookImage=(url:string)=>!url?"/images/wondertale-hero.webp":url.startsWith("/images/")?url:API+url;
+const bookImage=(url:string)=>!url?"/images/wondertale-hero.webp":url.startsWith("/images/")||url.startsWith("data:image/svg+xml;charset=utf-8,")?url:API+url;
 
 function App(){
   const [accountAction,setAccountAction]=useState<{kind:"verify"|"recover";token:string}|null>(()=>{
