@@ -11,3 +11,5 @@
 .library-sync-warning{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;padding:12px 14px;border:1px solid #e5c78e;border-radius:12px;background:#fff8ec;color:#624923;font-size:13px;line-height:1.45}
 .library-sync-warning button{flex-shrink:0;min-height:36px;padding:7px 12px;border:1px solid currentColor;border-radius:9px;background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}
 @media(max-width:600px){.library-sync-warning{align-items:flex-start;flex-direction:column}.library-sync-warning button{align-self:flex-start}}
+
+.library-sync-warning button:disabled{opacity:.5;cursor:not-allowed}
