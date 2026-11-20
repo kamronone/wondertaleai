@@ -74,3 +74,14 @@
 .parent-reading-guide .parent-reading-advice p{margin:5px 0 12px}
 .parent-reading-guide small{display:block;color:#786c83;font-size:11px;line-height:1.55}
 @media(max-width:380px){.parent-reading-guide{padding:12px}}
+
+/* Session-only character templates. Compact lists on narrow phones. */
+.create-page .character-actions{display:flex;gap:8px;flex-wrap:wrap}
+.create-page .character-saved{display:grid;gap:7px;border-top:1px solid #e9dcf1;padding-top:12px}
+.create-page .character-saved>strong{font-size:13px;color:#54366d}
+.create-page .character-saved ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+.create-page .character-saved li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center}
+.create-page .character-saved li button:first-child{min-width:0;text-align:left;overflow-wrap:anywhere}
+.create-page .character-saved li button:last-child{color:#8a3e56;border-color:#eed4dc}
+.create-page .character-feedback{color:#873852!important;font-weight:700}
+@media(max-width:350px){.create-page .character-actions>*{flex:1 1 100%}.create-page .character-saved li{grid-template-columns:minmax(0,1fr)}}
