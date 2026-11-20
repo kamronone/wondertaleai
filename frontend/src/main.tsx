@@ -518,6 +518,10 @@ function App(){
       setCreateStep(!name.trim()?1:2);
       return;
     }
+    if(!consent){
+      setError(({ru:"Подтвердите согласие перед созданием сказки.",uz:"Ertak yaratişdan oldin rozilikni tasdiqlang.",en:"Confirm your consent before creating a story."} as const)[lang]);
+      return;
+    }
     if(usePersonalAi&&prompt.trim().length<12){
       setCreateStep(2);
       setError(({ru:"Для AI-сказки опишите сюжет минимум 12 символами.",uz:"AI ertak uçun syujetni kamida 12 ta belgi bilan yozing.",en:"For an AI story, describe the plot in at least 12 characters."} as const)[lang]);
