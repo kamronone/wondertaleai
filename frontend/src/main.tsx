@@ -200,7 +200,12 @@ function App(){
   const [speechPaused,setSpeechPaused]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
-  const localSaveError=({ru:"Не удалось сохранить изменения на этом устройстве. Проверьте свободное место и настройки браузера.",uz:"Özgarişlarni qurilmaga saqlab bölmadi. Böş xotira va brauzer sozlamalarini tekşiring.",en:"Could not save changes on this device. Check available storage and browser settings."} as const)[lang];
+  const libraryHealth=getLocalLibraryHealth();
+  const localSaveError=libraryHealth==="corrupt"
+    ?({ru:"В библиотеке обнаружены повреждённые или повторяющиеся записи. Изменения не сохранены, чтобы защитить сказки. Не очищайте данные Safari или PWA.",uz:"Kutubxonada shikastlangan yoki takroriy yozuvlar topildi. Ertaklarni saqlaş uçun özgarişlar yozilmadi. Safari yoki PWA ma’lumotlarini tozalamang.",en:"Damaged or duplicate records were found in your library. Changes were not saved to protect your stories. Do not clear Safari or PWA data."} as const)[lang]
+    :libraryHealth==="unavailable"
+    ?({ru:"Хранилище Safari недоступно. Не удалось сохранить изменения. Проверьте настройки браузера, не очищая данные сайта.",uz:"Safari xotirasi mavjud emas. Özgarişlar saqlanmadi. Sayt ma’lumotlarini öçirmasdan brauzer sozlamalarini tekşiring.",en:"Safari storage is unavailable. Changes were not saved. Check browser settings without clearing site data."} as const)[lang]
+    :({ru:"Не удалось сохранить изменения на этом устройстве. Проверьте свободное место и настройки браузера.",uz:"Özgarişlarni qurilmaga saqlab bölmadi. Böş xotira va brauzer sozlamalarini tekşiring.",en:"Could not save changes on this device. Check available storage and browser settings."} as const)[lang];
   const [usePersonalAi,setUsePersonalAi]=useState(false);
   const [aiPagesCount,setAiPagesCount]=useState<8|12|20>(8);
 
