@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { BookOpen, CheckCircle2, CloudUpload, KeyRound, LogOut, Mail, ShieldCheck, UserRound } from "lucide-react";
 import type { Lang } from "./i18n";
+import { FamilyProfiles } from "./FamilyProfiles";
 
 type Mode="login"|"register"|"forgot";
 type Props={
@@ -123,6 +124,7 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
       <button type="submit" className="parent-account-primary" disabled={working||apiReady!==true||(mode==="register"&&!registrationEnabled)||(mode==="forgot"&&!recoveryEnabled)}>{working?t.loading:mode==="forgot"?t.sendLink:mode==="register"?t.register:t.login}</button>
       {mode==="login"?<button type="button" className="parent-account-textbtn" disabled={!recoveryEnabled} onClick={()=>{setMode("forgot");setError("");setNotice("");}}>{t.forgot}</button>:mode==="forgot"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.back}</button>:null}
     </form>}
+  {session&&api&&<FamilyProfiles api={api} session={session} lang={lang}/>}
   <p className="parent-account-footnote">{t.privacy}</p>
  </section>;
 }
