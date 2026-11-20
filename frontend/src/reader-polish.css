@@ -87,3 +87,37 @@
 .reading-achievement.unlocked .reading-achievement-count{color:#387352}
 .reading-achievement.unlocked .reading-achievement-track>span{background:#5b9a73}
 .reading-achievement.unlocked>span{color:#34674c}
+
+/* A4 book export: preserve every page with readable text and safe margins.
+   The browser's Print / Save as PDF remains the export mechanism. */
+@media print{
+  .print-book-cover,.print-book-page{
+    padding:7mm 5mm!important;
+    min-height:0!important;
+    height:265mm;
+    overflow:hidden;
+    box-sizing:border-box;
+    break-after:page;
+    page-break-after:always;
+  }
+  .print-book-page{gap:5mm!important}
+  .print-book-page img{
+    height:97mm!important;
+    max-height:97mm!important;
+    width:100%;
+    object-fit:contain;
+    flex:0 0 auto;
+  }
+  .print-book-page p{
+    font-family:Georgia,serif;
+    font-size:12pt!important;
+    line-height:1.45!important;
+    text-align:left;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+    margin:0!important;
+  }
+  .print-book-page-head{flex:0 0 auto}
+  .print-book-cover img{max-height:145mm}
+  .print-book-page:last-child{break-after:auto;page-break-after:auto}
+}
