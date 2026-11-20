@@ -188,7 +188,7 @@ function App(){
         lastPage:pendingProgress.current.get(book.id)??book.lastPage
       }));
       clearChildDraft();
-      setPrivateToken(token);setRemoteBooks(merged);setBooks(merged);setActive(null);setSyncMessage("");
+      setPrivateToken(token);setRemoteBooks(merged);setBooks(merged);setActive(null);setPage(0);setEditingPage(false);setPageDraft("");setError("");setSyncMessage("");setTab("home");
       return true;
     }catch{return false;}
   };
