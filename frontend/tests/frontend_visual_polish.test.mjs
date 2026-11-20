@@ -1,0 +1,43 @@
+import assert from "node:assert/strict";
+import {readFile} from "node:fs/promises";
+import {test} from "node:test";
+
+const [app,css]=await Promise.all([
+ readFile(new URL("../src/main.tsx",import.meta.url),"utf8"),
+ readFile(new URL("../src/reader-polish.css",import.meta.url),"utf8")
+]);
+
+test("Home keeps a concise create action, continue reading and a small story shelf",()=>{
+ assert.match(app,/className="hero"/);
+ assert.match(app,/className="continue-story-card" onClick=\{\(\)=>openBook\(continueBook\)\}/);
+ assert.match(app,/books\.slice\(0,3\)\.map\(book=>/);
+ assert.match(css,/\.shell \.hero-content\{padding:13px 16px 17px!important\}/);
+ assert.match(css,/\.shell \.quick-actions\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(css,/\.shell \.book-grid\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+});
+
+test("Four mobile navigation destinations identify the current page and stay printable-safe",()=>{
+ const nav=app.slice(app.indexOf('<nav className="mobile-tabbar"'),app.indexOf("</nav>",app.indexOf('<nav className="mobile-tabbar"')));
+ assert.equal((nav.match(/aria-current=/g)||[]).length,4);
+ assert.match(nav,/tab==="library"\|\|tab==="reader"\?"page":undefined/);
+ assert.match(css,/\.shell \.mobile-tabbar\{[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+ assert.match(css,/@media print\{\s*\.shell \.mobile-tabbar,[\s\S]*?display:none!important/);
+});
+
+test("Reader focus mode is reversible and retains the page navigation controls",()=>{
+ assert.match(app,/const \[readerFocusMode,setReaderFocusMode\]=useState\(false\)/);
+ assert.match(app,/aria-pressed=\{readerFocusMode\}/);
+ assert.match(app,/setReaderSettingsOpen\(false\);setEditingPage\(false\)/);
+ assert.match(app,/readerFocusMode\?\(\{ru:"Обычное чтение"/);
+ assert.match(app,/readerSettingsOpen&&!readerFocusMode&&<div id="reader-display-options"/);
+ assert.match(css,/\.reader-page\.reader-focused \.reader-title,[\s\S]*?\.reader-page\.reader-focused \.sequel-action\{\s*display:none!important/);
+ assert.doesNotMatch(css,/\.reader-page\.reader-focused \.pager\s*\{\s*display:none/);
+});
+
+test("Story-specific illustrations remain the source for polished covers",()=>{
+ assert.match(app,/className="book-cover-art"><StoryIllustration url=\{book\.pages\[0\]\?\.image_url\|\|""\}/);
+ assert.match(app,/className="book-cover-age" aria-hidden="true">\{book\.age\}\+/);
+ assert.match(css,/\.shell \.book-tile \.book-cover-art>img,/);
+ assert.match(css,/\.shell \.book-tile \.book-cover-art>\.story-image-fallback/);
+ assert.match(css,/\.shell \.classic-cover \.classic-generated-image/);
+});
