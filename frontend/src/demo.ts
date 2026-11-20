@@ -58,6 +58,15 @@ export const saveDemoBooks=(books:DemoBook[])=>{
  try{
    oldDevice=localStorage.getItem(deviceKey);
    oldSession=sessionStorage.getItem(sessionKey);
+   // A damaged JSON record must never be silently replaced by an incomplete
+   // getDemoBooks() result. Leave both stores untouched for recovery.
+   for(const previous of [oldDevice,oldSession]){
+     if(previous===null)continue;
+     let decoded:unknown;
+     try{decoded=JSON.parse(previous);}
+     catch{throw new Error("LOCAL_LIBRARY_SAVE_FAILED");}
+     if(!Array.isArray(decoded))throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
+   }
  }catch{
    throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
  }
