@@ -252,3 +252,24 @@
   border-color:#a74d62;
   box-shadow:0 0 0 2px rgba(167,77,98,.10);
 }
+
+
+/* Creation mode has two choices, while story languages have three. */
+.create-page .creator-mode-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.create-page .creator-mode-options>button{
+  min-width:0;
+  min-height:44px;
+  padding:9px 10px;
+  font-size:12px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+.create-page .story-lang-options>button[aria-pressed="true"],
+.create-page .classic-choice>button[aria-pressed="true"]{
+  font-weight:800;
+}
