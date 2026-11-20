@@ -8,8 +8,8 @@ const optional=worker.match(/const OPTIONAL_ART = \[([\s\S]*?)\];/)?.[1];
 assert.ok(optional,"Public PWA artwork list exists");
 const assets=[...optional.matchAll(/"([^"]+)"/g)].map(match=>match[1]);
 
-test("Every offline PWA illustration exists as a bundled public file",async()=>{
-  assert.ok(assets.length>=5);
+test("Essential offline PWA illustrations exist and precache stays small",async()=>{
+  assert.deepEqual(assets,["/images/wondertale-hero.webp","/images/wondertale-welcome.png"]);
   for(const path of assets){
     assert.match(path,/^\/images\/(?:features\/|classics\/|wondertale-)/);
     await assert.doesNotReject(access(new URL("../public"+path,import.meta.url)),path);
