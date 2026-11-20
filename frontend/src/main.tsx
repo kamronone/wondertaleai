@@ -113,8 +113,9 @@ function App(){
   const [readerFontScale,setReaderFontScale]=useState<"small"|"normal"|"large">(()=>{
     try{const saved=localStorage.getItem("wondertale_reader_font_scale");return saved==="small"||saved==="large"?saved:"normal";}catch{return "normal";}
   });
-  const [readerNightMode,setReaderNightMode]=useState(false);
+  const [readerNightMode,setReaderNightMode]=useState(()=>{try{return localStorage.getItem("wondertale_reader_night_mode")==="true";}catch{return false;}});
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_font_scale",readerFontScale);}catch{/* Browser storage can be unavailable. */}},[readerFontScale]);
+  useEffect(()=>{try{localStorage.setItem("wondertale_reader_night_mode",String(readerNightMode));}catch{/* Browser storage can be unavailable. */}},[readerNightMode]);
   const [name,setName]=useState("");
   const [secondHero,setSecondHero]=useState("");
   const [age,setAge]=useState("5");
@@ -780,7 +781,7 @@ function App(){
       {tab==="reader"&&active&&<section className="reader-page">
         <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions"><button className="icon-button" type="button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
         {error&&<p className="error" role="alert">{error}</p>}
-        <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
+        <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         <div className="reader-display-settings" role="group" aria-label={({ru:"Настройки чтения",uz:"Oqiş sozlamalari",en:"Reading settings"} as const)[lang]}>
           <span>{({ru:"Размер текста",uz:"Matn ölçami",en:"Text size"} as const)[lang]}</span>
