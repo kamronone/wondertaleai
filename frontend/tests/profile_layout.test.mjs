@@ -33,3 +33,18 @@ test("small phone styles keep status and disclosures lightweight",()=>{
   assert.match(css,/\.parent-account-page \.parent-account-head\{gap:10px;margin:0 0 14px\}/);
   assert.match(css,/\.parent-account-page \.parent-account-card,\s*\.parent-account-page \.parent-account-unavailable\{/);
 });
+
+test("profile keeps technical details and duplicate sync notice out of primary view",()=>{
+  assert.match(profile,/<details className="parent-account-help">/);
+  assert.match(profile,/className="parent-account-expand" aria-hidden="true"/);
+  const reading=profile.slice(profile.indexOf('<details className="parent-account-reading-section">'));
+  assert.match(reading,/<p className="parent-account-footnote">\{t\.privacy\}<\/p>[\s\S]*?<\/details>/);
+  assert.match(css,/\.parent-account-page \.parent-account-help>summary\{/);
+});
+
+test("parent demo status and recommendation controls have compact mobile dimensions",()=>{
+  assert.match(css,/\.parent-account-page \.parent-account-help>summary\{[^}]*min-height:43px/s);
+  assert.match(css,/\.parent-account-page \.parent-account-reading-section>summary\{[^}]*min-height:48px/s);
+  assert.match(css,/\.parent-account-page \.parent-account-hero-copy h2\{[^}]*font-size:18px/s);
+  assert.match(css,/\.account-plans-disclosure>summary\{[^}]*min-height:48px/s);
+});
