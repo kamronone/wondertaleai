@@ -1,5 +1,5 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v4";
+const CACHE = "wondertale-public-v5";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 const OPTIONAL_ART = ["/images/wondertale-hero.webp", "/images/wondertale-welcome.png"];
 const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/|images\/features\/|images\/wondertale-(?:hero\.webp|welcome\.(?:png|svg))$)/;
@@ -45,11 +45,13 @@ self.addEventListener("fetch", event => {
   // Dynamic responses and personalized book content always bypass the cache.
   if (PUBLIC_ASSET.test(url.pathname)) {
     event.respondWith(
-      caches.match(request).then(async cached => {
+      caches.open(CACHE).then(async cache => {
+        // Never use caches.match(): that may read another service worker's
+        // cache, including content not approved for this public shell.
+        const cached = await cache.match(request);
         if (cached) return cached;
         const response = await fetch(request);
         if (response.ok && response.type === "basic") {
-          const cache = await caches.open(CACHE);
           await cache.put(request, response.clone());
         }
         return response;
