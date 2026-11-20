@@ -132,3 +132,17 @@ test("Warm reader theme supports readable mobile contrast and accessible setting
   assert.match(css,/\.reader-page \.reader-font-controls button\{min-height:44px;height:44px/);
   assert.match(css,/\.reader-page \.reader-night-toggle\{min-height:44px\}/);
 });
+
+
+test("Pager, swipe and arrow navigation bring the new story page into view without jumping on initial open",async()=>{
+  const [app,css]=await Promise.all([
+    readFile(new URL("../src/main.tsx",import.meta.url),"utf8"),
+    readFile(new URL("../src/reader-polish.css",import.meta.url),"utf8")
+  ]);
+  assert.match(app,/const storyPageRef=useRef<HTMLDivElement\|null>\(null\)/);
+  assert.match(app,/previousReaderPageRef\.current=\{id:active\.id,page\}/);
+  assert.match(app,/previous\?\.id===active\.id&&previous\.page!==page/);
+  assert.match(app,/storyPageRef\.current\?\.scrollIntoView\(\{behavior:"auto",block:"start"\}\)/);
+  assert.match(app,/ref=\{storyPageRef\} onTouchStart=\{onReaderTouchStart\}/);
+  assert.match(css,/\.reader-page \.story-page\{scroll-margin-top:14px\}/);
+});
