@@ -13,6 +13,9 @@ const paths = [
   "src/story_interactions.ts",
   "src/ParentAccount.tsx",
   "src/AccountAction.tsx",
+  "src/FamilyProfiles.tsx",
+  "src/StoryChildPicker.tsx",
+  "src/PricingPlans.tsx",
 ];
 const oldLetters = /(?:[OoGg][\u2018\u2019\u02bb\u02bcʻʼ])(?=[A-Za-z])/u;
 const oldDigraphs = /(?:sh|ch)/i;
