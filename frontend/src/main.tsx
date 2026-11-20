@@ -235,6 +235,12 @@ function App(){
     if(tab!=="reader"||!active||isDemoBook(active)||!privateToken||!API)return;
     const bookId=active.id;
     const epoch=sessionEpoch.current;
+    // Persist the newest reading position before the network request starts.
+    // A closed iPhone tab must not lose the last page while the API is pending.
+    pendingProgress.current.set(bookId,page);
+    persistPending();
+    setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
+    setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
     // Serialize writes for each book: a slow response for page 1 must not
     // overwrite a newer page 3 on the server or in the interface.
     const token=privateToken;
@@ -253,9 +259,9 @@ function App(){
         }
         throw error;
       }
-      if(sessionEpoch.current!==epoch)return;
-      setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
-      setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
+      // A later page may already be queued; never overwrite it with this
+      // older request's completion.
+      if(sessionEpoch.current!==epoch||pendingProgress.current.has(bookId))return;
     });
     progressWrites.current.set(bookId,write);
     void write.catch(()=>{ /* Keep last confirmed position if offline. */ }).finally(()=>{
