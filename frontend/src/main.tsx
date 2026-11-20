@@ -986,7 +986,18 @@ function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()
  </button>;
 }
 function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
-  return <button className="book-tile" onClick={open}><StoryIllustration url={book.pages[0]?.image_url||""} alt={labels[lang].cover} lazy/><span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>{(book.lastPage||0)>0&&<small className="read-progress">{labels[lang].continueReading}: {labels[lang].page} {(book.lastPage||0)+1}</small>}{book.favorite&&<span className="book-favorite-badge"><Heart size={14} fill="currentColor"/></span>}</span></button>;
+  const finished=book.pages.length>1&&(book.lastPage??0)>=book.pages.length-1;
+  const reading=(book.lastPage??0)>0;
+  const progress=finished
+    ?({ru:"Дочитано",uz:"Oqib tugatildi",en:"Finished"} as const)[lang]
+    :labels[lang].continueReading+": "+labels[lang].page+" "+((book.lastPage??0)+1);
+  return <button type="button" className="book-tile" onClick={open} aria-label={book.title+" · "+book.name+(reading?" · "+progress:"")}>
+    <StoryIllustration url={book.pages[0]?.image_url||""} alt={book.title+" · "+labels[lang].cover} lazy/>
+    <span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>
+      {reading&&<small className="read-progress">{progress}</small>}
+      {book.favorite&&<span className="book-favorite-badge" aria-label={({ru:"В избранном",uz:"Sevimlilarda",en:"Favorite"} as const)[lang]}><Heart size={14} fill="currentColor"/></span>}
+    </span>
+  </button>;
 }
 createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
 
