@@ -192,6 +192,7 @@ function App(){
   const [readerFocusMode,setReaderFocusMode]=useState(false);
   const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
   const [wordGameAnswer,setWordGameAnswer]=useState<string|null>(null);
+  const [readerEndActivity,setReaderEndActivity]=useState<"ending"|"adventure"|"game"|null>(null);
   useEffect(()=>{setWordGameAnswer(null);},[active?.id]);
   useEffect(()=>{
     if(bedtimeUntil===null)return;
@@ -372,7 +373,7 @@ function App(){
   },[tab]);
   useEffect(()=>{if(!privateToken)setBooks(getDemoBooks());},[privateToken]);
   const openBook=(book:Book)=>{
-    setWordGameAnswer(null);
+    setWordGameAnswer(null);setReaderEndActivity(null);
     setReaderFocusMode(false);setReaderSettingsOpen(false);
     setEditingPage(false);setActive(book);setPage(resumeReaderPage(book.lastPage,book.pages.length));setTab("reader");setError("");
   };
@@ -1022,11 +1023,21 @@ function App(){
               <div><button type="button" onClick={savePageEdit}>{t.savePage}</button><button type="button" onClick={()=>setEditingPage(false)}>{t.cancelEdit}</button></div>
             </div>}
         </div>}
-        {isDemoBook(active)&&page===active.pages.length-1&&<div className="interactive-endings"><strong>{t.interactiveEnding}</strong>
+        {page===active.pages.length-1&&<section className="reader-finale" aria-label={({ru:"После сказки",uz:"Ertakdan keyin",en:"After the story"} as const)[lang]}>
+          <div className="reader-finale-heading">
+            <strong>{({ru:"История закончилась. Что дальше?",uz:"Ertak tugadi. Keyin nima?",en:"The story is finished. What's next?"} as const)[lang]}</strong>
+            <span>{({ru:"Выберите одно занятие",uz:"Bitta mashgulotni tanlang",en:"Choose one activity"} as const)[lang]}</span>
+          </div>
+          <div className="reader-finale-options" role="group" aria-label={({ru:"Занятия после сказки",uz:"Ertakdan keyingi mashgulotlar",en:"After-story activities"} as const)[lang]}>
+            {isDemoBook(active)&&<button type="button" aria-pressed={readerEndActivity==="ending"} onClick={()=>setReaderEndActivity(current=>current==="ending"?null:"ending")}>{({ru:"Изменить финал",uz:"Yakunini tanlash",en:"Choose an ending"} as const)[lang]}</button>}
+            <button type="button" aria-pressed={readerEndActivity==="adventure"} onClick={()=>setReaderEndActivity(current=>current==="adventure"?null:"adventure")}>{({ru:"Новое приключение",uz:"Yangi sarguzasht",en:"Bonus adventure"} as const)[lang]}</button>
+            <button type="button" aria-pressed={readerEndActivity==="game"} onClick={()=>setReaderEndActivity(current=>current==="game"?null:"game")}>{({ru:"Игра со словами",uz:"Soz oyini",en:"Word game"} as const)[lang]}</button>
+          </div>
+        {isDemoBook(active)&&readerEndActivity==="ending"&&<div className="interactive-endings"><strong>{t.interactiveEnding}</strong>
           <div role="group" aria-label={t.interactiveEnding}>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} aria-pressed={active.endingChoice===id} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
         </div>}
-        {page===active.pages.length-1&&<StoryBranchQuest key={active.id} lang={active.language||lang}/>}
-        {page===active.pages.length-1&&<section className="reading-word-game" aria-label={({ru:"Игра после сказки",uz:"Ertakdan keyingi o'yin",en:"After-story game"} as const)[lang]}>
+        {readerEndActivity==="adventure"&&<StoryBranchQuest key={active.id} lang={active.language||lang}/>}
+        {readerEndActivity==="game"&&<section className="reading-word-game" aria-label={({ru:"Игра после сказки",uz:"Ertakdan keyingi o'yin",en:"After-story game"} as const)[lang]}>
           <strong>{({ru:"Игра: найди слово из сказки",uz:"O'yin: ertakdagi so'zni top",en:"Game: find a word from the story"} as const)[lang]}</strong>
           {(()=>{
             const storyWords=Array.from(new Set(active.pages.flatMap(item=>item.text.match(/[\p{L}]{5,}/gu)||[]).map(word=>word.toLocaleLowerCase()))).filter(word=>word.length>=5);
@@ -1041,7 +1052,8 @@ function App(){
             </>;
           })()}
         </section>}
-        {isDemoBook(active)&&page===active.pages.length-1&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
+        {isDemoBook(active)&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
+        </section>}
         {<article className="print-book" aria-hidden="true">
           <div className="print-book-cover"><StoryIllustration url={active.pages[0].image_url} alt={t.cover}/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
           {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><StoryIllustration url={item.image_url} alt={t.illustration+" "+(index+1)}/><p>{item.text}</p></section>)}
