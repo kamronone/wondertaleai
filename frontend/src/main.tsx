@@ -370,14 +370,6 @@ function App(){
   useEffect(()=>{
     window.scrollTo({top:0,left:0,behavior:"instant"});
   },[tab]);
-  // While reading, a page-turn scrolls to the start of the page instead of leaving the new text offscreen.
-  useEffect(()=>{
-    if(tab!=="reader"||!active)return;
-    const pageElement=document.querySelector(".reader-title");
-    if(!pageElement)return;
-    const offset=pageElement.getBoundingClientRect().top+window.scrollY-12;
-    window.scrollTo({top:Math.max(0,offset),left:0,behavior:"instant"});
-  },[page,tab,active?.id]);
   useEffect(()=>{if(!privateToken)setBooks(getDemoBooks());},[privateToken]);
   const openBook=(book:Book)=>{
     setWordGameAnswer(null);
