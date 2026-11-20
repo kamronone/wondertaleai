@@ -39,8 +39,10 @@ test("Pinch zoom and cancelled iPhone touches never become reader page turns", a
   const app = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
   assert.match(app, /if\(event\.touches\.length!==1\)\{readerTouchStart\.current=null;return;\}/);
   assert.match(app, /identifier:touch\.identifier/);
-  assert.match(app, /event\.touches\.length>0\|\|!active\|\|editingPage/);
+  assert.match(app, /event\.touches\.length!==0\|\|event\.changedTouches\.length!==1\|\|!active\|\|editingPage/);
   assert.match(app, /item\.identifier===start\.identifier/);
+  assert.match(app, /onTouchMove=\{onReaderTouchMove\}/);
+  assert.match(app, /if\(event\.touches\.length!==1\)readerTouchStart\.current=null;/);
   assert.match(app, /onTouchCancel=\{onReaderTouchCancel\}/);
   assert.match(app, /const onReaderTouchCancel=\(\)=>\{readerTouchStart\.current=null;\}/);
 });
