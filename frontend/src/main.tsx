@@ -16,7 +16,7 @@ import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavori
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { canAppendStoryEnding } from "./ending_length";
 import { translateSelectedStoryPrompt, leaveClassicStoryPrompt, shouldDetachClassicOnEdit } from "./story_language";
-import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
+import { getAuthenticatedOwner, normalizePendingProgress, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
 import { nextReaderPage, resumeReaderPage, swipeDirection } from "./reader_navigation";
@@ -251,8 +251,9 @@ function App(){
       recentlyCreated.current.clear();
       offlineOwner.current=owner;
       const pending=readPendingMetadata(owner);
-      pendingProgress.current=new Map(Object.entries(pending.progress));
+      pendingProgress.current=normalizePendingProgress(new Map(Object.entries(pending.progress)),remote);
       pendingFavorites.current=new Map(Object.entries(pending.favorites));
+      persistPending(); // Keep repaired positions for the next PWA restart.
       const merged=remote.map(book=>({
         ...book,
         favorite:pendingFavorites.current.get(book.id)??book.favorite,
