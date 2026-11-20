@@ -379,6 +379,27 @@ def change_password(body:ChangePassword,owner:str=Depends(current_parent)):
 def me(owner: str=Depends(current_parent)):
     return {"id":owner}
 
+@app.get("/api/billing/status")
+def billing_status(owner:str=Depends(current_parent)):
+    """Read-only subscription status. Never grant paid entitlements from UI."""
+    today=datetime.now(timezone.utc).date().isoformat()
+    with connection() as c:
+        row=sql(c,"SELECT used FROM generation_quota WHERE owner_id=? AND day=?",(owner,today)).fetchone()
+        parent=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
+    allowed={email.strip().lower() for email in os.getenv("AI_ALLOWED_EMAILS","").split(",") if email.strip()}
+    pilot=bool(parent and parent[0].lower() in allowed)
+    ai_ready=(os.getenv("ENABLE_TEXT_AI","false").lower()=="true" and bool(os.getenv("OPENAI_API_KEY")))
+    return {
+        "plan":"free",
+        "subscription_status":"not_available",
+        "payments_enabled":False,
+        "ai_pilot_access":pilot and ai_ready,
+        "ai_daily_limit":2 if pilot and ai_ready else 0,
+        "ai_used_today":int(row[0]) if row else 0,
+        "quota_period":"daily",
+        "pricing_is_proposed":True,
+    }
+
 @app.get("/api/books")
 def books(owner:str=Depends(current_parent)):
     with connection() as c:
