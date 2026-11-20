@@ -112,3 +112,23 @@ test("Long story titles and action labels wrap without reader toolbar overflow o
   assert.match(css,/@media\(max-width:360px\)\{[\s\S]*?\.reader-page \.reader-toolbar\{grid-template-columns:minmax\(0,1fr\)\}/);
   assert.match(css,/\.reader-page \.reader-title h2\{hyphens:auto\}/);
 });
+
+
+test("Reader remembers warm paper mode across sessions and excludes the night theme",async()=>{
+  const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
+  assert.match(app,/localStorage\.getItem\("wondertale_reader_warm_mode"\)==="true"/);
+  assert.match(app,/localStorage\.setItem\("wondertale_reader_warm_mode",String\(readerWarmMode\)\)/);
+  assert.match(app,/readerNightMode\?" reader-night":readerWarmMode\?" reader-warm":""/);
+  assert.match(app,/aria-pressed=\{readerWarmMode&&!readerNightMode\}/);
+  assert.match(app,/setReaderWarmMode\(value=>!value\);setReaderNightMode\(false\)/);
+  assert.match(app,/setReaderNightMode\(v=>!v\);setReaderWarmMode\(false\)/);
+});
+
+test("Warm reader theme supports readable mobile contrast and accessible settings",async()=>{
+  const css=await readFile(new URL("../src/reader-polish.css",import.meta.url),"utf8");
+  assert.match(css,/\.reader-page \.story-page\.reader-warm\{/);
+  assert.match(css,/\.reader-page \.story-page\.reader-warm \.story-text\{/);
+  assert.match(css,/\.reader-page \.reader-warm-toggle\.active\{/);
+  assert.match(css,/\.reader-page \.reader-font-controls button\{min-height:44px;height:44px/);
+  assert.match(css,/\.reader-page \.reader-night-toggle\{min-height:44px\}/);
+});
