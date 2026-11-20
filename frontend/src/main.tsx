@@ -974,7 +974,7 @@ function App(){
               </select>
             </label>
           </div>
-          <div className="library-age-filter"><label>{({ru:"Возраст читателя",uz:"O‘quvchi yoshi",en:"Reader age"} as const)[lang]} <select value={libraryAge} onChange={event=>setLibraryAge(event.target.value)}><option value="all">{({ru:"Любой возраст",uz:"Barcha yoshlar",en:"All ages"} as const)[lang]}</option>{[3,5,7,10,12].map(years=><option value={years} key={years}>{years}+</option>)}</select></label></div>
+          <div className="library-age-filter"><label>{({ru:"Возраст читателя",uz:"Oquvchi yoshi",en:"Reader age"} as const)[lang]} <select value={libraryAge} onChange={event=>setLibraryAge(event.target.value)}><option value="all">{({ru:"Любой возраст",uz:"Barcha yoshlar",en:"All ages"} as const)[lang]}</option>{[3,5,7,10,12].map(years=><option value={years} key={years}>{years}+</option>)}</select></label></div>
           <div className="library-filters" role="group" aria-label={t.library}>
             <button type="button" aria-pressed={!favoritesOnly} className={!favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(false)}>{t.allBooks}</button>
             <button type="button" aria-pressed={favoritesOnly} className={favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(true)}><Heart size={15}/>{t.favorites}</button>
