@@ -405,3 +405,48 @@
   .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr)}
   .reader-page .reader-actions{width:100%;justify-content:flex-start}
 }
+
+
+/* WonderTale compact home and navigation: small text, predictable mobile taps. */
+@media(max-width:620px){
+  .shell .hero{min-height:0!important;box-shadow:none}
+  .shell .hero-sky{max-height:224px;overflow:hidden}
+  .shell .hero-content{padding:13px 16px 17px!important}
+  .shell .hero h1{font-size:clamp(23px,6.2vw,29px)!important;line-height:1.16;margin:0 0 8px}
+  .shell .hero p{font-size:12px!important;line-height:1.45;margin:0 0 12px}
+  .shell .hero .primary-button{
+    width:auto;max-width:100%;min-height:44px;padding:9px 13px;
+    font-size:12px;line-height:1.3;border-radius:12px;gap:7px
+  }
+  .shell .quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px}
+  .shell .quick-actions>button{min-width:0;min-height:58px;padding:9px;gap:7px;box-sizing:border-box}
+  .shell .quick-actions>button strong{font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+  .shell .quick-actions .quick-icon{flex-shrink:0}
+  .shell .section-head{gap:9px}
+  .shell .section-head h2{font-size:clamp(19px,5.4vw,24px)!important}
+  .shell .text-link{font-size:12px;overflow-wrap:anywhere;min-height:44px}
+  .shell .book-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .shell .book-tile{min-width:0;overflow:hidden;border-radius:14px}
+  .shell .book-caption{display:flex;flex-direction:column;gap:3px;padding:10px}
+  .shell .book-caption strong{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+  .shell .book-caption small{font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+  .shell .mobile-tabbar{
+    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:4px;padding:6px 8px calc(6px + env(safe-area-inset-bottom))!important;
+  }
+  .shell .mobile-tabbar button{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    max-width:none!important;min-width:0;min-height:48px;gap:3px;
+    padding:5px 2px;font-size:10px;white-space:normal
+  }
+  .shell .mobile-tabbar button span{
+    display:block;max-width:100%;white-space:normal;overflow:visible;
+    overflow-wrap:anywhere;font-size:10px;line-height:1.15;text-align:center
+  }
+  .shell .mobile-tabbar button[aria-current="page"]{background:#f1e8ff;color:#59358a}
+}
+@media(max-width:360px){
+  .shell .quick-actions>button{gap:4px;padding:8px 6px}
+  .shell .quick-actions .quick-icon svg{width:18px;height:18px}
+  .shell .hero-sky{max-height:185px}
+}
