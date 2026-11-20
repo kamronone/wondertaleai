@@ -70,3 +70,15 @@ test("PWA preloads only bundled public artwork and never API paths",()=>{
   assert.match(worker,/const PRIVATE_PATH =/);
   assert.match(worker,/request\.headers\.has\("Authorization"\)/);
 });
+
+
+test("Library filters are reset on successful parent switch and logout",()=>{
+  assert.match(app,/clearChildDraft\(\);\s*\/\/ Search and favorites[\s\S]*?setLibraryQuery\(""\);setLibrarySort\("newest"\);setFavoritesOnly\(false\);\s*setPrivateToken\(token\)/);
+  assert.match(app,/setLibraryQuery\(""\);setLibrarySort\("newest"\);setFavoritesOnly\(false\);\s*setPrivateToken\(null\)/);
+});
+
+test("Reader cover thumbnails expose the book title and completion state",()=>{
+  assert.match(app,/const finished=book\.pages\.length>1/);
+  assert.match(app,/alt=\{book\.title\+" · "\+labels\[lang\]\.cover\}/);
+  assert.match(app,/aria-label=\{book\.title\+" · "\+book\.name/);
+});
