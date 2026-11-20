@@ -98,3 +98,18 @@ test("Onboarding arrows do not intercept keyboard use of language selector",()=>
   assert.match(app,/event\.key==="ArrowLeft"\)\{event\.preventDefault\(\);setOnboardingStep/);
   assert.match(app,/aria-label=\{\(\{ru:"Экраны знакомства"/);
 });
+
+
+test("Onboarding ignores pinch zoom, simultaneous releases and cancelled touch sequences",()=>{
+  assert.match(app,/if\(event\.touches\.length!==1\)\{welcomeTouchStart\.current=null;return;\}/);
+  assert.match(app,/if\(event\.touches\.length!==1\)welcomeTouchStart\.current=null;/);
+  assert.match(app,/event\.touches\.length!==0\|\|event\.changedTouches\.length!==1/);
+  assert.match(app,/item\.identifier===start\.identifier/);
+  assert.match(app,/onTouchMove=\{onWelcomeTouchMove\}/);
+  assert.match(app,/onTouchCancel=\{onWelcomeTouchCancel\}/);
+});
+
+test("Onboarding slides can receive keyboard focus without hijacking language controls",()=>{
+  assert.match(app,/className="welcome-screen"[^>]*tabIndex=\{0\}/);
+  assert.match(app,/target\.closest\("button, select, input, textarea, \[role='button'\]"\)/);
+});
