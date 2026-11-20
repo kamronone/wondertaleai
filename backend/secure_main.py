@@ -660,7 +660,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                 raise HTTPException(409,"Library limit reached")
             sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps(story_document,ensure_ascii=False),now))
             c.commit()
-    except Exception:
+    except Exception as exc:
         # A successfully generated story can still fail to save, for example
         # when another request fills the library while the provider is running.
         # Refund the reserved allowance only after the insert has rolled back.
@@ -673,6 +673,8 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         # Do not expose database errors or internal tracebacks to the parent.
         # The 409 conflict is safe and actionable; other persistence failures
         # are reported as a generic service error after quota refund.
+        if isinstance(exc,HTTPException) and exc.status_code==409:
+            raise exc
         raise HTTPException(503,"Unable to save this story. Please try later.")
     return {"id":bid,"title":generated.title,"language":generated.language,"pages":story_document["pages"],"created_at":now}
 
