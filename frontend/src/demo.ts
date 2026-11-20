@@ -102,6 +102,8 @@ export const saveDemoBooks=(books:DemoBook[])=>{
  }catch{
    throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
  }
+ let deviceWriteAttempted=false;
+ let sessionWriteAttempted=false;
  try{
    // A page turn often changes only one storage area. Avoid rewriting the
    // other one: Safari can reject even redundant writes when storage is full.
@@ -118,23 +120,32 @@ export const saveDemoBooks=(books:DemoBook[])=>{
    const sessionUnchanged=oldSession===null?nextSession===null:
      comparable(readBooks(()=>sessionStorage,sessionKey,false))===comparable(ephemeral);
    if(!deviceUnchanged){
+     // Mark before calling storage: a browser may partially change data and
+     // then throw (including browser extensions or wrapped storage APIs).
+     deviceWriteAttempted=true;
      if(nextDevice===null)localStorage.removeItem(deviceKey);
      else localStorage.setItem(deviceKey,nextDevice);
    }
    if(!sessionUnchanged){
+     sessionWriteAttempted=true;
      if(nextSession===null)sessionStorage.removeItem(sessionKey);
      else sessionStorage.setItem(sessionKey,nextSession);
    }
  }catch{
-   // Browser storage has no cross-storage transaction. Roll back what we can.
-   try{
-     if(oldDevice===null)localStorage.removeItem(deviceKey);
-     else localStorage.setItem(deviceKey,oldDevice);
-   }catch{/* Restore may also fail if storage is unavailable. */}
-   try{
-     if(oldSession===null)sessionStorage.removeItem(sessionKey);
-     else sessionStorage.setItem(sessionKey,oldSession);
-   }catch{/* Never claim the write succeeded after a storage failure. */}
+   // Roll back only stores that were touched. An unchanged Safari storage
+   // area may itself be full and must not receive a redundant restore write.
+   if(deviceWriteAttempted){
+     try{
+       if(oldDevice===null)localStorage.removeItem(deviceKey);
+       else localStorage.setItem(deviceKey,oldDevice);
+     }catch{/* Restore may also fail if storage is unavailable. */}
+   }
+   if(sessionWriteAttempted){
+     try{
+       if(oldSession===null)sessionStorage.removeItem(sessionKey);
+       else sessionStorage.setItem(sessionKey,oldSession);
+     }catch{/* Never claim the write succeeded after a storage failure. */}
+   }
    throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
  }
 };
