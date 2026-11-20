@@ -4,6 +4,7 @@ import { classics, type ClassicId } from "./classics";
 export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
+const hasDuplicateLocalIds=(ids:readonly string[]):boolean=>new Set(ids).size!==ids.length;
 export const isValidLocalBook=(value:unknown):value is DemoBook=>{
  if(!value||typeof value!=="object")return false;
  const book=value as Partial<DemoBook>;
@@ -38,13 +39,16 @@ const readBooks=(getStore:()=>Storage,key:string,persistent:boolean):DemoBook[]=
 };
 export const getLocalLibraryHealth=():"ok"|"corrupt"|"unavailable"=>{
  try{
+   const allIds:string[]=[];
    for(const [storage,key] of [[localStorage,deviceKey],[sessionStorage,sessionKey]] as const){
      const raw=storage.getItem(key);
      if(raw===null)continue;
      let parsed:unknown;
      try{parsed=JSON.parse(raw);}catch{return "corrupt";}
      if(!Array.isArray(parsed)||parsed.length>20||parsed.some(book=>!isValidLocalBook(book)))return "corrupt";
+     allIds.push(...parsed.map((book:DemoBook)=>book.id));
    }
+   if(hasDuplicateLocalIds(allIds))return "corrupt";
    return "ok";
  }catch{
    // SecurityError can occur when private browsing disables browser storage.
@@ -65,6 +69,12 @@ export const saveDemoBooks=(books:DemoBook[])=>{
  if(chosen.length>20||ephemeral.length>20){
    throw new Error("LOCAL_LIBRARY_FULL");
  }
+ // Duplicate ids across either storage cause silent deduplication in getDemoBooks.
+ // Reject such writes before touching either store.
+ if(books.some(book=>!isValidLocalBook(book))||
+    hasDuplicateLocalIds(books.map(book=>book.id))){
+   throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
+ }
  // Names and stories stay in this browser; photos are never saved or uploaded in demo.
  // A browser storage exception can occur halfway through the two writes.
  // Keep the previous values and report failure instead of silently losing books.
@@ -75,6 +85,7 @@ export const saveDemoBooks=(books:DemoBook[])=>{
    oldSession=sessionStorage.getItem(sessionKey);
    // A damaged JSON record must never be silently replaced by an incomplete
    // getDemoBooks() result. Leave both stores untouched for recovery.
+   const existingIds:string[]=[];
    for(const previous of [oldDevice,oldSession]){
      if(previous===null)continue;
      let decoded:unknown;
@@ -84,7 +95,9 @@ export const saveDemoBooks=(books:DemoBook[])=>{
      // Reject writes rather than silently discarding books omitted on read.
      if(!Array.isArray(decoded)||decoded.length>20||
         decoded.some(entry=>!isValidLocalBook(entry)))throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
+     existingIds.push(...decoded.map((book:DemoBook)=>book.id));
    }
+   if(hasDuplicateLocalIds(existingIds))throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
  }catch{
    throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
  }
