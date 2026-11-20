@@ -13,5 +13,5 @@ test("reading reminders do not pretend to enforce parental restrictions",()=>{
   assert.match(source,/not an app restriction/);
   assert.doesNotMatch(source,/fetch\s*\(/);
   assert.doesNotMatch(source,/localStorage|sessionStorage/);
-  assert.match(app,/ReadingSessionTimer key=\{active\.id\}/);
+  assert.doesNotMatch(app,/<ReadingSessionTimer\\b/);
 });
