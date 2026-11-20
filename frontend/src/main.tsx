@@ -495,13 +495,25 @@ function App(){
         }
         const result=await response.json();
         if(typeof result.id!=="string")throw new Error(t.generateError);
-        const refreshed=await loadPrivateBooks(API,privateToken);
-        if(sessionEpoch.current!==epoch)return;
-        const newBook=refreshed.find(book=>book.id===result.id);
-        setRemoteBooks(refreshed);
-        setBooks(refreshed);
-        if(!newBook)throw new Error(t.generateError);
-        openBook(newBook);
+        // The provider has already created the book. A failed follow-up GET
+        // must never tell the parent that generation failed and encourage
+        // another paid request that could create a duplicate.
+        try{
+          const refreshed=await loadPrivateBooks(API,privateToken);
+          if(sessionEpoch.current!==epoch)return;
+          const newBook=refreshed.find(book=>book.id===result.id);
+          setRemoteBooks(refreshed);
+          setBooks(refreshed);
+          if(newBook)openBook(newBook);
+          else{
+            setTab("library");
+            setError(({ru:"Сказка создана, но ещё не появилась в библиотеке. Обновите её позже.",uz:"Ertak yaratildi, ammo kutubxonada hali körinmayapti. Keyinroq yangilang.",en:"Story created, but it is not visible in your library yet. Refresh later."} as const)[lang]);
+          }
+        }catch{
+          if(sessionEpoch.current!==epoch)return;
+          setTab("library");
+          setError(({ru:"Сказка создана и сохранена. Не создавайте её повторно: обновите библиотеку после восстановления связи.",uz:"Ertak yaratildi va saqlandi. Qayta yaratmañ: aloqa tiklanganda kutubxonani yangilang.",en:"Story was created and saved. Do not generate it again; refresh the library when connected."} as const)[lang]);
+        }
         return;
       }
       const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
