@@ -16,6 +16,7 @@ import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavori
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
+import { printFullBook } from "./print_book";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -521,44 +522,6 @@ function App(){
     };
     setSpeaking(true);setSpeechPaused(false);
     engine.speak(utterance);
-  };
-  const printFullBook=async()=>{
-    // Safari can open print preview before off-screen book images finish loading.
-    // Wait briefly for every printable illustration, then always allow printing.
-    const images=Array.from(document.querySelectorAll<HTMLImageElement>(".print-book img"));
-    const unfinished=images.filter(image=>!image.complete);
-    if(unfinished.length){
-      await new Promise<void>(resolve=>{
-        let pending=unfinished.length;
-        let completed=false;
-        const cleanups:Array<()=>void>=[];
-        const finish=()=>{
-          if(completed)return;
-          completed=true;
-          window.clearTimeout(timeout);
-          cleanups.forEach(cleanup=>cleanup());
-          resolve();
-        };
-        const timeout=window.setTimeout(finish,2500);
-        for(const image of unfinished){
-          let counted=false;
-          const settled=()=>{
-            if(counted)return;
-            counted=true;
-            image.removeEventListener("load",settled);
-            image.removeEventListener("error",settled);
-            pending--;
-            if(pending===0)finish();
-          };
-          image.addEventListener("load",settled,{once:true});
-          image.addEventListener("error",settled,{once:true});
-          cleanups.push(()=>{image.removeEventListener("load",settled);image.removeEventListener("error",settled);});
-          // Image may have loaded between filtering and installing listeners.
-          if(image.complete)settled();
-        }
-      });
-    }
-    window.print();
   };
   const stopSpeech=()=>{
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
