@@ -21,7 +21,13 @@ const cleanImage=(source:string,classicId?:string)=>{
 };
 function normalizeServerBook(book:ServerRow):RemoteBook|null{
  try{
+  // A corrupt or unexpected API row must not crash the entire parent library.
+  if(!book||typeof book!=="object"||typeof book.id!=="string"||
+     typeof book.story!=="string"||typeof book.title!=="string"||
+     typeof book.child_name!=="string"||typeof book.created_at!=="string"||
+     !Number.isInteger(book.age)||book.age<2||book.age>14)return null;
   const stored=JSON.parse(book.story) as StoredStory;
+  if(!stored||typeof stored!=="object")return null;
   if(!Array.isArray(stored.pages)||stored.pages.length<1)return null;
   // A malformed page must not silently disappear: filtering it would shift
   // reading progress and make the remaining pages appear under wrong numbers.
