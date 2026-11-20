@@ -143,3 +143,9 @@ def test_provider_page_with_only_whitespace_is_rejected():
     payload["pages"][0]=" "*100
     with pytest.raises(ValueError,match="Model did not return a valid story"):
         validate_generated_story(json.dumps(payload),"en")
+
+
+@pytest.mark.parametrize("raw",[None,42,{},["unexpected"]])
+def test_non_text_provider_output_is_rejected(raw):
+    with pytest.raises(ValueError,match="Model did not return a valid story"):
+        validate_generated_story(raw,"en")
