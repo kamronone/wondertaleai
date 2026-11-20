@@ -299,3 +299,34 @@ def test_resend_verification_remains_single_use_and_throttled(monkeypatch):
     assert client.post("/api/auth/verify-email",json={"token":sent[-1][1]}).status_code==200
     assert client.post("/api/auth/resend-verification",json={"email":email}).status_code==200
     assert len(sent)==2
+
+
+def test_parent_ai_quota_rejection_does_not_consume_global_budget(monkeypatch):
+    """A rejected third request must not block another authorized family."""
+    from ai_generation import GeneratedStory
+    import uuid
+    first_email="quota-a-"+str(uuid.uuid4())+"@example.com"
+    second_email="quota-b-"+str(uuid.uuid4())+"@example.com"
+    first=signup(first_email)
+    second=signup(second_email)
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    monkeypatch.setenv("OPENAI_API_KEY","test-injected-no-network")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",first_email+","+second_email)
+    monkeypatch.setenv("MAX_AI_STORIES_PER_DAY","10")
+    monkeypatch.setattr(secure_main,"generate_story",lambda x:GeneratedStory(
+        title="A gentle magical adventure",language=x.language,
+        pages=["A calm adventure where children help their friends and learn kindness together."]*x.pages_count))
+    body={"name":"Amir","age":5,"language":"en","idea":"A friendly adventure in a magical garden"}
+    for _ in range(2):
+        response=client.post("/api/books/generate",headers=headers(first),json=body)
+        assert response.status_code==201,response.text
+    today=__import__("datetime").datetime.now(__import__("datetime").timezone.utc).date().isoformat()
+    with secure_main.connection() as connection:
+        before=secure_main.sql(connection,"SELECT used FROM generation_global_quota WHERE day=?",(today,)).fetchone()[0]
+    denied=client.post("/api/books/generate",headers=headers(first),json=body)
+    assert denied.status_code==429,denied.text
+    with secure_main.connection() as connection:
+        after=secure_main.sql(connection,"SELECT used FROM generation_global_quota WHERE day=?",(today,)).fetchone()[0]
+    assert after==before,"Rejected parent quota must not consume global quota"
+    other=client.post("/api/books/generate",headers=headers(second),json=body)
+    assert other.status_code==201,other.text
