@@ -97,3 +97,18 @@ test("Mobile reader replaces tiny page dots with a readable current-page indicat
   assert.match(css,/\.reader-page \.pager>button\{min-height:44px\}/);
   assert.match(css,/\.reader-page \.reader-actions \.icon-button\{[\s\S]*?min-width:44px/);
 });
+
+
+test("Reader arrow shortcuts leave focused buttons, links and form inputs alone",async()=>{
+  const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
+  assert.match(app,/target\.closest\("button, a, input, textarea, select, \[role='button'\], \[role='dialog'\], \[contenteditable='true'\]"\)/);
+  assert.match(app,/event\.defaultPrevented\|\|event\.altKey\|\|event\.ctrlKey\|\|event\.metaKey\|\|event\.shiftKey/);
+  assert.match(app,/className="icon-button dangerous" type="button"[^>]*aria-label=\{t\.delete\}/);
+});
+
+test("Long story titles and action labels wrap without reader toolbar overflow on small iPhones",async()=>{
+  const css=await readFile(new URL("../src/reader-polish.css",import.meta.url),"utf8");
+  assert.match(css,/\.reader-page \.reader-title h2,[\s\S]*?\.reader-page \.reader-toolbar \.back-button\{\s*overflow-wrap:anywhere/);
+  assert.match(css,/@media\(max-width:360px\)\{[\s\S]*?\.reader-page \.reader-toolbar\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(css,/\.reader-page \.reader-title h2\{hyphens:auto\}/);
+});
