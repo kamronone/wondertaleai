@@ -4,8 +4,26 @@ import { classics, type ClassicId } from "./classics";
 export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
+export const isValidLocalBook=(value:unknown):value is DemoBook=>{
+ if(!value||typeof value!=="object")return false;
+ const book=value as Partial<DemoBook>;
+ return typeof book.id==="string"&&/^local-[A-Za-z0-9_-]{1,120}$/.test(book.id)&&
+   typeof book.created_at==="string"&&!Number.isNaN(Date.parse(book.created_at))&&
+   typeof book.name==="string"&&book.name.trim().length>0&&book.name.length<=60&&
+   typeof book.title==="string"&&book.title.trim().length>0&&book.title.length<=120&&
+   typeof book.age==="number"&&Number.isInteger(book.age)&&book.age>=2&&book.age<=14&&
+   typeof book.theme==="string"&&typeof book.style==="string"&&
+   typeof book.prompt==="string"&&book.prompt.length<=1200&&
+   Array.isArray(book.pages)&&book.pages.length>=1&&book.pages.length<=30&&
+   book.pages.every((p,index)=>p&&typeof p.text==="string"&&p.text.trim().length>0&&p.text.length<=1600&&
+     typeof p.image_url==="string"&&p.image_url.length<=40000&&
+     Number.isInteger(p.number)&&p.number===index+1);
+};
 const readBooks=(store:Storage,key:string):DemoBook[]=>{
- try{const parsed=JSON.parse(store.getItem(key)||"[]");return Array.isArray(parsed)?parsed.filter(x=>x&&typeof x.id==="string"&&x.id.startsWith("local-")&&Array.isArray(x.pages)).slice(0,20):[];}catch{return []}
+ try{
+   const parsed:unknown=JSON.parse(store.getItem(key)||"[]");
+   return Array.isArray(parsed)?parsed.filter(isValidLocalBook).slice(0,20):[];
+ }catch{return []}
 };
 export const getDemoBooks=():DemoBook[]=>{
  const session=readBooks(sessionStorage,sessionKey);
