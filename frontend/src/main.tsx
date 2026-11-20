@@ -701,6 +701,22 @@ function App(){
       </section>}
       {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<PricingPlans lang={lang} api={API} session={privateToken}/></>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
+        <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
+          <div className="reading-achievements-heading"><Star size={18}/><strong>{({ru:"Мои достижения",uz:"Mening yutuqlarim",en:"My achievements"} as const)[lang]}</strong></div>
+          <div className="reading-achievements-grid">
+            {([
+              {id:"books",count:books.length,goal:3,label:({ru:"Сказки в библиотеке",uz:"Kutubxonadagi ertaklar",en:"Stories in library"} as const)[lang]},
+              {id:"reading",count:books.filter(book=>(book.lastPage||0)>0).length,goal:3,label:({ru:"Начал читать",uz:"Oqişni başladim",en:"Started reading"} as const)[lang]},
+              {id:"finished",count:books.filter(book=>book.pages.length>1&&(book.lastPage||0)>=book.pages.length-1).length,goal:3,label:({ru:"Дочитал до конца",uz:"Oxirigaça oqidim",en:"Reached final page"} as const)[lang]},
+              {id:"favorites",count:books.filter(book=>book.favorite).length,goal:3,label:({ru:"Любимые сказки",uz:"Sevimli ertaklar",en:"Favorite stories"} as const)[lang]}
+            ] as const).map(item=><div className="reading-achievement" key={item.id}>
+              <div className="reading-achievement-count"><Star size={15} fill={item.count>=item.goal?"currentColor":"none"}/><strong>{item.count}</strong><small>/ {item.goal}</small></div>
+              <span>{item.label}</span>
+              <div className="reading-achievement-track" role="progressbar" aria-label={item.label} aria-valuemin={0} aria-valuemax={item.goal} aria-valuenow={Math.min(item.count,item.goal)}><span style={{width:Math.min(100,item.count/item.goal*100)+"%"}}/></div>
+            </div>)}
+          </div>
+          <small className="reading-achievements-note">{({ru:"Прогресс рассчитан по текущей библиотеке. Последняя страница означает, что вы до неё дошли.",uz:"Natijalar joriy kutubxona asosida hisoblanadi. Oxirgi sahifaga yetiş yakunlangan deb hisoblanadi.",en:"Progress is based on this library. Reaching the final page counts as finishing."} as const)[lang]}</small>
+        </section>
         {privateToken&&libraryRefreshError&&<div className="library-sync-warning" role="status">
           <span>{({ru:"Не удалось обновить библиотеку. Ранее загруженные книги сохранены.",uz:"Kutubxonani yangilab bölmadi. Avval yuklangan kitoblar saqlangan.",en:"Could not refresh your library. Previously loaded books are still available."} as const)[lang]}</span>
           <button type="button" disabled={!isOnline} onClick={()=>setLibraryRefreshAttempt(value=>value+1)}>{({ru:"Повторить",uz:"Qayta uriniş",en:"Retry"} as const)[lang]}</button>
