@@ -305,10 +305,15 @@ function App(){
     }catch(error){
       if(sessionEpoch.current!==epoch)return;
       if(error instanceof Error&&error.message==="Private account authorization expired"){
-        // Never leave private books on screen after the server rejects the session.
+        // Preserve offline edits for the same parent before discarding their
+        // in-memory session. They can resume after signing in again.
+        persistPending();
         ++sessionEpoch.current;
+        pendingProgress.current.clear();pendingFavorites.current.clear();
+        offlineOwner.current=null;recentlyCreated.current.clear();
         clearChildDraft();
-        setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
+        setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
+        setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setPage(0);setTab("home");
         setSyncMessage({
           ru:"Сессия истекла. Войдите снова, чтобы перенести сохранённые книги.",
           uz:"Sessiya tugadi. Saqlangan kitoblarni köçiriş uçun qayta kiring.",
@@ -473,10 +478,13 @@ function App(){
       }catch(error){
         if(disposed||sessionEpoch.current!==epoch)return;
         if(error instanceof Error&&error.message==="Private account authorization expired"){
+          persistPending();
           ++sessionEpoch.current;
           pendingProgress.current.clear();pendingFavorites.current.clear();
           offlineOwner.current=null;recentlyCreated.current.clear();
-          setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
+          clearChildDraft();
+          setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
+          setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setPage(0);setTab("home");
           setSyncMessage({
             ru:"Сессия истекла. Войдите снова.",
             uz:"Sessiya tugadi. Qayta kiring.",
