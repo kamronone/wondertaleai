@@ -1167,3 +1167,108 @@
     white-space:pre-wrap;
   }
 }
+
+/* A single focused finale avoids three full-size competing cards. */
+.reader-page .reader-finale{
+  margin:14px 0 10px;
+  padding:14px;
+  border:1px solid #e2d5ec;
+  border-radius:16px;
+  background:#fffaff;
+  display:grid;
+  gap:12px;
+  min-width:0;
+}
+.reader-page .reader-finale-heading{
+  display:grid;gap:4px;
+}
+.reader-page .reader-finale-heading strong{
+  font-size:15px;line-height:1.3;color:#51386e;
+}
+.reader-page .reader-finale-heading span{
+  font-size:12px;line-height:1.35;color:#82718e;
+}
+.reader-page .reader-finale-options{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.reader-page .reader-finale-options>button{
+  display:flex;align-items:center;justify-content:center;
+  min-width:0;min-height:48px;padding:9px 8px;
+  background:#fff;border:1px solid #ddcbe8;border-radius:11px;
+  color:#654384;font-size:12px;font-weight:700;line-height:1.3;
+  text-align:center;overflow-wrap:anywhere;white-space:normal;
+}
+.reader-page .reader-finale-options>button[aria-pressed="true"]{
+  background:#7650aa;color:#fff;border-color:#7650aa;
+}
+.reader-page .reader-finale .interactive-endings,
+.reader-page .reader-finale .story-branch-quest,
+.reader-page .reader-finale .reading-word-game{
+  margin:0;
+  padding:12px;
+  border-radius:12px;
+  box-shadow:none;
+  width:100%;
+  box-sizing:border-box;
+}
+.reader-page .reader-finale .interactive-endings>div,
+.reader-page .reader-finale .story-branch-choices{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.reader-page .reader-finale .interactive-endings button,
+.reader-page .reader-finale .story-branch-choices button,
+.reader-page .reader-finale .reading-word-choices button{
+  box-sizing:border-box;width:100%;min-width:0;min-height:48px;
+  display:flex;align-items:center;justify-content:center;
+  padding:9px 10px;font-size:12px;line-height:1.3;
+  text-align:center;overflow-wrap:anywhere;white-space:normal;
+}
+.reader-page .reader-finale .reading-word-choices{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;gap:8px;
+}
+.reader-page .reader-finale .sequel-action{
+  margin:0;
+  width:100%;
+  min-height:48px;
+  border-radius:11px;
+  font-size:12px;
+  line-height:1.3;
+  padding:9px 12px;
+  flex-wrap:wrap;
+  box-shadow:none;
+}
+.reader-page .reader-finale button:focus-visible{
+  outline:3px solid #9d77ca;
+  outline-offset:2px;
+}
+@media screen and (max-width:620px){
+  .reader-page .reader-finale{
+    margin:10px 0 8px;padding:11px;gap:9px;border-radius:14px;
+  }
+  .reader-page .reader-finale-heading strong{font-size:14px}
+  .reader-page .reader-finale-options{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+  }
+  .reader-page .reader-finale-options>button{font-size:11px;min-height:44px}
+  .reader-page .reader-finale .reading-word-choices{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+  }
+}
+@media screen and (max-width:360px){
+  .reader-page .reader-finale .reading-word-choices{
+    grid-template-columns:1fr;
+  }
+  .reader-page .reader-finale .interactive-endings>div,
+  .reader-page .reader-finale .story-branch-choices{
+    grid-template-columns:1fr;
+  }
+}
+@media print{
+  .reader-page .reader-finale{display:none!important}
+}
