@@ -1,12 +1,9 @@
 name: WonderTale frontend checks
 
 on:
-  push:
-    branches:
-      - fix/private-book-access
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-checks.yml'
+  # GitHub-hosted runners currently fail before any job step executes.
+  # Avoid repeated billed/failed runs from iterative branch commits.
+  # Use workflow_dispatch until repository Actions access is restored.
   pull_request:
     branches:
       - main
