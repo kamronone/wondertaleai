@@ -32,3 +32,18 @@
 .reader-page .story-branch-quest [role="status"] strong{display:block;margin-top:10px;font-size:14px}
 @media(max-width:360px){.reader-page .story-branch-choices{grid-template-columns:1fr}}
 @media print{.reader-page .story-branch-quest{display:none!important}}
+
+/* Compact opt-in character editor. No character data stored separately. */
+.create-page .character-builder{margin:12px 0 16px;padding:14px;border:1px solid #e5d7ef;border-radius:14px;background:#fdfaff;display:grid;gap:10px}
+.create-page .character-builder h4{font-size:15px;margin:0;color:#4b356e}
+.create-page .character-builder p,.create-page .character-builder small{font-size:12px;line-height:1.5;margin:0;color:#776588}
+.create-page .character-builder label{display:grid;gap:5px;font-size:12px;font-weight:700;color:#594370}
+.create-page .character-builder input{width:100%;box-sizing:border-box;min-height:44px;padding:9px 10px;border-radius:10px;border:1px solid #d9c4e7;font-size:16px}
+.create-page .character-builder fieldset{border:0;margin:0;padding:0;min-width:0}
+.create-page .character-builder legend{font-size:12px;font-weight:700;color:#594370;margin-bottom:6px}
+.create-page .character-roles{display:flex;flex-wrap:wrap;gap:7px}
+.create-page .character-builder button{min-height:44px;min-width:0;padding:8px 12px;font-size:12px;font-weight:700;border:1px solid #d9c4e7;border-radius:10px;background:white;color:#624488;white-space:normal}
+.create-page .character-builder button[aria-pressed="true"]{border-color:#8354b9;background:#f0e6fa}
+.create-page .character-builder .character-preview{font-size:12px;color:#4b356e;overflow-wrap:anywhere}
+.create-page .character-builder .character-apply{justify-self:start;background:#7751af;color:#fff;border-color:#7751af}
+.create-page .character-builder .character-apply:disabled{opacity:.5}
