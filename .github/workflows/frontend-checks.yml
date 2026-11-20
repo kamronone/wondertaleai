@@ -15,6 +15,11 @@ on:
       - '.github/workflows/frontend-checks.yml'
   workflow_dispatch:
 
+# Keep only the newest run for this working branch while deployment limits apply.
+concurrency:
+  group: wondertale-frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
