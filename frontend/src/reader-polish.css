@@ -772,3 +772,57 @@
   .create-page .form-card > .error,
   .create-page .form-card > [role="alert"]{margin-bottom:0!important}
 }
+
+/* Compact reader toolbar: library back action stays at left, book actions at right.
+   Overrides legacy phone rules that stack / center action buttons. */
+@media screen and (max-width:620px){
+  .reader-page .reader-toolbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    justify-items:stretch!important;
+    column-gap:8px!important;
+    row-gap:8px!important;
+    width:100%;
+    margin:0 0 12px!important;
+  }
+  .reader-page .reader-toolbar > .back-button{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    justify-self:start!important;
+    text-align:left!important;
+    min-width:0;
+    width:auto!important;
+    max-width:100%;
+    margin:0!important;
+    padding:8px 4px!important;
+    font-size:12px!important;
+    line-height:1.25;
+    white-space:normal;
+  }
+  .reader-page .reader-toolbar > .reader-actions{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    justify-self:end!important;
+    width:auto!important;
+    min-width:0;
+    flex-wrap:nowrap!important;
+    gap:5px!important;
+  }
+  .reader-page .reader-toolbar > .reader-actions .icon-button{
+    flex:0 0 44px!important;
+    width:44px!important;
+    min-width:44px!important;
+    height:44px!important;
+    padding:9px!important;
+  }
+}
+@media screen and (max-width:355px){
+  .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr)!important}
+  .reader-page .reader-toolbar > .reader-actions{
+    grid-row:2;
+    justify-self:end!important;
+  }
+}
