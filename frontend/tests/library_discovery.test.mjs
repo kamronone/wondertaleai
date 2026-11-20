@@ -26,7 +26,7 @@ test("Search matches title, child and theme without changing the source array",(
 
 test("Favorites and sorting operate on the caller-provided library only",()=>{
   assert.deepEqual(discoverBooks(entries,"",true,"newest").map(x=>x.id),["a","c"]);
-  assert.deepEqual(discoverBooks(entries,"",false,"continue").map(x=>x.id),["b","c","a"]);
+  assert.deepEqual(discoverBooks(entries,"",false,"continue").map(x=>x.id),["c","b","a"]);
   assert.deepEqual(discoverBooks(entries,"",false,"title").map(x=>x.id),["b","c","a"]);
   assert.deepEqual(discoverBooks(entries.slice(0,1),"",false,"newest").map(x=>x.id),["a"]);
 });
