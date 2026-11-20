@@ -79,7 +79,7 @@ function App(){
   // into a different account, and never persist bearer tokens on the device.
   const pendingProgress=useRef(new Map<string,number>());
   const pendingFavorites=useRef(new Map<string,boolean>());
-  const flushing=useRef(false);
+  const flushing=useRef<number|null>(null);
   const recentlyCreated=useRef(new Map<string,number>());
   const offlineOwner=useRef<string|null>(null);
   const persistPending=()=>{
@@ -301,8 +301,8 @@ function App(){
     let disposed=false;
     const epoch=sessionEpoch.current;
     const flush=async()=>{
-      if(flushing.current||!navigator.onLine||disposed)return;
-      flushing.current=true;
+      if(flushing.current===epoch||!navigator.onLine||disposed)return;
+      flushing.current=epoch;
       try{
         for(const [id,position] of [...pendingProgress.current]){
           if(disposed||sessionEpoch.current!==epoch)break;
@@ -323,7 +323,7 @@ function App(){
             if(!disposed&&sessionEpoch.current===epoch&&pendingFavorites.current.get(id)===favorite){pendingFavorites.current.delete(id);persistPending();}
           }catch{break;}
         }
-      }finally{flushing.current=false;}
+      }finally{if(flushing.current===epoch)flushing.current=null;}
     };
     const onOnline=()=>{void flush();};
     // Retry transient server failures even when the browser never fires an online event.
