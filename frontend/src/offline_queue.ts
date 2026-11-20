@@ -1,6 +1,10 @@
 // Account-scoped, bounded metadata queue. Never store tokens or story content.
 export type PendingMetadata={progress:Record<string,number>;favorites:Record<string,boolean>};
 const prefix="wondertale:pending-metadata:v1:";
+// The writer can store 100 progress and 100 favorite IDs of up to 128 chars.
+// Their combined JSON can exceed 16 KB; keep the read ceiling above that
+// maximum, otherwise a valid queue silently disappears after an iPhone restart.
+const maxSerializedLength=32768;
 const empty=():PendingMetadata=>({progress:{},favorites:{}});
 const validId=(id:string)=>/^[a-zA-Z0-9_-]{1,128}$/.test(id)&&id!=="__proto__"&&id!=="constructor"&&id!=="prototype";
 const key=(owner:string)=>prefix+owner;
@@ -8,7 +12,7 @@ export function readPendingMetadata(owner:string):PendingMetadata{
  if(!validId(owner))return empty();
  try{
   const raw=localStorage.getItem(key(owner));
-  if(!raw||raw.length>16000)return empty();
+  if(!raw||raw.length>maxSerializedLength)return empty();
   const data:unknown=JSON.parse(raw);
   if(!data||typeof data!=="object")return empty();
   const item=data as Partial<PendingMetadata>;
