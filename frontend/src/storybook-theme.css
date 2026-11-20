@@ -732,3 +732,24 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
   .create-page .wizard-step-actions{gap:8px}
   .create-page .wizard-step-actions button{flex:1 1 auto}
 }
+
+/* Reading achievements: derived from visible library, never from shared device counters. */
+.reading-achievements{margin:0 0 20px;padding:16px;border:1px solid #e8def2;border-radius:17px;background:linear-gradient(145deg,#fffdfb,#f8f0ff)}
+.reading-achievements-heading{display:flex;align-items:center;gap:8px;margin-bottom:12px;color:#573a86;font-size:15px}
+.reading-achievements-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.reading-achievement{min-width:0;padding:12px;border:1px solid #e9dff3;border-radius:12px;background:#fff}
+.reading-achievement-count{display:flex;align-items:center;gap:5px;color:#7250aa}
+.reading-achievement-count strong{font-size:20px;line-height:1.1}
+.reading-achievement-count small{font-size:11px;color:#81748d}
+.reading-achievement>span{display:block;min-height:34px;margin:7px 0;font-size:12px;line-height:1.4;color:#584d67;overflow-wrap:anywhere}
+.reading-achievement-track{height:5px;overflow:hidden;border-radius:999px;background:#ede4f5}
+.reading-achievement-track>span{display:block;height:100%;border-radius:inherit;background:#9670d4;transition:width .2s ease}
+.reading-achievements-note{display:block;margin-top:10px;color:#756780;font-size:11px;line-height:1.4}
+@media(max-width:620px){
+  .reading-achievements{padding:12px;margin-bottom:16px;border-radius:14px}
+  .reading-achievements-heading{font-size:13px}
+  .reading-achievements-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .reading-achievement{padding:10px}
+  .reading-achievement-count strong{font-size:18px}
+  .reading-achievement>span{min-height:32px;font-size:11px}
+}
