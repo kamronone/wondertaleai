@@ -47,7 +47,7 @@ if (!i18n.includes('saved==="en"?saved:"uz"')) {
   problems.push("New visitors must default to Uzbek without overriding saved preferences");
 }
 const main = readFileSync(resolve(root, "src/main.tsx"), "utf8");
-if (main.includes('className="welcome-language"')) problems.push("Onboarding must not contain a language selector");
+if (!main.includes('className="welcome-language"') || !main.includes('id="welcome-language-select"')) problems.push("Onboarding must provide a language selector");
 if (!main.includes('uz:"Boşlaş"')) problems.push("Welcome button must use reformed Uzbek");
 if (problems.length) {
   console.error(problems.join("\n"));
