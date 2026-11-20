@@ -122,14 +122,20 @@ function App(){
   });
   const shownClassics=showAllClassics||classicQuery.trim()||classicCategory!=="all"||classicAge!=="all"?visibleClassics:visibleClassics.slice(0,6);
   const activeClassic=classics.find(x=>x.id===classicId);
-  const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);openCreate();};
+  const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);openCreate(true);};
   const changeStoryLanguage=(next:Lang)=>{setStoryLang(next);if(activeClassic)setPrompt(activeClassic.prompt[next]);};
   const [photo,setPhoto]=useState<File|null>(null);
   const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
   const [createStep,setCreateStep]=useState<1|2|3>(1);
   // Every new creation starts with the child, never with a stale confirmation step.
-  const openCreate=()=>{setCreateStep(1);setConsent(false);setUsePersonalAi(false);setError("");setTab("create");};
+  const openCreate=(preservePreset=false)=>{
+    setCreateStep(1);setConsent(false);setUsePersonalAi(false);setError("");
+    // Avoid showing a previous child's personal details when starting a new story.
+    setName("");setSecondHero("");setAge("5");setPhoto(null);
+    if(!preservePreset){setClassicId(null);setPrompt("");setThemeIndex(0);setStyleIndex(0);}
+    setTab("create");
+  };
   const [saveOnDevice,setSaveOnDevice]=useState(false);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
   const [editingPage,setEditingPage]=useState(false);
