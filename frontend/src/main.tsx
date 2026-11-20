@@ -457,6 +457,15 @@ function App(){
       try{
         const remote=await loadPrivateBooks(API,privateToken);
         if(disposed||sessionEpoch.current!==epoch)return;
+        // An eventually consistent API can reveal a book only after login.
+        // Reconcile its queued page with the now-known book length before
+        // displaying or replaying any pending position.
+        const repairedProgress=normalizePendingProgress(pendingProgress.current,remote);
+        if([...pendingProgress.current].some(([id,position])=>repairedProgress.get(id)!==position)||
+           repairedProgress.size!==pendingProgress.current.size){
+          pendingProgress.current=repairedProgress;
+          persistPending();
+        }
         // Do not replace optimistic offline state with an older server snapshot.
         const merged=remote.map(book=>({
           ...book,
