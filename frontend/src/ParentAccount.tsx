@@ -25,6 +25,7 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  const [apiReady,setApiReady]=useState<boolean|null>(null);
  const [registrationEnabled,setRegistrationEnabled]=useState(false);
  const [recoveryEnabled,setRecoveryEnabled]=useState(false);
+ const [readinessAttempt,setReadinessAttempt]=useState(0);
  useEffect(()=>{
   if(!api){setApiReady(false);return;}
   const controller=new AbortController();
@@ -44,7 +45,7 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
    .catch(()=>{if(!controller.signal.aborted)setApiReady(false);})
    .finally(()=>clearTimeout(timeout));
   return ()=>{clearTimeout(timeout);controller.abort();};
- },[api]);
+ },[api,readinessAttempt]);
 
  const submit=async(e:FormEvent)=>{
   e.preventDefault();
@@ -91,7 +92,7 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  };
  return <section className="parent-account-page">
   <div className="parent-account-head"><span className="parent-account-symbol"><UserRound size={24}/></span><div><h2>{t.title}</h2><p>{t.subtitle}</p></div></div>
-  {(!api||apiReady===false)&&!session?<div className="parent-account-unavailable"><ShieldCheck size={30}/><h3>{t.demo}</h3><p>{t.notReady}</p></div>:
+  {(!api||apiReady===false)&&!session?<div className="parent-account-unavailable"><ShieldCheck size={30}/><h3>{t.demo}</h3><p>{t.notReady}</p>{api&&<button type="button" className="parent-account-secondary" onClick={()=>setReadinessAttempt(n=>n+1)}>{({ru:"Проверить снова",uz:"Qayta tekşiriş",en:"Check again"} as const)[lang]}</button>}</div>:
     apiReady===null&&!session?<div className="parent-account-unavailable" role="status"><p>{({ru:"Проверяем подключение аккаунта…",uz:"Akkaunt ulanişi tekşirilmoqda…",en:"Checking account availability…"} as const)[lang]}</p></div>:
     session?<div className="parent-account-card"><div className="parent-account-success"><CheckCircle2 size={23}/><strong>{t.welcome}</strong></div>
       <p className="parent-account-muted">{t.syncDescription}</p><p className="parent-account-muted">{t.syncNotice}</p>
