@@ -752,3 +752,23 @@
   .library-page > .empty p{font-size:13px;line-height:1.5;margin:0}
   .library-page > .empty svg{width:28px;height:28px}
 }
+
+/* Creation wizard must not reserve a second fixed-navbar gap.
+   The shell owns the only bottom safe area on small screens. */
+@media screen and (max-width:620px){
+  .shell > main > .create-page{
+    box-sizing:border-box;
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:8px!important;
+    margin-bottom:0!important;
+  }
+  .create-page > .form-card{
+    min-height:0!important;
+    height:auto!important;
+    margin-bottom:0!important;
+  }
+  .create-page .wizard-step-actions{margin-bottom:0!important}
+  .create-page .form-card > .error,
+  .create-page .form-card > [role="alert"]{margin-bottom:0!important}
+}
