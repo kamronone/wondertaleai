@@ -191,6 +191,7 @@ function App(){
   const [speechPaused,setSpeechPaused]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
+  const localSaveError=({ru:"Не удалось сохранить изменения на этом устройстве. Проверьте свободное место и настройки браузера.",uz:"Özgarişlarni qurilmaga saqlab bölmadi. Böş xotira va brauzer sozlamalarini tekşiring.",en:"Could not save changes on this device. Check available storage and browser settings."} as const)[lang];
   const [usePersonalAi,setUsePersonalAi]=useState(false);
   const [aiPagesCount,setAiPagesCount]=useState<8|12|20>(8);
 
@@ -307,8 +308,10 @@ function App(){
     const saved=getDemoBooks();
     const original=saved.find(book=>book.id===active.id);
     if(!original||original.lastPage===page)return;
-    saveDemoBooks(saved.map(book=>book.id===active.id?{...book,lastPage:page}:book));
-    setBooks(previous=>previous.map(book=>book.id===active.id?{...book,lastPage:page}:book));
+    try{
+      saveDemoBooks(saved.map(book=>book.id===active.id?{...book,lastPage:page}:book));
+      setBooks(previous=>previous.map(book=>book.id===active.id?{...book,lastPage:page}:book));
+    }catch{setError(localSaveError);}
   },[page,active?.id,tab]);
   useEffect(()=>{
     if(tab!=="reader"||!active||isDemoBook(active)||!privateToken||!API)return;
@@ -458,9 +461,11 @@ function App(){
     if(isDemoBook(active)){
       const favorite=!active.favorite;
       const saved=getDemoBooks();
-      saveDemoBooks(saved.map(book=>book.id===active.id?{...book,favorite}:book));
-      setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
-      setActive(prev=>prev?{...prev,favorite}:null);
+      try{
+        saveDemoBooks(saved.map(book=>book.id===active.id?{...book,favorite}:book));
+        setBooks(prev=>prev.map(book=>book.id===active.id?{...book,favorite}:book));
+        setActive(prev=>prev?{...prev,favorite}:null);
+      }catch{setError(localSaveError);}
       return;
     }
     if(!privateToken||!API)return;
@@ -545,7 +550,8 @@ function App(){
     if(text.length<12||text.length>1500){setError(t.generateError);return;}
     const revised={...active,pages:active.pages.map((p,i)=>i===page?{...p,text}:p)};
     if(page===active.pages.length-1){revised.originalEnding=text;revised.endingChoice=undefined;}
-    applyLocalBookChange(revised);setEditingPage(false);setError("");
+    try{applyLocalBookChange(revised);setEditingPage(false);setError("");}
+    catch{setError(localSaveError);}
   };
   const continueAdventure=()=>{
     if(!active||!isDemoBook(active))return;
@@ -557,7 +563,7 @@ function App(){
     }catch(e){
       setError(e instanceof Error&&e.message==="LOCAL_LIBRARY_FULL"
         ?({ru:"Библиотека заполнена. Удалите ненужную сказку перед созданием продолжения.",uz:"Kutubxona toldi. Davomini yaratishdan oldin keraksiz ertakni oçiring.",en:"Library full. Delete an unwanted story before creating a sequel."} as const)[lang]
-        :t.generateError);
+        :e instanceof Error&&e.message==="LOCAL_LIBRARY_SAVE_FAILED"?localSaveError:t.generateError);
     }
   };
   const selectEnding=(choice:EndingId)=>{
@@ -565,8 +571,10 @@ function App(){
     const last=active.pages.length-1;
     const originalEnding=active.originalEnding||active.pages[last].text;
     const addition=endings[active.language||storyLang][choice].addition;
-    applyLocalBookChange({...active,originalEnding,endingChoice:choice,pages:active.pages.map((p,i)=>i===last?{...p,text:originalEnding+" "+addition}:p)});
-    setEditingPage(false);
+    try{
+      applyLocalBookChange({...active,originalEnding,endingChoice:choice,pages:active.pages.map((p,i)=>i===last?{...p,text:originalEnding+" "+addition}:p)});
+      setEditingPage(false);
+    }catch{setError(localSaveError);}
   };
   const generate=async(e:React.FormEvent)=>{
     e.preventDefault();
@@ -703,6 +711,8 @@ function App(){
     }catch(e){
       if(e instanceof Error&&e.message==="LOCAL_LIBRARY_FULL"){
         setError(({ru:"Библиотека этого устройства заполнена (20 книг в каждом режиме хранения). Удалите ненужную сказку в библиотеке перед созданием новой.",uz:"Bu qurilma kutubxonasi toldi (har bir saqlash rejimida 20 ta kitob). Yangi ertak yaratishdan oldin keraksiz kitobni oçiring.",en:"This device library is full (20 books per storage mode). Delete an unwanted story before creating another."} as const)[lang]);
+      }else if(e instanceof Error&&e.message==="LOCAL_LIBRARY_SAVE_FAILED"){
+        setError(localSaveError);
       }else setError(e instanceof Error?e.message:t.genericError);
     }
     finally{setBusy(false);}
