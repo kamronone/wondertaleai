@@ -368,6 +368,10 @@ function App(){
       // A later page turn supersedes queued positions, including after a
       // parent account switch. Only the latest pending page is sent.
       if(sessionEpoch.current!==epoch||pendingProgress.current.get(bookId)!==page)return;
+      // Safari PWA can remain open while offline. The owner-scoped pending
+      // queue is already persisted, so wait for the reconnect flush instead
+      // of making a doomed request on every page turn.
+      if(!navigator.onLine)return;
       try{
         await updatePrivateReadingProgress(API,token,bookId,page);
         if(sessionEpoch.current===epoch&&pendingProgress.current.get(bookId)===page){pendingProgress.current.delete(bookId);persistPending();}
