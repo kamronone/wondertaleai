@@ -1,6 +1,7 @@
 // Browser-only preview fallback. Photos never leave the browser in this mode.
 import type { Lang } from "./i18n";
 import { classics, type ClassicId } from "./classics";
+import { fitSequelTitle } from "./sequel_title";
 export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
@@ -343,7 +344,7 @@ export const createDemoSequel=(previous:DemoBook):DemoBook=>{
     id:"local-"+crypto.randomUUID(),
     created_at:new Date().toISOString(),
     name:previous.name,age:previous.age,theme:previous.theme,style:previous.style,
-    prompt:previous.prompt,title:previous.title+story.suffix,language:lang,
+    prompt:previous.prompt,title:fitSequelTitle(previous.title,story.suffix),language:lang,
     classicId:previous.classicId,mode:"browser-demo",savedOnDevice:Boolean(previous.savedOnDevice),
     pages:story.pages.map((text,index)=>({number:index+1,text,image_url:art||illustration(index+1)}))
  };
