@@ -54,19 +54,19 @@ test("21st saved book is rejected without deleting previously saved stories", ()
 
 test("Session-only overflow does not mutate the saved device library", () => withStores((local, session) => {
   saveDemoBooks(makeBooks(2));
-  saveDemoBooks([...makeBooks(2), ...makeBooks(20, false).map((book, i) => ({ ...book, id: "session-" + i }))]);
+  saveDemoBooks([...makeBooks(2), ...makeBooks(20, false).map((book, i) => ({ ...book, id: "local-session-" + i }))]);
   const beforeDevice = local.getItem("wondertale-opt-in-books-v1");
   const beforeSession = session.getItem("wondertale-preview-books-v1");
   assert.throws(() => saveDemoBooks([
     ...makeBooks(2),
-    ...makeBooks(21, false).map((book, i) => ({ ...book, id: "session-" + i }))
+    ...makeBooks(21, false).map((book, i) => ({ ...book, id: "local-session-" + i }))
   ]), /LOCAL_LIBRARY_FULL/);
   assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
   assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
 }));
 
 test("Session quota error restores both previous book collections", () => withStores((local, session) => {
-  saveDemoBooks([...makeBooks(3), ...makeBooks(2, false).map((b, i) => ({ ...b, id: "session-" + i }))]);
+  saveDemoBooks([...makeBooks(3), ...makeBooks(2, false).map((b, i) => ({ ...b, id: "local-session-" + i }))]);
   const beforeDevice = local.getItem("wondertale-opt-in-books-v1");
   const beforeSession = session.getItem("wondertale-preview-books-v1");
   const originalSetItem = session.setItem;
@@ -76,7 +76,7 @@ test("Session quota error restores both previous book collections", () => withSt
     return originalSetItem(key, value);
   };
   assert.throws(() => saveDemoBooks([
-    ...makeBooks(4), ...makeBooks(3, false).map((b, i) => ({ ...b, id: "session-" + i }))
+    ...makeBooks(4), ...makeBooks(3, false).map((b, i) => ({ ...b, id: "local-session-" + i }))
   ]), /LOCAL_LIBRARY_SAVE_FAILED/);
   assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
   assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
