@@ -71,3 +71,14 @@ test("Choosing custom mode again never wipes an existing original idea", async (
   assert.equal(leaveClassicStoryPrompt("My very own tale", "en"), "My very own tale");
   assert.equal(leaveClassicStoryPrompt("", "ru"), "");
 });
+
+
+test("Editing a fixed classic story switches to the custom plot mode", async () => {
+  const { shouldDetachClassicOnEdit } = await import(
+    "data:text/javascript;base64," + Buffer.from(result.outputFiles[0].contents).toString("base64")
+  );
+  assert.equal(shouldDetachClassicOnEdit(classics.ru, "ru", classics), false);
+  assert.equal(shouldDetachClassicOnEdit(classics.ru + " и моя собственная концовка", "ru", classics), true);
+  assert.equal(shouldDetachClassicOnEdit(classics.uz + " yangi qahramon", "uz", classics), true);
+  assert.equal(shouldDetachClassicOnEdit("My own story", "en"), false);
+});
