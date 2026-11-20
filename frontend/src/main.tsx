@@ -17,6 +17,7 @@ import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
+import { nextReaderPage, swipeDirection } from "./reader_navigation";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -123,23 +124,24 @@ function App(){
     readerTouchStart.current=null;
     const touch=event.changedTouches[0];
     if(!start||!touch||!active||editingPage)return;
-    const dx=touch.clientX-start.x,dy=touch.clientY-start.y;
-    if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.5)return;
-    setPage(previous=>Math.max(0,Math.min(active.pages.length-1,previous+(dx<0?1:-1))));
+    if(window.getSelection()?.toString().trim())return;
+    const direction=swipeDirection(touch.clientX-start.x,touch.clientY-start.y);
+    if(direction===null)return;
+    setPage(previous=>nextReaderPage(previous,active.pages.length,direction));
   };
   useEffect(()=>{
-    if(tab!=="reader"||!active)return;
+    if(tab!=="reader"||!active||editingPage)return;
     const onKeyDown=(event:KeyboardEvent)=>{
       const target=event.target;
       if(event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||
          (target instanceof HTMLElement&&(target.isContentEditable||!!target.closest("input, textarea, select, [role='dialog']"))))return;
       if(event.key!=="ArrowLeft"&&event.key!=="ArrowRight")return;
       event.preventDefault();
-      setPage(previous=>Math.max(0,Math.min(active.pages.length-1,previous+(event.key==="ArrowRight"?1:-1))));
+      setPage(previous=>nextReaderPage(previous,active.pages.length,event.key==="ArrowRight"?1:-1));
     };
     window.addEventListener("keydown",onKeyDown);
     return ()=>window.removeEventListener("keydown",onKeyDown);
-  },[tab,active?.id,active?.pages.length]);
+  },[tab,active?.id,active?.pages.length,editingPage]);
   const [readerFontScale,setReaderFontScale]=useState<"small"|"normal"|"large">(()=>{
     try{const saved=localStorage.getItem("wondertale_reader_font_scale");return saved==="small"||saved==="large"?saved:"normal";}catch{return "normal";}
   });
