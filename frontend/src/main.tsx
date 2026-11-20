@@ -804,8 +804,10 @@ function App(){
               {id:"books",count:books.length,goal:3,label:({ru:"Сказки в библиотеке",uz:"Kutubxonadagi ertaklar",en:"Stories in library"} as const)[lang]},
               {id:"reading",count:books.filter(book=>(book.lastPage||0)>0).length,goal:3,label:({ru:"Начал читать",uz:"Oqişni başladim",en:"Started reading"} as const)[lang]},
               {id:"finished",count:books.filter(book=>book.pages.length>1&&(book.lastPage||0)>=book.pages.length-1).length,goal:3,label:({ru:"Дочитал до конца",uz:"Oxirigaça oqidim",en:"Reached final page"} as const)[lang]},
-              {id:"favorites",count:books.filter(book=>book.favorite).length,goal:3,label:({ru:"Любимые сказки",uz:"Sevimli ertaklar",en:"Favorite stories"} as const)[lang]}
-            ] as const).map(item=><div className="reading-achievement" key={item.id}>
+              {id:"favorites",count:books.filter(book=>book.favorite).length,goal:3,label:({ru:"Любимые сказки",uz:"Sevimli ertaklar",en:"Favorite stories"} as const)[lang]},
+               {id:"explorer",count:new Set(books.filter(book=>(book.lastPage||0)>0).map(book=>book.theme||book.classicId||"other")).size,goal:3,label:({ru:"Разные миры",uz:"Turli olamlar",en:"Different worlds"} as const)[lang]},
+               {id:"collection",count:books.filter(book=>book.savedOnDevice||book.mode==="private-account").length,goal:5,label:({ru:"Сохранённые книги",uz:"Saqlangan kitoblar",en:"Saved books"} as const)[lang]}
+            ] as const).map(item=><div className={"reading-achievement"+(item.count>=item.goal?" unlocked":"")} key={item.id} aria-label={item.count>=item.goal?item.label+" ✓":item.label}>
               <div className="reading-achievement-count"><Star size={15} fill={item.count>=item.goal?"currentColor":"none"}/><strong>{item.count}</strong><small>/ {item.goal}</small></div>
               <span>{item.label}</span>
               <div className="reading-achievement-track" role="progressbar" aria-label={item.label} aria-valuemin={0} aria-valuemax={item.goal} aria-valuenow={Math.min(item.count,item.goal)}><span style={{width:Math.min(100,item.count/item.goal*100)+"%"}}/></div>
