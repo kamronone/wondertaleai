@@ -42,3 +42,24 @@ export async function getAuthenticatedOwner(api:string,token:string):Promise<str
  if(typeof id!=="string"||!validId(id))throw Error("Invalid account identifier");
  return id;
 }
+
+/**
+ * Repair queued progress after a parent signs back in and the server supplies
+ * current page counts. Keep unknown book IDs for a later refresh: a newly
+ * created book may not yet be present on a lagging read replica.
+ */
+export function normalizePendingProgress(
+ progress: ReadonlyMap<string,number>,
+ books: readonly {id:string;pages:readonly unknown[]}[]
+): Map<string,number>{
+ const lastPageById=new Map(books.map(book=>[
+  book.id,Math.max(0,book.pages.length-1)
+ ] as const));
+ const repaired=new Map<string,number>();
+ for(const [id,page] of progress){
+  if(!validId(id)||!Number.isInteger(page)||page<0||page>99)continue;
+  const last=lastPageById.get(id);
+  repaired.set(id,last===undefined?page:Math.min(page,last));
+ }
+ return repaired;
+}
