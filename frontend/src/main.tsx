@@ -251,7 +251,7 @@ function App(){
         await updatePrivateReadingProgress(API,token,bookId,page);
         if(sessionEpoch.current===epoch&&pendingProgress.current.get(bookId)===page){pendingProgress.current.delete(bookId);persistPending();}
       }catch(error){
-        if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
+        if(sessionEpoch.current===epoch&&pendingProgress.current.get(bookId)===page&&!(error instanceof Error&&error.message==="Private account authorization expired")){
           pendingProgress.current.set(bookId,page);
           persistPending();
           setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
