@@ -73,3 +73,36 @@ def test_multiple_heroes_and_requested_length_in_ai_prompt(monkeypatch):
     client=SimpleNamespace(responses=FakeResponses())
     data=GenerateStoryInput(name="Amir",age=5,language="en",idea="A magical forest journey with friends",other_heroes=["Aliya","Omar"],pages_count=12)
     assert len(generate_story(data,client=client).pages)==12
+
+
+@pytest.mark.parametrize("field,value",[
+    ("name","   "),("idea","            "),("style","  "),
+])
+def test_blank_ai_request_fields_rejected(field,value):
+    from pydantic import ValidationError
+    kwargs={"name":"Amir","age":5,"idea":"A magical garden adventure"}
+    kwargs[field]=value
+    with pytest.raises(ValidationError):
+        GenerateStoryInput(**kwargs)
+
+
+@pytest.mark.parametrize("hero",["   ","x"*46])
+def test_invalid_additional_hero_rejected(hero):
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError):
+        GenerateStoryInput(name="Amir",age=5,idea="A magical garden adventure",other_heroes=[hero])
+
+
+def test_story_fields_are_trimmed_and_classic_can_be_empty():
+    data=GenerateStoryInput(name="  Amir  ",age=5,idea="  A magical garden adventure  ",other_heroes=["  Aliya  "])
+    assert data.name=="Amir"
+    assert data.idea=="A magical garden adventure"
+    assert data.other_heroes==["Aliya"]
+    assert data.classic_title==""
+
+
+def test_whitespace_only_title_rejected():
+    payload=json.loads(valid_story("en"))
+    payload["title"]="   "
+    with pytest.raises(ValueError):
+        validate_generated_story(json.dumps(payload),"en")
