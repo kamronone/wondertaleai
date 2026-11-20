@@ -39,27 +39,32 @@ test("A missing book stays pending while later progress and favorites are synced
  assert.equal(harness.persisted,2);
 });
 
-test("A transient network error stops progress replay but preserves other kinds of edits",async()=>{
+test("A network failure stops the entire replay, preserving progress and favorites",async()=>{
+ let favoriteRequests=0;
  const harness=makeOptions({
   sendProgress:async(id)=>{if(id==="missing")throw Error("network down");throw Error("must not be called");},
-  sendFavorite:async()=>{}
+  sendFavorite:async()=>{favoriteRequests++;}
  });
  await replayPendingChanges(harness.options);
  assert.equal(harness.progress.size,2);
- assert.equal(harness.favorites.size,0);
- assert.equal(harness.persisted,2);
+ assert.equal(harness.favorites.size,2);
+ assert.equal(harness.persisted,0);
+ assert.equal(favoriteRequests,0);
 });
 
-test("Newer progress is not deleted when an older network request completes",async()=>{
+test("Newer progress survives completion of a request that actually started",async()=>{
  const progress=new Map([["book",2]]);
  let release;
+ let signalStart;
  const gate=new Promise(resolve=>{release=resolve;});
+ const started=new Promise(resolve=>{signalStart=resolve;});
  const options=makeOptions({
   progress,favorites:new Map(),
-  sendProgress:async()=>{await gate;}
+  sendProgress:async()=>{signalStart();await gate;}
  });
  const attempt=replayPendingChanges(options.options);
- // The API request has started, and the user flips another page before it returns.
+ await started;
+ // The old request is now in flight, not merely queued.
  progress.set("book",7);
  release();
  await attempt;
@@ -99,4 +104,16 @@ test("In-flight progress writes complete before any replay starts",async()=>{
  release();
  await attempt;
  assert.deepEqual(sent,["previous-finished","replayed"]);
+});
+
+test("A failed favorite request stops the replay without clearing pending favorites",async()=>{
+ const sent=[];
+ const harness=makeOptions({
+  progress:new Map(),
+  sendFavorite:async(id)=>{sent.push(id);throw Error("timeout");}
+ });
+ await replayPendingChanges(harness.options);
+ assert.deepEqual(sent,["missing"]);
+ assert.equal(harness.favorites.size,2);
+ assert.equal(harness.persisted,0);
 });
