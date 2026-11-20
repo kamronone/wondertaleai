@@ -49,21 +49,27 @@ function App(){
   },[]);
 
   const [onboardingStep,setOnboardingStep]=useState(0);
-  const welcomeTouchStart=useRef<{x:number;y:number}|null>(null);
+  const welcomeTouchStart=useRef<{x:number;y:number;identifier:number}|null>(null);
   const onWelcomeTouchStart=(event:React.TouchEvent<HTMLElement>)=>{
+    if(event.touches.length!==1){welcomeTouchStart.current=null;return;}
     const touch=event.touches[0];
-    if(touch)welcomeTouchStart.current={x:touch.clientX,y:touch.clientY};
+    welcomeTouchStart.current={x:touch.clientX,y:touch.clientY,identifier:touch.identifier};
+  };
+  const onWelcomeTouchMove=(event:React.TouchEvent<HTMLElement>)=>{
+    if(event.touches.length!==1)welcomeTouchStart.current=null;
   };
   const onWelcomeTouchEnd=(event:React.TouchEvent<HTMLElement>)=>{
     const start=welcomeTouchStart.current;
     welcomeTouchStart.current=null;
-    const touch=event.changedTouches[0];
-    if(!start||!touch)return;
+    if(!start||event.touches.length!==0||event.changedTouches.length!==1)return;
+    const touch=Array.from(event.changedTouches).find(item=>item.identifier===start.identifier);
+    if(!touch)return;
     const dx=touch.clientX-start.x;
     const dy=touch.clientY-start.y;
     if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.3)return;
     setOnboardingStep(current=>Math.max(0,Math.min(2,current+(dx<0?1:-1))));
   };
+  const onWelcomeTouchCancel=()=>{welcomeTouchStart.current=null;};
   const [showOnboarding,setShowOnboarding]=useState(()=>{try{return localStorage.getItem("wondertale-onboarding-v1")!=="seen"}catch{return true}});
   const finishOnboarding=(destination:"home"|"account")=>{
     try{localStorage.setItem("wondertale-onboarding-v1","seen")}catch{/* Continue even when private browsing blocks storage. */}
@@ -769,7 +775,7 @@ function App(){
   };
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
   if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
-  if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome" onTouchStart={onWelcomeTouchStart} onTouchEnd={onWelcomeTouchEnd} onKeyDown={event=>{const target=event.target;if(target instanceof HTMLElement&&target.closest("button, select, input, textarea, [role='button']"))return;if(event.key==="ArrowRight"){event.preventDefault();setOnboardingStep(current=>Math.min(2,current+1));}if(event.key==="ArrowLeft"){event.preventDefault();setOnboardingStep(current=>Math.max(0,current-1));}}}>
+  if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome" onTouchStart={onWelcomeTouchStart} onTouchMove={onWelcomeTouchMove} onTouchEnd={onWelcomeTouchEnd} onTouchCancel={onWelcomeTouchCancel} tabIndex={0} onKeyDown={event=>{const target=event.target;if(target instanceof HTMLElement&&target.closest("button, select, input, textarea, [role='button']"))return;if(event.key==="ArrowRight"){event.preventDefault();setOnboardingStep(current=>Math.min(2,current+1));}if(event.key==="ArrowLeft"){event.preventDefault();setOnboardingStep(current=>Math.max(0,current-1));}}}>
     <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.png" alt=""/></div>
     <div className="welcome-shade" aria-hidden="true"/>
     <div className="welcome-content">
