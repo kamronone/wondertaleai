@@ -812,7 +812,7 @@ function App(){
   if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
   if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome" onTouchStart={onWelcomeTouchStart} onTouchMove={onWelcomeTouchMove} onTouchEnd={onWelcomeTouchEnd} onTouchCancel={onWelcomeTouchCancel} tabIndex={0} onKeyDown={event=>{const target=event.target;if(target instanceof HTMLElement&&target.closest("button, select, input, textarea, [role='button']"))return;if(event.key==="ArrowRight"){event.preventDefault();setOnboardingStep(current=>Math.min(2,current+1));}if(event.key==="ArrowLeft"){event.preventDefault();setOnboardingStep(current=>Math.max(0,current-1));}}}>
     <button type="button" className="welcome-skip" onClick={()=>finishOnboarding("home")}>{({ru:"Пропустить",uz:"Ötkazib yuboriş",en:"Skip intro"} as const)[lang]}</button>
-    <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.png" alt=""/></div>
+    <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.png" alt="" fetchPriority="high" decoding="async"/></div>
     <div className="welcome-shade" aria-hidden="true"/>
     <div className="welcome-content">
       <div className="welcome-brand"><Crown size={27} fill="#ffd67a"/><span>WonderTale <strong>AI</strong></span></div>
@@ -836,7 +836,7 @@ function App(){
     </div>}
     <main>
       {tab==="home"&&<>
-        <div className="hero"><div className="hero-sky" aria-hidden="true"><img src="/images/wondertale-hero.webp" alt="" loading="eager" decoding="async"/></div><div className="hero-content"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
+        <div className="hero"><div className="hero-sky" aria-hidden="true"><img src="/images/wondertale-hero.webp" alt="" loading="eager" fetchPriority="high" decoding="async"/></div><div className="hero-content"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
           <div className="hero-brand"><Crown size={26}/><span>WonderTale <strong>AI</strong></span></div><h1>{t.hero1} <em>{t.hero2}</em> {t.hero3}</h1>
           <p>{t.heroDesc}</p>
           <button className="primary-button" onClick={()=>openCreate()}><WandSparkles size={19}/> {t.create} <ArrowRight size={18}/></button>
@@ -1032,7 +1032,7 @@ function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boo
    <path d="M320 275 V355" stroke="#7757aa" strokeWidth="9"/>
    <g fill="#fff8dc"><circle cx="108" cy="95" r="7"/><circle cx="175" cy="150" r="5"/><circle cx="360" cy="77" r="6"/><circle cx="565" cy="185" r="5"/></g>
  </svg>;
- return <img src={src} alt={alt} loading={lazy?"lazy":"eager"} decoding="async" onError={()=>setFailed(true)}/>;
+ return <img src={src} alt={alt} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(true)}/>;
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  const [coverFailed,setCoverFailed]=useState(false);
@@ -1042,7 +1042,7 @@ function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()
      ? <ClassicCover item={item}/>
      : <img className="classic-generated-image"
          src={"/images/classics/"+item.id+imageExtension}
-         alt={item.title[lang]} loading="lazy" decoding="async" onError={()=>setCoverFailed(true)}/>}<span className="classic-age-badge" aria-hidden="true">{item.minAge??5}+</span></span>
+         alt={item.title[lang]} loading="lazy" decoding="async" fetchPriority="low" onError={()=>setCoverFailed(true)}/>}<span className="classic-age-badge" aria-hidden="true">{item.minAge??5}+</span></span>
    <span className="classic-info"><strong>{item.title[lang]}</strong><small>{item.summary[lang]}</small><span className="classic-link">{action} <ArrowRight size={15}/></span></span>
  </button>;
 }
