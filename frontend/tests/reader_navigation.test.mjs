@@ -71,6 +71,14 @@ test("Private reading progress skips superseded queued pages before a network wr
   const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
   assert.match(app,/pendingProgress\.current\.set\(bookId,page\);\s*persistPending\(\);/);
   assert.match(app,/const write=next\.catch\(\(\)=>\{\}\)\.then\(async\(\)=>\{/);
-  assert.match(app,/if\(sessionEpoch\.current!==epoch\|\|pendingProgress\.current\.get\(bookId\)!==page\)return;\s*try\{\s*await updatePrivateReadingProgress/);
+  assert.match(app,/if\(sessionEpoch\.current!==epoch\|\|pendingProgress\.current\.get\(bookId\)!==page\)return;\s*\/\/ Safari PWA[\s\S]*?if\(!navigator\.onLine\)return;\s*try\{\s*await updatePrivateReadingProgress/);
   assert.match(app,/progressWrites\.current\.set\(bookId,write\)/);
+});
+
+test("Offline page turns remain queued without attempting a network write",async()=>{
+  const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
+  assert.match(app,/pendingProgress\.current\.set\(bookId,page\);\s*persistPending\(\);/);
+  assert.match(app,/if\(!navigator\.onLine\)return;\s*try\{\s*await updatePrivateReadingProgress/);
+  assert.match(app,/const onOnline=\(\)=>\{void flush\(\);\}/);
+  assert.match(app,/if\(pendingProgress\.current\.get\(id\)!==position\)continue;/);
 });
