@@ -327,7 +327,7 @@ function App(){
           return [...missing,...merged];
         };
         setRemoteBooks(preserve);
-        setBooks(previous=>preserve(previous.filter(book=>!isDemoBook(book))));
+        setBooks(previous=>preserve(previous.filter((book):book is RemoteBook=>book.mode==="private-account")));
       }catch(error){
         if(disposed||sessionEpoch.current!==epoch)return;
         if(error instanceof Error&&error.message==="Private account authorization expired"){
