@@ -85,3 +85,18 @@
 .create-page .character-saved li button:last-child{color:#8a3e56;border-color:#eed4dc}
 .create-page .character-feedback{color:#873852!important;font-weight:700}
 @media(max-width:350px){.create-page .character-actions>*{flex:1 1 100%}.create-page .character-saved li{grid-template-columns:minmax(0,1fr)}}
+
+/* Parent-assisted foreground reading reminder, not a lock or parental enforcement. */
+.reader-page .reading-session-timer{margin:12px 0;padding:13px;border:1px solid #dfd3ec;border-radius:14px;background:#faf8fe;color:#594477}
+.reader-page .reading-session-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.reader-page .reading-session-top strong{font-size:13px}
+.reader-page .reading-session-top span{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.reader-page .reading-session-duration,.reader-page .reading-session-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.reader-page .reading-session-timer button{min-height:44px;font:inherit;font-size:12px;font-weight:700;padding:9px 11px;border:1px solid #cdb7e1;border-radius:10px;background:white;color:#60437f}
+.reader-page .reading-session-timer button[aria-pressed="true"]{background:#7652ad;color:white;border-color:#7652ad}
+.reader-page .reading-session-timer button:focus-visible{outline:3px solid #9268be;outline-offset:2px}
+.reader-page .reading-session-timer p{margin:10px 0 6px;font-size:12px;line-height:1.5}
+.reader-page .reading-session-timer .reading-session-finished{color:#8c3854;font-weight:750}
+.reader-page .reading-session-timer small{display:block;margin-top:8px;font-size:11px;color:#776785;line-height:1.5}
+@media(max-width:380px){.reader-page .reading-session-duration{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.reader-page .reading-session-duration button{min-width:0}}
+@media print{.reader-page .reading-session-timer{display:none!important}}
