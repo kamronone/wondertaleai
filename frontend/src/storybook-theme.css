@@ -643,3 +643,14 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
   .library-page .book-grid{gap:9px}
   .library-page .book-caption{padding:9px}
 }
+
+/* A single saved story should not occupy half the screen with an empty column. */
+@media (max-width:620px){
+  .library-page .book-grid:has(> .book-tile:only-child){
+    grid-template-columns:minmax(0,1fr);
+    max-width:340px;
+  }
+  .library-page .book-grid:has(> .book-tile:only-child) .book-tile img{
+    aspect-ratio:16/10;
+  }
+}
