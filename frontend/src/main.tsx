@@ -1020,12 +1020,12 @@ function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boo
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  const [coverFailed,setCoverFailed]=useState(false);
  const imageExtension=["red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(item.id)?".svg":".webp";
- return <button type="button" className={"classic-card classic-"+item.color} onClick={onPick} aria-label={action+": "+item.title[lang]}>
+ return <button type="button" className={"classic-card classic-"+item.color} onClick={onPick} aria-label={action+": "+item.title[lang]+" · "+(item.minAge??5)+"+"}>
    <span className="classic-cover">{coverFailed
      ? <ClassicCover item={item}/>
      : <img className="classic-generated-image"
          src={"/images/classics/"+item.id+imageExtension}
-         alt={item.title[lang]} loading="lazy" decoding="async" onError={()=>setCoverFailed(true)}/>}</span>
+         alt={item.title[lang]} loading="lazy" decoding="async" onError={()=>setCoverFailed(true)}/>}<span className="classic-age-badge" aria-hidden="true">{item.minAge??5}+</span></span>
    <span className="classic-info"><strong>{item.title[lang]}</strong><small>{item.summary[lang]}</small><span className="classic-link">{action} <ArrowRight size={15}/></span></span>
  </button>;
 }
