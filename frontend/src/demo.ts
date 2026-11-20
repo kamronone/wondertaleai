@@ -36,6 +36,21 @@ const readBooks=(getStore:()=>Storage,key:string,persistent:boolean):DemoBook[]=
    });
  }catch{return []}
 };
+export const getLocalLibraryHealth=():"ok"|"corrupt"|"unavailable"=>{
+ try{
+   for(const [storage,key] of [[localStorage,deviceKey],[sessionStorage,sessionKey]] as const){
+     const raw=storage.getItem(key);
+     if(raw===null)continue;
+     let parsed:unknown;
+     try{parsed=JSON.parse(raw);}catch{return "corrupt";}
+     if(!Array.isArray(parsed)||parsed.length>20||parsed.some(book=>!isValidLocalBook(book)))return "corrupt";
+   }
+   return "ok";
+ }catch{
+   // SecurityError can occur when private browsing disables browser storage.
+   return "unavailable";
+ }
+};
 export const getDemoBooks=():DemoBook[]=>{
  const session=readBooks(()=>sessionStorage,sessionKey,false);
  const saved=readBooks(()=>localStorage,deviceKey,true);
