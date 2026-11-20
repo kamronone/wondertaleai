@@ -101,7 +101,11 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  };
  return <section className="parent-account-page">
   <div className="parent-account-head"><span className="parent-account-symbol"><UserRound size={24}/></span><div><h2>{t.title}</h2><p>{t.subtitle}</p></div></div>
-  {(!api||apiReady===false)&&!session?<div className="parent-account-unavailable"><ShieldCheck size={30}/><h3>{t.demo}</h3><p>{t.notReady}</p>{api&&<button type="button" className="parent-account-secondary" onClick={()=>setReadinessAttempt(n=>n+1)}>{({ru:"Проверить снова",uz:"Qayta tekşiriş",en:"Check again"} as const)[lang]}</button>}</div>:
+  {(!api||apiReady===false)&&!session?<div className="parent-account-unavailable" role="status">
+    <div className="parent-account-status"><ShieldCheck size={19}/><div><strong>{t.demo}</strong><span>{({ru:"Сказки на этом устройстве доступны без аккаунта.",uz:"Qurilmadagi ertaklarni akkauntsiz oqish mumkin.",en:"Stories on this device are available without an account."} as const)[lang]}</span></div></div>
+    <details className="parent-account-help"><summary>{({ru:"Почему аккаунт недоступен?",uz:"Nega akkaunt ishlamayapti?",en:"Why is my account unavailable?"} as const)[lang]}</summary><p>{t.notReady}</p></details>
+    {api&&<button type="button" className="parent-account-secondary" onClick={()=>setReadinessAttempt(n=>n+1)}>{({ru:"Повторить подключение",uz:"Qayta ulanish",en:"Retry connection"} as const)[lang]}</button>}
+   </div>:
     apiReady===null&&!session?<div className="parent-account-unavailable" role="status"><p>{({ru:"Проверяем подключение аккаунта…",uz:"Akkaunt ulanişi tekşirilmoqda…",en:"Checking account availability…"} as const)[lang]}</p></div>:
     session?<div className="parent-account-card"><div className="parent-account-success"><CheckCircle2 size={23}/><strong>{t.welcome}</strong></div>
       <p className="parent-account-muted">{t.syncDescription}</p><p className="parent-account-muted">{t.syncNotice}</p>
@@ -126,7 +130,10 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
       {mode==="login"?<button type="button" className="parent-account-textbtn" disabled={!recoveryEnabled} onClick={()=>{setMode("forgot");setError("");setNotice("");}}>{t.forgot}</button>:mode==="forgot"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.back}</button>:null}
     </form>}
   {session&&api&&<FamilyProfiles key={session} api={api} session={session} lang={lang}/>}
-  <ParentReadingGuide lang={lang}/>
+  <details className="parent-account-reading-section">
+    <summary><BookOpen size={18}/><span>{({ru:"Советы по чтению",uz:"Oqish tavsiyalari",en:"Reading tips"} as const)[lang]}</span><span className="parent-account-expand" aria-hidden="true">⌄</span></summary>
+    <ParentReadingGuide lang={lang}/>
+  </details>
   <p className="parent-account-footnote">{t.privacy}</p>
  </section>;
 }
