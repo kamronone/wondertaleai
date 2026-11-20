@@ -21,6 +21,7 @@ import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
 import { nextReaderPage, swipeDirection } from "./reader_navigation";
 import { discoverBooks, type LibrarySort } from "./library_discovery";
+import { getReadingAchievements } from "./reading_achievements";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -753,6 +754,15 @@ function App(){
     catch{setError(t.deleteError);}
   };
   const shownBooks=discoverBooks(books,libraryQuery,favoritesOnly,librarySort);
+  const readingStats=getReadingAchievements(books);
+  const achievementLabels={
+    books:({ru:"Сказки в библиотеке",uz:"Kutubxonadagi ertaklar",en:"Stories in library"} as const)[lang],
+    reading:({ru:"Начал читать",uz:"Oqişni başladim",en:"Started reading"} as const)[lang],
+    finished:({ru:"Дочитал до конца",uz:"Oxirigaça oqidim",en:"Reached final page"} as const)[lang],
+    favorites:({ru:"Любимые сказки",uz:"Sevimli ertaklar",en:"Favorite stories"} as const)[lang],
+    explorer:({ru:"Разные миры",uz:"Turli olamlar",en:"Different worlds"} as const)[lang],
+    collection:({ru:"Сохранённые книги",uz:"Saqlangan kitoblar",en:"Saved books"} as const)[lang]
+  };
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
   if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
   if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome" onTouchStart={onWelcomeTouchStart} onTouchEnd={onWelcomeTouchEnd} onKeyDown={event=>{if(event.key==="ArrowRight")setOnboardingStep(current=>Math.min(2,current+1));if(event.key==="ArrowLeft")setOnboardingStep(current=>Math.max(0,current-1));}}>
@@ -869,18 +879,12 @@ function App(){
         </div>}
         <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
           <div className="reading-achievements-heading"><Star size={18}/><strong>{({ru:"Мои достижения",uz:"Mening yutuqlarim",en:"My achievements"} as const)[lang]}</strong></div>
+          <p className="reading-achievements-summary" role="status">{readingStats.unlocked} / {readingStats.total} {({ru:"достижений открыто",uz:"yutuq oçildi",en:"achievements unlocked"} as const)[lang]}</p>
           <div className="reading-achievements-grid">
-            {([
-              {id:"books",count:books.length,goal:3,label:({ru:"Сказки в библиотеке",uz:"Kutubxonadagi ertaklar",en:"Stories in library"} as const)[lang]},
-              {id:"reading",count:books.filter(book=>(book.lastPage||0)>0).length,goal:3,label:({ru:"Начал читать",uz:"Oqişni başladim",en:"Started reading"} as const)[lang]},
-              {id:"finished",count:books.filter(book=>book.pages.length>1&&(book.lastPage||0)>=book.pages.length-1).length,goal:3,label:({ru:"Дочитал до конца",uz:"Oxirigaça oqidim",en:"Reached final page"} as const)[lang]},
-              {id:"favorites",count:books.filter(book=>book.favorite).length,goal:3,label:({ru:"Любимые сказки",uz:"Sevimli ertaklar",en:"Favorite stories"} as const)[lang]},
-               {id:"explorer",count:new Set(books.filter(book=>(book.lastPage||0)>0).map(book=>book.theme||"other")).size,goal:3,label:({ru:"Разные миры",uz:"Turli olamlar",en:"Different worlds"} as const)[lang]},
-               {id:"collection",count:books.filter(book=>book.savedOnDevice||book.mode==="private-account").length,goal:5,label:({ru:"Сохранённые книги",uz:"Saqlangan kitoblar",en:"Saved books"} as const)[lang]}
-            ] as const).map(item=><div className={"reading-achievement"+(item.count>=item.goal?" unlocked":"")} key={item.id} aria-label={item.count>=item.goal?item.label+" ✓":item.label}>
+            {readingStats.entries.map(item=><div className={"reading-achievement"+(item.count>=item.goal?" unlocked":"")} key={item.id} aria-label={item.count>=item.goal?achievementLabels[item.id]+" ✓":achievementLabels[item.id]}>
               <div className="reading-achievement-count"><Star size={15} fill={item.count>=item.goal?"currentColor":"none"}/><strong>{item.count}</strong><small>/ {item.goal}</small></div>
-              <span>{item.label}</span>
-              <div className="reading-achievement-track" role="progressbar" aria-label={item.label} aria-valuemin={0} aria-valuemax={item.goal} aria-valuenow={Math.min(item.count,item.goal)}><span style={{width:Math.min(100,item.count/item.goal*100)+"%"}}/></div>
+              <span>{achievementLabels[item.id]}</span>
+              <div className="reading-achievement-track" role="progressbar" aria-label={achievementLabels[item.id]} aria-valuemin={0} aria-valuemax={item.goal} aria-valuenow={Math.min(item.count,item.goal)}><span style={{width:Math.min(100,item.count/item.goal*100)+"%"}}/></div>
             </div>)}
           </div>
           <small className="reading-achievements-note">{({ru:"Прогресс рассчитан по текущей библиотеке. Последняя страница означает, что вы до неё дошли.",uz:"Natijalar joriy kutubxona asosida hisoblanadi. Oxirgi sahifaga yetiş yakunlangan deb hisoblanadi.",en:"Progress is based on this library. Reaching the final page counts as finishing."} as const)[lang]}</small>
