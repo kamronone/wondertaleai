@@ -333,3 +333,19 @@
   .shell .hero{min-height:330px}
   .reading-achievements-summary{font-size:11px}
 }
+
+
+/* Home: unfinished stories return to the reader with one tap. */
+.continue-story-card{display:flex;align-items:center;gap:13px;width:100%;min-width:0;margin:12px 0;padding:10px 13px;border:1px solid #e4d7ed;border-radius:16px;background:linear-gradient(100deg,#fffdf8,#f6f0ff);color:#513670;text-align:left}
+.continue-story-card>img,.continue-story-card>.story-image-fallback{width:76px;min-width:76px;height:68px;max-height:68px;aspect-ratio:1;object-fit:cover;border-radius:11px}
+.continue-story-card .continue-story-copy{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.continue-story-card .continue-story-copy strong{font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.continue-story-card .continue-story-copy small{font-size:11px;color:#79628f}
+.continue-story-card>svg:last-child{flex-shrink:0}
+.continue-story-card:focus-visible{outline:3px solid #8355b9;outline-offset:3px}
+@media(max-width:420px){
+  .continue-story-card{gap:9px;padding:9px}
+  .continue-story-card>img,.continue-story-card>.story-image-fallback{width:60px;min-width:60px;height:62px}
+  .continue-story-card .continue-story-copy strong{font-size:12px}
+  .continue-story-card .continue-story-copy small{font-size:10px}
+}
