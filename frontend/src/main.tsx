@@ -493,26 +493,34 @@ function App(){
           }
           throw new Error(t.generateError);
         }
-        const result=await response.json();
-        if(typeof result.id!=="string")throw new Error(t.generateError);
-        // The provider has already created the book. A failed follow-up GET
-        // must never tell the parent that generation failed and encourage
-        // another paid request that could create a duplicate.
+        const result:unknown=await response.json();
+        if(!result||typeof result!=="object")throw new Error(t.generateError);
+        const generated=result as {id?:unknown;title?:unknown;pages?:unknown;created_at?:unknown};
+        if(typeof generated.id!=="string"||typeof generated.title!=="string"||
+           !Array.isArray(generated.pages)||!generated.pages.length||
+           !generated.pages.every(p=>p&&typeof p.text==="string"&&p.text.trim()))throw new Error(t.generateError);
+        if(sessionEpoch.current!==epoch)return;
+        // POST succeeded: show the saved story immediately even if the follow-up
+        // library GET fails. Never encourage a duplicate paid generation.
+        const created:RemoteBook={
+          id:generated.id,created_at:typeof generated.created_at==="string"?generated.created_at:new Date().toISOString(),
+          title:generated.title,name:data.name,age:data.age,language:storyLang,
+          theme:data.classic_title,prompt:data.idea,style:data.style,
+          pages:generated.pages.map((p:{text:string},index:number)=>({
+            number:index+1,text:p.text,image_url:"/images/wondertale-hero.webp"
+          })),mode:"private-account",favorite:false,lastPage:0
+        };
+        setRemoteBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);
+        setBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);
+        openBook(created);
         try{
           const refreshed=await loadPrivateBooks(API,privateToken);
-          if(sessionEpoch.current!==epoch)return;
-          const newBook=refreshed.find(book=>book.id===result.id);
-          setRemoteBooks(refreshed);
-          setBooks(refreshed);
-          if(newBook)openBook(newBook);
-          else{
-            setTab("library");
-            setError(({ru:"Сказка создана, но ещё не появилась в библиотеке. Обновите её позже.",uz:"Ertak yaratildi, ammo kutubxonada hali körinmayapti. Keyinroq yangilang.",en:"Story created, but it is not visible in your library yet. Refresh later."} as const)[lang]);
+          if(sessionEpoch.current===epoch){
+            setRemoteBooks(refreshed);
+            setBooks(refreshed);
           }
         }catch{
-          if(sessionEpoch.current!==epoch)return;
-          setTab("library");
-          setError(({ru:"Сказка создана и сохранена. Не создавайте её повторно: обновите библиотеку после восстановления связи.",uz:"Ertak yaratildi va saqlandi. Qayta yaratmañ: aloqa tiklanganda kutubxonani yangilang.",en:"Story was created and saved. Do not generate it again; refresh the library when connected."} as const)[lang]);
+          // Keep the committed story on screen until a later library refresh.
         }
         return;
       }
