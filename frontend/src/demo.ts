@@ -29,7 +29,7 @@ export const getDemoBooks=():DemoBook[]=>{
  const session=readBooks(sessionStorage,sessionKey);
  const saved=readBooks(localStorage,deviceKey).map(b=>({...b,savedOnDevice:true}));
  const found=new Set<string>();
- return [...saved,...session].filter(book=>{if(found.has(book.id))return false;found.add(book.id);return true;}).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,30);
+ return [...saved,...session].filter(book=>{if(found.has(book.id))return false;found.add(book.id);return true;}).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,40);
 };
 export const saveDemoBooks=(books:DemoBook[])=>{
  const chosen=books.filter(b=>b.savedOnDevice);
