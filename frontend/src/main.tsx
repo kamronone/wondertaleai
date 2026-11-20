@@ -533,8 +533,14 @@ function App(){
           if(response.status===409){
             throw new Error(({ru:"Библиотека заполнена. Удалите ненужную сказку перед созданием новой.",uz:"Kutubxona tölgan. Yangi ertakdan oldin keraksizini öçiring.",en:"Your library is full. Delete a story before creating another."} as const)[lang]);
           }
-          if(response.status===403||response.status===503){
+          if(response.status===403){
             throw new Error(({ru:"AI-генерация пока не включена для этого аккаунта.",uz:"AI yaratiş uşbu akkaunt uçun hali yoqilmagan.",en:"AI generation is not enabled for this account yet."} as const)[lang]);
+          }
+          if(response.status===503){
+            throw new Error(({ru:"AI-сервис временно недоступен или не смог сохранить сказку. Попробуйте позже.",uz:"AI xizmati vaqtinça işlamayapti yoki ertakni saqlay olmadi. Keyinroq qayta urining.",en:"The AI service is temporarily unavailable or could not save the story. Please try again later."} as const)[lang]);
+          }
+          if(response.status===502){
+            throw new Error(({ru:"AI не смог создать сказку. Попробуйте позже.",uz:"AI ertak yarata olmadi. Keyinroq qayta urining.",en:"AI could not generate the story. Please try again later."} as const)[lang]);
           }
           if(response.status===429){
             throw new Error(({ru:"Дневной лимит AI-сказок исчерпан.",uz:"Kunlik AI ertaklar limiti tugadi.",en:"Daily AI story limit reached."} as const)[lang]);
