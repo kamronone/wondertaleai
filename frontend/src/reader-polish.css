@@ -1354,3 +1354,54 @@
   .create-page .wizard-optional-character>summary svg:last-child,
   .account-plans-disclosure>summary svg:last-child{transition:none}
 }
+
+/* Mobile width audit: shared overflow guards for 320/375/390/430px iPhones.
+   Keep form fields readable without letting labels or cards widen the page. */
+@media screen and (max-width:430px){
+  .shell > main,
+  .shell > main > section,
+  .shell > main > .reader-page,
+  .shell > main > .library-page,
+  .shell > main > .create-page{
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+  }
+  .library-page .library-discovery,
+  .library-page .book-grid,
+  .create-page .form-grid{
+    min-width:0;
+    max-width:100%;
+  }
+  .create-page .form-card input:not([type="checkbox"]):not([type="radio"]),
+  .create-page .form-card select,
+  .create-page .form-card textarea,
+  .parent-account-page .parent-account-card input{
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .library-page .book-caption,
+  .library-page .book-caption strong,
+  .reader-page .reader-book-meta,
+  .create-page .step-title,
+  .parent-account-page .parent-account-head>div{
+    min-width:0;overflow-wrap:anywhere;
+  }
+  .library-page .book-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .shell .mobile-tabbar{
+    width:100%;
+    max-width:100vw;
+    box-sizing:border-box;
+  }
+}
+@media screen and (max-width:340px){
+  .library-page .book-grid{gap:7px}
+  .library-page .book-caption{padding:8px}
+  .library-page .book-caption strong{font-size:11px;line-height:1.3}
+  .create-page .wizard-progress .progress-step{font-size:9px;min-width:0}
+  .parent-account-page .parent-account-head h2{font-size:18px}
+}
