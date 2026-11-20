@@ -42,3 +42,16 @@ test("Truncation removes trailing spaces before ellipsis",()=>{
   assert.equal(result.endsWith(suffixes[2]),true);
   assert.ok(!result.includes(" …"));
 });
+
+
+test("Truncation never leaves a broken emoji surrogate pair",()=>{
+  const suffix=" — a New Adventure";
+  const available=260-suffix.length-1;
+  const title="A".repeat(available-1)+"😀"+"Z".repeat(30);
+  const result=fitSequelTitle(title,suffix);
+  assert.ok(result.endsWith(suffix));
+  assert.ok(result.length<=260);
+  assert.ok(!/[\\uD800-\\uDBFF](?![\\uDC00-\\uDFFF])/.test(result));
+  assert.ok(!/(?<![\\uD800-\\uDBFF])[\\uDC00-\\uDFFF]/.test(result));
+  assert.ok(!result.includes("�"));
+});
