@@ -33,3 +33,14 @@ test("Reader navigation disables arrow keys when editing a story page", async ()
   assert.match(app, /\[tab,active\?\.id,active\?\.pages\.length,editingPage\]/);
   assert.match(app, /window\.getSelection\(\)\?\.toString\(\)\.trim\(\)/);
 });
+
+
+test("Pinch zoom and cancelled iPhone touches never become reader page turns", async () => {
+  const app = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
+  assert.match(app, /if\(event\.touches\.length!==1\)\{readerTouchStart\.current=null;return;\}/);
+  assert.match(app, /identifier:touch\.identifier/);
+  assert.match(app, /event\.touches\.length>0\|\|!active\|\|editingPage/);
+  assert.match(app, /item\.identifier===start\.identifier/);
+  assert.match(app, /onTouchCancel=\{onReaderTouchCancel\}/);
+  assert.match(app, /const onReaderTouchCancel=\(\)=>\{readerTouchStart\.current=null;\}/);
+});
