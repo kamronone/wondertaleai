@@ -80,5 +80,6 @@ test("Offline page turns remain queued without attempting a network write",async
   assert.match(app,/pendingProgress\.current\.set\(bookId,page\);\s*persistPending\(\);/);
   assert.match(app,/if\(!navigator\.onLine\)return;\s*try\{\s*await updatePrivateReadingProgress/);
   assert.match(app,/const onOnline=\(\)=>\{void flush\(\);\}/);
-  assert.match(app,/if\(pendingProgress\.current\.get\(id\)!==position\)continue;/);
+  assert.match(app,/await replayPendingChanges\(\{/);
+  assert.match(app,/progress:pendingProgress\.current/);
 });
