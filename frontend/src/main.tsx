@@ -496,9 +496,11 @@ function App(){
         const result:unknown=await response.json();
         if(!result||typeof result!=="object")throw new Error(t.generateError);
         const generated=result as {id?:unknown;title?:unknown;pages?:unknown;created_at?:unknown};
-        if(typeof generated.id!=="string"||typeof generated.title!=="string"||
-           !Array.isArray(generated.pages)||!generated.pages.length||
-           !generated.pages.every(p=>p&&typeof p.text==="string"&&p.text.trim()))throw new Error(t.generateError);
+        if(typeof generated.id!=="string"||!/^[a-f0-9-]{36}$/i.test(generated.id)||
+           typeof generated.title!=="string"||!generated.title.trim()||generated.title.length>120||
+           !Array.isArray(generated.pages)||generated.pages.length!==data.pages_count||
+           !generated.pages.every(p=>p&&typeof p.text==="string"&&
+             p.text.trim().length>=70&&p.text.length<=1200))throw new Error(t.generateError);
         if(sessionEpoch.current!==epoch)return;
         // POST succeeded: show the saved story immediately even if the follow-up
         // library GET fails. Never encourage a duplicate paid generation.
