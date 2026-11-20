@@ -168,14 +168,16 @@ function App(){
     // Account switching must not discard the previous parent's offline edits.
     persistPending();
     const epoch=++sessionEpoch.current;
-    pendingProgress.current.clear();pendingFavorites.current.clear();
-    offlineOwner.current=null;
-    recentlyCreated.current.clear();
+    // Keep the current account's offline queue intact if the new login fails.
     if(!API||!await validateSession(API,token)||sessionEpoch.current!==epoch)return false;
     try{
       const owner=await getAuthenticatedOwner(API,token);
       const remote=await loadPrivateBooks(API,token);
       if(sessionEpoch.current!==epoch)return false;
+      // Only replace the current owner's queue after the new session and library
+      // have both been validated. A failed login must not erase offline edits.
+      pendingProgress.current.clear();pendingFavorites.current.clear();
+      recentlyCreated.current.clear();
       offlineOwner.current=owner;
       const pending=readPendingMetadata(owner);
       pendingProgress.current=new Map(Object.entries(pending.progress));
