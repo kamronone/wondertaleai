@@ -113,3 +113,11 @@ def test_generated_title_is_trimmed_before_storage():
     payload["title"]="  Amir and the Magical Night  "
     parsed=validate_generated_story(json.dumps(payload),"en")
     assert parsed.title=="Amir and the Magical Night"
+
+
+@pytest.mark.parametrize("title",["  A  ","  AB  ","   "])
+def test_short_generated_title_rejected_after_trimming(title):
+    payload=json.loads(valid_story("en"))
+    payload["title"]=title
+    with pytest.raises(ValueError,match="valid story"):
+        validate_generated_story(json.dumps(payload),"en")
