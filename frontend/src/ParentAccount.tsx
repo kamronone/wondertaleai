@@ -110,10 +110,10 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
       {mode==="register"&&<p className="parent-account-muted">{t.registerInfo}</p>}
       {notice&&<p className="parent-account-notice" role="status">{notice}</p>}
       {error&&<p className="parent-account-error" role="alert">{error}</p>}
-      {unverified&&<button type="button" className="parent-account-secondary" disabled={working||!recoveryEnabled} onClick={()=>void resend()}>{t.resend}</button>}
+      {unverified&&<button type="button" className="parent-account-secondary" disabled={working} onClick={()=>void resend()}>{t.resend}</button>}
       {mode==="register"&&notice&&<button type="button" className="parent-account-textbtn" disabled={working||!recoveryEnabled} onClick={()=>void resend()}>{t.resend}</button>}
-      <button type="submit" className="parent-account-primary" disabled={working}>{working?t.loading:mode==="forgot"?t.sendLink:mode==="register"?t.register:t.login}</button>
-      {mode==="login"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("forgot");setError("");setNotice("");}}>{t.forgot}</button>:mode==="forgot"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.back}</button>:null}
+      <button type="submit" className="parent-account-primary" disabled={working||apiReady!==true||(mode==="register"&&!registrationEnabled)||(mode==="forgot"&&!recoveryEnabled)}>{working?t.loading:mode==="forgot"?t.sendLink:mode==="register"?t.register:t.login}</button>
+      {mode==="login"?<button type="button" className="parent-account-textbtn" disabled={!recoveryEnabled} onClick={()=>{setMode("forgot");setError("");setNotice("");}}>{t.forgot}</button>:mode==="forgot"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.back}</button>:null}
     </form>}
   <p className="parent-account-footnote">{t.privacy}</p>
  </section>;
