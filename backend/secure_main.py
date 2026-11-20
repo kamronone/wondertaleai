@@ -398,7 +398,7 @@ def billing_status(owner:str=Depends(current_parent)):
         "plan":"free",
         "subscription_status":"not_available",
         "payments_enabled":False,
-        "ai_pilot_access":pilot and ai_ready,
+        "ai_pilot_access":pilot and ai_ready and daily_cap>0,
         "ai_daily_limit":limit,
         "ai_used_today":used,
         "ai_remaining_today":min(max(0,limit-used),global_remaining),
