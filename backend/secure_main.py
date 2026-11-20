@@ -614,6 +614,10 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             raise HTTPException(429,"Daily AI service limit reached")
         row=sql(c,"INSERT INTO generation_quota(owner_id,day,used) VALUES(?,?,1) ON CONFLICT(owner_id,day) DO UPDATE SET used=generation_quota.used+1 WHERE generation_quota.used<2 RETURNING used",(owner,today)).fetchone()
         if row is None:
+            # The global reservation happened in this same transaction. Explicitly
+            # roll it back before raising: the connection context otherwise commits
+            # a successful global increment even though this parent is at quota.
+            c.rollback()
             raise HTTPException(429,"Daily AI story limit reached")
         c.commit()
     try:
