@@ -39,3 +39,12 @@ test("creation wizard leaves no duplicate bottom tab bar gap",()=>{
   assert.match(polish,/\.create-page\s*>\s*\.form-card\s*\{[^}]*margin-bottom:0!important/s);
   assert.match(polish,/\.create-page \.wizard-step-actions\{margin-bottom:0!important\}/);
 });
+
+test("reader toolbar anchors back button left and action icons right on mobile",()=>{
+  assert.match(polish,/\.reader-page \.reader-toolbar\s*>\s*\.back-button\s*\{[^}]*justify-self:start!important/s);
+  assert.match(polish,/\.reader-page \.reader-toolbar\s*>\s*\.reader-actions\s*\{[^}]*justify-self:end!important/s);
+  assert.match(polish,/\.reader-page \.reader-toolbar\s*\{[^}]*grid-template-columns:minmax\(0,1fr\) auto!important/s);
+});
+test("reading session timer is absent from the visible reader layout",()=>{
+  assert.doesNotMatch(app,/<ReadingSessionTimer\b/);
+});
