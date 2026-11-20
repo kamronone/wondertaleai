@@ -82,3 +82,11 @@ test("Reader cover thumbnails expose the book title and completion state",()=>{
   assert.match(app,/alt=\{book\.title\+" · "\+labels\[lang\]\.cover\}/);
   assert.match(app,/aria-label=\{book\.title\+" · "\+book\.name/);
 });
+
+
+test("Home offers one-tap reading continuation only for unfinished multi-page books",()=>{
+  assert.match(app,/const continueBook=books\.find\(book=>book\.pages\.length>1/);
+  assert.match(app,/\(book\.lastPage\?\?0\)<book\.pages\.length-1/);
+  assert.match(app,/className="continue-story-card" onClick=\{\(\)=>openBook\(continueBook\)\}/);
+  assert.match(css,/\.continue-story-card/);
+});
