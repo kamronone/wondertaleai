@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { Lang } from "./i18n";
 
 type Child={id:string;nickname:string;age:number;created_at:string};
@@ -18,6 +18,7 @@ export function FamilyProfiles({api,session,lang}:Props){
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState(false);
  const [attempt,setAttempt]=useState(0);
+ const requestEpoch=useRef(0);
  const refresh=useCallback(async(signal?:AbortSignal)=>{
   const response=await fetch(api+"/api/children",{headers:{Authorization:"Bearer "+session},cache:"no-store",signal:signal??AbortSignal.timeout(15000)});
   if(!response.ok)throw Error("Child profiles unavailable");
@@ -27,28 +28,34 @@ export function FamilyProfiles({api,session,lang}:Props){
  },[api,session]);
  useEffect(()=>{
   const controller=new AbortController();
+  const epoch=++requestEpoch.current;
+  const timeout=window.setTimeout(()=>controller.abort(),15000);
   setLoading(true);setError(false);setChildren([]);
-  void refresh(controller.signal).then(rows=>{if(!controller.signal.aborted)setChildren(rows);}).catch(()=>{if(!controller.signal.aborted)setError(true);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
-  return ()=>controller.abort();
+  void refresh(controller.signal).then(rows=>{if(requestEpoch.current===epoch)setChildren(rows);}).catch(()=>{if(requestEpoch.current===epoch)setError(true);}).finally(()=>{window.clearTimeout(timeout);if(requestEpoch.current===epoch)setLoading(false);});
+  return ()=>{++requestEpoch.current;window.clearTimeout(timeout);controller.abort();};
  },[refresh,attempt]);
  const add=async(event:FormEvent)=>{
   event.preventDefault();
   if(busy||loading||error||children.length>=5||!nickname.trim()||age<2||age>14)return;
   setBusy(true);
+  const epoch=requestEpoch.current;
   try{
    const response=await fetch(api+"/api/children",{method:"POST",headers:{Authorization:"Bearer "+session,"Content-Type":"application/json"},body:JSON.stringify({nickname:nickname.trim(),age}),signal:AbortSignal.timeout(15000)});
    if(!response.ok)throw Error("Create failed");
-   setChildren(await refresh());setNickname("");setError(false);
-  }catch{setError(true);}finally{setBusy(false);}
+   const rows=await refresh();
+   if(requestEpoch.current===epoch){setChildren(rows);setNickname("");setError(false);}
+  }catch{if(requestEpoch.current===epoch)setError(true);}finally{if(requestEpoch.current===epoch)setBusy(false);}
  };
  const remove=async(child:Child)=>{
   if(busy||!window.confirm(t.confirm))return;
   setBusy(true);
+  const epoch=requestEpoch.current;
   try{
    const response=await fetch(api+"/api/children/"+encodeURIComponent(child.id),{method:"DELETE",headers:{Authorization:"Bearer "+session},signal:AbortSignal.timeout(15000)});
    if(!response.ok)throw Error("Delete failed");
-   setChildren(await refresh());setError(false);
-  }catch{setError(true);}finally{setBusy(false);}
+   const rows=await refresh();
+   if(requestEpoch.current===epoch){setChildren(rows);setError(false);}
+  }catch{if(requestEpoch.current===epoch)setError(true);}finally{if(requestEpoch.current===epoch)setBusy(false);}
  };
  return <div className="parent-account-card" aria-label={t.title}>
   <h3>{t.title}</h3><p className="parent-account-muted">{t.info}</p>
