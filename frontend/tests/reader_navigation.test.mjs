@@ -103,7 +103,7 @@ test("Reader arrow shortcuts leave focused buttons, links and form inputs alone"
   const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
   assert.match(app,/target\.closest\("button, a, input, textarea, select, \[role='button'\], \[role='dialog'\], \[contenteditable='true'\]"\)/);
   assert.match(app,/event\.defaultPrevented\|\|event\.altKey\|\|event\.ctrlKey\|\|event\.metaKey\|\|event\.shiftKey/);
-  assert.match(app,/className="icon-button dangerous" type="button"[^>]*aria-label=\{t\.delete\}/);
+  assert.match(app,/className="icon-button dangerous"[^>]*type="button"[^>]*aria-label=\{t\.delete\}/);
 });
 
 test("Long story titles and action labels wrap without reader toolbar overflow on small iPhones",async()=>{
