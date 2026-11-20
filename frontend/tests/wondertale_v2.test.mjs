@@ -81,11 +81,23 @@ test("Honest illustrations copy does not promise unavailable photo-based generat
   assert.match(i18n,/Персональные AI-иллюстрации пока недоступны/);
 });
 
-test("PWA preloads only bundled public artwork and never API paths",()=>{
-  assert.match(worker,/wondertale-public-v8/);
-  assert.match(worker,/\/images\/features\/real-book\.png/);
+test("PWA installs essential imagery only and keeps secondary art lazy",()=>{
+  assert.match(worker,/wondertale-public-v9/);
+  const optional=worker.match(/const OPTIONAL_ART = \[([\s\S]*?)\];/)?.[1]||"";
+  assert.match(optional,/\/images\/wondertale-hero\.webp/);
+  assert.match(optional,/\/images\/wondertale-welcome\.png/);
+  assert.doesNotMatch(optional,/\/images\/features\//);
+  assert.doesNotMatch(optional,/\/images\/classics\//);
   assert.match(worker,/const PRIVATE_PATH =/);
   assert.match(worker,/request\.headers\.has\("Authorization"\)/);
+  assert.match(worker,/PUBLIC_ASSET\.test\(url\.pathname\)/);
+});
+
+test("Initial viewport art loads first while story covers stay low priority",()=>{
+  assert.match(app,/src="\/images\/wondertale-hero\.webp" alt="" loading="eager" fetchPriority="high"/);
+  assert.match(app,/src="\/images\/wondertale-welcome\.png" alt="" fetchPriority="high"/);
+  assert.match(app,/loading=\{lazy\?"lazy":"eager"\} decoding="async" fetchPriority=\{lazy\?"low":"auto"\}/);
+  assert.match(app,/alt=\{item\.title\[lang\]\} loading="lazy" decoding="async" fetchPriority="low"/);
 });
 
 
