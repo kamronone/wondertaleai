@@ -379,3 +379,29 @@
   .reader-page .pager{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
   .reader-page .pager-indicators{justify-content:center}
 }
+
+
+/* Reader: long book titles and localized controls cannot push the iPhone viewport. */
+.reader-page .reader-title h2,
+.reader-page .reader-title>span,
+.reader-page .reader-toolbar .back-button{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.reader-page .reader-title h2{hyphens:auto}
+.reader-page .reader-toolbar,
+.reader-page .reader-actions,
+.reader-page .reader-display-settings,
+.reader-page .reader-font-controls{max-width:100%;box-sizing:border-box}
+@media(max-width:420px){
+  .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr) auto}
+  .reader-page .back-button{overflow-wrap:anywhere;min-height:44px}
+  .reader-page .reader-actions{flex-wrap:nowrap}
+  .reader-page .reader-title h2{font-size:clamp(19px,5.4vw,24px);line-height:1.28}
+  .reader-page .reader-display-settings{overflow-wrap:anywhere}
+  .reader-page .reader-night-toggle{overflow-wrap:anywhere}
+}
+@media(max-width:360px){
+  .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr)}
+  .reader-page .reader-actions{width:100%;justify-content:flex-start}
+}
