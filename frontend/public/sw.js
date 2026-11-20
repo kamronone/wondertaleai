@@ -1,7 +1,7 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v3";
-const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
-const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/)/;
+const CACHE = "wondertale-public-v4";
+const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/images/wondertale-hero.webp", "/images/wondertale-welcome.png"];
+const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/|images\/features\/|images\/wondertale-(?:hero\.webp|welcome\.(?:png|svg))$)/;
 const PRIVATE_PATH = /^\/(?:api\/|auth\/|account\/)/;
 
 self.addEventListener("install", event => {
