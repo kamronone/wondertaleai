@@ -38,7 +38,9 @@ function normalizeServerBook(book:ServerRow):RemoteBook|null{
    image_url:cleanImage(typeof p.image_url==="string"?p.image_url:"")
   }));
   return {id:book.id,created_at:book.created_at,name:book.child_name,age:book.age,title:book.title,
-   theme:stored.theme||"",prompt:stored.prompt||"",style:stored.style||"",
+   theme:typeof stored.theme==="string"?stored.theme:"",
+   prompt:typeof stored.prompt==="string"?stored.prompt:"",
+   style:typeof stored.style==="string"?stored.style:"",
    language:stored.language==="uz"||stored.language==="en"?stored.language:"ru",
    pages,mode:"private-account"};
  }catch{return null;}
