@@ -541,7 +541,15 @@ function App(){
         };
         const timeout=window.setTimeout(finish,2500);
         for(const image of unfinished){
-          const settled=()=>{pending--;if(pending===0)finish();};
+          let counted=false;
+          const settled=()=>{
+            if(counted)return;
+            counted=true;
+            image.removeEventListener("load",settled);
+            image.removeEventListener("error",settled);
+            pending--;
+            if(pending===0)finish();
+          };
           image.addEventListener("load",settled,{once:true});
           image.addEventListener("error",settled,{once:true});
           cleanups.push(()=>{image.removeEventListener("load",settled);image.removeEventListener("error",settled);});
