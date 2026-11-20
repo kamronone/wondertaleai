@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import vm from "node:vm";
+import { transform } from "esbuild";
 
 const workerSource = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
 const mainSource = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
 const printCss = await readFile(new URL("../src/reader-polish.css", import.meta.url), "utf8");
+const imagesSource = await readFile(new URL("../src/book_images.ts", import.meta.url), "utf8");
+const { code: imagesCode } = await transform(imagesSource, { loader: "ts", format: "esm", target: "es2022" });
+const { resolveBookImage } = await import("data:text/javascript;base64," + Buffer.from(imagesCode).toString("base64"));
 
 function serviceWorkerHarness({ optionalFailure = false } = {}) {
   const listeners = new Map();
@@ -79,10 +83,22 @@ test("PWA serves original public book artwork and app assets through its cache p
   assert.ok(dispatchFetch(listeners, "/assets/index-abc123.js"));
 });
 
-test("Printable books include all pages and preserve locally generated SVG data images", () => {
+test("Printable books include all pages with illustration fallback", () => {
   assert.match(mainSource, /active\.pages\.map\(\(item,index\)=>\s*<section className="print-book-page"/);
-  assert.ok(mainSource.includes('url.startsWith("data:image/svg+xml;charset=utf-8,")'));
+  assert.match(mainSource, /<StoryIllustration url=\{item\.image_url\}/);
   assert.match(printCss, /@media print/);
   assert.match(printCss, /overflow:visible;/);
   assert.doesNotMatch(printCss, /height:265mm;\s*overflow:hidden/);
+});
+
+test("Local SVG artwork survives optional API configuration without unsafe URLs", () => {
+  const svg = "data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2010%2010%22%3E%3C%2Fsvg%3E";
+  const api = "https://api.wondertale.example";
+  assert.equal(resolveBookImage(svg, api), svg);
+  assert.equal(resolveBookImage("/images/classics/ryaba.webp", api), "/images/classics/ryaba.webp");
+  assert.equal(resolveBookImage("/media/page-1.webp", api), api + "/media/page-1.webp");
+  assert.equal(resolveBookImage("javascript:alert(1)", api), "/images/wondertale-hero.webp");
+  assert.equal(resolveBookImage("https://untrusted.example/child.png", api), "/images/wondertale-hero.webp");
+  assert.equal(resolveBookImage("data:image/svg+xml;charset=utf-8," + "a".repeat(41000), api), "/images/wondertale-hero.webp");
+  assert.equal(resolveBookImage("/media/page-1.webp", "http://localhost:8000"), "/images/wondertale-hero.webp");
 });
