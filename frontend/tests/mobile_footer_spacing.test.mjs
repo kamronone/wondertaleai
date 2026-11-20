@@ -25,3 +25,10 @@ test("mobile footer follows content while the navigation stays fixed",()=>{
 test("print layout does not inherit mobile reserved space",()=>{
   assert.match(polish,/@media print\{\s*\.shell\{min-height:0!important;padding-bottom:0!important\}/);
 });
+
+test("empty mobile library does not reserve a second fixed-nav height",()=>{
+  assert.match(polish,/\.shell\s*>\s*main\s*>\s*\.library-page\s*\{[^}]*padding-bottom:8px!important/s);
+  assert.match(polish,/\.library-page\s*>\s*\.empty\s*\{[^}]*min-height:0!important/s);
+  assert.match(polish,/\.library-page\s*>\s*\.empty\s*\{[^}]*height:auto!important/s);
+  assert.match(polish,/\.library-page\s*>\s*\.empty\s*\{[^}]*padding:28px 16px!important/s);
+});
