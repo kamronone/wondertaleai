@@ -554,8 +554,10 @@ function App(){
       const sequel=createDemoSequel(active as DemoBook);
       setBooks(prev=>[sequel,...prev]);
       openBook(sequel);
-    }catch{
-      setError(t.generateError);
+    }catch(e){
+      setError(e instanceof Error&&e.message==="LOCAL_LIBRARY_FULL"
+        ?({ru:"Библиотека заполнена. Удалите ненужную сказку перед созданием продолжения.",uz:"Kutubxona toldi. Davomini yaratishdan oldin keraksiz ertakni oçiring.",en:"Library full. Delete an unwanted story before creating a sequel."} as const)[lang]
+        :t.generateError);
     }
   };
   const selectEnding=(choice:EndingId)=>{
@@ -698,7 +700,11 @@ function App(){
       // in the parent's remote library until explicitly transferred.
       if(!privateToken)setBooks(previous=>[book,...previous]);
       openBook(book);
-    }catch(e){setError(e instanceof Error?e.message:t.genericError);}
+    }catch(e){
+      if(e instanceof Error&&e.message==="LOCAL_LIBRARY_FULL"){
+        setError(({ru:"Библиотека этого устройства заполнена (20 книг в каждом режиме хранения). Удалите ненужную сказку в библиотеке перед созданием новой.",uz:"Bu qurilma kutubxonasi toldi (har bir saqlash rejimida 20 ta kitob). Yangi ertak yaratishdan oldin keraksiz kitobni oçiring.",en:"This device library is full (20 books per storage mode). Delete an unwanted story before creating another."} as const)[lang]);
+      }else setError(e instanceof Error?e.message:t.genericError);
+    }
     finally{setBusy(false);}
   };
   const deleteBook=async(book:Book)=>{
