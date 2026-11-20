@@ -450,3 +450,38 @@
   .shell .quick-actions .quick-icon svg{width:18px;height:18px}
   .shell .hero-sky{max-height:185px}
 }
+
+
+/* Reader: two compact controls instead of permanently exposed settings. */
+.reader-page .reader-mode-controls{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:8px;
+  margin:4px 0 12px;
+}
+.reader-page .reader-mode-controls>button{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  max-width:100%;min-height:44px;padding:9px 13px;
+  border:1px solid #d9c6e8;border-radius:11px;
+  background:#fff;color:#62448b;font-size:12px;line-height:1.25;
+  font-weight:700;overflow-wrap:anywhere;
+}
+.reader-page .reader-mode-controls>button.active{
+  background:#6246a1;color:#fff;border-color:#6246a1;
+}
+.reader-page.reader-focused .reader-title,
+.reader-page.reader-focused .reader-audio-toolbar,
+.reader-page.reader-focused .story-edit-zone,
+.reader-page.reader-focused .interactive-endings,
+.reader-page.reader-focused .sequel-action{
+  display:none!important;
+}
+.reader-page.reader-focused .story-page{margin:10px 0 18px}
+.reader-page.reader-focused .story-text{max-width:72ch;margin-inline:auto}
+@media(max-width:620px){
+  .reader-page .reader-mode-controls{margin:5px 0 10px}
+  .reader-page .reader-mode-controls>button{font-size:11px;padding:8px 12px}
+  .reader-page.reader-focused .story-page-image img{max-height:340px}
+  .reader-page.reader-focused .story-text{line-height:1.8}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .reader-mode-controls>button{transition:none!important}
+}
