@@ -69,6 +69,7 @@ function App(){
   const pendingProgress=useRef(new Map<string,number>());
   const pendingFavorites=useRef(new Map<string,boolean>());
   const flushing=useRef(false);
+  const recentlyCreated=useRef(new Set<string>());
   const offlineOwner=useRef<string|null>(null);
   const persistPending=()=>{
     if(!offlineOwner.current)return;
@@ -124,6 +125,7 @@ function App(){
     const epoch=++sessionEpoch.current;
     pendingProgress.current.clear();pendingFavorites.current.clear();
     offlineOwner.current=null;
+    recentlyCreated.current.clear();
     if(!API||!await validateSession(API,token)||sessionEpoch.current!==epoch)return false;
     try{
       const owner=await getAuthenticatedOwner(API,token);
@@ -146,6 +148,7 @@ function App(){
     ++sessionEpoch.current;
     pendingProgress.current.clear();pendingFavorites.current.clear();
     offlineOwner.current=null;
+    recentlyCreated.current.clear();
     const token=privateToken;
     setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setSyncMessage("");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
@@ -311,8 +314,19 @@ function App(){
           favorite:pendingFavorites.current.get(book.id)??book.favorite,
           lastPage:pendingProgress.current.get(book.id)??book.lastPage
         }));
-        setRemoteBooks(merged);
-        setBooks(merged);
+        // A refresh can race with the POST response or a lagging replica.
+        // Retain recently created books until the server snapshot includes them.
+        setRemoteBooks(previous=>{
+          const missing=previous.filter(book=>!merged.some(item=>item.id===book.id)&&
+            recentlyCreated.current.has(book.id));
+          return [...missing,...merged];
+        });
+        setBooks(previous=>{
+          const missing=previous.filter(book=>!merged.some(item=>item.id===book.id)&&
+            recentlyCreated.current.has(book.id));
+          return [...missing,...merged];
+        });
+        for(const book of merged)recentlyCreated.current.delete(book.id);
       }catch(error){
         if(disposed||sessionEpoch.current!==epoch)return;
         if(error instanceof Error&&error.message==="Private account authorization expired"){
@@ -512,6 +526,7 @@ function App(){
             number:index+1,text:p.text,image_url:"/images/wondertale-hero.webp"
           })),mode:"private-account",favorite:false,lastPage:0
         };
+        recentlyCreated.current.add(created.id);
         setRemoteBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);
         setBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);
         openBook(created);
@@ -526,6 +541,7 @@ function App(){
             // A lagging read replica may not expose the newly committed book yet.
             // Keep it visible until the server includes it in a later snapshot.
             const visible=merged.some(book=>book.id===created.id)?merged:[created,...merged];
+            if(merged.some(book=>book.id===created.id))recentlyCreated.current.delete(created.id);
             setRemoteBooks(visible);
             setBooks(visible);
           }
@@ -545,7 +561,7 @@ function App(){
   };
   const deleteBook=async(book:Book)=>{
     if(!confirm(t.deleteConfirm))return;
-    try{if(isDemoBook(book)){saveDemoBooks(getDemoBooks().filter(b=>b.id!==book.id));}else{if(!privateToken)throw new Error("Parent login required");const r=await fetch(API+"/api/books/"+book.id,{method:"DELETE",headers:{Authorization:"Bearer "+privateToken}});if(!r.ok)throw new Error("Ошибка удаления");pendingProgress.current.delete(book.id);pendingFavorites.current.delete(book.id);persistPending();setRemoteBooks(prev=>prev.filter(b=>b.id!==book.id));}setBooks(prev=>prev.filter(b=>b.id!==book.id));setTab("library");setActive(null);}
+    try{if(isDemoBook(book)){saveDemoBooks(getDemoBooks().filter(b=>b.id!==book.id));}else{if(!privateToken)throw new Error("Parent login required");const r=await fetch(API+"/api/books/"+book.id,{method:"DELETE",headers:{Authorization:"Bearer "+privateToken}});if(!r.ok)throw new Error("Ошибка удаления");pendingProgress.current.delete(book.id);pendingFavorites.current.delete(book.id);recentlyCreated.current.delete(book.id);persistPending();setRemoteBooks(prev=>prev.filter(b=>b.id!==book.id));}setBooks(prev=>prev.filter(b=>b.id!==book.id));setTab("library");setActive(null);}
     catch{setError(t.deleteError);}
   };
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
