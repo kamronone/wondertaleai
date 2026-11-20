@@ -100,3 +100,13 @@
 .reader-page .reading-session-timer small{display:block;margin-top:8px;font-size:11px;color:#776785;line-height:1.5}
 @media(max-width:380px){.reader-page .reading-session-duration{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.reader-page .reading-session-duration button{min-width:0}}
 @media print{.reader-page .reading-session-timer{display:none!important}}
+
+/* Page index is collapsed by default: all books stay compact on mobile. */
+.reader-page .reader-page-index{margin:16px 0 10px;max-width:100%}
+.reader-page .reader-index-toggle{width:100%;min-height:44px;padding:10px 13px;border:1px solid #dac9e8;border-radius:12px;background:#faf7ff;color:#5c4380;font:inherit;font-size:13px;font-weight:750;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.reader-page .reader-index-toggle span{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600;color:#736284}
+.reader-page .reader-index-grid{margin-top:8px;padding:12px;border:1px solid #e7dcf0;border-radius:12px;background:#fff;display:grid;grid-template-columns:repeat(auto-fill,minmax(45px,1fr));gap:8px}
+.reader-page .reader-index-grid button{min-height:44px;border-radius:10px;border:1px solid #d8cae8;background:#fcfaff;color:#594175;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.reader-page .reader-index-grid button[aria-current="page"]{background:#7653ad;color:white;border-color:#7653ad}
+.reader-page .reader-page-index button:focus-visible{outline:3px solid #9b75ce;outline-offset:2px}
+@media print{.reader-page .reader-page-index{display:none!important}}
