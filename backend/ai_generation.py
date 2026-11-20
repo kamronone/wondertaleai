@@ -23,7 +23,10 @@ class GenerateStoryInput(BaseModel):
     @field_validator("name","idea","style","classic_title")
     @classmethod
     def normalize_story_input(cls,value:str)->str:
-        return value.strip()
+        cleaned=value.strip()
+        if not cleaned:
+            raise ValueError("Story fields must not be blank")
+        return cleaned
 
     @field_validator("other_heroes")
     @classmethod
