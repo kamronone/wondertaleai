@@ -19,3 +19,16 @@
 .library-page .library-age-filter label{display:flex;gap:9px;align-items:center;font-size:12px;font-weight:650;color:#634e7c;flex-wrap:wrap}
 .library-page .library-age-filter select{min-height:44px;min-width:132px;border-radius:10px;background:#fff;color:#503768;border:1px solid #dccaea;padding:8px 10px;font-size:14px}
 @media(max-width:420px){.library-page .library-age-filter{justify-content:stretch}.library-page .library-age-filter label{width:100%;justify-content:space-between}}
+
+/* Optional choose-your-path epilogue stays outside the saved book. */
+.reader-page .story-branch-quest{margin:17px 0;padding:16px;border:1px solid #d8c9ee;border-radius:16px;background:linear-gradient(145deg,#fbf8ff,#f4f9ff);color:#4c3864}
+.reader-page .story-branch-quest h3{font-size:17px;line-height:1.3;margin:0 0 7px}
+.reader-page .story-branch-quest p{font-size:13px;line-height:1.65;margin:8px 0 12px}
+.reader-page .story-branch-quest .story-branch-note{font-size:11px;color:#756684}
+.reader-page .story-branch-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.reader-page .story-branch-quest button{font:inherit;font-size:12px;font-weight:700;min-height:44px;min-width:0;padding:9px 10px;border-radius:11px;border:1px solid #cbb5df;background:#fff;color:#5e4082;overflow-wrap:anywhere;white-space:normal}
+.reader-page .story-branch-quest .story-branch-back{margin-top:9px;background:transparent}
+.reader-page .story-branch-quest button:focus-visible{outline:3px solid #9765bc;outline-offset:2px}
+.reader-page .story-branch-quest [role="status"] strong{display:block;margin-top:10px;font-size:14px}
+@media(max-width:360px){.reader-page .story-branch-choices{grid-template-columns:1fr}}
+@media print{.reader-page .story-branch-quest{display:none!important}}
