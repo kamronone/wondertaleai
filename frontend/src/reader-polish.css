@@ -1499,3 +1499,122 @@
   .legal-center .legal-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
   .legal-center .legal-sections>section{padding:13px}
 }
+
+/* Branded parent profile illustration, cropped from an original generated PNG.
+   No stock media and no user or child photos are stored in this image. */
+.parent-account-page .parent-account-hero{
+  position:relative;
+  display:grid;
+  grid-template-columns:118px minmax(0,1fr);
+  gap:15px;
+  align-items:center;
+  min-width:0;
+  padding:14px 17px;
+  margin:0 0 15px;
+  border:1px solid #dcccef;
+  border-radius:19px;
+  background:linear-gradient(125deg,#f2eaff 0%,#fffaf8 75%);
+  box-shadow:0 5px 15px rgba(92,53,137,.07);
+}
+.parent-account-page .parent-account-hero-art{
+  width:118px;
+  height:118px;
+  overflow:hidden;
+  border-radius:22px;
+  border:2px solid rgba(255,255,255,.9);
+  box-shadow:0 4px 13px rgba(67,37,111,.13);
+  background:#624899;
+}
+.parent-account-page .parent-account-hero-art img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  image-rendering:auto;
+}
+.parent-account-page .parent-account-hero-copy{
+  display:grid;
+  gap:5px;
+  min-width:0;
+  align-content:center;
+}
+.parent-account-page .parent-account-hero-copy .parent-account-eyebrow{
+  font-size:10px;
+  line-height:1.25;
+  color:#8662af;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.parent-account-page .parent-account-hero-copy h2{
+  margin:0;
+  font-size:21px;
+  line-height:1.22;
+  color:#50356f;
+  overflow-wrap:anywhere;
+}
+.parent-account-page .parent-account-hero-copy p{
+  margin:0;
+  font-size:12px;
+  line-height:1.4;
+  color:#806c94;
+}
+.parent-account-page .parent-account-author{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid #e5d6f0;
+  color:#654583;
+  font-weight:700;
+  font-size:10px;
+  overflow-wrap:anywhere;
+}
+@media screen and (max-width:620px){
+  .parent-account-page .parent-account-hero{
+    grid-template-columns:86px minmax(0,1fr);
+    gap:11px;
+    padding:11px;
+    margin:0 0 12px;
+    border-radius:15px;
+  }
+  .parent-account-page .parent-account-hero-art{
+    width:86px;
+    height:86px;
+    border-radius:17px;
+  }
+  .parent-account-page .parent-account-hero-copy{
+    gap:3px;
+  }
+  .parent-account-page .parent-account-hero-copy h2{
+    font-size:17px;
+  }
+  .parent-account-page .parent-account-hero-copy p{
+    font-size:11px;
+  }
+  .parent-account-page .parent-account-author{
+    font-size:9px;
+    padding:4px 7px;
+  }
+}
+@media screen and (max-width:340px){
+  .parent-account-page .parent-account-hero{
+    grid-template-columns:69px minmax(0,1fr);
+    gap:9px;
+    padding:9px;
+  }
+  .parent-account-page .parent-account-hero-art{
+    width:69px;
+    height:69px;
+    border-radius:13px;
+  }
+  .parent-account-page .parent-account-hero-copy h2{
+    font-size:15px;
+  }
+  .parent-account-page .parent-account-hero-copy p{
+    font-size:10px;
+  }
+}
