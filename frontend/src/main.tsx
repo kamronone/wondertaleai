@@ -132,6 +132,9 @@ function App(){
   const [error,setError]=useState("");
   const [usePersonalAi,setUsePersonalAi]=useState(false);
 
+  // Child profile details must never carry over between parent sessions.
+  const clearChildDraft=()=>{setName("");setAge("5");setSecondHero("");setPhoto(null);};
+
   // API health alone never authorizes uploading a child photo or generating a story.
   // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
   const loginParent=async(token:string):Promise<boolean>=>{
@@ -153,6 +156,7 @@ function App(){
         favorite:pendingFavorites.current.get(book.id)??book.favorite,
         lastPage:pendingProgress.current.get(book.id)??book.lastPage
       }));
+      clearChildDraft();
       setPrivateToken(token);setRemoteBooks(merged);setBooks(merged);setActive(null);setSyncMessage("");
       return true;
     }catch{return false;}
@@ -163,6 +167,7 @@ function App(){
     offlineOwner.current=null;
     recentlyCreated.current.clear();
     const token=privateToken;
+    clearChildDraft();
     setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setSyncMessage("");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
   };
@@ -194,6 +199,7 @@ function App(){
       if(error instanceof Error&&error.message==="Private account authorization expired"){
         // Never leave private books on screen after the server rejects the session.
         ++sessionEpoch.current;
+        clearChildDraft();
         setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
         setSyncMessage({
           ru:"Сессия истекла. Войдите снова, чтобы перенести сохранённые книги.",
