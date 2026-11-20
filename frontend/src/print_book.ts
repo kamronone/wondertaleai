@@ -29,15 +29,19 @@ export const printFullBook = async (): Promise<void> => {
       for (const src of sources) {
         const preload = new Image();
         pending.push(preload);
-        preload.onload = settled;
-        preload.onerror = settled;
-        preload.src = src;
-        // Covers images already present in the browser's memory cache.
-        if (preload.complete) {
+        let counted = false;
+        const once = () => {
+          if (counted) return;
+          counted = true;
           preload.onload = null;
           preload.onerror = null;
           settled();
-        }
+        };
+        preload.onload = once;
+        preload.onerror = once;
+        preload.src = src;
+        // Covers images already present in the browser's memory cache.
+        if (preload.complete) once();
       }
     });
   }
