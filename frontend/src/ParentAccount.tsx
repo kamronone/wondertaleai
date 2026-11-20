@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { BookOpen, CheckCircle2, CloudUpload, KeyRound, LogOut, Mail, ShieldCheck, UserRound } from "lucide-react";
 import type { Lang } from "./i18n";
 
@@ -22,9 +22,27 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  const [notice,setNotice]=useState("");
  const [error,setError]=useState("");
  const [unverified,setUnverified]=useState(false);
+ const [apiReady,setApiReady]=useState<boolean|null>(null);
+ useEffect(()=>{
+  if(!api){setApiReady(false);return;}
+  const controller=new AbortController();
+  setApiReady(null);
+  const timeout=setTimeout(()=>controller.abort(),8000);
+  fetch(api+"/api/ready",{signal:controller.signal,cache:"no-store"})
+   .then(async response=>{
+    if(!response.ok)return false;
+    const data:unknown=await response.json();
+    return typeof data==="object"&&data!==null&&"ok" in data&&data.ok===true&&"database" in data&&data.database==="connected";
+   })
+   .then(ready=>{if(!controller.signal.aborted)setApiReady(ready);})
+   .catch(()=>{if(!controller.signal.aborted)setApiReady(false);})
+   .finally(()=>clearTimeout(timeout));
+  return ()=>{clearTimeout(timeout);controller.abort();};
+ },[api]);
+
  const submit=async(e:FormEvent)=>{
   e.preventDefault();
-  if(!api||working)return;
+  if(!api||apiReady!==true||working)return;
   setWorking(true);setError("");setNotice("");setUnverified(false);
   try{
    const endpoint=mode==="login"?"/api/auth/login":mode==="register"?"/api/auth/register":"/api/auth/forgot-password";
@@ -54,7 +72,7 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
   }catch(e){setError(e instanceof Error&&e.message==="Unverified"?t.unverified:t.failed);}finally{setWorking(false);}
  };
  const resend=async()=>{
-  if(!api||working||!email.trim())return;
+  if(!api||apiReady!==true||working||!email.trim())return;
   setWorking(true);setError("");setNotice("");
   try{
    const response=await fetch(api+"/api/auth/resend-verification",{
@@ -67,7 +85,8 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  };
  return <section className="parent-account-page">
   <div className="parent-account-head"><span className="parent-account-symbol"><UserRound size={24}/></span><div><h2>{t.title}</h2><p>{t.subtitle}</p></div></div>
-  {!api?<div className="parent-account-unavailable"><ShieldCheck size={30}/><h3>{t.demo}</h3><p>{t.notReady}</p></div>:
+  {(!api||apiReady===false)&&!session?<div className="parent-account-unavailable"><ShieldCheck size={30}/><h3>{t.demo}</h3><p>{t.notReady}</p></div>:
+    apiReady===null&&!session?<div className="parent-account-unavailable" role="status"><p>{({ru:"Проверяем подключение аккаунта…",uz:"Akkaunt ulanişi tekşirilmoqda…",en:"Checking account availability…"} as const)[lang]}</p></div>:
     session?<div className="parent-account-card"><div className="parent-account-success"><CheckCircle2 size={23}/><strong>{t.welcome}</strong></div>
       <p className="parent-account-muted">{t.syncDescription}</p><p className="parent-account-muted">{t.syncNotice}</p>
       <button type="button" className="parent-account-primary" onClick={()=>void onSync()} disabled={syncBusy}><CloudUpload size={17}/>{syncBusy?t.loading:t.sync}</button>
