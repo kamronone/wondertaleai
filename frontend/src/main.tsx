@@ -49,7 +49,9 @@ function App(){
   };
   const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account"|"legal">(()=>readLegalHash()?"legal":"home");
   const [legalDocument,setLegalDocument]=useState<LegalDocument>(()=>readLegalHash()||"terms");
+  const [legalReturnTab,setLegalReturnTab]=useState<"home"|"create"|"library"|"reader"|"account">("home");
   const openLegal=(document:LegalDocument)=>{
+    if(tab!=="legal")setLegalReturnTab(tab);
     setLegalDocument(document);setTab("legal");
     window.history.replaceState(null,"",window.location.pathname+window.location.search+"#legal/"+document);
   };
@@ -968,7 +970,7 @@ function App(){
           {error&&createStep!==3&&<p className="error" role="alert">{error}</p>}
         </form>
       </section>}
-      {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab("home")}/>}
+      {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab(legalReturnTab)}/>}
       {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<details className="account-plans-disclosure"><summary><Star size={16}/>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}<ChevronDown size={16}/></summary><PricingPlans lang={lang} api={API} session={privateToken}/></details></>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
         {!isOnline&&<div className="library-sync-warning" role="status">
