@@ -553,8 +553,10 @@ function App(){
         if(typeof generated.id!=="string"||!/^[a-f0-9-]{36}$/i.test(generated.id)||
            typeof generated.title!=="string"||!generated.title.trim()||generated.title.length>120||
            !Array.isArray(generated.pages)||generated.pages.length!==data.pages_count||
-           !generated.pages.every(p=>p&&typeof p.text==="string"&&
-             p.text.trim().length>=70&&p.text.length<=1200))throw new Error(t.generateError);
+           !generated.pages.every((p,index)=>p&&typeof p==="object"&&
+             p.number===index+1&&typeof p.text==="string"&&
+             p.text.trim().length>=70&&p.text.length<=1200&&
+             (p.image_url===""||typeof p.image_url==="undefined")))throw new Error(t.generateError);
         if(sessionEpoch.current!==epoch)return;
         // POST succeeded: show the saved story immediately even if the follow-up
         // library GET fails. Never encourage a duplicate paid generation.
@@ -563,7 +565,7 @@ function App(){
           title:generated.title,name:data.name,age:data.age,language:storyLang,
           theme:data.classic_title,prompt:data.idea,style:data.style,
           pages:generated.pages.map((p:{text:string},index:number)=>({
-            number:index+1,text:p.text,image_url:"/images/wondertale-hero.webp"
+            number:index+1,text:p.text,image_url:""
           })),mode:"private-account",favorite:false,lastPage:0
         };
         recentlyCreated.current.set(created.id,Date.now());
