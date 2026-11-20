@@ -321,7 +321,8 @@ function App(){
     let refreshing=false;
     const epoch=sessionEpoch.current;
     const refresh=async()=>{
-      if(refreshing||!navigator.onLine)return;
+      if(refreshing||disposed)return;
+      if(!navigator.onLine){setLibraryRefreshError(true);return;}
       refreshing=true;
       setLibraryRefreshError(false);
       try{
@@ -350,6 +351,8 @@ function App(){
         if(disposed||sessionEpoch.current!==epoch)return;
         if(error instanceof Error&&error.message==="Private account authorization expired"){
           ++sessionEpoch.current;
+          pendingProgress.current.clear();pendingFavorites.current.clear();
+          offlineOwner.current=null;recentlyCreated.current.clear();
           setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);
           setSyncMessage({
             ru:"Сессия истекла. Войдите снова.",
@@ -673,7 +676,7 @@ function App(){
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
         {privateToken&&libraryRefreshError&&<div className="library-sync-warning" role="status">
           <span>{({ru:"Не удалось обновить библиотеку. Ранее загруженные книги сохранены.",uz:"Kutubxonani yangilab bölmadi. Avval yuklangan kitoblar saqlangan.",en:"Could not refresh your library. Previously loaded books are still available."} as const)[lang]}</span>
-          <button type="button" onClick={()=>setLibraryRefreshAttempt(value=>value+1)}>{({ru:"Повторить",uz:"Qayta uriniş",en:"Retry"} as const)[lang]}</button>
+          <button type="button" disabled={!isOnline} onClick={()=>setLibraryRefreshAttempt(value=>value+1)}>{({ru:"Повторить",uz:"Qayta uriniş",en:"Retry"} as const)[lang]}</button>
         </div>}<button className="primary-button add-book" onClick={()=>setTab("create")}><Plus size={18}/> {t.newStory}</button>{error&&<p className="error">{error}</p>}
         {books.length>0&&<div className="library-filters" role="group"><button type="button" className={!favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(false)}>{t.allBooks}</button><button type="button" className={favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(true)}><Heart size={15}/>{t.favorites}</button></div>}
         {(favoritesOnly?books.filter(book=>book.favorite):books).length?<div className="book-grid">{(favoritesOnly?books.filter(book=>book.favorite):books).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{favoritesOnly?t.noFavorites:t.empty}</h3><p>{favoritesOnly?"":t.emptyDesc}</p></div>}</section>}
