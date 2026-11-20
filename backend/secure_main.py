@@ -46,7 +46,7 @@ if DATABASE_URL.startswith("postgres://"):
 IS_PG = DATABASE_URL.startswith("postgresql://")
 app = FastAPI(title="WonderTale Secure API", docs_url=None, redoc_url=None)
 origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if x.strip()]
-app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,allow_methods=["GET","POST","DELETE"],allow_headers=["Authorization","Content-Type"])
+app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,allow_methods=["GET","POST","PUT","DELETE"],allow_headers=["Authorization","Content-Type"])
 
 @app.middleware("http")
 async def protect_private_responses(request, call_next):
