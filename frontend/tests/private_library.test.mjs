@@ -124,7 +124,7 @@ test("HTTP 400 validation error is not treated as an uncertain commit", async ()
   }, async () => {
     const result = await transferLocalBooks("https://api.test", "token", [book("local-rejected")]);
     assert.deepEqual([result.uploaded, result.existing, result.failed], [0, 0, 1]);
-    assert.equal(bookGets, 2); // initial listing and final library load, no reconciliation
+    assert.equal(bookGets, 3); // initial listing, private library snapshot and final mapping; no uncertain-POST reconciliation
   });
 });
 
