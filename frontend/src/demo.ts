@@ -103,10 +103,18 @@ export const saveDemoBooks=(books:DemoBook[])=>{
    throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
  }
  try{
-   if(chosen.length)localStorage.setItem(deviceKey,JSON.stringify(chosen));
-   else localStorage.removeItem(deviceKey);
-   if(ephemeral.length)sessionStorage.setItem(sessionKey,JSON.stringify(ephemeral));
-   else sessionStorage.removeItem(sessionKey);
+   // A page turn often changes only one storage area. Avoid rewriting the
+   // other one: Safari can reject even redundant writes when storage is full.
+   const nextDevice=chosen.length?JSON.stringify(chosen):null;
+   const nextSession=ephemeral.length?JSON.stringify(ephemeral):null;
+   if(nextDevice!==oldDevice){
+     if(nextDevice===null)localStorage.removeItem(deviceKey);
+     else localStorage.setItem(deviceKey,nextDevice);
+   }
+   if(nextSession!==oldSession){
+     if(nextSession===null)sessionStorage.removeItem(sessionKey);
+     else sessionStorage.setItem(sessionKey,nextSession);
+   }
  }catch{
    // Browser storage has no cross-storage transaction. Roll back what we can.
    try{
