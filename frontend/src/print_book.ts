@@ -1,39 +1,45 @@
-/** Wait for off-screen book illustrations before opening browser Print / Save as PDF. */
-export const printFullBook=async()=>{
-    // Safari can open print preview before off-screen book images finish loading.
-    // Wait briefly for every printable illustration, then always allow printing.
-    const images=Array.from(document.querySelectorAll<HTMLImageElement>(".print-book img"));
-    const unfinished=images.filter(image=>!image.complete);
-    if(unfinished.length){
-      await new Promise<void>(resolve=>{
-        let pending=unfinished.length;
-        let completed=false;
-        const cleanups:Array<()=>void>=[];
-        const finish=()=>{
-          if(completed)return;
-          completed=true;
-          window.clearTimeout(timeout);
-          cleanups.forEach(cleanup=>cleanup());
-          resolve();
-        };
-        const timeout=window.setTimeout(finish,2500);
-        for(const image of unfinished){
-          let counted=false;
-          const settled=()=>{
-            if(counted)return;
-            counted=true;
-            image.removeEventListener("load",settled);
-            image.removeEventListener("error",settled);
-            pending--;
-            if(pending===0)finish();
-          };
-          image.addEventListener("load",settled,{once:true});
-          image.addEventListener("error",settled,{once:true});
-          cleanups.push(()=>{image.removeEventListener("load",settled);image.removeEventListener("error",settled);});
-          // Image may have loaded between filtering and installing listeners.
-          if(image.complete)settled();
+/** Preload hidden printable artwork before opening Safari Print / Save as PDF. */
+export const printFullBook = async (): Promise<void> => {
+  const images = Array.from(document.querySelectorAll<HTMLImageElement>(".print-book img"));
+  // The print-only article is display:none until @media print. Safari can
+  // defer these network requests forever, so load each distinct URL into an
+  // independent image before opening the native print dialog.
+  const sources = [...new Set(images.map(image => image.currentSrc || image.src).filter(Boolean))];
+  if (sources.length) {
+    await new Promise<void>(resolve => {
+      let remaining = sources.length;
+      let finished = false;
+      const pending: HTMLImageElement[] = [];
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        window.clearTimeout(timeout);
+        for (const image of pending) {
+          image.onload = null;
+          image.onerror = null;
         }
-      });
-    }
-    window.print();
-  };
+        resolve();
+      };
+      const settled = () => {
+        remaining--;
+        if (remaining === 0) finish();
+      };
+      // Always open print preview, even on a disconnected iPhone.
+      const timeout = window.setTimeout(finish, 2500);
+      for (const src of sources) {
+        const preload = new Image();
+        pending.push(preload);
+        preload.onload = settled;
+        preload.onerror = settled;
+        preload.src = src;
+        // Covers images already present in the browser's memory cache.
+        if (preload.complete) {
+          preload.onload = null;
+          preload.onerror = null;
+          settled();
+        }
+      }
+    });
+  }
+  window.print();
+};
