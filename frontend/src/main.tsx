@@ -14,6 +14,7 @@ import { ParentAccount } from "./ParentAccount";
 import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
+import { canAppendStoryEnding } from "./ending_length";
 import { translateSelectedStoryPrompt, leaveClassicStoryPrompt, shouldDetachClassicOnEdit } from "./story_language";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
@@ -579,9 +580,13 @@ function App(){
     const last=active.pages.length-1;
     const originalEnding=active.originalEnding||active.pages[last].text;
     const addition=endings[active.language||storyLang][choice].addition;
+    if(!canAppendStoryEnding(originalEnding,addition)){
+      setError(({ru:"Последняя страница слишком длинная для новой концовки. Сократите её через «Редактировать страницу» и повторите.",uz:"Oxirgi sahifa yangi yakun uchun juda uzun. Uni «Sahifani tahrirlash» orqali qisqartirib, qayta urinib köring.",en:"The final page is too long for a new ending. Shorten it using Edit page and try again."} as const)[lang]);
+      return;
+    }
     try{
       applyLocalBookChange({...active,originalEnding,endingChoice:choice,pages:active.pages.map((p,i)=>i===last?{...p,text:originalEnding+" "+addition}:p)});
-      setEditingPage(false);
+      setEditingPage(false);setError("");
     }catch{setError(localSaveError);}
   };
   const generate=async(e:React.FormEvent)=>{
