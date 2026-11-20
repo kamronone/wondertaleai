@@ -90,3 +90,11 @@ test("Home offers one-tap reading continuation only for unfinished multi-page bo
   assert.match(app,/className="continue-story-card" onClick=\{\(\)=>openBook\(continueBook\)\}/);
   assert.match(css,/\.continue-story-card/);
 });
+
+
+test("Onboarding arrows do not intercept keyboard use of language selector",()=>{
+  assert.match(app,/target\.closest\("button, select, input, textarea, \[role='button'\]"\)\)return;/);
+  assert.match(app,/event\.key==="ArrowRight"\)\{event\.preventDefault\(\);setOnboardingStep/);
+  assert.match(app,/event\.key==="ArrowLeft"\)\{event\.preventDefault\(\);setOnboardingStep/);
+  assert.match(app,/aria-label=\{\(\{ru:"Экраны знакомства"/);
+});
