@@ -1,0 +1,15 @@
+/* Scoped bedtime reader controls and end-of-book word game. */
+.reader-page .bedtime-controls{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:12px 0;padding:10px 12px;border:1px solid #e2d4ef;border-radius:13px;background:#faf6ff;color:#56416c;font-size:12px}
+.reader-page .bedtime-controls>span{font-weight:750;margin-right:auto}
+.reader-page .bedtime-controls button,.reader-page .reading-word-game button{font:inherit;font-size:12px;font-weight:650;min-height:42px;border:1px solid #dac6ed;border-radius:10px;background:#fff;color:#60417c;padding:8px 12px}
+.reader-page .bedtime-controls button[aria-pressed="true"]{background:#7250aa;color:#fff;border-color:#7250aa}
+.reader-page .reading-word-game{margin:18px 0;padding:16px;border:1px solid #e4d7ee;border-radius:15px;background:#fffcff;color:#4c3864}
+.reader-page .reading-word-game>strong{display:block;font-size:15px}
+.reader-page .reading-word-game p{font-size:13px;line-height:1.5;margin:10px 0}
+.reader-page .reading-word-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.reader-page .reading-word-choices button{min-width:0;overflow-wrap:anywhere;white-space:normal}
+.reader-page .reading-word-choices button[aria-pressed="true"]{background:#efe6fc;border-color:#9d7ec9}
+.reader-page .reading-word-game button:focus-visible,.reader-page .bedtime-controls button:focus-visible{outline:3px solid #9b75ce;outline-offset:2px}
+.reader-page .reading-word-game button:disabled{opacity:.7}
+@media(max-width:380px){.reader-page .reading-word-choices{grid-template-columns:1fr}.reader-page .bedtime-controls>span{flex:1 1 70%}}
+@media print{.reader-page .bedtime-controls,.reader-page .reading-word-game{display:none!important}}
