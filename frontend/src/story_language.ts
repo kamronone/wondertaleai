@@ -32,3 +32,11 @@ export const leaveClassicStoryPrompt = (
   if (!classicPrompts) return prompt;
   return prompt === classicPrompts[language] ? "" : prompt;
 };
+
+
+/** Editing a classic's stock prompt opts out of its fixed demo narrative. */
+export const shouldDetachClassicOnEdit = (
+  nextPrompt: string,
+  language: Lang,
+  classicPrompts?: Record<Lang, string>
+): boolean => Boolean(classicPrompts && nextPrompt !== classicPrompts[language]);
