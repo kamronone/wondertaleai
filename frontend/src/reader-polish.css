@@ -81,3 +81,9 @@
 .wizard-review p{font-size:12px;line-height:1.6;color:#5e4e70;white-space:pre-wrap;overflow-wrap:anywhere}
 .wizard-review button{min-height:40px;padding:9px 13px;border:1px solid #d8bce8;border-radius:10px;background:#fff;color:#69418f;font-weight:700;font-size:12px}
 @media(max-width:380px){.wizard-review dl{grid-template-columns:1fr}}
+
+/* Earned achievements are visibly distinct; progress remains library-scoped. */
+.reading-achievement.unlocked{border-color:#b3d4bc;background:linear-gradient(145deg,#fff,#eff8f1)}
+.reading-achievement.unlocked .reading-achievement-count{color:#387352}
+.reading-achievement.unlocked .reading-achievement-track>span{background:#5b9a73}
+.reading-achievement.unlocked>span{color:#34674c}
