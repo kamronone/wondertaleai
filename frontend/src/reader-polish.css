@@ -1095,3 +1095,75 @@
 @media(prefers-reduced-motion:reduce){
   .parent-account-page .parent-account-reading-section .parent-account-expand{transition:none}
 }
+
+/* Mobile book reading: fit more of the illustration and the first paragraphs
+   without cutting any story text. Long stories continue scrolling naturally. */
+@media screen and (max-width:620px){
+  .reader-page .story-page{
+    border-radius:15px;
+    margin-top:8px;
+    margin-bottom:12px;
+    scroll-margin-top:8px;
+  }
+  .reader-page .story-page-image{
+    padding:8px 8px 0;
+  }
+  .reader-page .story-page-image img,
+  .reader-page .story-page-image > .story-image-fallback{
+    display:block;
+    width:100%;
+    max-height:min(33dvh,240px);
+    min-height:0;
+    height:auto;
+    object-fit:contain;
+    border-radius:11px;
+    box-shadow:none;
+  }
+  .reader-page .story-page .story-text{
+    padding:15px 15px 19px;
+    line-height:1.55;
+    text-align:left;
+    overflow-wrap:anywhere;
+    white-space:pre-wrap;
+  }
+  .reader-page .story-page.reader-font-small .story-text{
+    font-size:14px;
+    line-height:1.5;
+  }
+  .reader-page .story-page.reader-font-normal .story-text{
+    font-size:15px;
+    line-height:1.55;
+  }
+  .reader-page .story-page.reader-font-large .story-text{
+    font-size:18px;
+    line-height:1.6;
+  }
+  .reader-page .story-page .dropcap-star{
+    margin-right:5px;
+  }
+  .reader-page .story-edit-zone{
+    margin:8px 0 10px;
+  }
+  .reader-page .pager{
+    gap:7px;
+    margin:8px 0 0!important;
+  }
+}
+@media screen and (max-width:380px){
+  .reader-page .story-page-image img,
+  .reader-page .story-page-image > .story-image-fallback{
+    max-height:min(30dvh,205px);
+  }
+  .reader-page .story-page .story-text{
+    padding:12px 12px 16px;
+  }
+}
+@media print{
+  .reader-page .story-page-image img,
+  .reader-page .story-page-image > .story-image-fallback{
+    max-height:none;
+  }
+  .reader-page .story-page .story-text{
+    white-space:pre-wrap;
+  }
+}
