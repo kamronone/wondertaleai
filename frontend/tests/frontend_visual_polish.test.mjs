@@ -41,3 +41,21 @@ test("Story-specific illustrations remain the source for polished covers",()=>{
  assert.match(css,/\.shell \.book-tile \.book-cover-art>\.story-image-fallback/);
  assert.match(css,/\.shell \.classic-cover \.classic-generated-image/);
 });
+
+
+test("Home resume card exposes real progress without another oversized section",()=>{
+ assert.match(app,/className="continue-story-progress" role="progressbar"/);
+ assert.match(app,/aria-valuemax=\{continueBook\.pages\.length\}/);
+ assert.match(app,/aria-valuenow=\{\(continueBook\.lastPage\?\?0\)\+1\}/);
+ assert.match(app,/continueBook\.pages\.length\)\*100/);
+ assert.match(css,/\.continue-story-card \.continue-story-progress/);
+ assert.match(css,/\.continue-story-card \.continue-story-progress>span/);
+});
+
+test("Started and finished story tiles render bounded reading progress",()=>{
+ assert.match(app,/reading&&<><small className="read-progress">\{progress\}<\/small><span className="book-progress-track"/);
+ assert.match(app,/aria-valuemax=\{book\.pages\.length\}/);
+ assert.match(app,/Math\.min\(\(book\.lastPage\?\?0\)\+1,book\.pages\.length\)/);
+ assert.match(css,/\.shell \.book-tile \.book-progress-track\{/);
+ assert.match(css,/\.shell \.book-tile \.book-progress-track>span/);
+});
