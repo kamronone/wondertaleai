@@ -3,12 +3,8 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { transform } from "esbuild";
 
-const source = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
-const begin = source.indexOf("  const printFullBook=async()=>{");
-const end = source.indexOf("  const stopSpeech=()=>{", begin);
-assert.ok(begin !== -1 && end > begin, "Reader export implementation exists");
-const fragment = source.slice(begin, end).replace("const printFullBook=", "export const printFullBook=");
-const { code } = await transform(fragment, { loader: "ts", format: "esm", target: "es2022" });
+const source = await readFile(new URL("../src/print_book.ts", import.meta.url), "utf8");
+const { code } = await transform(source, { loader: "ts", format: "esm", target: "es2022" });
 const { printFullBook } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
 
 function withPrintBrowser(images) {
