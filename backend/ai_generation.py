@@ -58,6 +58,8 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
             raise ValueError("Unexpected page count")
         if not parsed.title.strip() or any(len(text.strip())<70 or len(text)>1200 for text in parsed.pages):
             raise ValueError("Page length out of bounds")
+        # Do not store provider formatting whitespace as part of a book title.
+        parsed.title=parsed.title.strip()
         return parsed
     except (ValueError,ValidationError,IndexError,KeyError) as exc:
         raise ValueError("Model did not return a valid story") from exc
