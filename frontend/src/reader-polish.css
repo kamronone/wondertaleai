@@ -727,3 +727,28 @@
   .shell > main{padding-bottom:0!important}
   .shell > footer{display:none!important}
 }
+
+
+/* Library-specific empty state: the older mobile theme reserves 105px inside
+   .library-page even though the fixed tabbar is already reserved by .shell.
+   Never stretch an empty shelf into a second viewport. */
+@media screen and (max-width:620px){
+  .shell > main > .library-page{
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:8px!important;
+    margin-bottom:0!important;
+  }
+  .library-page > .empty{
+    box-sizing:border-box;
+    width:auto;
+    min-height:0!important;
+    height:auto!important;
+    padding:28px 16px!important;
+    margin:16px 0 8px!important;
+    border-radius:17px;
+  }
+  .library-page > .empty h3{font-size:19px;line-height:1.3;margin:10px 0 5px}
+  .library-page > .empty p{font-size:13px;line-height:1.5;margin:0}
+  .library-page > .empty svg{width:28px;height:28px}
+}
