@@ -365,7 +365,9 @@ function App(){
     const token=privateToken;
     const next=progressWrites.current.get(bookId)??Promise.resolve();
     const write=next.catch(()=>{}).then(async()=>{
-      if(sessionEpoch.current!==epoch)return;
+      // A later page turn supersedes queued positions, including after a
+      // parent account switch. Only the latest pending page is sent.
+      if(sessionEpoch.current!==epoch||pendingProgress.current.get(bookId)!==page)return;
       try{
         await updatePrivateReadingProgress(API,token,bookId,page);
         if(sessionEpoch.current===epoch&&pendingProgress.current.get(bookId)===page){pendingProgress.current.delete(bookId);persistPending();}
