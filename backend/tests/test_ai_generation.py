@@ -133,7 +133,7 @@ def test_malformed_provider_output_is_rejected(raw):
 
 
 def test_provider_markdown_json_fence_is_supported():
-    raw="\x60\x60\x60json\\n"+valid_story("en")+"\\n\x60\x60\x60"
+    raw="\x60\x60\x60json\n"+valid_story("en")+"\n\x60\x60\x60"
     result=validate_generated_story(raw,"en")
     assert result.language=="en" and len(result.pages)==8
 
