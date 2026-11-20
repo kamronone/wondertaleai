@@ -24,6 +24,7 @@ import { printFullBook } from "./print_book";
 import { nextReaderPage, resumeReaderPage, swipeDirection } from "./reader_navigation";
 import { discoverBooks, type LibrarySort } from "./library_discovery";
 import { getReadingAchievements } from "./reading_achievements";
+import { StoryBranchQuest } from "./StoryBranchQuest";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -1018,6 +1019,7 @@ function App(){
         {isDemoBook(active)&&page===active.pages.length-1&&<div className="interactive-endings"><strong>{t.interactiveEnding}</strong>
           <div role="group" aria-label={t.interactiveEnding}>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} aria-pressed={active.endingChoice===id} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
         </div>}
+        {page===active.pages.length-1&&<StoryBranchQuest key={active.id} lang={active.language||lang}/>}
         {page===active.pages.length-1&&<section className="reading-word-game" aria-label={({ru:"Игра после сказки",uz:"Ertakdan keyingi o'yin",en:"After-story game"} as const)[lang]}>
           <strong>{({ru:"Игра: найди слово из сказки",uz:"O'yin: ertakdagi so'zni top",en:"Game: find a word from the story"} as const)[lang]}</strong>
           {(()=>{
