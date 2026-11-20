@@ -54,3 +54,19 @@ test("Empty books safely restore to the first page",()=>{
   {id:"empty",pages:[]}
  ]).get("empty"),0);
 });
+
+
+test("A later library refresh repairs the page of a book first missing at login",()=>{
+ const offline=new Map([["delayed-book",28]]);
+ const initial=normalizePendingProgress(offline,[]);
+ assert.equal(initial.get("delayed-book"),28);
+ const refreshed=normalizePendingProgress(initial,[{id:"delayed-book",pages:[1,2,3,4,5,6]}]);
+ assert.equal(refreshed.get("delayed-book"),5);
+});
+
+test("Private-library refresh persists repaired pending pages before merge and replay",async()=>{
+ const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
+ assert.match(app,/const repairedProgress=normalizePendingProgress\(pendingProgress\.current,remote\)/);
+ assert.match(app,/pendingProgress\.current=repairedProgress;\s*persistPending\(\);/);
+ assert.match(app,/const merged=remote\.map\(book=>\(\{/);
+});
