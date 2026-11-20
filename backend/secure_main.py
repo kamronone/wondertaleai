@@ -179,7 +179,7 @@ def ready():
             raise RuntimeError("Unexpected database result")
     except Exception:
         raise HTTPException(503,"Database is unavailable")
-    return {"ok":True,"database":"connected","email_configured":mail_configured()}
+    return {"ok":True,"database":"connected","email_configured":mail_configured(),"registration_enabled":os.getenv("ENABLE_REGISTRATION","false").lower()=="true" and (not verification_required() or mail_configured()),"password_recovery_enabled":mail_configured()}
 
 
 LOGIN_WINDOW_SECONDS=15*60
