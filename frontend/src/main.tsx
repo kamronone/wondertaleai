@@ -11,6 +11,7 @@ import { AccountAction } from "./AccountAction";
 import { ParentAccount } from "./ParentAccount";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
+import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -68,6 +69,14 @@ function App(){
   const pendingProgress=useRef(new Map<string,number>());
   const pendingFavorites=useRef(new Map<string,boolean>());
   const flushing=useRef(false);
+  const offlineOwner=useRef<string|null>(null);
+  const persistPending=()=>{
+    if(!offlineOwner.current)return;
+    writePendingMetadata(offlineOwner.current,{
+      progress:Object.fromEntries(pendingProgress.current),
+      favorites:Object.fromEntries(pendingFavorites.current)
+    });
+  };
   const [remoteBooks,setRemoteBooks]=useState<RemoteBook[]>([]);
   const [syncBusy,setSyncBusy]=useState(false);
   const [syncMessage,setSyncMessage]=useState("");
@@ -114,17 +123,29 @@ function App(){
   const loginParent=async(token:string):Promise<boolean>=>{
     const epoch=++sessionEpoch.current;
     pendingProgress.current.clear();pendingFavorites.current.clear();
+    offlineOwner.current=null;
     if(!API||!await validateSession(API,token)||sessionEpoch.current!==epoch)return false;
     try{
+      const owner=await getAuthenticatedOwner(API,token);
       const remote=await loadPrivateBooks(API,token);
       if(sessionEpoch.current!==epoch)return false;
-      setPrivateToken(token);setRemoteBooks(remote);setBooks(remote);setActive(null);setSyncMessage("");
+      offlineOwner.current=owner;
+      const pending=readPendingMetadata(owner);
+      pendingProgress.current=new Map(Object.entries(pending.progress));
+      pendingFavorites.current=new Map(Object.entries(pending.favorites));
+      const merged=remote.map(book=>({
+        ...book,
+        favorite:pendingFavorites.current.get(book.id)??book.favorite,
+        lastPage:pendingProgress.current.get(book.id)??book.lastPage
+      }));
+      setPrivateToken(token);setRemoteBooks(merged);setBooks(merged);setActive(null);setSyncMessage("");
       return true;
     }catch{return false;}
   };
   const logoutParent=()=>{
     ++sessionEpoch.current;
     pendingProgress.current.clear();pendingFavorites.current.clear();
+    offlineOwner.current=null;
     const token=privateToken;
     setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setSyncMessage("");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
@@ -209,10 +230,11 @@ function App(){
       if(sessionEpoch.current!==epoch)return;
       try{
         await updatePrivateReadingProgress(API,token,bookId,page);
-        if(pendingProgress.current.get(bookId)===page)pendingProgress.current.delete(bookId);
+        if(pendingProgress.current.get(bookId)===page){pendingProgress.current.delete(bookId);persistPending();}
       }catch(error){
         if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
           pendingProgress.current.set(bookId,page);
+          persistPending();
           setBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
           setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,lastPage:page}:book));
         }
@@ -243,7 +265,7 @@ function App(){
           if(pendingProgress.current.get(id)!==position)continue;
           try{
             await updatePrivateReadingProgress(API,privateToken,id,position);
-            if(pendingProgress.current.get(id)===position)pendingProgress.current.delete(id);
+            if(pendingProgress.current.get(id)===position){pendingProgress.current.delete(id);persistPending();}
           }catch{break;}
         }
         for(const [id,favorite] of [...pendingFavorites.current]){
@@ -251,7 +273,7 @@ function App(){
           if(pendingFavorites.current.get(id)!==favorite)continue;
           try{
             await setPrivateFavorite(API,privateToken,id,favorite);
-            if(pendingFavorites.current.get(id)===favorite)pendingFavorites.current.delete(id);
+            if(pendingFavorites.current.get(id)===favorite){pendingFavorites.current.delete(id);persistPending();}
           }catch{break;}
         }
       }finally{flushing.current=false;}
@@ -335,9 +357,11 @@ function App(){
       try{
         await setPrivateFavorite(API,privateToken,bookId,favorite);
         pendingFavorites.current.delete(bookId);
+        persistPending();
       }catch(error){
         if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
           pendingFavorites.current.set(bookId,favorite);
+          persistPending();
           setBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
           setRemoteBooks(prev=>prev.map(book=>book.id===bookId?{...book,favorite}:book));
           setActive(prev=>prev?.id===bookId?{...prev,favorite}:prev);
