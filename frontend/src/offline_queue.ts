@@ -19,10 +19,16 @@ export function readPendingMetadata(owner:string):PendingMetadata{
   const result=empty();
   const progress=item.progress&&typeof item.progress==="object"&&!Array.isArray(item.progress)?item.progress:{};
   const favorites=item.favorites&&typeof item.favorites==="object"&&!Array.isArray(item.favorites)?item.favorites:{};
-  for(const [id,page] of Object.entries(progress).slice(0,100))
-   if(validId(id)&&Number.isInteger(page)&&page>=0&&page<=99)result.progress[id]=page;
-  for(const [id,favorite] of Object.entries(favorites).slice(0,100))
-   if(validId(id)&&typeof favorite==="boolean")result.favorites[id]=favorite;
+  // Reject invalid records before applying the capacity limit: otherwise
+  // 100 corrupt entries at the start hide every later valid offline edit.
+  const safeProgress=Object.entries(progress)
+   .filter(([id,page])=>validId(id)&&Number.isInteger(page)&&page>=0&&page<=99)
+   .slice(-100);
+  const safeFavorites=Object.entries(favorites)
+   .filter(([id,favorite])=>validId(id)&&typeof favorite==="boolean")
+   .slice(-100);
+  for(const [id,page] of safeProgress)result.progress[id]=page as number;
+  for(const [id,favorite] of safeFavorites)result.favorites[id]=favorite as boolean;
   return result;
  }catch{return empty();}
 }
