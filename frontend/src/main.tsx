@@ -19,7 +19,7 @@ import { translateSelectedStoryPrompt, leaveClassicStoryPrompt, shouldDetachClas
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
-import { nextReaderPage, swipeDirection } from "./reader_navigation";
+import { nextReaderPage, resumeReaderPage, swipeDirection } from "./reader_navigation";
 import { discoverBooks, type LibrarySort } from "./library_discovery";
 import { getReadingAchievements } from "./reading_achievements";
 
@@ -334,7 +334,7 @@ function App(){
   },[page,tab,active?.id]);
   useEffect(()=>{if(!privateToken)setBooks(getDemoBooks());},[privateToken]);
   const openBook=(book:Book)=>{
-    setEditingPage(false);setActive(book);setPage(Math.max(0,Math.min(book.lastPage||0,book.pages.length-1)));setTab("reader");setError("");
+    setEditingPage(false);setActive(book);setPage(resumeReaderPage(book.lastPage,book.pages.length));setTab("reader");setError("");
   };
   useEffect(()=>{
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
