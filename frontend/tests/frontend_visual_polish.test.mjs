@@ -59,3 +59,19 @@ test("Started and finished story tiles render bounded reading progress",()=>{
  assert.match(css,/\.shell \.book-tile \.book-progress-track\{/);
  assert.match(css,/\.shell \.book-tile \.book-progress-track>span/);
 });
+
+
+test("Classic covers show the catalogue age guidance without replacing illustrations",()=>{
+ assert.match(app,/className="classic-age-badge" aria-hidden="true">\{item\.minAge\?\?5\}\+/);
+ assert.match(app,/aria-label=\{action\+": "\+item\.title\[lang\]\+" · "\+\(item\.minAge\?\?5\)\+"\+"\}/);
+ assert.match(app,/src=\{"\/images\/classics\/"\+item\.id\+imageExtension\}/);
+ assert.match(app,/onError=\{\(\)=>setCoverFailed\(true\)\}/);
+ assert.match(css,/\.shell \.classic-card \.classic-age-badge\{/);
+});
+
+test("Classic tiles remain compact and readable on small phones",()=>{
+ assert.match(css,/\.shell \.classic-card \.classic-info small\{[\s\S]*?-webkit-line-clamp:3/);
+ assert.match(css,/@media\(max-width:620px\)\{\s*\.shell \.classic-grid/);
+ assert.match(css,/\.shell \.classic-card \.classic-info strong\{font-size:12px;line-height:1\.3\}/);
+ assert.match(css,/\.shell \.classic-card:focus-visible\{/);
+});
