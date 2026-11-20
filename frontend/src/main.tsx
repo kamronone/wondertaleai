@@ -71,6 +71,8 @@ function App(){
   const [privateToken,setPrivateToken]=useState<string|null>(null);
   // Prevent late responses from a previous parent session entering the current account.
   const sessionEpoch=useRef(0);
+  // Failed login attempts must not invalidate an already authenticated session.
+  const loginAttempt=useRef(0);
   // Serialize writes per book so rapid page turns cannot overwrite newer progress.
   const progressWrites=useRef(new Map<string,Promise<void>>());
   // A favorite endpoint toggles its state, so never overlap requests for one book.
@@ -167,13 +169,14 @@ function App(){
   const loginParent=async(token:string):Promise<boolean>=>{
     // Account switching must not discard the previous parent's offline edits.
     persistPending();
-    const epoch=++sessionEpoch.current;
-    // Keep the current account's offline queue intact if the new login fails.
-    if(!API||!await validateSession(API,token)||sessionEpoch.current!==epoch)return false;
+    const attempt=++loginAttempt.current;
+    // Keep the current account and its sync workers intact if login fails.
+    if(!API||!await validateSession(API,token)||loginAttempt.current!==attempt)return false;
     try{
       const owner=await getAuthenticatedOwner(API,token);
       const remote=await loadPrivateBooks(API,token);
-      if(sessionEpoch.current!==epoch)return false;
+      if(loginAttempt.current!==attempt)return false;
+      ++sessionEpoch.current;
       // Only replace the current owner's queue after the new session and library
       // have both been validated. A failed login must not erase offline edits.
       pendingProgress.current.clear();pendingFavorites.current.clear();
@@ -193,6 +196,7 @@ function App(){
     }catch{return false;}
   };
   const logoutParent=()=>{
+    ++loginAttempt.current;
     // Preserve unsynced reader progress for this parent before clearing in-memory state.
     persistPending();
     ++sessionEpoch.current;
