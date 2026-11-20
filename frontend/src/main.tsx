@@ -10,6 +10,7 @@ import { ClassicCover } from "./ClassicCover";
 import { AccountAction } from "./AccountAction";
 import { PricingPlans } from "./PricingPlans";
 import { ParentAccount } from "./ParentAccount";
+import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
@@ -648,6 +649,7 @@ function App(){
         {heading(t.magic,t.magicDesc)}
         <div className="wizard-progress" aria-label="Create story"><span className="progress-step active"><span>1</span>{t.heroStep}</span><span className="progress-line"/><span className="progress-step"><span>2</span>{t.storyStep}</span><span className="progress-line"/><span className="progress-step"><span>3</span>{t.createBook}</span></div><form onSubmit={generate} className="form-card">
           <div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
+          {privateToken&&API&&<StoryChildPicker key={privateToken} api={API} session={privateToken} lang={lang} onSelect={child=>{if(child){setName(child.nickname);setAge(String(child.age));}}}/>}
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
           <label className="second-hero-field">{t.extraHero}<input maxLength={45} value={secondHero} onChange={e=>setSecondHero(e.target.value)} placeholder={t.extraHeroHint}/></label>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
