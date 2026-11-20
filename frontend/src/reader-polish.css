@@ -235,3 +235,20 @@
   .create-page .wizard-step-actions>button{font-size:11px;padding:9px 6px;gap:4px}
   .create-page .wizard-step-actions>button svg{width:15px;height:15px}
 }
+
+/* Validation is shown beside hero inputs rather than only after the final step. */
+.create-page .wizard-inline-error{
+  margin:5px 0 12px;
+  padding:9px 11px;
+  border-left:3px solid #a74d62;
+  border-radius:8px;
+  background:#fff3f5;
+  color:#833349;
+  font-size:12px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.create-page .second-hero-field input[aria-invalid="true"]{
+  border-color:#a74d62;
+  box-shadow:0 0 0 2px rgba(167,77,98,.10);
+}
