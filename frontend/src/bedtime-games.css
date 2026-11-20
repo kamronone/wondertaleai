@@ -62,3 +62,15 @@
 .reader-page .story-page.book-style-storybook.reader-night{border-color:#62567c;box-shadow:none}
 @media(max-width:420px){.reader-page .reader-book-style span{width:100%}}
 @media print{.reader-page .reader-book-style{display:none!important}}
+
+/* Lightweight guidance only, explicitly not an access-control system. */
+.parent-reading-guide{margin:20px 0;padding:16px;border:1px solid #e0d3e9;border-radius:16px;background:#fbf9ff;color:#4c3964}
+.parent-reading-guide h3{margin:0 0 7px;font-size:17px}
+.parent-reading-guide p{font-size:13px;line-height:1.55;margin:7px 0 12px}
+.parent-reading-guide label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700}
+.parent-reading-guide select{min-height:44px;min-width:96px;font-size:16px;color:#503967;border:1px solid #d5c4e6;border-radius:10px;padding:8px 10px;background:#fff}
+.parent-reading-guide .parent-reading-advice{padding:12px;border-radius:11px;background:#fff;margin:12px 0}
+.parent-reading-guide .parent-reading-advice strong{font-size:12px}
+.parent-reading-guide .parent-reading-advice p{margin:5px 0 12px}
+.parent-reading-guide small{display:block;color:#786c83;font-size:11px;line-height:1.55}
+@media(max-width:380px){.parent-reading-guide{padding:12px}}
