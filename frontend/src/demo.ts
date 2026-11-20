@@ -125,11 +125,15 @@ export const saveDemoBooks=(books:DemoBook[])=>{
      deviceWriteAttempted=true;
      if(nextDevice===null)localStorage.removeItem(deviceKey);
      else localStorage.setItem(deviceKey,nextDevice);
+     // Some embedded/private browser storage implementations can silently
+     // reject writes. Never tell the reader a book was saved without readback.
+     if(localStorage.getItem(deviceKey)!==nextDevice)throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
    }
    if(!sessionUnchanged){
      sessionWriteAttempted=true;
      if(nextSession===null)sessionStorage.removeItem(sessionKey);
      else sessionStorage.setItem(sessionKey,nextSession);
+     if(sessionStorage.getItem(sessionKey)!==nextSession)throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
    }
  }catch{
    // Roll back only stores that were touched. An unchanged Safari storage
