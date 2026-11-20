@@ -59,6 +59,22 @@ test("Welcome screen stays uncluttered while the header retains language selecti
   assert.match(uzCheck,/Onboarding must not show the language selector/);
 });
 
+test("Onboarding has a single-tap skip path, without changing saved language",()=>{
+  assert.match(app,/className="welcome-skip" onClick=\{\(\)=>finishOnboarding\("home"\)\}/);
+  assert.match(app,/const finishOnboarding=\(destination:"home"\|"account"\)=>\{/);
+  assert.match(app,/localStorage\.setItem\("wondertale-onboarding-v1","seen"\)/);
+  assert.doesNotMatch(app,/id="welcome-language-select"/);
+  assert.match(app,/className="language-control"/);
+  assert.match(css,/\.welcome-screen \.welcome-skip\{/);
+  assert.match(css,/\.welcome-screen \.welcome-skip:focus-visible\{/);
+});
+
+test("Small iPhones retain readable welcome controls without oversized buttons",()=>{
+  assert.match(css,/@media\(max-width:620px\)\{\s*\.welcome-screen \.welcome-content/);
+  assert.match(css,/\.welcome-screen \.welcome-primary,\s*\.welcome-screen \.welcome-secondary\{[\s\S]*?min-height:44px;max-width:360px/);
+  assert.match(css,/@media\(max-height:660px\)\{/);
+});
+
 test("Honest illustrations copy does not promise unavailable photo-based generation",()=>{
   assert.doesNotMatch(i18n,/В AI-режиме иллюстрации создаются по фотографии малыша/);
   assert.doesNotMatch(i18n,/In AI mode, pictures are inspired by your child's photo/);
