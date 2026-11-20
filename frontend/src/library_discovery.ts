@@ -32,7 +32,13 @@ export function discoverBooks<T extends DiscoverableBook>(
       return title || a.id.localeCompare(b.id);
     }
     if(sort==="continue"){
-      const progress=Number(b.lastPage||0)-Number(a.lastPage||0);
+      // Relative progress is comparable across books with different page counts.
+      // A book on page 4 of 5 is further along than page 5 of 20.
+      const fraction=(book:T)=>{
+        const last=Math.max(0,book.pages.length-1);
+        return last===0?0:Math.min(last,Math.max(0,Number(book.lastPage)||0))/last;
+      };
+      const progress=fraction(b)-fraction(a);
       if(progress)return progress;
     }
     return b.created_at.localeCompare(a.created_at)||a.id.localeCompare(b.id);
