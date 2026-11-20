@@ -1,13 +1,18 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
 const CACHE = "wondertale-public-v4";
-const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/images/wondertale-hero.webp", "/images/wondertale-welcome.png"];
+const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const OPTIONAL_ART = ["/images/wondertale-hero.webp", "/images/wondertale-welcome.png"];
 const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/|images\/features\/|images\/wondertale-(?:hero\.webp|welcome\.(?:png|svg))$)/;
 const PRIVATE_PATH = /^\/(?:api\/|auth\/|account\/)/;
 
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(cache => cache.addAll(CORE))
+      .then(async cache => {
+        await cache.addAll(CORE);
+        // A missing optional illustration must not prevent the PWA from installing.
+        await Promise.allSettled(OPTIONAL_ART.map(path => cache.add(path)));
+      })
       .then(() => self.skipWaiting())
   );
 });
