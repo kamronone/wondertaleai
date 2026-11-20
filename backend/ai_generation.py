@@ -48,6 +48,8 @@ class GeneratedStory(BaseModel):
 
 def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,20]=8)->GeneratedStory:
     try:
+        if not isinstance(raw,str):
+            raise ValueError("Provider output must be text")
         raw=raw.strip()
         if raw.startswith("```"):
             raw=raw.split("\n",1)[1].rsplit("```",1)[0].strip()
