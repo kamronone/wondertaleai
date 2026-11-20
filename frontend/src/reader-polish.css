@@ -612,3 +612,40 @@
   .continue-story-card .continue-story-progress>span,
   .shell .book-tile .book-progress-track>span{transition:none!important}
 }
+
+
+/* Classic library: readable compact cards and age guidance on real cover art. */
+.shell .classic-card .classic-cover{isolation:isolate}
+.shell .classic-card .classic-age-badge{
+  position:absolute;top:8px;right:8px;z-index:3;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:25px;min-width:30px;padding:3px 7px;
+  border-radius:9px;border:1px solid #ffffffa0;
+  background:#fffaf4ee;color:#51356d;
+  box-shadow:0 2px 8px #20163826;
+  font-size:11px;font-weight:800;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.shell .classic-card .classic-info{min-width:0}
+.shell .classic-card .classic-info strong,
+.shell .classic-card .classic-info small{overflow-wrap:anywhere}
+.shell .classic-card .classic-info small{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;
+  overflow:hidden;line-height:1.45;
+}
+.shell .classic-card .classic-link{margin-top:auto;padding-top:8px}
+.shell .classic-card:focus-visible{outline:3px solid #8051b5;outline-offset:3px}
+@media(max-width:620px){
+  .shell .classic-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .shell .classic-card{border-radius:13px}
+  .shell .classic-card .classic-cover{height:auto;aspect-ratio:4/3}
+  .shell .classic-card .classic-info{padding:9px;gap:5px}
+  .shell .classic-card .classic-info strong{font-size:12px;line-height:1.3}
+  .shell .classic-card .classic-info small{font-size:10px;line-height:1.4}
+  .shell .classic-card .classic-link{font-size:10px;padding-top:5px;gap:4px}
+  .shell .classic-card .classic-age-badge{top:6px;right:6px;min-height:23px;min-width:27px;font-size:10px}
+}
+@media(max-width:350px){
+  .shell .classic-grid{gap:7px}
+  .shell .classic-card .classic-info{padding:8px}
+}
