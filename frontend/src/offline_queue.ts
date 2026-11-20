@@ -1,0 +1,42 @@
+// Account-scoped, bounded metadata queue. Never store tokens or story content.
+export type PendingMetadata={progress:Record<string,number>;favorites:Record<string,boolean>};
+const prefix="wondertale:pending-metadata:v1:";
+const empty=():PendingMetadata=>({progress:{},favorites:{}});
+const validId=(id:string)=>/^[a-zA-Z0-9_-]{1,128}$/.test(id);
+const key=(owner:string)=>prefix+owner;
+export function readPendingMetadata(owner:string):PendingMetadata{
+ if(!validId(owner))return empty();
+ try{
+  const raw=localStorage.getItem(key(owner));
+  if(!raw||raw.length>16000)return empty();
+  const data:unknown=JSON.parse(raw);
+  if(!data||typeof data!=="object")return empty();
+  const item=data as Partial<PendingMetadata>;
+  const result=empty();
+  for(const [id,page] of Object.entries(item.progress??{}).slice(0,100))
+   if(validId(id)&&Number.isInteger(page)&&page>=0&&page<=99)result.progress[id]=page;
+  for(const [id,favorite] of Object.entries(item.favorites??{}).slice(0,100))
+   if(validId(id)&&typeof favorite==="boolean")result.favorites[id]=favorite;
+  return result;
+ }catch{return empty();}
+}
+export function writePendingMetadata(owner:string,data:PendingMetadata):void{
+ if(!validId(owner))return;
+ try{
+  const progress=Object.fromEntries(Object.entries(data.progress).filter(([id,page])=>validId(id)&&Number.isInteger(page)&&page>=0&&page<=99).slice(-100));
+  const favorites=Object.fromEntries(Object.entries(data.favorites).filter(([id,value])=>validId(id)&&typeof value==="boolean").slice(-100));
+  if(!Object.keys(progress).length&&!Object.keys(favorites).length)localStorage.removeItem(key(owner));
+  else localStorage.setItem(key(owner),JSON.stringify({progress,favorites}));
+ }catch{/* Storage can be unavailable in private browsing. */}
+}
+export async function getAuthenticatedOwner(api:string,token:string):Promise<string>{
+ const response=await fetch(api+"/api/me",{
+  headers:{Authorization:"Bearer "+token},
+  signal:AbortSignal.timeout(15000)
+ });
+ if(!response.ok)throw Error("Unable to verify account");
+ const data:unknown=await response.json();
+ const id=(data as {id?:unknown})?.id;
+ if(typeof id!=="string"||!validId(id))throw Error("Invalid account identifier");
+ return id;
+}
