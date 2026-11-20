@@ -113,3 +113,18 @@ test("Onboarding slides can receive keyboard focus without hijacking language co
   assert.match(app,/className="welcome-screen"[^>]*tabIndex=\{0\}/);
   assert.match(app,/target\.closest\("button, select, input, textarea, \[role='button'\]"\)/);
 });
+
+
+test("Expired parent sessions persist offline edits before clearing account data",()=>{
+  const expirationHandlers=[...app.matchAll(/if\(error instanceof Error&&error\.message==="Private account authorization expired"\)\{([\s\S]*?)\n\s*setSyncMessage\(/g)];
+  assert.ok(expirationHandlers.length>=2,"Transfer and library-refresh handlers must both be covered");
+  for(const [,body] of expirationHandlers){
+    const persist=body.indexOf("persistPending();");
+    const clear=body.indexOf("pendingProgress.current.clear();pendingFavorites.current.clear();");
+    assert.ok(persist>=0&&clear>persist,"Persist pending changes before clearing them");
+    assert.match(body,/offlineOwner\.current=null/);
+    assert.match(body,/setPrivateToken\(null\)/);
+    assert.match(body,/setActive\(null\)/);
+    assert.ok(body.includes('setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);'));
+  }
+});
