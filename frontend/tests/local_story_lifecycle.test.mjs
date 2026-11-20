@@ -77,3 +77,38 @@ test("A failed subsequent write leaves the original saved story intact",()=>with
  assert.equal(device.getItem("wondertale-opt-in-books-v1"),previous);
  assert.equal(getDemoBooks().length,1);
 }));
+
+test("A quota error while writing session books restores both storage areas",()=>withBrowserStores(({device,session})=>{
+ const saved=create(true);
+ const transient=create(false);
+ const oldDevice=device.getItem("wondertale-opt-in-books-v1");
+ const oldSession=session.getItem("wondertale-preview-books-v1");
+ const original=session.setItem;
+ session.setItem=()=>{throw new Error("QuotaExceededError");};
+ try{
+  assert.throws(()=>saveDemoBooks(getDemoBooks().map(book=>
+   book.id===saved.id?{...book,lastPage:2}:book
+  )),/LOCAL_LIBRARY_SAVE_FAILED/);
+ }finally{session.setItem=original;}
+ assert.equal(device.getItem("wondertale-opt-in-books-v1"),oldDevice);
+ assert.equal(session.getItem("wondertale-preview-books-v1"),oldSession);
+ assert.deepEqual(new Set(getDemoBooks().map(b=>b.id)),new Set([saved.id,transient.id]));
+ assert.equal(getDemoBooks().find(book=>book.id===saved.id)?.lastPage,0);
+}));
+
+test("A quota error on the persistent store cannot erase temporary books",()=>withBrowserStores(({device,session})=>{
+ const saved=create(true);
+ const transient=create(false);
+ const oldDevice=device.getItem("wondertale-opt-in-books-v1");
+ const oldSession=session.getItem("wondertale-preview-books-v1");
+ const original=device.setItem;
+ device.setItem=()=>{throw new Error("QuotaExceededError");};
+ try{
+  assert.throws(()=>saveDemoBooks(getDemoBooks().map(book=>
+   book.id===transient.id?{...book,lastPage:3}:book
+  )),/LOCAL_LIBRARY_SAVE_FAILED/);
+ }finally{device.setItem=original;}
+ assert.equal(device.getItem("wondertale-opt-in-books-v1"),oldDevice);
+ assert.equal(session.getItem("wondertale-preview-books-v1"),oldSession);
+ assert.deepEqual(new Set(getDemoBooks().map(b=>b.id)),new Set([saved.id,transient.id]));
+}));
