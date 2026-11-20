@@ -10,7 +10,7 @@ assert.ok(start >= 0 && end > start, "Local storage validator and writer exist")
 const isolated = 'const deviceKey="wondertale-opt-in-books-v1"; const sessionKey="wondertale-preview-books-v1";\n' +
   source.slice(start, end);
 const { code } = await transform(isolated, { loader: "ts", format: "esm", target: "es2022" });
-const { saveDemoBooks } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
+const { isValidLocalBook, saveDemoBooks } = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
 
 function fakeStore() {
   const data = new Map();
@@ -170,3 +170,9 @@ test("Existing duplicate book IDs within one store are not silently dropped", ()
   assert.equal(local.getItem("wondertale-opt-in-books-v1"), before);
   assert.equal(session.getItem("wondertale-preview-books-v1"), null);
 }));
+
+test("All normal test fixtures have valid local-book IDs and structure", () => {
+  assert.ok(makeBooks(20).every(isValidLocalBook));
+  assert.ok(makeBooks(20, false).map((book, i)=>({...book,id:"local-session-"+i})).every(isValidLocalBook));
+  assert.equal(isValidLocalBook({...makeBooks(1)[0],id:"session-0"}), false);
+});
