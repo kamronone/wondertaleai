@@ -11,7 +11,7 @@ const imagesSource = await readFile(new URL("../src/book_images.ts", import.meta
 const { code: imagesCode } = await transform(imagesSource, { loader: "ts", format: "esm", target: "es2022" });
 const { resolveBookImage } = await import("data:text/javascript;base64," + Buffer.from(imagesCode).toString("base64"));
 
-function serviceWorkerHarness({ optionalFailure = false } = {}) {
+function serviceWorkerHarness({ optionalFailure = false, shellHtml = "" } = {}) {
   const listeners = new Map();
   const cached = [];
   const written = [];
@@ -22,7 +22,7 @@ function serviceWorkerHarness({ optionalFailure = false } = {}) {
       if (optionalFailure) throw Error("Optional art unavailable");
       cached.push(path);
     },
-    match: async () => null,
+    match: async request => request === "/index.html" ? { text: async () => shellHtml } : null,
     put: async (request) => { written.push(request.url); }
   };
   const self = {
@@ -64,6 +64,20 @@ test("PWA installation does not fail when optional artwork is unavailable", asyn
   await assert.doesNotReject(installation);
   assert.ok(cached.includes("/index.html"));
   assert.ok(cached.includes("/manifest.webmanifest"));
+});
+
+test("PWA precaches same-origin Vite JS/CSS on first install", async () => {
+  const shellHtml = '<!doctype html><script type="module" src="/assets/index-A12.js"></script>' +
+    '<link rel="stylesheet" href="/assets/index-BC3.css">' +
+    '<script src="https://other.example/secret.js"></script>' +
+    '<script src="/api/private-token.js"></script>';
+  const { listeners, cached } = serviceWorkerHarness({ shellHtml });
+  let installation;
+  listeners.get("install")({ waitUntil(promise) { installation = promise; } });
+  await installation;
+  assert.ok(cached.includes("/assets/index-A12.js"));
+  assert.ok(cached.includes("/assets/index-BC3.css"));
+  assert.ok(!cached.some(url => url.includes("secret.js") || url.includes("private-token.js")));
 });
 
 test("PWA never intercepts account APIs, authenticated requests, or other origins", () => {
