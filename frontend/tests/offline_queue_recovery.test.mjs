@@ -82,3 +82,44 @@ test("Reader calls the isolated replay engine for both progress and favorites",a
  assert.match(flush,/sendFavorite:\(id,favorite\)=>setPrivateFavorite/);
  assert.match(flush,/isActive:\(\)=>!disposed&&sessionEpoch\.current===epoch&&navigator\.onLine/);
 });
+
+test("Maximum valid metadata queue survives an iPhone PWA restart",()=>{
+ withStorage(storage=>{
+  const ids=Array.from({length:100},(_,i)=>
+   ("book_"+String(i).padStart(3,"0")).padEnd(128,"x")
+  );
+  const progress=Object.fromEntries(ids.map((id,i)=>[id,i%100]));
+  const favorites=Object.fromEntries(ids.map((id,i)=>[id,i%2===0]));
+  writePendingMetadata("parent-large-library",{progress,favorites});
+  const raw=storage.get("wondertale:pending-metadata:v1:parent-large-library");
+  assert.ok(raw.length>16000,"A full queue must exercise the former 16 KB limit");
+  assert.ok(raw.length<=32768,"Metadata remains bounded");
+  assert.deepEqual(readPendingMetadata("parent-large-library"),{progress,favorites});
+  assert.deepEqual(readPendingMetadata("other-parent"),{progress:{},favorites:{}});
+ });
+});
+
+test("Oversized or malformed local metadata is rejected safely",()=>{
+ withStorage(storage=>{
+  const key="wondertale:pending-metadata:v1:parent";
+  storage.set(key,"x".repeat(32769));
+  assert.deepEqual(readPendingMetadata("parent"),{progress:{},favorites:{}});
+  storage.set(key,"{invalid-json");
+  assert.deepEqual(readPendingMetadata("parent"),{progress:{},favorites:{}});
+ });
+});
+
+test("Queue writer keeps the most recent hundred valid positions and favorites",()=>{
+ withStorage(()=>{
+  const ids=Array.from({length:120},(_,i)=>"book_"+String(i).padStart(3,"0"));
+  const progress=Object.fromEntries(ids.map((id,i)=>[id,i%100]));
+  const favorites=Object.fromEntries(ids.map((id,i)=>[id,i%2===0]));
+  writePendingMetadata("parent",{progress,favorites});
+  const recovered=readPendingMetadata("parent");
+  assert.equal(Object.keys(recovered.progress).length,100);
+  assert.equal(Object.keys(recovered.favorites).length,100);
+  assert.equal(recovered.progress[ids[0]],undefined);
+  assert.equal(recovered.progress[ids[119]],19);
+  assert.equal(recovered.favorites[ids[119]],false);
+ });
+});
