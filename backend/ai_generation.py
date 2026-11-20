@@ -42,6 +42,10 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
         raise ValueError("Model did not return a valid story") from exc
 
 def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
+    if not data.name.strip() or not data.idea.strip() or not data.style.strip():
+        raise ValueError("Story name, idea and style must not be blank")
+    if any(not hero.strip() for hero in data.other_heroes):
+        raise ValueError("Additional hero names must not be blank")
     if os.getenv("ENABLE_TEXT_AI","false").lower()!="true":
         raise RuntimeError("AI text generation is disabled")
     if not os.getenv("OPENAI_API_KEY") and client is None:
