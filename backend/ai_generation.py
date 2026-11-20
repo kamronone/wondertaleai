@@ -20,13 +20,18 @@ class GenerateStoryInput(BaseModel):
     pages_count: Literal[8,12,20]=8
     other_heroes: list[str]=Field(default_factory=list,max_length=3)
 
-    @field_validator("name","idea","style","classic_title")
+    @field_validator("name","idea","style")
     @classmethod
     def normalize_story_input(cls,value:str)->str:
         cleaned=value.strip()
         if not cleaned:
             raise ValueError("Story fields must not be blank")
         return cleaned
+
+    @field_validator("classic_title")
+    @classmethod
+    def normalize_optional_classic(cls,value:str)->str:
+        return value.strip()
 
     @field_validator("other_heroes")
     @classmethod
