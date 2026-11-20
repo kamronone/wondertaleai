@@ -1721,3 +1721,198 @@
     padding:10px 8px 12px!important;
   }
 }
+
+/* Profile UI 3.0: short, consistent account sections instead of oversized cards.
+   These late overrides deliberately supersede the older storybook theme. */
+.parent-account-page .parent-account-unavailable{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  text-align:left;
+  padding:13px 15px;
+  border-radius:14px;
+  box-shadow:none;
+}
+.parent-account-page .parent-account-status{
+  align-items:center;
+  gap:10px;
+  padding:0 0 8px;
+}
+.parent-account-page .parent-account-status>svg{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  padding:9px;
+}
+.parent-account-page .parent-account-status>div{gap:2px}
+.parent-account-page .parent-account-status strong{
+  font-size:14px;
+  line-height:1.25;
+}
+.parent-account-page .parent-account-status span{
+  font-size:11px;
+  line-height:1.4;
+}
+.parent-account-page .parent-account-help{
+  padding:0;
+  margin-top:3px;
+  border-top:1px solid #f0e7f4;
+}
+.parent-account-page .parent-account-help>summary{
+  min-height:43px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 2px;
+  font-size:12px;
+  font-weight:700;
+  color:#76529a;
+  line-height:1.3;
+  list-style:none;
+  cursor:pointer;
+}
+.parent-account-page .parent-account-help>summary::-webkit-details-marker{display:none}
+.parent-account-page .parent-account-help>summary .parent-account-expand{
+  flex:0 0 auto;
+  font-size:18px;
+  transition:transform .15s ease;
+}
+.parent-account-page .parent-account-help[open]>summary .parent-account-expand{
+  transform:rotate(180deg);
+}
+.parent-account-page .parent-account-help>p{
+  margin:0 0 9px!important;
+  padding:0 2px;
+  font-size:11px;
+  line-height:1.5;
+  color:#806d8e;
+}
+.parent-account-page .parent-account-reading-section{
+  margin:10px 0 0;
+  border-radius:13px;
+}
+.parent-account-page .parent-account-reading-section>summary{
+  min-height:48px;
+  padding:9px 13px;
+  font-size:12px;
+  gap:9px;
+}
+.parent-account-page .parent-account-reading-section .parent-account-footnote{
+  margin:0!important;
+  padding:0 14px 13px;
+  font-size:10px;
+  line-height:1.45;
+  text-align:left;
+}
+.profile-legal-menu{
+  margin:10px auto 0;
+  padding:12px;
+  gap:8px;
+  border-radius:14px;
+  box-shadow:none;
+}
+.profile-legal-heading h3{font-size:14px;line-height:1.25}
+.profile-legal-heading p{font-size:11px;line-height:1.4;margin-top:3px}
+.profile-legal-links > button{
+  min-height:46px;
+  padding:6px 9px;
+  gap:8px;
+  font-size:11px;
+  border-radius:10px;
+}
+.profile-legal-icon{
+  width:32px;
+  height:32px;
+  flex-basis:32px;
+  border-radius:9px;
+}
+.account-plans-disclosure{
+  margin:10px auto 6px;
+  border-radius:13px;
+}
+.account-plans-disclosure>summary{
+  min-height:48px;
+  font-size:12px;
+  padding:10px 12px;
+}
+.parent-account-page .parent-account-hero{
+  margin-bottom:10px;
+  padding:10px 12px;
+  gap:11px;
+  box-shadow:none;
+}
+.parent-account-page .parent-account-hero-copy h2{
+  font-size:18px;
+  line-height:1.22;
+}
+.parent-account-page .parent-account-author{
+  font-size:10px;
+  padding:4px 7px;
+}
+.site-legal-footer{
+  margin-top:0!important;
+  padding:9px 8px 12px!important;
+  font-size:11px;
+  line-height:1.4;
+}
+@media screen and (max-width:620px){
+  .parent-account-page{
+    padding:9px 12px 8px!important;
+    max-width:100%;
+  }
+  .parent-account-page .parent-account-hero{
+    grid-template-columns:66px minmax(0,1fr);
+    margin:0 0 10px;
+    padding:9px;
+    gap:10px;
+    border-radius:14px;
+  }
+  .parent-account-page .parent-account-hero-art{
+    width:66px;
+    height:66px;
+    border-radius:13px;
+  }
+  .parent-account-page .parent-account-hero-copy h2{font-size:16px}
+  .parent-account-page .parent-account-hero-copy p{font-size:10px}
+  .parent-account-page .parent-account-hero-copy .parent-account-eyebrow{font-size:9px}
+  .parent-account-page .parent-account-author{font-size:9px}
+  .parent-account-page .parent-account-unavailable,
+  .parent-account-page .parent-account-card{
+    padding:11px 12px;
+    border-radius:13px;
+  }
+  .parent-account-page .parent-account-unavailable{gap:0}
+  .parent-account-page .parent-account-reading-section{margin-top:9px}
+  .parent-account-page .parent-account-reading-section>summary{
+    min-height:46px;
+    padding:8px 11px;
+  }
+  .profile-legal-menu{
+    margin:9px 12px 0;
+    width:calc(100% - 24px);
+    padding:10px;
+    gap:7px;
+    border-radius:13px;
+  }
+  .profile-legal-links{gap:6px}
+  .profile-legal-links > button{
+    min-height:44px;
+    padding:5px 8px;
+    font-size:11px;
+  }
+  .profile-legal-icon{
+    flex-basis:30px;
+    width:30px;
+    height:30px;
+  }
+  .account-plans-disclosure{
+    margin:9px 12px 6px;
+    width:calc(100% - 24px);
+  }
+  .account-plans-disclosure>summary{min-height:46px;padding:8px 11px}
+}
+@media(prefers-reduced-motion:reduce){
+  .parent-account-page .parent-account-help>summary .parent-account-expand{transition:none}
+}
