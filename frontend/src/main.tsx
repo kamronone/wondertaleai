@@ -516,8 +516,13 @@ function App(){
         try{
           const refreshed=await loadPrivateBooks(API,privateToken);
           if(sessionEpoch.current===epoch){
-            setRemoteBooks(refreshed);
-            setBooks(refreshed);
+            const merged=refreshed.map(book=>({
+              ...book,
+              favorite:pendingFavorites.current.get(book.id)??book.favorite,
+              lastPage:pendingProgress.current.get(book.id)??book.lastPage
+            }));
+            setRemoteBooks(merged);
+            setBooks(merged);
           }
         }catch{
           // Keep the committed story on screen until a later library refresh.
