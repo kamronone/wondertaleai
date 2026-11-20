@@ -18,8 +18,8 @@ test("mobile footer follows content while the navigation stays fixed",()=>{
   assert.match(app,/return <div className="shell">/);
   assert.match(app,/<main>/);
   assert.match(app,/<footer className="site-legal-footer">/);
-  assert.match(app, /<nav aria-label=\{/);
-  assert.match(app, /onClick=\{\(\)=>openLegal\("privacy"\)\}/);
+  assert.match(app, /<ProfileLegalMenu lang=\{lang\} onOpen=\{openLegal\}\/>/);
+  assert.doesNotMatch(app, /<footer className="site-legal-footer">[\\s\\S]*?<nav aria-label=/);
   assert.match(polish,/\.shell \.mobile-tabbar\{[^}]*position:fixed!important/s);
   assert.match(polish,/\.reader-page \.pager\{margin-bottom:4px!important\}/);
 });
