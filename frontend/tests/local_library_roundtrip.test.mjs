@@ -9,6 +9,8 @@ const source = await readFile(new URL("../src/demo.ts", import.meta.url), "utf8"
 const start = source.indexOf("export const isValidLocalBook=");
 const end = source.indexOf("const illustration=", start);
 assert.ok(start >= 0 && end > start, "Browser library module exists");
+assert.ok(source.slice(start,end).includes("const hasDuplicateLocalIds="),
+  "Isolated library tests must include the duplicate-ID helper");
 const fragment = [
   'const sessionKey="wondertale-preview-books-v1";',
   'const deviceKey="wondertale-opt-in-books-v1";',
