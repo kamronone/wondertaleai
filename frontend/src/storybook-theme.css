@@ -719,3 +719,16 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
   .reader-page .story-page.reader-font-normal .story-text{font-size:16px}
   .reader-page .story-page.reader-font-large .story-text{font-size:20px}
 }
+
+/* Guided story wizard: one decision group at a time, not an endless form. */
+.create-page .wizard-progress{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px}
+.create-page .progress-step.completed{color:#5b3f95}
+.create-page .progress-step.completed>span{background:#e8dcfb;border-color:#baa2e7;color:#50318b}
+.create-page .wizard-step-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:18px}
+.create-page .wizard-step-actions .primary-button,.create-page .wizard-step-actions .secondary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:auto;max-width:100%;min-height:43px;padding:10px 16px;font-size:13px;border-radius:12px}
+.create-page .wizard-step-actions .primary-button.full{width:auto}
+@media(max-width:620px){
+  .create-page .wizard-progress{gap:5px}
+  .create-page .wizard-step-actions{gap:8px}
+  .create-page .wizard-step-actions button{flex:1 1 auto}
+}
