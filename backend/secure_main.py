@@ -386,11 +386,14 @@ def billing_status(owner:str=Depends(current_parent)):
     with connection() as c:
         row=sql(c,"SELECT used FROM generation_quota WHERE owner_id=? AND day=?",(owner,today)).fetchone()
         parent=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
+        global_row=sql(c,"SELECT used FROM generation_global_quota WHERE day=?",(today,)).fetchone()
     allowed={email.strip().lower() for email in os.getenv("AI_ALLOWED_EMAILS","").split(",") if email.strip()}
     pilot=bool(parent and parent[0].lower() in allowed)
     ai_ready=(os.getenv("ENABLE_TEXT_AI","false").lower()=="true" and bool(os.getenv("OPENAI_API_KEY")))
     used=max(0,int(row[0])) if row else 0
-    limit=2 if pilot and ai_ready else 0
+    daily_cap=max(0,min(200,int(os.getenv("MAX_AI_STORIES_PER_DAY","10"))))
+    global_remaining=max(0,daily_cap-(max(0,int(global_row[0])) if global_row else 0))
+    limit=2 if pilot and ai_ready and daily_cap>0 else 0
     return {
         "plan":"free",
         "subscription_status":"not_available",
@@ -398,7 +401,7 @@ def billing_status(owner:str=Depends(current_parent)):
         "ai_pilot_access":pilot and ai_ready,
         "ai_daily_limit":limit,
         "ai_used_today":used,
-        "ai_remaining_today":max(0,limit-used),
+        "ai_remaining_today":min(max(0,limit-used),global_remaining),
         "quota_period":"daily",
         "quota_timezone":"UTC",
         "pricing_is_proposed":True,
