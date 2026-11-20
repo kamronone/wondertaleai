@@ -27,7 +27,7 @@ export function PricingPlans({lang,api,session}:{lang:Lang;api:string;session:st
   return ()=>controller.abort();
  },[api,session]);
  const t=copy[lang];
- const activePlan=status&&(["free","plus","family"].includes(status.plan.toLowerCase())?status.plan.toUpperCase():"Unknown");
+ const activePlan=status?(typeof status.plan==="string"&&["free","plus","family"].includes(status.plan.toLowerCase())?status.plan.toUpperCase():({ru:"Неизвестен",uz:"Nomaʼlum",en:"Unknown"} as const)[lang]):null;
  const billingSummary=({ru:"Текущий план",uz:"Joriy tarif",en:"Current plan"} as const)[lang];
  const pendingLabel=({ru:"Планируемая функция",uz:"Rejalashtirilgan imkoniyat",en:"Planned feature"} as const)[lang];
  return <section className="pricing-section" aria-labelledby="pricing-heading">
