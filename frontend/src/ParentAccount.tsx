@@ -27,6 +27,13 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  const [recoveryEnabled,setRecoveryEnabled]=useState(false);
  const [readinessAttempt,setReadinessAttempt]=useState(0);
  useEffect(()=>{
+  const onOnline=()=>setReadinessAttempt(n=>n+1);
+  const onVisible=()=>{if(document.visibilityState==="visible")setReadinessAttempt(n=>n+1);};
+  window.addEventListener("online",onOnline);
+  document.addEventListener("visibilitychange",onVisible);
+  return ()=>{window.removeEventListener("online",onOnline);document.removeEventListener("visibilitychange",onVisible);};
+ },[]);
+ useEffect(()=>{
   if(!api){setApiReady(false);return;}
   const controller=new AbortController();
   setApiReady(null);
