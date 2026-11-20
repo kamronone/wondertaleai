@@ -1,6 +1,12 @@
 import type { DemoBook } from "./demo";
 
 export type RemoteBook=DemoBook & {mode:"private-account"};
+
+/** A missing book must not block synchronizing unrelated offline edits. */
+export class PrivateBookNotFoundError extends Error {
+ constructor(){super("Private book is not yet available");this.name="PrivateBookNotFoundError";}
+}
+
 export type TransferReport={uploaded:number;existing:number;failed:number;metadataFailed:number;serverBooks:RemoteBook[]};
 
 type ServerRow={id:string;title:string;child_name:string;age:number;story:string;created_at:string};
@@ -74,6 +80,7 @@ export async function updatePrivateReadingProgress(api:string,token:string,bookI
   method:"POST",body:JSON.stringify({page})
  });
  if(response.status===401||response.status===403)throw Error("Private account authorization expired");
+ if(response.status===404)throw new PrivateBookNotFoundError();
  if(!response.ok)throw Error("Unable to synchronize reading position");
 }
 export async function updatePrivateFavorite(api:string,token:string,bookId:string):Promise<boolean>{
@@ -89,6 +96,7 @@ export async function setPrivateFavorite(api:string,token:string,bookId:string,f
   method:"PUT",body:JSON.stringify({favorite})
  });
  if(response.status===401||response.status===403)throw Error("Private account authorization expired");
+ if(response.status===404)throw new PrivateBookNotFoundError();
  if(!response.ok)throw Error("Unable to synchronize favorite");
 }
 export async function validateSession(api:string,token:string):Promise<boolean>{
