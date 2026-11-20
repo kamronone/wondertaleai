@@ -73,7 +73,10 @@ def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
         raise RuntimeError("OPENAI_API_KEY is not configured")
     if client is None:
         from openai import OpenAI
-        client=OpenAI(timeout=75,max_retries=1)
+        # Keep the provider deadline below the frontend 120-second request limit.
+        # Automatic retries can outlive that limit and leave parents uncertain
+        # whether a story was created, so retry explicitly from the UI instead.
+        client=OpenAI(timeout=95,max_retries=0)
 
     lng={"ru":"Russian","uz":"Uzbek in the reformed 2026 Latin alphabet (Ş ş, Ç ç, Ö ö, Ğ ğ; never write old sh, ch, oʻ, gʻ letter forms)","en":"English"}[data.language]
     other=[name.strip() for name in data.other_heroes if name.strip()]
