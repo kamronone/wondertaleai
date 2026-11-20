@@ -26,7 +26,6 @@ import { discoverBooks, type LibrarySort } from "./library_discovery";
 import { getReadingAchievements } from "./reading_achievements";
 import { StoryBranchQuest } from "./StoryBranchQuest";
 import { CharacterBuilder } from "./CharacterBuilder";
-import { ReadingSessionTimer } from "./ReadingSessionTimer";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -1004,7 +1003,6 @@ function App(){
             <SlidersHorizontal size={16}/>{({ru:"Настройки",uz:"Sozlamalar",en:"Settings"} as const)[lang]}
           </button>}
         </div>
-        <ReadingSessionTimer key={active.id} lang={lang}/>
         <div className="bedtime-controls" role="group" aria-label={({ru:"Таймер перед сном",uz:"Uxlash taymeri",en:"Bedtime timer"} as const)[lang]}>
           <MoonStar size={16}/><span>{({ru:"Перед сном",uz:"Uyqu oldidan",en:"Bedtime"} as const)[lang]}</span>
           {([10,20] as const).map(minutes=><button type="button" key={minutes} aria-pressed={bedtimeUntil!==null&&Math.abs(bedtimeUntil-Date.now()-minutes*60000)<60000} onClick={()=>{setReaderNightMode(true);setReaderWarmMode(false);setBedtimeUntil(Date.now()+minutes*60000);}}>{minutes} {({ru:"мин",uz:"daq",en:"min"} as const)[lang]}</button>)}
