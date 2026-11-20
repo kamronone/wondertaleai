@@ -4,6 +4,7 @@ import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film
 import "./style.css";
 import "./storybook-theme.css";
 import "./reader-polish.css";
+import "./bedtime-games.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -184,6 +185,19 @@ function App(){
     try{return localStorage.getItem("wondertale_reader_warm_mode")==="true";}catch{return false;}
   });
   const [readerFocusMode,setReaderFocusMode]=useState(false);
+  const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
+  const [wordGameAnswer,setWordGameAnswer]=useState<string|null>(null);
+  useEffect(()=>{setWordGameAnswer(null);},[active?.id]);
+  useEffect(()=>{
+    if(bedtimeUntil===null)return;
+    const remaining=bedtimeUntil-Date.now();
+    if(remaining<=0){if("speechSynthesis" in window)window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);return;}
+    const timeout=window.setTimeout(()=>{
+      if("speechSynthesis" in window)window.speechSynthesis.cancel();
+      setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);
+    },remaining);
+    return ()=>window.clearTimeout(timeout);
+  },[bedtimeUntil]);
   const [readerSettingsOpen,setReaderSettingsOpen]=useState(false);
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_font_scale",readerFontScale);}catch{/* Browser storage can be unavailable. */}},[readerFontScale]);
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_night_mode",String(readerNightMode));}catch{/* Browser storage can be unavailable. */}},[readerNightMode]);
@@ -359,6 +373,7 @@ function App(){
   },[page,tab,active?.id]);
   useEffect(()=>{if(!privateToken)setBooks(getDemoBooks());},[privateToken]);
   const openBook=(book:Book)=>{
+    setWordGameAnswer(null);
     setReaderFocusMode(false);setReaderSettingsOpen(false);
     setEditingPage(false);setActive(book);setPage(resumeReaderPage(book.lastPage,book.pages.length));setTab("reader");setError("");
   };
@@ -976,6 +991,11 @@ function App(){
             <SlidersHorizontal size={16}/>{({ru:"Настройки",uz:"Sozlamalar",en:"Settings"} as const)[lang]}
           </button>}
         </div>
+        <div className="bedtime-controls" role="group" aria-label={({ru:"Таймер перед сном",uz:"Uxlash taymeri",en:"Bedtime timer"} as const)[lang]}>
+          <MoonStar size={16}/><span>{({ru:"Перед сном",uz:"Uyqu oldidan",en:"Bedtime"} as const)[lang]}</span>
+          {([10,20] as const).map(minutes=><button type="button" key={minutes} aria-pressed={bedtimeUntil!==null&&Math.abs(bedtimeUntil-Date.now()-minutes*60000)<60000} onClick={()=>{setReaderNightMode(true);setReaderWarmMode(false);setBedtimeUntil(Date.now()+minutes*60000);}}>{minutes} {({ru:"мин",uz:"daq",en:"min"} as const)[lang]}</button>)}
+          {bedtimeUntil!==null&&<button type="button" onClick={()=>setBedtimeUntil(null)}>{({ru:"Отменить",uz:"Bekor qilish",en:"Cancel"} as const)[lang]}</button>}
+        </div>
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         {readerSettingsOpen&&!readerFocusMode&&<div id="reader-display-options" className="reader-display-settings" role="group" aria-label={({ru:"Настройки чтения",uz:"Oqiş sozlamalari",en:"Reading settings"} as const)[lang]}>
@@ -996,6 +1016,21 @@ function App(){
         {isDemoBook(active)&&page===active.pages.length-1&&<div className="interactive-endings"><strong>{t.interactiveEnding}</strong>
           <div role="group" aria-label={t.interactiveEnding}>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} aria-pressed={active.endingChoice===id} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
         </div>}
+        {page===active.pages.length-1&&<section className="reading-word-game" aria-label={({ru:"Игра после сказки",uz:"Ertakdan keyingi o'yin",en:"After-story game"} as const)[lang]}>
+          <strong>{({ru:"Игра: найди слово из сказки",uz:"O'yin: ertakdagi so'zni top",en:"Game: find a word from the story"} as const)[lang]}</strong>
+          {(()=>{
+            const storyWords=Array.from(new Set(active.pages.flatMap(item=>item.text.match(/[\p{L}]{5,}/gu)||[]).map(word=>word.toLocaleLowerCase()))).filter(word=>word.length>=5);
+            const answer=storyWords[0];
+            if(!answer)return <p>{({ru:"Для этой сказки пока нет словесной игры.",uz:"Bu ertak uchun so'z o'yini hali yo'q.",en:"No word game for this story yet."} as const)[lang]}</p>;
+            const candidates=["радуга","корабль","солнышко","дракон","пианино","планета","волшебство","приключение","карандаш","путешествие"].filter(word=>!storyWords.includes(word)&&word!==answer);
+            const choices=[answer,...candidates.slice(0,2)].sort((a,b)=>a.localeCompare(b));
+            return <><p>{({ru:"Какое слово встречалось в истории?",uz:"Qaysi so'z hikoyada uchradi?",en:"Which word appeared in the story?"} as const)[lang]}</p>
+              <div className="reading-word-choices">{choices.map(word=><button type="button" key={word} disabled={wordGameAnswer!==null} aria-pressed={wordGameAnswer===word} onClick={()=>setWordGameAnswer(word)}>{word}</button>)}</div>
+              {wordGameAnswer!==null&&<p role="status">{wordGameAnswer===answer?({ru:"Верно! Ты внимательно читал сказку.",uz:"To'g'ri! Ertakni diqqat bilan o'qiding.",en:"Correct! You read carefully."} as const)[lang]:({ru:"Попробуй ещё раз: правильное слово",uz:"Yana urinib ko'r: to'g'ri so'z",en:"Try again: the correct word is"} as const)[lang]+" «"+answer+"»"}</p>}
+              {wordGameAnswer!==null&&<button type="button" className="word-game-retry" onClick={()=>setWordGameAnswer(null)}>{({ru:"Играть снова",uz:"Qayta o'ynash",en:"Play again"} as const)[lang]}</button>}
+            </>;
+          })()}
+        </section>}
         {isDemoBook(active)&&page===active.pages.length-1&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
         {<article className="print-book" aria-hidden="true">
           <div className="print-book-cover"><StoryIllustration url={active.pages[0].image_url} alt={t.cover}/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
