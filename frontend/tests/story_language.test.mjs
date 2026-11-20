@@ -52,3 +52,22 @@ test("Custom-written prompt never changes when switching languages", () => {
 test("Switching to the same language does not modify the prompt", () => {
   assert.equal(translateSelectedStoryPrompt(classics.ru, "ru", "ru", classics), classics.ru);
 });
+
+
+test("Choosing a custom story preserves a parent's edited classic prompt", async () => {
+  const { leaveClassicStoryPrompt } = await import(
+    "data:text/javascript;base64," + Buffer.from(result.outputFiles[0].contents).toString("base64")
+  );
+  const custom = classics.ru + " и мой дракон";
+  assert.equal(leaveClassicStoryPrompt(custom, "ru", classics), custom);
+  assert.equal(leaveClassicStoryPrompt(classics.ru, "ru", classics), "");
+  assert.equal(leaveClassicStoryPrompt(classics.en, "en", classics), "");
+});
+
+test("Choosing custom mode again never wipes an existing original idea", async () => {
+  const { leaveClassicStoryPrompt } = await import(
+    "data:text/javascript;base64," + Buffer.from(result.outputFiles[0].contents).toString("base64")
+  );
+  assert.equal(leaveClassicStoryPrompt("My very own tale", "en"), "My very own tale");
+  assert.equal(leaveClassicStoryPrompt("", "ru"), "");
+});
