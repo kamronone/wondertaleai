@@ -11,13 +11,13 @@ const imagesSource = await readFile(new URL("../src/book_images.ts", import.meta
 const { code: imagesCode } = await transform(imagesSource, { loader: "ts", format: "esm", target: "es2022" });
 const { resolveBookImage } = await import("data:text/javascript;base64," + Buffer.from(imagesCode).toString("base64"));
 
-function serviceWorkerHarness({ optionalFailure = false, shellHtml = "" } = {}) {
+function serviceWorkerHarness({ optionalFailure = false, requiredFailure = false, shellHtml = '<script type="module" src="/assets/index-1.js"></script>' } = {}) {
   const listeners = new Map();
   const cached = [];
   const written = [];
   const publicResponse = { ok: true, type: "basic", clone() { return this; } };
   const store = {
-    addAll: async paths => { cached.push(...paths); },
+    addAll: async paths => { if (requiredFailure && paths.some(path => path.startsWith("/assets/"))) throw Error("Bundled app asset failed"); cached.push(...paths); },
     add: async path => {
       if (optionalFailure) throw Error("Optional art unavailable");
       cached.push(path);
@@ -78,6 +78,21 @@ test("PWA precaches same-origin Vite JS/CSS on first install", async () => {
   assert.ok(cached.includes("/assets/index-A12.js"));
   assert.ok(cached.includes("/assets/index-BC3.css"));
   assert.ok(!cached.some(url => url.includes("secret.js") || url.includes("private-token.js")));
+});
+
+test("PWA update refuses activation when required app JS cannot be cached", async () => {
+  const { listeners, cached } = serviceWorkerHarness({ requiredFailure: true });
+  let installation;
+  listeners.get("install")({ waitUntil(promise) { installation = promise; } });
+  await assert.rejects(installation, /Bundled app asset failed/);
+  assert.ok(cached.includes("/index.html"));
+});
+
+test("PWA update refuses an HTML shell missing the application entry", async () => {
+  const { listeners } = serviceWorkerHarness({ shellHtml: "<!doctype html><title>Missing build</title>" });
+  let installation;
+  listeners.get("install")({ waitUntil(promise) { installation = promise; } });
+  await assert.rejects(installation, /Missing Vite application entry/);
 });
 
 test("PWA never intercepts account APIs, authenticated requests, or other origins", () => {
