@@ -583,6 +583,13 @@ function App(){
       setError(({ru:"Подтвердите согласие перед созданием сказки.",uz:"Ertak yaratişdan oldin rozilikni tasdiqlang.",en:"Confirm your consent before creating a story."} as const)[lang]);
       return;
     }
+    const combinedHeroName=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
+    if(!usePersonalAi&&combinedHeroName.length>60){
+      setCreateStep(1);
+      setError(({ru:"Имена двух героев вместе должны содержать не более 60 символов.",uz:"Ikki qahramon ismi birga 60 belgidan oşmasligi kerak.",en:"Both hero names together must be 60 characters or fewer."} as const)[lang]);
+      return;
+    }
+
     if(usePersonalAi&&prompt.trim().length<12){
       setCreateStep(2);
       setError(({ru:"Для AI-сказки опишите сюжет минимум 12 символами.",uz:"AI ertak uçun syujetni kamida 12 ta belgi bilan yozing.",en:"For an AI story, describe the plot in at least 12 characters."} as const)[lang]);
@@ -685,7 +692,7 @@ function App(){
         }
         return;
       }
-      const heroes=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
+      const heroes=combinedHeroName;
       const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);
       // When signed in, demo books stay in the browser only and are not shown
       // in the parent's remote library until explicitly transferred.
