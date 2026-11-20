@@ -22,9 +22,38 @@ export const saveDemoBooks=(books:DemoBook[])=>{
 };
 export const isDemoBook=(book:DemoBook)=>book.id.startsWith("local-");
 const illustration=(index:number):string=>{
-  const bg=[["#6b55af","#e5b2d9"],["#306c8b","#9cd8da"],["#604e9b","#d5a4b3"],["#657d9c","#f5c6a0"]][index%4];
-  const stars=Array.from({length:20},(_,i)=>{const x=(i*137+index*42)%700+40;const y=(i*89+index*65)%700+30;return '<circle cx="'+x+'" cy="'+y+'" r="'+(i%4+2)+'" fill="#fff4d3"/>'}).join("");
-  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 1024"><defs><linearGradient id="sky" x2="0.5" y2="1"><stop stop-color="'+bg[0]+'"/><stop offset="1" stop-color="'+bg[1]+'"/></linearGradient></defs><rect width="768" height="1024" fill="url(#sky)"/>'+stars+'<circle cx="385" cy="505" r="230" fill="#fff2cd"/><path d="M385 315 L426 443 561 445 452 522 494 651 385 569 276 651 318 522 209 445 344 443Z" fill="#efbd64"/><circle cx="341" cy="523" r="9" fill="#55436c"/><circle cx="433" cy="523" r="9" fill="#55436c"/><path d="M346 565 Q385 610 424 565" fill="none" stroke="#ad6e89" stroke-width="9" stroke-linecap="round"/></svg>';
+  // Original deterministic vector scenes for the local demo. No images are
+  // downloaded, no child photos are used and no story text is embedded in SVG.
+  const themes=[
+    {sky:"#314575",horizon:"#a78ac2",hill:"#355c77",ground:"#538681",accent:"#ffe6a3"},
+    {sky:"#514078",horizon:"#d296ac",hill:"#635f9a",ground:"#8192a7",accent:"#ffe6b1"},
+    {sky:"#1f5e79",horizon:"#8ec2bc",hill:"#397e87",ground:"#75a990",accent:"#ffedc1"},
+    {sky:"#4c4079",horizon:"#dbaab3",hill:"#765d88",ground:"#917b9b",accent:"#fff1bf"}
+  ] as const;
+  const scene=index%8;
+  const theme=themes[Math.floor(index/2)%themes.length];
+  const stars=Array.from({length:15},(_,i)=>{
+    const x=45+(i*131+index*43)%670;
+    const y=54+(i*79+index*27)%330;
+    return '<circle cx="'+x+'" cy="'+y+'" r="'+(i%3+2)+'" fill="#fff6de" opacity=".85"/>';
+  }).join("");
+  const tree=(x:number,y:number,scale:number)=>'<g transform="translate('+x+' '+y+') scale('+scale+')"><path d="M-9 0 V-155 H9 V0" fill="#674e69"/><path d="M0 -280 C-145 -250 -135 -150 -90 -130 Q0 -85 90 -130 C135 -150 145 -250 0 -280Z" fill="#36776e"/><path d="M-82 -178 Q0 -265 82 -178" fill="none" stroke="#92bc9a" stroke-width="12" opacity=".45"/></g>';
+  const forest=tree(122,810,.87)+tree(645,830,1.05)+tree(420,870,.53);
+  const castle='<g transform="translate(170 425)"><path d="M0 300 V70 L88 70 V0 L155 0 V85 L256 85 V18 H320 V300Z" fill="#d4bfd7" stroke="#735f91" stroke-width="9"/><path d="M-20 70 L43 -15 108 70 M140 0 L188 -70 236 0 M245 18 L288 -54 336 18" fill="#856ba5" stroke="#74598d" stroke-width="8"/><path d="M134 300 V180 Q160 145 189 180 V300" fill="#66537c"/><path d="M50 135 H89 V182 H50 M230 140 H269 V187 H230" fill="#ffe5aa"/></g>';
+  const bridge='<g><path d="M100 810 Q385 520 680 810 L680 864 Q385 616 100 864Z" fill="#c9a9a7" stroke="#845b7d" stroke-width="8"/><path d="M130 818 Q385 554 648 818" fill="none" stroke="#f3d8ae" stroke-width="14"/></g>';
+  const fox='<g transform="translate(272 654)"><path d="M180 135 Q290 22 338 98 Q281 187 200 168" fill="#b9706b"/><ellipse cx="130" cy="170" rx="94" ry="126" fill="#e5a978"/><path d="M35 67 L60 -24 126 43 186 -24 213 67" fill="#e6a575"/><path d="M53 67 Q124 186 195 67 L177 147 Q130 196 73 151Z" fill="#fff1d7"/><circle cx="95" cy="93" r="8" fill="#44384e"/><circle cx="163" cy="93" r="8" fill="#44384e"/><circle cx="130" cy="123" r="9" fill="#4a384a"/></g>';
+  const dragon='<g transform="translate(170 550)"><path d="M65 200 Q-5 20 120 30 Q270 -40 392 140 L475 110 Q465 228 343 213 Q220 300 65 200Z" fill="#80b1a0" stroke="#427b85" stroke-width="10"/><path d="M135 54 L180 -35 212 67 265 -22 282 100" fill="#c4d7ae"/><circle cx="330" cy="115" r="12" fill="#433c57"/><path d="M355 160 Q390 182 432 147" fill="none" stroke="#476777" stroke-width="9"/></g>';
+  const boat='<g transform="translate(175 625)"><path d="M30 180 H390 Q365 284 190 275 Q55 272 30 180Z" fill="#956f8b"/><path d="M190 178 V-110 M193 -92 Q380 12 208 102Z" fill="#fbe8c1" stroke="#c4a5a8" stroke-width="8"/><path d="M90 310 Q160 280 220 305 T390 303" fill="none" stroke="#fff3cc" stroke-width="13" opacity=".7"/></g>';
+  const lanterns=Array.from({length:5},(_,i)=>'<g transform="translate('+(105+i*136)+' '+(480+(i%2)*100)+')"><path d="M0 -85 V-10" stroke="#f9eac8" stroke-width="4"/><rect x="-23" y="-11" width="46" height="63" rx="13" fill="#ffe4a0" stroke="#ce9c98" stroke-width="6"/></g>').join("");
+  const object=[forest,castle,fox,dragon,bridge,boat,lanterns,castle+fox][scene];
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 1024" role="img" aria-label="Fairy-tale illustration">'+
+    '<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="'+theme.sky+'"/><stop offset="1" stop-color="'+theme.horizon+'"/></linearGradient></defs>'+
+    '<rect width="768" height="1024" fill="url(#sky)"/>'+stars+
+    '<circle cx="'+(scene%2?565:190)+'" cy="205" r="76" fill="'+theme.accent+'" opacity=".93"/>'+
+    '<path d="M0 625 Q180 525 390 620 T768 570 V1024 H0Z" fill="'+theme.hill+'"/>'+
+    '<path d="M0 765 Q200 660 425 774 T768 718 V1024 H0Z" fill="'+theme.ground+'"/>'+
+    object+'<path d="M0 943 Q230 884 460 946 T768 928 V1024 H0Z" fill="#253f63" opacity=".24"/>'+
+    '</svg>';
   return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
 };
 const demoStories:Record<Lang,(name:string,theme:string,prompt:string)=>{title:string;pages:string[]}>={
