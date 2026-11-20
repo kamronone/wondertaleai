@@ -1114,7 +1114,7 @@ function App(){
       <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></nav>
     </main>
     <footer className="site-legal-footer">
-      <span>© {new Date().getFullYear()} WonderTale AI · kamronone</span>
+      <span>© {new Date().getFullYear()} WonderTale AI · Komron Giyosov</span>
       <nav aria-label={({ru:"Правовая информация",uz:"Huquqiy malumot",en:"Legal information"} as const)[lang]}>
         <button type="button" onClick={()=>openLegal("terms")}>{({ru:"Условия",uz:"Shartlar",en:"Terms"} as const)[lang]}</button>
         <button type="button" onClick={()=>openLegal("privacy")}>{({ru:"Конфиденциальность",uz:"Maxfiylik",en:"Privacy"} as const)[lang]}</button>
