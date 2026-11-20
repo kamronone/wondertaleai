@@ -1038,7 +1038,7 @@ function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
     ?({ru:"Дочитано",uz:"Oqib tugatildi",en:"Finished"} as const)[lang]
     :labels[lang].continueReading+": "+labels[lang].page+" "+((book.lastPage??0)+1);
   return <button type="button" className="book-tile" onClick={open} aria-label={book.title+" · "+book.name+(reading?" · "+progress:"")}>
-    <StoryIllustration url={book.pages[0]?.image_url||""} alt={book.title+" · "+labels[lang].cover} lazy/>
+    <span className="book-cover-art"><StoryIllustration url={book.pages[0]?.image_url||""} alt={book.title+" · "+labels[lang].cover} lazy/><span className="book-cover-age" aria-hidden="true">{book.age}+</span></span>
     <span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>
       {reading&&<small className="read-progress">{progress}</small>}
       {book.favorite&&<span className="book-favorite-badge" aria-label={({ru:"В избранном",uz:"Sevimlilarda",en:"Favorite"} as const)[lang]}><Heart size={14} fill="currentColor"/></span>}
