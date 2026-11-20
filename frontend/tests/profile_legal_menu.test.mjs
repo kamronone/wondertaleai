@@ -1,0 +1,34 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+
+const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
+const menu=readFileSync(new URL("../src/ProfileLegalMenu.tsx",import.meta.url),"utf8");
+const styles=readFileSync(new URL("../src/reader-polish.css",import.meta.url),"utf8");
+
+test("legal entry points live in account profile and not global footer",()=>{
+  assert.match(app,/\{tab==="account"&&<>[\s\S]*?<ProfileLegalMenu lang=\{lang\} onOpen=\{openLegal\}\/>/);
+  const footer=app.slice(app.indexOf('<footer className="site-legal-footer">'),app.indexOf('</footer>',app.indexOf('<footer className="site-legal-footer">')));
+  assert.match(footer,/Komron Giyosov/);
+  assert.doesNotMatch(footer,/openLegal|<nav/);
+});
+
+test("all four legal documents are accessible through functional profile buttons",()=>{
+  for(const entry of ['{id:"terms",Icon:FileText}','{id:"privacy",Icon:ShieldCheck}','{id:"copyright",Icon:Copyright}','{id:"parents",Icon:UsersRound}'])
+    assert.ok(menu.includes(entry),entry);
+  assert.match(menu,/onClick=\{\(\)=>onOpen\(id\)\}/);
+  assert.match(menu,/type="button"/);
+  assert.match(menu,/ProfileLegalMenu/);
+  assert.match(menu,/Huquqiy ma'lumot/);
+});
+
+test("mobile layout uses readable full-width rows without overflow",()=>{
+  assert.match(styles,/\.profile-legal-links\s*>\s*button\s*\{[^}]*min-height:52px/s);
+  assert.match(styles,/@media screen and \(max-width:620px\)\{\s*\.profile-legal-menu/);
+  assert.match(styles,/\.profile-legal-links\s*\{\s*grid-template-columns:1fr/s);
+});
+
+test("opening a profile legal page preserves return tab",()=>{
+  assert.match(app,/if\(tab!=="legal"\)setLegalReturnTab\(tab\)/);
+  assert.match(app,/onBack=\{\(\)=>setTab\(legalReturnTab\)\}/);
+});
