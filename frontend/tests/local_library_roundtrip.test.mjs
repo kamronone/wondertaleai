@@ -115,3 +115,37 @@ test("If session storage is blocked, saved device books remain visible", () => w
     else delete globalThis.sessionStorage;
   }
 }));
+
+
+test("Session stories cannot forge persistent status in stored JSON", () => withStorage(({ device, session }) => {
+  const forgedSession = { ...story(0, true), savedOnDevice: true };
+  const forgedDevice = { ...story(1, false), savedOnDevice: false };
+  session.setItem("wondertale-preview-books-v1", JSON.stringify([forgedSession]));
+  device.setItem("wondertale-opt-in-books-v1", JSON.stringify([forgedDevice]));
+  const books = getDemoBooks();
+  assert.equal(books.find(book => book.id === "local-book-0")?.savedOnDevice, false);
+  assert.equal(books.find(book => book.id === "local-book-1")?.savedOnDevice, true);
+  saveDemoBooks(books);
+  assert.equal(JSON.parse(session.getItem("wondertale-preview-books-v1")).length, 1);
+  assert.equal(JSON.parse(device.getItem("wondertale-opt-in-books-v1")).length, 1);
+}));
+
+test("Invalid progress and favorite flags cannot corrupt reading state", () => withStorage(({ session }) => {
+  const books = [
+    { ...story(0, false), favorite: "true", lastPage: -400, endingChoice: "other", originalEnding: 42 },
+    { ...story(1, false), favorite: true, lastPage: 500 },
+    { ...story(2, false), favorite: false, lastPage: Number.NaN, language: "xx" }
+  ];
+  session.setItem("wondertale-preview-books-v1", JSON.stringify(books));
+  const loaded = getDemoBooks();
+  assert.equal(loaded.length, 3);
+  const first = loaded.find(book => book.id === "local-book-0");
+  assert.equal(first.favorite, false);
+  assert.equal(first.lastPage, 0);
+  assert.equal(first.endingChoice, undefined);
+  assert.equal(first.originalEnding, undefined);
+  assert.equal(loaded.find(book => book.id === "local-book-1").lastPage, 1);
+  assert.equal(loaded.find(book => book.id === "local-book-1").favorite, true);
+  assert.equal(loaded.find(book => book.id === "local-book-2").lastPage, 0);
+  assert.equal(loaded.find(book => book.id === "local-book-2").language, undefined);
+}));
