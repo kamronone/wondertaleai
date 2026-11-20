@@ -60,3 +60,33 @@ test("Session-only overflow does not mutate the saved device library", () => wit
   assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
   assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
 }));
+
+test("Session quota error restores both previous book collections", () => withStores((local, session) => {
+  saveDemoBooks([...makeBooks(3), ...makeBooks(2, false).map((b, i) => ({ ...b, id: "session-" + i }))]);
+  const beforeDevice = local.getItem("wondertale-opt-in-books-v1");
+  const beforeSession = session.getItem("wondertale-preview-books-v1");
+  const originalSetItem = session.setItem;
+  let failOnce = true;
+  session.setItem = (key, value) => {
+    if (failOnce) { failOnce = false; throw new Error("QuotaExceededError"); }
+    return originalSetItem(key, value);
+  };
+  assert.throws(() => saveDemoBooks([
+    ...makeBooks(4), ...makeBooks(3, false).map((b, i) => ({ ...b, id: "session-" + i }))
+  ]), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
+}));
+
+test("Device quota error leaves the existing saved books intact", () => withStores(local => {
+  saveDemoBooks(makeBooks(3));
+  const previous = local.getItem("wondertale-opt-in-books-v1");
+  const originalSetItem = local.setItem;
+  let failOnce = true;
+  local.setItem = (key, value) => {
+    if (failOnce) { failOnce = false; throw new Error("QuotaExceededError"); }
+    return originalSetItem(key, value);
+  };
+  assert.throws(() => saveDemoBooks(makeBooks(4)), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), previous);
+}));
