@@ -12,7 +12,7 @@ import { AccountAction } from "./AccountAction";
 import { PricingPlans } from "./PricingPlans";
 import { ParentAccount } from "./ParentAccount";
 import { StoryChildPicker } from "./StoryChildPicker";
-import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
+import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, PrivateBookNotFoundError, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { canAppendStoryEnding } from "./ending_length";
 import { translateSelectedStoryPrompt, leaveClassicStoryPrompt, shouldDetachClassicOnEdit } from "./story_language";
@@ -416,7 +416,12 @@ function App(){
           try{
             await updatePrivateReadingProgress(API,privateToken,id,position);
             if(!disposed&&sessionEpoch.current===epoch&&pendingProgress.current.get(id)===position){pendingProgress.current.delete(id);persistPending();}
-          }catch{break;}
+          }catch(error){
+            // Read-replica lag or a removed book must not starve unrelated edits.
+            // Keep this item pending until the book becomes visible again.
+            if(error instanceof PrivateBookNotFoundError)continue;
+            break;
+          }
         }
         for(const [id,favorite] of [...pendingFavorites.current]){
           if(disposed||sessionEpoch.current!==epoch)break;
@@ -424,7 +429,12 @@ function App(){
           try{
             await setPrivateFavorite(API,privateToken,id,favorite);
             if(!disposed&&sessionEpoch.current===epoch&&pendingFavorites.current.get(id)===favorite){pendingFavorites.current.delete(id);persistPending();}
-          }catch{break;}
+          }catch(error){
+            // Read-replica lag or a removed book must not starve unrelated edits.
+            // Keep this item pending until the book becomes visible again.
+            if(error instanceof PrivateBookNotFoundError)continue;
+            break;
+          }
         }
       }finally{if(flushing.current===epoch)flushing.current=null;}
     };
