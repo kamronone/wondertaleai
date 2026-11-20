@@ -153,6 +153,8 @@ function App(){
   // API health alone never authorizes uploading a child photo or generating a story.
   // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
   const loginParent=async(token:string):Promise<boolean>=>{
+    // Account switching must not discard the previous parent's offline edits.
+    persistPending();
     const epoch=++sessionEpoch.current;
     pendingProgress.current.clear();pendingFavorites.current.clear();
     offlineOwner.current=null;
