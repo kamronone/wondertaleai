@@ -688,3 +688,10 @@
   .reader-page .story-page.reader-warm,
   .reader-page .reader-warm-toggle{transition:none!important}
 }
+
+
+/* Keep the beginning of the new page visible after mobile swipe or pager navigation. */
+.reader-page .story-page{scroll-margin-top:14px}
+@media(max-width:620px){
+  .reader-page .story-page{scroll-margin-top:10px}
+}
