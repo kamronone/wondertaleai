@@ -47,3 +47,18 @@
 .create-page .character-builder .character-preview{font-size:12px;color:#4b356e;overflow-wrap:anywhere}
 .create-page .character-builder .character-apply{justify-self:start;background:#7751af;color:#fff;border-color:#7751af}
 .create-page .character-builder .character-apply:disabled{opacity:.5}
+
+/* Reader display style: accessible alternative to ornate pages. */
+.reader-page .reader-book-style{display:flex;align-items:center;flex-wrap:wrap;gap:7px;width:100%;margin-top:8px}
+.reader-page .reader-book-style span{font-size:12px;font-weight:700;color:#655176;margin-right:auto}
+.reader-page .reader-book-style button{min-width:0;min-height:44px;padding:8px 11px;font:inherit;font-size:12px;font-weight:700;border:1px solid #dac9ec;border-radius:10px;background:white;color:#674b88}
+.reader-page .reader-book-style button[aria-pressed="true"]{background:#70509b;color:#fff;border-color:#70509b}
+.reader-page .story-page.book-style-storybook{position:relative;border:1px solid #e1cbab;box-shadow:0 9px 22px rgba(92,57,19,.11),inset 0 0 0 5px rgba(255,255,255,.3)}
+.reader-page .story-page.book-style-storybook::before{content:"";position:absolute;inset:8px;border:1px solid rgba(156,115,70,.26);border-radius:inherit;pointer-events:none}
+.reader-page .story-page.book-style-simple{background:#fff;border:1px solid #e2e2e2;box-shadow:none}
+.reader-page .story-page.book-style-simple .dropcap-star{display:none}
+.reader-page .story-page.book-style-simple .story-text{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:normal}
+.reader-page .story-page.book-style-simple.reader-night{background:#1f2030;border-color:#3b4055}
+.reader-page .story-page.book-style-storybook.reader-night{border-color:#62567c;box-shadow:none}
+@media(max-width:420px){.reader-page .reader-book-style span{width:100%}}
+@media print{.reader-page .reader-book-style{display:none!important}}
