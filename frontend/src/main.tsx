@@ -1022,7 +1022,7 @@ function App(){
             const storyWords=Array.from(new Set(active.pages.flatMap(item=>item.text.match(/[\p{L}]{5,}/gu)||[]).map(word=>word.toLocaleLowerCase()))).filter(word=>word.length>=5);
             const answer=storyWords[0];
             if(!answer)return <p>{({ru:"Для этой сказки пока нет словесной игры.",uz:"Bu ertak uchun so'z o'yini hali yo'q.",en:"No word game for this story yet."} as const)[lang]}</p>;
-            const candidates=["радуга","корабль","солнышко","дракон","пианино","планета","волшебство","приключение","карандаш","путешествие"].filter(word=>!storyWords.includes(word)&&word!==answer);
+            const candidates=({ru:["радуга","корабль","солнышко","дракон","пианино","планета","волшебство","приключение","карандаш","путешествие"],uz:["kamalak","kemalar","quyosh","ajdarho","musiqa","sayyora","sehrgar","sarguzasht","qalamlar","sayohat"],en:["rainbow","spaceship","sunshine","dragon","piano","planet","magical","adventure","pencils","journey"]} as const)[active.language||lang].filter(word=>!storyWords.includes(word)&&word!==answer);
             const choices=[answer,...candidates.slice(0,2)].sort((a,b)=>a.localeCompare(b));
             return <><p>{({ru:"Какое слово встречалось в истории?",uz:"Qaysi so'z hikoyada uchradi?",en:"Which word appeared in the story?"} as const)[lang]}</p>
               <div className="reading-word-choices">{choices.map(word=><button type="button" key={word} disabled={wordGameAnswer!==null} aria-pressed={wordGameAnswer===word} onClick={()=>setWordGameAnswer(word)}>{word}</button>)}</div>
