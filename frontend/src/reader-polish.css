@@ -649,3 +649,42 @@
   .shell .classic-grid{gap:7px}
   .shell .classic-card .classic-info{padding:8px}
 }
+
+
+/* Reader comfort: a paper-like option between bright and night reading. */
+.reader-page .story-page.reader-warm{
+  background:#f5e8cd;border-color:#d9c6a1;
+  box-shadow:0 8px 24px #73532719;
+}
+.reader-page .story-page.reader-warm .story-text{
+  background:#f5e8cd;color:#433525;
+}
+.reader-page .story-page.reader-warm .dropcap-star{color:#9e6d32}
+.reader-page .reader-warm-toggle{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:44px;max-width:100%;padding:8px 11px;
+  border:1px solid #e4d8f2;border-radius:10px;
+  color:#493467;background:#fff;font-size:12px;font-weight:650;
+  white-space:normal;overflow-wrap:anywhere;cursor:pointer;
+}
+.reader-page .reader-warm-toggle.active{
+  background:#73512b;color:#fff;border-color:#73512b;
+}
+.reader-page .reader-night-toggle{min-height:44px}
+.reader-page .reader-font-controls button{min-height:44px;height:44px;min-width:40px}
+@media(max-width:620px){
+  .reader-page .reader-display-settings{
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  }
+  .reader-page .reader-warm-toggle,
+  .reader-page .reader-night-toggle{
+    flex:1 1 118px;min-height:44px;
+    font-size:11px;line-height:1.3;padding:8px;
+  }
+  .reader-page .reader-font-controls{flex:0 0 auto}
+  .reader-page .story-page.reader-warm .story-text{line-height:1.78}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .story-page.reader-warm,
+  .reader-page .reader-warm-toggle{transition:none!important}
+}
