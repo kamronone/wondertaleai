@@ -955,10 +955,10 @@ function App(){
         <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions"><button className="icon-button" type="button" onClick={()=>void printFullBook()} title={t.savePdf} aria-label={t.savePdf}><Download size={19}/></button>{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" type="button" onClick={()=>deleteBook(active)} title={t.delete} aria-label={t.delete}><Trash2 size={19}/></button></div></div>
         {error&&<p className="error" role="alert">{error}</p>}
         <div className="reader-mode-controls" role="group" aria-label={({ru:"Режим чтения",uz:"Oqish rejimi",en:"Reading mode"} as const)[lang]}>
-          <button type="button" aria-pressed={readerFocusMode} className={readerFocusMode?"active":""} onClick={()=>{setReaderFocusMode(v=>!v);setReaderSettingsOpen(false);}}>
-            <BookOpen size={16}/>{({ru:"Только сказка",uz:"Faqat ertak",en:"Focus reading"} as const)[lang]}
+          <button type="button" aria-pressed={readerFocusMode} className={readerFocusMode?"active":""} onClick={()=>{setReaderFocusMode(v=>!v);setReaderSettingsOpen(false);setEditingPage(false);}}>
+            <BookOpen size={16}/>{readerFocusMode?({ru:"Обычное чтение",uz:"Oddiy oqish",en:"Show controls"} as const)[lang]:({ru:"Только сказка",uz:"Faqat ertak",en:"Focus reading"} as const)[lang]}
           </button>
-          {!readerFocusMode&&<button type="button" aria-expanded={readerSettingsOpen} aria-controls="reader-display-options" onClick={()=>setReaderSettingsOpen(v=>!v)}>
+          {!readerFocusMode&&<button type="button" aria-expanded={readerSettingsOpen} onClick={()=>setReaderSettingsOpen(v=>!v)}>
             <SlidersHorizontal size={16}/>{({ru:"Настройки",uz:"Sozlamalar",en:"Settings"} as const)[lang]}
           </button>}
         </div>
