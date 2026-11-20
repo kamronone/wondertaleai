@@ -15,11 +15,12 @@ import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
+import { resolveBookImage } from "./book_images";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
-const bookImage=(url:string)=>!url?"/images/wondertale-hero.webp":url.startsWith("/images/")||url.startsWith("data:image/svg+xml;charset=utf-8,")?url:API+url;
+const bookImage=(url:string)=>resolveBookImage(url,API);
 
 function App(){
   const [accountAction,setAccountAction]=useState<{kind:"verify"|"recover";token:string}|null>(()=>{
@@ -845,8 +846,8 @@ function App(){
         </div>}
         {isDemoBook(active)&&page===active.pages.length-1&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
         {<article className="print-book" aria-hidden="true">
-          <div className="print-book-cover"><img src={bookImage(active.pages[0].image_url)} alt=""/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
-          {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><img src={bookImage(item.image_url)} alt=""/><p>{item.text}</p></section>)}
+          <div className="print-book-cover"><StoryIllustration url={active.pages[0].image_url} alt={t.cover}/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
+          {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><StoryIllustration url={item.image_url} alt={t.illustration+" "+(index+1)}/><p>{item.text}</p></section>)}
         </article>}
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span className="pager-indicators" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length}>{active.pages.length<=7?active.pages.map((_,i)=><button type="button" key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)} aria-current={i===page?"page":undefined}/>):<><button type="button" className="pager-jump" disabled={page===0} onClick={()=>setPage(0)} aria-label={t.page+" 1"}>1</button><span className="pager-current" aria-live="polite">{page+1} / {active.pages.length}</span><button type="button" className="pager-jump" disabled={page===active.pages.length-1} onClick={()=>setPage(active.pages.length-1)} aria-label={t.page+" "+active.pages.length}>{active.pages.length}</button></>}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
