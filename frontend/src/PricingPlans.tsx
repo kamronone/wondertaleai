@@ -13,7 +13,7 @@ const copy={
  uz:{title:"WonderTale tariflari",subtitle:"Dastlabki tariflar. Tölov hali ulanmagan, körsatilgan limitlar amalda emas.",month:"söm / oy",free:"Bepul",planned:"Tez kunda",names:{free:"Free",plus:"Plus",family:"Family"},note:"Obuna yoq, pul yeçilmaydi. AI imkoniyati hozir alohida başqariladi."},
  en:{title:"WonderTale plans",subtitle:"Proposed pricing. Payments are not enabled and these limits are not active.",month:"UZS / month",free:"Free",planned:"Coming soon",names:{free:"Free",plus:"Plus",family:"Family"},note:"No subscription is created or charged. AI access is currently managed separately."}
 };
-type BillingStatus={plan:string;subscription_status:string;payments_enabled:boolean;ai_pilot_access:boolean;ai_daily_limit:number;ai_used_today:number};
+type BillingStatus={plan:string;subscription_status:string;payments_enabled:boolean;ai_pilot_access:boolean;ai_daily_limit:number;ai_used_today:number;ai_remaining_today:number;quota_timezone:string};
 export function PricingPlans({lang,api,session}:{lang:Lang;api:string;session:string|null}){
  const [status,setStatus]=useState<BillingStatus|null>(null);
  useEffect(()=>{
@@ -35,7 +35,7 @@ export function PricingPlans({lang,api,session}:{lang:Lang;api:string;session:st
    <ul>{plan.features[lang].map(feature=><li key={feature}>{feature}</li>)}</ul>
    <span className="pricing-status">{plan.id==="free"?t.free:t.planned}</span>
   </article>)}</div>
-  {status&&<p className="pricing-note" role="status">{({ru:"Ваш тариф: Free",uz:"Sizning tarifingiz: Free",en:"Your plan: Free"} as const)[lang]} · {status.ai_pilot_access?({ru:"Пилотный AI-доступ",uz:"Sinov AI ruxsati",en:"Pilot AI access"} as const)[lang]+": "+status.ai_used_today+"/"+status.ai_daily_limit:({ru:"AI-доступ пока не активирован",uz:"AI ruxsati hali faol emas",en:"AI access is not active yet"} as const)[lang]}</p>}
+  {status&&<p className="pricing-note" role="status">{({ru:"Ваш тариф: Free",uz:"Sizning tarifingiz: Free",en:"Your plan: Free"} as const)[lang]} · {status.ai_pilot_access?({ru:"Пилотный AI-доступ",uz:"Sinov AI ruxsati",en:"Pilot AI access"} as const)[lang]+": "+status.ai_used_today+"/"+status.ai_daily_limit+" · "+({ru:"Осталось сегодня",uz:"Bugun qolgan",en:"Remaining today"} as const)[lang]+": "+Math.max(0,status.ai_remaining_today)+" (UTC)":({ru:"AI-доступ пока не активирован",uz:"AI ruxsati hali faol emas",en:"AI access is not active yet"} as const)[lang]}</p>}
   <p className="pricing-note">{t.note}</p>
  </section>;
 }
