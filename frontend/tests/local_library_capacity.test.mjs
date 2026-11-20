@@ -151,7 +151,7 @@ test("Duplicate IDs supplied for both stores are rejected without changing saved
   assert.throws(() => saveDemoBooks([...makeBooks(1), makeBooks(1, false)[0]]), /LOCAL_LIBRARY_SAVE_FAILED/);
   assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
   assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
-});
+}));
 
 test("Existing duplicate book IDs in different stores prevent destructive rewrites", () => withStores((local, session) => {
   local.setItem("wondertale-opt-in-books-v1", JSON.stringify(makeBooks(1)));
