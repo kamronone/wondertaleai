@@ -17,7 +17,9 @@ test("mobile shell no longer stretches main and keeps only a single bottom-nav r
 test("mobile footer follows content while the navigation stays fixed",()=>{
   assert.match(app,/return <div className="shell">/);
   assert.match(app,/<main>/);
-  assert.match(app,/<footer>© WonderTale AI<\/footer>/);
+  assert.match(app,/<footer className="site-legal-footer">/);
+  assert.match(app, /<nav aria-label=\{/);
+  assert.match(app, /onClick=\{\(\)=>openLegal\("privacy"\)\}/);
   assert.match(polish,/\.shell \.mobile-tabbar\{[^}]*position:fixed!important/s);
   assert.match(polish,/\.reader-page \.pager\{margin-bottom:4px!important\}/);
 });
