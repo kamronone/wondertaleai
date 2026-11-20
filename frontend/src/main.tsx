@@ -127,6 +127,7 @@ function App(){
   const [photo,setPhoto]=useState<File|null>(null);
   const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
+  const [createStep,setCreateStep]=useState<1|2|3>(1);
   const [saveOnDevice,setSaveOnDevice]=useState(false);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
   const [editingPage,setEditingPage]=useState(false);
@@ -667,14 +668,15 @@ function App(){
       {tab==="create"&&<section className="create-page">
         <button className="back-button" onClick={()=>setTab("home")}><ArrowLeft size={17}/> {t.backHome}</button>
         {heading(t.magic,t.magicDesc)}
-        <div className="wizard-progress" aria-label="Create story"><span className="progress-step active"><span>1</span>{t.heroStep}</span><span className="progress-line"/><span className="progress-step"><span>2</span>{t.storyStep}</span><span className="progress-line"/><span className="progress-step"><span>3</span>{t.createBook}</span></div><form onSubmit={generate} className="form-card">
-          <div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
+        <div className="wizard-progress" aria-label="Create story">{([1,2,3] as const).map((step,index)=><React.Fragment key={step}>{index>0&&<span className="progress-line"/>}<span className={"progress-step"+(createStep===step?" active":"")+(createStep>step?" completed":"")} aria-current={createStep===step?"step":undefined}><span>{step}</span>{step===1?t.heroStep:step===2?t.storyStep:t.createBook}</span></React.Fragment>)}</div><form onSubmit={generate} className="form-card">
+          {createStep===1&&<><div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           {privateToken&&API&&<StoryChildPicker key={privateToken} api={API} session={privateToken} lang={lang} onSelect={child=>{if(child){setName(child.nickname);setAge(String(child.age));}}}/>}
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
           <label className="second-hero-field">{t.extraHero}<input maxLength={45} value={secondHero} onChange={e=>setSecondHero(e.target.value)} placeholder={t.extraHeroHint}/></label>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
           {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
-          <div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
+          <div className="wizard-step-actions"><button type="button" className="primary-button" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
+          {createStep===2&&<><div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
           <div className="classic-choice"><button type="button" className={!classicId?"active":""} onClick={()=>{setClassicId(null);setPrompt("");}}>{t.classicCustom}</button>{classics.map(item=><button type="button" className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
           {activeClassic&&<p className="classic-selected"><CheckCircle2 size={16}/> {t.classicSelected}: <strong>{activeClassic.title[lang]}</strong></p>}
           <label>{t.world}</label><div className="chips">{themes.map((x,i)=><button type="button" key={x} className={"chip "+(themeIndex===i?"selected":"")} onClick={()=>setThemeIndex(i)}>{x}</button>)}</div>
@@ -683,7 +685,8 @@ function App(){
           <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
-          <div className="story-lang-field"><label>{({ru:"Режим создания",uz:"Yaratiş rejimi",en:"Creation mode"} as const)[lang]}</label><div className="story-lang-options"><button type="button" className={!usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(false)}>{({ru:"Демо",uz:"Demo",en:"Demo"} as const)[lang]}</button><button type="button" className={usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(true)}>{({ru:"AI (аккаунт)",uz:"AI (akkaunt)",en:"AI (account)"} as const)[lang]}</button></div></div>
+          <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(1)}><ArrowLeft size={16}/>{t.back}</button><button type="button" className="primary-button" onClick={()=>{if(prompt.trim().length<8){setError(({ru:"Опишите сюжет минимум 8 символами.",uz:"Syujetni kamida 8 ta belgi bilan yozing.",en:"Describe the plot in at least 8 characters."} as const)[lang]);return;}setError("");setCreateStep(3);}}>{t.next}<ArrowRight size={17}/></button></div></>}
+          {createStep===3&&<><div className="step-title next"><span>03</span><div><h3>{t.createBook}</h3><p>{t.storyStepDesc}</p></div></div><div className="story-lang-field"><label>{({ru:"Режим создания",uz:"Yaratiş rejimi",en:"Creation mode"} as const)[lang]}</label><div className="story-lang-options"><button type="button" className={!usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(false)}>{({ru:"Демо",uz:"Demo",en:"Demo"} as const)[lang]}</button><button type="button" className={usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(true)}>{({ru:"AI (аккаунт)",uz:"AI (akkaunt)",en:"AI (account)"} as const)[lang]}</button></div></div>
           {usePersonalAi&&<label>{({ru:"Длина AI-сказки",uz:"AI ertak uzunligi",en:"AI story length"} as const)[lang]}<select value={aiPagesCount} onChange={e=>setAiPagesCount(Number(e.target.value) as 8|12|20)}><option value={8}>8 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={12}>12 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={20}>20 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option></select></label>}
           {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
           {!usePersonalAi&&<div className="device-save-option">
@@ -692,7 +695,8 @@ function App(){
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
           {!usePersonalAi&&<p className="notice">{activeClassic?t.classicDemo:t.demo}</p>}
           {error&&<p className="error" role="alert">{error}</p>}
-          <button className="primary-button full" disabled={busy||!consent} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button>
+          <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(2)} disabled={busy}><ArrowLeft size={16}/>{t.back}</button><button className="primary-button full" disabled={busy||!consent} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button></div></>}
+          {error&&createStep!==3&&<p className="error" role="alert">{error}</p>}
         </form>
       </section>}
       {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<PricingPlans lang={lang} api={API} session={privateToken}/></>}
