@@ -27,7 +27,6 @@ import { getReadingAchievements } from "./reading_achievements";
 import { StoryBranchQuest } from "./StoryBranchQuest";
 import { CharacterBuilder } from "./CharacterBuilder";
 import { ReadingSessionTimer } from "./ReadingSessionTimer";
-import { ReaderPageIndex } from "./ReaderPageIndex";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -1057,7 +1056,6 @@ function App(){
           <div className="print-book-cover"><StoryIllustration url={active.pages[0].image_url} alt={t.cover}/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
           {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><StoryIllustration url={item.image_url} alt={t.illustration+" "+(index+1)}/><p>{item.text}</p></section>)}
         </article>}
-        <ReaderPageIndex key={active.id} lang={lang} total={active.pages.length} page={page} onChange={setPage}/>
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span className="pager-indicators" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length}><span className="pager-mobile-current" aria-live="polite">{page+1} / {active.pages.length}</span>{active.pages.length<=7?active.pages.map((_,i)=><button type="button" key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)} aria-current={i===page?"page":undefined}/>):<><button type="button" className="pager-jump" disabled={page===0} onClick={()=>setPage(0)} aria-label={t.page+" 1"}>1</button><span className="pager-current" aria-live="polite">{page+1} / {active.pages.length}</span><button type="button" className="pager-jump" disabled={page===active.pages.length-1} onClick={()=>setPage(active.pages.length-1)} aria-label={t.page+" "+active.pages.length}>{active.pages.length}</button></>}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
       {tab==="home"&&<section className="install-panel compact-install">
