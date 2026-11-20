@@ -3,8 +3,8 @@ export const languages: {id:Lang;label:string}[] = [{id:"ru",label:"Русски
 export const labels = {
  ru:{
  library:"Мои сказки", classicsTitle:"Любимые сказки",classicsDesc:"Выберите знакомую историю и сделайте ребёнка её героем.",classicSelect:"Выбрать",classicSearch:"Найти сказку...",classicCategory:"Категории",classicAll:"Все",classicMagic:"Волшебные",classicAdventure:"Приключения",classicAnimals:"О животных",classicKindness:"О доброте",classicAge:"Возраст",classicAnyAge:"Любой",classicMore:"Показать все сказки",classicLess:"Свернуть каталог",classicEmpty:"Сказок по запросу не найдено",classicCount:"сказок",classicSelected:"Выбрана сказка",classicCustom:"Свой сюжет",classicFormTitle:"Готовая сказка или своя идея",classicDemo:"В демоверсии используется бережная адаптация выбранной сказки. Фото ребёнка не используется.", badge:"Чудеса начинаются здесь", hero1:"Сказка, в которой", hero2:"главный герой",hero3:"— ваш ребёнок",
- heroDesc:"Создавайте тёплые, волшебные истории с именем ребёнка, его фотографией и самым необычным сюжетом.",
- create:"Создать свою сказку", recognizable:"Узнаваемый герой",recognizableDesc:"В AI-режиме иллюстрации создаются по фотографии малыша.",
+ heroDesc:"Создавайте добрые сказки с именем ребёнка, любимыми героями и собственным сюжетом.",
+ create:"Создать свою сказку", recognizable:"Узнаваемый герой",recognizableDesc:"В демоверсии ребёнок становится героем истории по имени. Персональные AI-иллюстрации пока недоступны.",
  anyStory:"Любой сюжет",anyStoryDesc:"Космос, драконы или удивительные друзья. Вы решаете!",
  realBook:"Настоящая книга",realBookDesc:"Листайте страницы и сохраняйте истории.",
  shelf:"Ваша волшебная полка",seeAll:"Посмотреть все",quiet:"У вас пока нет сказок",quietDesc:"Создайте первую персональную историю для ребёнка.",firstBook:"Создать сказку",
@@ -20,8 +20,8 @@ export const labels = {
  },
  uz:{
  library:"Ertaklarim", classicsTitle:"Sevimli ertaklar",classicsDesc:"Taniş ertakni tanlang va farzandingizni uning qahramoniga aylantiring.",classicSelect:"Tanlaş",classicSearch:"Ertak qidiriş...",classicCategory:"Turkumlar",classicAll:"Hammasi",classicMagic:"Sehrli",classicAdventure:"Sarguzaştlar",classicAnimals:"Hayvonlar haqida",classicKindness:"Mehr-oqibat",classicAge:"Yoş",classicAnyAge:"Barçasi",classicMore:"Barça ertaklarni körsatiş",classicLess:"Katalogni qisqartiriş",classicEmpty:"Ertak topilmadi",classicCount:"ertak",classicSelected:"Tanlangan ertak",classicCustom:"Öz syujetim",classicFormTitle:"Tayyor ertak yoki öz ğoyangiz",classicDemo:"Demo rejimida tanlangan ertakning moslaştirilgan talqini işlatiladi. Bola surati işlatilmaydi.",badge:"Möjizalar şu yerda boşlanadi",hero1:"Bu ertakning",hero2:"boş qahramoni",hero3:"— farzandingiz",
- heroDesc:"Farzandingizning ismi, surati va ajoyib sarguzaştlari asosida sehrli ertaklar yarating.",
- create:"Ertak yaratiş",recognizable:"Taniş qahramon",recognizableDesc:"AI rejimida rasmlar bolaning suratiga asoslanadi.",
+ heroDesc:"Farzandingiz ismi, sevimli qahramonlari va öz syujetingiz bilan sehrli ertaklar yarating.",
+ create:"Ertak yaratiş",recognizable:"Taniş qahramon",recognizableDesc:"Demo rejimida bola ismi bilan qahramonga aylanadi. Maxsus AI rasmlari hozirça mavjud emas.",
  anyStory:"Istalgan syujet",anyStoryDesc:"Koinot, ajdarlar yoki yangi döstlar. Tanlov sizniki!",
  realBook:"Haqiqiy kitob",realBookDesc:"Sahifalarni varaqlang va ertaklarni saqlang.",
  shelf:"Sehrli kutubxonangiz",seeAll:"Barçasini köriş",quiet:"Hozirça ertaklaringiz yöq",quietDesc:"Farzandingiz uçun birinçi şaxsiy ertakni yarating.",firstBook:"Ertak yaratiş",
@@ -37,8 +37,8 @@ export const labels = {
  },
  en:{
  library:"My stories", classicsTitle:"Beloved fairy tales",classicsDesc:"Choose a classic story and make your child its hero.",classicSelect:"Choose story",classicSearch:"Search fairy tales...",classicCategory:"Categories",classicAll:"All",classicMagic:"Magic",classicAdventure:"Adventures",classicAnimals:"Animals",classicKindness:"Kindness",classicAge:"Age",classicAnyAge:"Any",classicMore:"Show all stories",classicLess:"Show fewer stories",classicEmpty:"No stories match your search",classicCount:"stories",classicSelected:"Selected story",classicCustom:"My own story",classicFormTitle:"Classic story or your own idea",classicDemo:"Demo mode uses a gentle adaptation of the chosen classic. Child photos are not used.",badge:"Where magic begins",hero1:"A story where",hero2:"the main character",hero3:"is your child",
- heroDesc:"Create heartwarming adventures starring your child, inspired by their name, photo, and imagination.",
- create:"Create a story",recognizable:"Familiar hero",recognizableDesc:"In AI mode, pictures are inspired by your child's photo.",
+ heroDesc:"Create warm adventures with your child's name, favorite characters, and your own story idea.",
+ create:"Create a story",recognizable:"Familiar hero",recognizableDesc:"Demo stories feature your child by name. Personalized AI illustrations are not available yet.",
  anyStory:"Any adventure",anyStoryDesc:"Space, dragons, or wonderful friends. You decide!",
  realBook:"A real storybook",realBookDesc:"Turn pages and save your favorite stories.",
  shelf:"Your magical shelf",seeAll:"View all",quiet:"No stories yet",quietDesc:"Create your child’s first personalized adventure.",firstBook:"Create a story",
