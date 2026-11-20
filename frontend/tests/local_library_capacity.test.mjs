@@ -117,7 +117,7 @@ test("Unexpected top-level JSON objects are preserved instead of replaced", () =
 }));
 
 test("Empty storage keys still allow new stories to be saved", () => withStores((local, session) => {
-  saveDemoBooks([...makeBooks(1), ...makeBooks(1, false)]);
+  saveDemoBooks([...makeBooks(1), ...makeBooks(1, false).map(book=>({...book,id:"local-session-0"}))]);
   assert.equal(JSON.parse(local.getItem("wondertale-opt-in-books-v1")).length, 1);
   assert.equal(JSON.parse(session.getItem("wondertale-preview-books-v1")).length, 1);
 }));
@@ -142,4 +142,31 @@ test("An older over-capacity book array remains untouched for recovery", () => w
   assert.throws(() => saveDemoBooks(makeBooks(1)), /LOCAL_LIBRARY_SAVE_FAILED/);
   assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
   assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
+}));
+
+test("Duplicate IDs supplied for both stores are rejected without changing saved books", () => withStores((local, session) => {
+  saveDemoBooks([...makeBooks(1), {...makeBooks(1, false)[0], id:"local-session-a"}]);
+  const beforeDevice=local.getItem("wondertale-opt-in-books-v1");
+  const beforeSession=session.getItem("wondertale-preview-books-v1");
+  assert.throws(() => saveDemoBooks([...makeBooks(1), makeBooks(1, false)[0]]), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
+});
+
+test("Existing duplicate book IDs in different stores prevent destructive rewrites", () => withStores((local, session) => {
+  local.setItem("wondertale-opt-in-books-v1", JSON.stringify(makeBooks(1)));
+  session.setItem("wondertale-preview-books-v1", JSON.stringify(makeBooks(1, false)));
+  const beforeDevice=local.getItem("wondertale-opt-in-books-v1");
+  const beforeSession=session.getItem("wondertale-preview-books-v1");
+  assert.throws(() => saveDemoBooks(makeBooks(1)), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
+});
+
+test("Existing duplicate book IDs within one store are not silently dropped", () => withStores((local, session) => {
+  local.setItem("wondertale-opt-in-books-v1", JSON.stringify([makeBooks(1)[0],makeBooks(1)[0]]));
+  const before=local.getItem("wondertale-opt-in-books-v1");
+  assert.throws(() => saveDemoBooks(makeBooks(1)), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), before);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), null);
 }));
