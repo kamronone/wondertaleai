@@ -1618,3 +1618,106 @@
     font-size:10px;
   }
 }
+
+/* Legal pages belong to the profile, not the fixed navigation or global footer. */
+.profile-legal-menu{
+  display:grid;
+  gap:10px;
+  width:100%;
+  max-width:680px;
+  min-width:0;
+  box-sizing:border-box;
+  margin:14px auto 0;
+  padding:14px;
+  border:1px solid #e2d6ed;
+  border-radius:16px;
+  background:#fff;
+}
+.profile-legal-heading h3{
+  margin:0;
+  color:#503771;
+  font-size:16px;
+  line-height:1.35;
+}
+.profile-legal-heading p{
+  margin:4px 0 0;
+  color:#80718c;
+  font-size:12px;
+  line-height:1.45;
+}
+.profile-legal-links{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.profile-legal-links > button{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  min-height:52px;
+  width:100%;
+  padding:9px 10px;
+  border:1px solid #e9dff2;
+  border-radius:12px;
+  color:#61447f;
+  background:#fcfaff;
+  text-align:left;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.3;
+  cursor:pointer;
+}
+.profile-legal-icon{
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  background:#f1e7fa;
+  color:#7e56aa;
+}
+.profile-legal-label{
+  flex:1 1 auto;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.profile-legal-chevron{
+  flex:0 0 17px;
+  color:#907ba5;
+}
+.profile-legal-links > button:hover{
+  background:#f7f0ff;
+  border-color:#d7c0eb;
+}
+.profile-legal-links > button:focus-visible{
+  outline:3px solid #a276c7;
+  outline-offset:2px;
+}
+.site-legal-footer{
+  gap:0!important;
+  padding-bottom:12px!important;
+}
+@media screen and (max-width:620px){
+  .profile-legal-menu{
+    margin:12px auto 0;
+    padding:12px;
+    gap:9px;
+    border-radius:15px;
+  }
+  .profile-legal-heading h3{font-size:15px}
+  .profile-legal-links{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+  .profile-legal-links > button{
+    min-height:48px;
+    font-size:12px;
+  }
+  .site-legal-footer{
+    padding:10px 8px 12px!important;
+  }
+}
