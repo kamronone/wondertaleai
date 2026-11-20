@@ -253,6 +253,8 @@ function App(){
         lastPage:pendingProgress.current.get(book.id)??book.lastPage
       }));
       clearChildDraft();
+      // Search and favorites from the previous parent must not filter the new library.
+      setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
       setPrivateToken(token);setRemoteBooks(merged);setBooks(merged);setActive(null);setPage(0);setEditingPage(false);setPageDraft("");setError("");setSyncMessage("");setTab("home");
       return true;
     }catch{return false;}
@@ -267,6 +269,7 @@ function App(){
     recentlyCreated.current.clear();
     const token=privateToken;
     clearChildDraft();
+    setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
     setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setPage(0);setEditingPage(false);setPageDraft("");setError("");setSyncMessage("");setTab("home");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
   };
