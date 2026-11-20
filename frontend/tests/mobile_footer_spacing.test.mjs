@@ -54,3 +54,12 @@ test("reader page removes the legacy 100px bottom padding on iPhone",()=>{
   assert.match(polish,/\.shell\s*>\s*main\s*>\s*\.reader-page\s*\{[^}]*min-height:0!important/s);
   assert.match(polish,/\.shell\s*>\s*main\s*>\s*\.reader-page \.pager\s*\{[^}]*margin-bottom:0!important/s);
 });
+
+test("creator action buttons use equal height, equal grid columns, and consistent typography",()=>{
+  assert.match(polish,/\.create-page \.wizard-step-actions\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/s);
+  assert.match(polish,/\.create-page \.wizard-step-actions > \.primary-button,\s*\.create-page \.wizard-step-actions > \.secondary-button\s*\{[^}]*min-height:60px!important/s);
+  assert.match(polish,/\.create-page \.wizard-step-actions > \.primary-button,\s*\.create-page \.wizard-step-actions > \.secondary-button\s*\{[^}]*height:60px!important/s);
+  assert.match(polish,/\.create-page \.wizard-step-actions > button:only-child\s*\{[^}]*grid-column:2!important/s);
+  assert.match(polish,/\.create-page \.wizard-step-actions > \.secondary-button\s*\{[^}]*background:#fff!important/s);
+  assert.match(polish,/\.create-page \.wizard-step-actions > \.primary-button\s*\{[^}]*color:#fff!important/s);
+});
