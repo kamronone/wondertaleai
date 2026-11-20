@@ -670,7 +670,10 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             sql(c,"UPDATE generation_quota SET used=used-1 WHERE owner_id=? AND day=? AND used>0",(owner,today))
             sql(c,"UPDATE generation_global_quota SET used=used-1 WHERE day=? AND used>0",(today,))
             c.commit()
-        raise
+        # Do not expose database errors or internal tracebacks to the parent.
+        # The 409 conflict is safe and actionable; other persistence failures
+        # are reported as a generic service error after quota refund.
+        raise HTTPException(503,"Unable to save this story. Please try later.")
     return {"id":bid,"title":generated.title,"language":generated.language,"pages":story_document["pages"],"created_at":now}
 
 @app.delete("/api/me",status_code=204)
