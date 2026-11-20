@@ -897,7 +897,7 @@ function App(){
           {privateToken&&API&&<StoryChildPicker key={privateToken} api={API} session={privateToken} lang={lang} onSelect={child=>{if(child){setName(child.nickname);setAge(String(child.age));}}}/>}
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} aria-invalid={heroNameTooLong} aria-describedby={heroNameTooLong?"hero-name-limit":undefined} value={name} onChange={e=>{setName(e.target.value);if(error===heroNameLengthError)setError("");}} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
           <label className="second-hero-field">{t.extraHero}<input maxLength={45} aria-invalid={heroNameTooLong} aria-describedby={heroNameTooLong?"hero-name-limit":undefined} value={secondHero} onChange={e=>{setSecondHero(e.target.value);if(error===heroNameLengthError)setError("");}} placeholder={t.extraHeroHint}/></label>{heroNameTooLong&&<p className="wizard-inline-error" id="hero-name-limit" role="status">{heroNameLengthError}</p>}
-          <CharacterBuilder key={privateToken?"private":"demo"} lang={lang} allowSave={!privateToken} onApply={hero=>{setSecondHero(hero);setError("");}}/>
+          <details className="wizard-optional-character"><summary><UserRound size={16}/>{({ru:"Добавить персонажа",uz:"Qahramon qoshish",en:"Add a character"} as const)[lang]}<ChevronDown size={16}/></summary><CharacterBuilder key={privateToken?"private":"demo"} lang={lang} allowSave={!privateToken} onApply={hero=>{setSecondHero(hero);setError("");}}/></details>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
           {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
           <div className="wizard-step-actions"><button type="button" className="primary-button" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}if(heroNameTooLong){setError(heroNameLengthError);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
@@ -937,7 +937,7 @@ function App(){
           {error&&createStep!==3&&<p className="error" role="alert">{error}</p>}
         </form>
       </section>}
-      {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<PricingPlans lang={lang} api={API} session={privateToken}/></>}
+      {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<details className="account-plans-disclosure"><summary><Star size={16}/>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}<ChevronDown size={16}/></summary><PricingPlans lang={lang} api={API} session={privateToken}/></details></>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
         {!isOnline&&<div className="library-sync-warning" role="status">
           <span>{privateToken?({ru:"Нет интернета. Серверная библиотека может быть недоступна после перезапуска. Для офлайн-чтения используйте сохранённые на устройстве демосказки; приватные книги не кешируются PWA.",uz:"Internet yoq. Server kutubxonasi qayta ochilganda mavjud bolmasligi mumkin. Oflayn oqish uchun qurilmada saqlangan demo ertaklardan foydalaning; shaxsiy kitoblar PWA keshiga yozilmaydi.",en:"You are offline. Server books may be unavailable after restarting. Use stories saved on this device for offline reading; private books are never stored in the PWA cache."} as const)[lang]:({ru:"Нет интернета. Доступны только сказки, уже сохранённые на этом устройстве.",uz:"Internet yoq. Faqat qurilmada saqlangan ertaklar mavjud.",en:"You are offline. Only stories already saved on this device are available."} as const)[lang]}</span>
@@ -948,6 +948,8 @@ function App(){
         {!privateToken&&getLocalLibraryHealth()==="unavailable"&&<div className="library-sync-warning" role="status">
           <span>{({ru:"Хранилище браузера недоступно. Локальные сказки могут не отображаться, а изменения не сохранятся. Проверьте настройки Safari.",uz:"Brauzer xotirasi mavjud emas. Mahalliy ertaklar körinmasligi va özgarişlar saqlanmasligi mumkin. Safari sozlamalarini tekshiring.",en:"Browser storage is unavailable. Local stories may be hidden and changes may not be saved. Check Safari settings."} as const)[lang]}</span>
         </div>}
+        <details className="library-achievements-disclosure">
+          <summary><Star size={16}/><span>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]} · {readingStats.unlocked}/{readingStats.total}</span><ChevronDown size={16}/></summary>
         <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
           <div className="reading-achievements-heading"><Star size={18}/><strong>{({ru:"Мои достижения",uz:"Mening yutuqlarim",en:"My achievements"} as const)[lang]}</strong></div>
           <p className="reading-achievements-summary" role="status">{readingStats.unlocked} / {readingStats.total} {({ru:"достижений открыто",uz:"yutuq oçildi",en:"achievements unlocked"} as const)[lang]}</p>
@@ -960,6 +962,11 @@ function App(){
           </div>
           <small className="reading-achievements-note">{({ru:"Прогресс рассчитан по текущей библиотеке. Последняя страница означает, что вы до неё дошли.",uz:"Natijalar joriy kutubxona asosida hisoblanadi. Oxirgi sahifaga yetiş yakunlangan deb hisoblanadi.",en:"Progress is based on this library. Reaching the final page counts as finishing."} as const)[lang]}</small>
         </section>
+        </details>
+        {books.some(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1)&&<div className="library-resume">
+          <div className="library-resume-text"><BookOpen size={17}/><span>{({ru:"Продолжить чтение",uz:"Oqishni davom ettirish",en:"Continue reading"} as const)[lang]}</span></div>
+          {books.filter(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1).slice(0,1).map(book=><button key={book.id} type="button" onClick={()=>openBook(book)}><span>{book.title}</span><ArrowRight size={17}/></button>)}
+        </div>}
         {privateToken&&libraryRefreshError&&<div className="library-sync-warning" role="status">
           <span>{({ru:"Не удалось обновить библиотеку. Ранее загруженные книги сохранены.",uz:"Kutubxonani yangilab bölmadi. Avval yuklangan kitoblar saqlangan.",en:"Could not refresh your library. Previously loaded books are still available."} as const)[lang]}</span>
           <button type="button" disabled={!isOnline} onClick={()=>setLibraryRefreshAttempt(value=>value+1)}>{({ru:"Повторить",uz:"Qayta uriniş",en:"Retry"} as const)[lang]}</button>
