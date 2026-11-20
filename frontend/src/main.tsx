@@ -14,6 +14,7 @@ import { ParentAccount } from "./ParentAccount";
 import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
+import { translateSelectedStoryPrompt } from "./story_language";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
@@ -172,16 +173,7 @@ function App(){
   const pickClassic=(id:ClassicId)=>{const item=classics.find(x=>x.id===id);if(!item)return;setClassicId(id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);openCreate(true);};
   const changeStoryLanguage=(next:Lang)=>{
     if(next===storyLang)return;
-    // Switch only a selected, unedited template. Custom writing must survive.
-    if(activeClassic){
-      if(prompt===activeClassic.prompt[storyLang])setPrompt(activeClassic.prompt[next]);
-    }else{
-      const selectedPreset=storyPresets[storyLang].find(preset=>preset.idea===prompt);
-      if(selectedPreset){
-        const translated=storyPresets[next].find(preset=>preset.id===selectedPreset.id);
-        if(translated)setPrompt(translated.idea);
-      }
-    }
+    setPrompt(previous=>translateSelectedStoryPrompt(previous,storyLang,next,activeClassic?.prompt));
     setStoryLang(next);
   };
   const combinedHeroName=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
