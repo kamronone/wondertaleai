@@ -51,7 +51,9 @@ test("Truncation never leaves a broken emoji surrogate pair",()=>{
   const result=fitSequelTitle(title,suffix);
   assert.ok(result.endsWith(suffix));
   assert.ok(result.length<=260);
-  assert.ok(!/[\\uD800-\\uDBFF](?![\\uDC00-\\uDFFF])/.test(result));
-  assert.ok(!/(?<![\\uD800-\\uDBFF])[\\uDC00-\\uDFFF]/.test(result));
+  const hasBrokenSurrogate = text => /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(text);
+  assert.equal(hasBrokenSurrogate(result),false);
+  assert.equal(hasBrokenSurrogate("Broken: "+String.fromCharCode(0xD83D)),true);
+  assert.equal(hasBrokenSurrogate("Broken: "+String.fromCharCode(0xDE00)),true);
   assert.ok(!result.includes("�"));
 });
