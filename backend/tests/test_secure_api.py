@@ -312,7 +312,9 @@ def test_parent_ai_quota_rejection_does_not_consume_global_budget(monkeypatch):
     monkeypatch.setenv("ENABLE_TEXT_AI","true")
     monkeypatch.setenv("OPENAI_API_KEY","test-injected-no-network")
     monkeypatch.setenv("AI_ALLOWED_EMAILS",first_email+","+second_email)
-    monkeypatch.setenv("MAX_AI_STORIES_PER_DAY","10")
+    # Other tests share this SQLite database; use a high global ceiling so
+    # unrelated prior generations do not make this regression flaky.
+    monkeypatch.setenv("MAX_AI_STORIES_PER_DAY","200")
     monkeypatch.setattr(secure_main,"generate_story",lambda x:GeneratedStory(
         title="A gentle magical adventure",language=x.language,
         pages=["A calm adventure where children help their friends and learn kindness together."]*x.pages_count))
