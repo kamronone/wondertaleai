@@ -8,7 +8,7 @@ const css = await readFile(new URL("../src/reader-polish.css", import.meta.url),
 test("The hero name limit is checked before leaving wizard step one", () => {
   assert.match(app, /const combinedHeroName=secondHero\.trim\(\)\?/);
   assert.match(app, /const heroNameTooLong=combinedHeroName\.length>60/);
-  assert.match(app, /if\(heroNameTooLong\)\{setError\(heroNameLengthError\);return;\}setError\(" "\)/.source ? /if\(heroNameTooLong\)\{setError\(heroNameLengthError\);return;\}/ : /unreachable/);
+  assert.match(app, /if\(heroNameTooLong\)\{setError\(heroNameLengthError\);return;\}/);
 });
 
 test("The wizard shows an accessible message by the second hero field", () => {
