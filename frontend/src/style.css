@@ -7,3 +7,7 @@
 /* Persistent, compact connectivity notice; never overlays story controls. */
 .offline-status-banner{position:relative;z-index:2;max-width:1100px;margin:8px auto 0;padding:10px 14px;border:1px solid #d6b37d;border-radius:12px;background:#fff8e9;color:#654521;font-size:13px;line-height:1.5;text-align:center}
 @media(max-width:600px){.offline-status-banner{margin:8px 12px 0;padding:9px 12px;font-size:12px}}
+
+.library-sync-warning{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;padding:12px 14px;border:1px solid #e5c78e;border-radius:12px;background:#fff8ec;color:#624923;font-size:13px;line-height:1.45}
+.library-sync-warning button{flex-shrink:0;min-height:36px;padding:7px 12px;border:1px solid currentColor;border-radius:9px;background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}
+@media(max-width:600px){.library-sync-warning{align-items:flex-start;flex-direction:column}.library-sync-warning button{align-self:flex-start}}
