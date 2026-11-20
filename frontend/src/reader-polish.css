@@ -852,3 +852,23 @@
     gap:8px;
   }
 }
+
+/* Reader-specific bottom gap: legacy theme adds 100px to .reader-page,
+   while the fixed tabbar's safe area is already reserved by .shell.
+   The page and its last pager must follow natural content height. */
+@media screen and (max-width:620px){
+  .shell > main > .reader-page{
+    box-sizing:border-box;
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:8px!important;
+    margin-bottom:0!important;
+  }
+  .shell > main > .reader-page .pager{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+  .shell > main > .reader-page .reader-page-index{
+    margin-bottom:8px!important;
+  }
+}
