@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
+import "./reader-polish.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -110,6 +111,33 @@ function App(){
   const [libraryRefreshAttempt,setLibraryRefreshAttempt]=useState(0);
   const [active,setActive]=useState<Book|null>(null);
   const [page,setPage]=useState(0);
+  const readerTouchStart=useRef<{x:number;y:number}|null>(null);
+  const onReaderTouchStart=(event:React.TouchEvent<HTMLElement>)=>{
+    const touch=event.touches[0];
+    if(touch)readerTouchStart.current={x:touch.clientX,y:touch.clientY};
+  };
+  const onReaderTouchEnd=(event:React.TouchEvent<HTMLElement>)=>{
+    const start=readerTouchStart.current;
+    readerTouchStart.current=null;
+    const touch=event.changedTouches[0];
+    if(!start||!touch||!active||editingPage)return;
+    const dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+    if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    setPage(previous=>Math.max(0,Math.min(active.pages.length-1,previous+(dx<0?1:-1))));
+  };
+  useEffect(()=>{
+    if(tab!=="reader"||!active)return;
+    const onKeyDown=(event:KeyboardEvent)=>{
+      const target=event.target;
+      if(event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||
+         (target instanceof HTMLElement&&(target.isContentEditable||!!target.closest("input, textarea, select, [role='dialog']"))))return;
+      if(event.key!=="ArrowLeft"&&event.key!=="ArrowRight")return;
+      event.preventDefault();
+      setPage(previous=>Math.max(0,Math.min(active.pages.length-1,previous+(event.key==="ArrowRight"?1:-1))));
+    };
+    window.addEventListener("keydown",onKeyDown);
+    return ()=>window.removeEventListener("keydown",onKeyDown);
+  },[tab,active?.id,active?.pages.length]);
   const [readerFontScale,setReaderFontScale]=useState<"small"|"normal"|"large">(()=>{
     try{const saved=localStorage.getItem("wondertale_reader_font_scale");return saved==="small"||saved==="large"?saved:"normal";}catch{return "normal";}
   });
@@ -779,7 +807,7 @@ function App(){
         {books.length>0&&<div className="library-filters" role="group"><button type="button" className={!favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(false)}>{t.allBooks}</button><button type="button" className={favoritesOnly?"active":""} onClick={()=>setFavoritesOnly(true)}><Heart size={15}/>{t.favorites}</button></div>}
         {(favoritesOnly?books.filter(book=>book.favorite):books).length?<div className="book-grid">{(favoritesOnly?books.filter(book=>book.favorite):books).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty"><BookOpen size={30}/><h3>{favoritesOnly?t.noFavorites:t.empty}</h3><p>{favoritesOnly?"":t.emptyDesc}</p></div>}</section>}
       {tab==="reader"&&active&&<section className="reader-page">
-        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions"><button className="icon-button" type="button" onClick={()=>window.print()} title={t.savePdf}><Download size={19}/></button>{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
+        <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions"><button className="icon-button" type="button" onClick={()=>window.print()} title={t.savePdf} aria-label={t.savePdf}><Download size={19}/></button>{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" onClick={()=>deleteBook(active)} title={t.delete}><Trash2 size={19}/></button></div></div>
         {error&&<p className="error" role="alert">{error}</p>}
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
@@ -790,7 +818,7 @@ function App(){
           </div>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>setReaderNightMode(v=>!v)}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>
-        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":"")}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
+        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":"")} onTouchStart={onReaderTouchStart} onTouchEnd={onReaderTouchEnd} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
             <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
