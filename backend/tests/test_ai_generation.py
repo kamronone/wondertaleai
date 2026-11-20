@@ -121,3 +121,25 @@ def test_short_generated_title_rejected_after_trimming(title):
     payload["title"]=title
     with pytest.raises(ValueError,match="valid story"):
         validate_generated_story(json.dumps(payload),"en")
+
+
+@pytest.mark.parametrize("raw",[
+    "", "not json", "{}", "[]", '{"title":"Book","language":"en","pages":null}',
+    '{"title":"Book","language":"en","pages":["short"]}',
+])
+def test_malformed_provider_output_is_rejected(raw):
+    with pytest.raises(ValueError,match="Model did not return a valid story"):
+        validate_generated_story(raw,"en")
+
+
+def test_provider_markdown_json_fence_is_supported():
+    raw="\x60\x60\x60json\\n"+valid_story("en")+"\\n\x60\x60\x60"
+    result=validate_generated_story(raw,"en")
+    assert result.language=="en" and len(result.pages)==8
+
+
+def test_provider_page_with_only_whitespace_is_rejected():
+    payload=json.loads(valid_story("en"))
+    payload["pages"][0]=" "*100
+    with pytest.raises(ValueError,match="Model did not return a valid story"):
+        validate_generated_story(json.dumps(payload),"en")
