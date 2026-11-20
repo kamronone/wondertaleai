@@ -129,7 +129,7 @@ function App(){
   const [consent,setConsent]=useState(false);
   const [createStep,setCreateStep]=useState<1|2|3>(1);
   // Every new creation starts with the child, never with a stale confirmation step.
-  const openCreate=()=>{setCreateStep(1);setError("");setTab("create");};
+  const openCreate=()=>{setCreateStep(1);setConsent(false);setUsePersonalAi(false);setError("");setTab("create");};
   const [saveOnDevice,setSaveOnDevice]=useState(false);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
   const [editingPage,setEditingPage]=useState(false);
