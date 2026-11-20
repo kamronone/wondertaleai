@@ -13,3 +13,9 @@
 .reader-page .reading-word-game button:disabled{opacity:.7}
 @media(max-width:380px){.reader-page .reading-word-choices{grid-template-columns:1fr}.reader-page .bedtime-controls>span{flex:1 1 70%}}
 @media print{.reader-page .bedtime-controls,.reader-page .reading-word-game{display:none!important}}
+
+/* Compact age recommendation filter; not a security boundary. */
+.library-page .library-age-filter{margin:-3px 0 13px;display:flex;justify-content:flex-end}
+.library-page .library-age-filter label{display:flex;gap:9px;align-items:center;font-size:12px;font-weight:650;color:#634e7c;flex-wrap:wrap}
+.library-page .library-age-filter select{min-height:44px;min-width:132px;border-radius:10px;background:#fff;color:#503768;border:1px solid #dccaea;padding:8px 10px;font-size:14px}
+@media(max-width:420px){.library-page .library-age-filter{justify-content:stretch}.library-page .library-age-filter label{width:100%;justify-content:space-between}}
