@@ -23,16 +23,22 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
  const [error,setError]=useState("");
  const [unverified,setUnverified]=useState(false);
  const [apiReady,setApiReady]=useState<boolean|null>(null);
+ const [registrationEnabled,setRegistrationEnabled]=useState(false);
+ const [recoveryEnabled,setRecoveryEnabled]=useState(false);
  useEffect(()=>{
   if(!api){setApiReady(false);return;}
   const controller=new AbortController();
   setApiReady(null);
+  setRegistrationEnabled(false);
+  setRecoveryEnabled(false);
   const timeout=setTimeout(()=>controller.abort(),8000);
   fetch(api+"/api/ready",{signal:controller.signal,cache:"no-store"})
    .then(async response=>{
     if(!response.ok)return false;
     const data:unknown=await response.json();
-    return typeof data==="object"&&data!==null&&"ok" in data&&data.ok===true&&"database" in data&&data.database==="connected";
+    if(typeof data!=="object"||data===null)return false;
+    if(!controller.signal.aborted){setRegistrationEnabled("registration_enabled" in data&&data.registration_enabled===true);setRecoveryEnabled("password_recovery_enabled" in data&&data.password_recovery_enabled===true);}
+    return "ok" in data&&data.ok===true&&"database" in data&&data.database==="connected";
    })
    .then(ready=>{if(!controller.signal.aborted)setApiReady(ready);})
    .catch(()=>{if(!controller.signal.aborted)setApiReady(false);})
@@ -42,7 +48,7 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
 
  const submit=async(e:FormEvent)=>{
   e.preventDefault();
-  if(!api||apiReady!==true||working)return;
+  if(!api||apiReady!==true||working||(mode==="register"&&!registrationEnabled)||(mode==="forgot"&&!recoveryEnabled))return;
   setWorking(true);setError("");setNotice("");setUnverified(false);
   try{
    const endpoint=mode==="login"?"/api/auth/login":mode==="register"?"/api/auth/register":"/api/auth/forgot-password";
@@ -96,15 +102,16 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
     <form className="parent-account-card" onSubmit={submit}>
       <div className="parent-account-mode">
         <button type="button" className={mode==="login"?"active":""} onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.login}</button>
-        <button type="button" className={mode==="register"?"active":""} onClick={()=>{setMode("register");setError("");setNotice("");}}>{t.register}</button>
+        <button type="button" className={mode==="register"?"active":""} disabled={!registrationEnabled} onClick={()=>{setMode("register");setError("");setNotice("");}}>{t.register}</button>
       </div>
+      {!registrationEnabled&&<p className="parent-account-muted">{({ru:"Регистрация временно закрыта.",uz:"Röyxatdan ötiş vaqtinça yopiq.",en:"Registration is temporarily closed."} as const)[lang]}</p>}
       <label><Mail size={16}/>{t.email}<input type="email" autoComplete="email" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)} /></label>
       {mode!=="forgot"&&<label><KeyRound size={16}/>{t.password}<input type="password" autoComplete={mode==="register"?"new-password":"current-password"} required minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)}/></label>}
       {mode==="register"&&<p className="parent-account-muted">{t.registerInfo}</p>}
       {notice&&<p className="parent-account-notice" role="status">{notice}</p>}
       {error&&<p className="parent-account-error" role="alert">{error}</p>}
-      {unverified&&<button type="button" className="parent-account-secondary" disabled={working} onClick={()=>void resend()}>{t.resend}</button>}
-      {mode==="register"&&notice&&<button type="button" className="parent-account-textbtn" disabled={working} onClick={()=>void resend()}>{t.resend}</button>}
+      {unverified&&<button type="button" className="parent-account-secondary" disabled={working||!recoveryEnabled} onClick={()=>void resend()}>{t.resend}</button>}
+      {mode==="register"&&notice&&<button type="button" className="parent-account-textbtn" disabled={working||!recoveryEnabled} onClick={()=>void resend()}>{t.resend}</button>}
       <button type="submit" className="parent-account-primary" disabled={working}>{working?t.loading:mode==="forgot"?t.sendLink:mode==="register"?t.register:t.login}</button>
       {mode==="login"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("forgot");setError("");setNotice("");}}>{t.forgot}</button>:mode==="forgot"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.back}</button>:null}
     </form>}
