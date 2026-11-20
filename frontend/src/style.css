@@ -3,3 +3,7 @@
 
 /* PWA installation, brand and safe areas */
 .install-panel{margin-top:24px;display:flex;align-items:center;gap:18px;padding:22px 24px;border:1px solid #e8dced;background:#fff;border-radius:18px}.install-icon{width:70px;height:70px;flex-shrink:0;overflow:hidden;border-radius:18px;box-shadow:0 6px 17px #44356c2b}.install-icon img{width:100%;height:100%;display:block}.install-panel h3{margin:0 0 7px;font-size:16px}.install-panel p{margin:0;color:#82758e;font-size:13px;line-height:1.65}.topbar{padding-top:max(12px,env(safe-area-inset-top))}footer{padding-bottom:max(23px,env(safe-area-inset-bottom))}@media(max-width:480px){.install-panel{padding:14px;gap:12px}.install-icon{width:54px;height:54px;border-radius:14px}.install-panel h3{font-size:14px}.install-panel p{font-size:12px}}
+
+/* Persistent, compact connectivity notice; never overlays story controls. */
+.offline-status-banner{position:relative;z-index:2;max-width:1100px;margin:8px auto 0;padding:10px 14px;border:1px solid #d6b37d;border-radius:12px;background:#fff8e9;color:#654521;font-size:13px;line-height:1.5;text-align:center}
+@media(max-width:600px){.offline-status-banner{margin:8px 12px 0;padding:9px 12px;font-size:12px}}
