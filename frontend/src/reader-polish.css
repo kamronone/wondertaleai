@@ -121,3 +121,20 @@
   .print-book-cover img{max-height:145mm}
   .print-book-page:last-child{break-after:auto;page-break-after:auto}
 }
+
+/* SVG artwork fallback must size identically to normal images in printed books. */
+@media print{
+  .print-book-cover>.story-image-fallback{
+    display:block;
+    width:78%;
+    height:145mm;
+    margin:0 auto 12mm;
+  }
+  .print-book-page>.story-image-fallback{
+    display:block;
+    width:100%;
+    height:97mm;
+    max-height:97mm;
+    flex:0 0 auto;
+  }
+}
