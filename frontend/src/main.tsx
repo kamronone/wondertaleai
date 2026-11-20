@@ -795,10 +795,10 @@ function App(){
   const heading=(label:string,sub:string)=><div className="section-heading"><h2>{label}</h2><p>{sub}</p></div>;
   if(accountAction)return <AccountAction kind={accountAction.kind} token={accountAction.token} api={API} lang={lang} onDone={()=>{setAccountAction(null);setTab("home");}}/>;
   if(showOnboarding&&!privateToken)return <section className="welcome-screen" aria-label="WonderTale AI welcome" onTouchStart={onWelcomeTouchStart} onTouchMove={onWelcomeTouchMove} onTouchEnd={onWelcomeTouchEnd} onTouchCancel={onWelcomeTouchCancel} tabIndex={0} onKeyDown={event=>{const target=event.target;if(target instanceof HTMLElement&&target.closest("button, select, input, textarea, [role='button']"))return;if(event.key==="ArrowRight"){event.preventDefault();setOnboardingStep(current=>Math.min(2,current+1));}if(event.key==="ArrowLeft"){event.preventDefault();setOnboardingStep(current=>Math.max(0,current-1));}}}>
+    <button type="button" className="welcome-skip" onClick={()=>finishOnboarding("home")}>{({ru:"Пропустить",uz:"Ötkazib yuboriş",en:"Skip intro"} as const)[lang]}</button>
     <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.png" alt=""/></div>
     <div className="welcome-shade" aria-hidden="true"/>
     <div className="welcome-content">
-      <button type="button" className="welcome-skip" onClick={()=>finishOnboarding("home")}>{({ru:"Пропустить",uz:"Ötkazib yuboriş",en:"Skip intro"} as const)[lang]}</button>
       <div className="welcome-brand"><Crown size={27} fill="#ffd67a"/><span>WonderTale <strong>AI</strong></span></div>
       <h1>{[
         {ru:"Ваш ребёнок — герой собственной сказки",uz:"Farzandingiz öz ertagining qahramoni",en:"Your child is the hero of their own story"},
