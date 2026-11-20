@@ -757,6 +757,7 @@ function App(){
     catch{setError(t.deleteError);}
   };
   const shownBooks=discoverBooks(books,libraryQuery,favoritesOnly,librarySort);
+  const continueBook=books.find(book=>book.pages.length>1&&(book.lastPage??0)>0&&(book.lastPage??0)<book.pages.length-1);
   const readingStats=getReadingAchievements(books);
   const achievementLabels={
     books:({ru:"Сказки в библиотеке",uz:"Kutubxonadagi ertaklar",en:"Stories in library"} as const)[lang],
@@ -805,6 +806,15 @@ function App(){
           <button className="primary-button" onClick={()=>openCreate()}><WandSparkles size={19}/> {t.create} <ArrowRight size={18}/></button>
           </div>
         </div>
+        {continueBook&&<button type="button" className="continue-story-card" onClick={()=>openBook(continueBook)}>
+          <StoryIllustration url={continueBook.pages[0]?.image_url||""} alt={continueBook.title} lazy/>
+          <span className="continue-story-copy">
+            <small>{({ru:"Продолжить чтение",uz:"Öqişni davom ettiriş",en:"Continue reading"} as const)[lang]}</small>
+            <strong>{continueBook.title}</strong>
+            <small>{t.page} {(continueBook.lastPage??0)+1} {t.of} {continueBook.pages.length}</small>
+          </span>
+          <ArrowRight size={19} aria-hidden="true"/>
+        </button>}
         <div className="quick-actions"><button type="button" onClick={()=>setTab("library")}><span className="quick-icon"><Library size={22}/></span><strong>{t.library}</strong><ArrowRight size={16}/></button><button type="button" onClick={()=>document.getElementById("classic-stories")?.scrollIntoView({behavior:"smooth",block:"start"})}><span className="quick-icon"><BookOpen size={22}/></span><strong>{t.classicsTitle}</strong><ArrowRight size={16}/></button></div>
         <div className="section-head"><div><span className="section-eyebrow">✦ WonderTale</span><h2>{t.shelf}</h2></div><button className="text-link" onClick={()=>setTab("library")}>{t.seeAll} <ArrowRight size={16}/></button></div>
         {books.length?<div className="book-grid">{books.slice(0,3).map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:<div className="empty empty-compact"><span className="empty-compact-icon"><BookOpen size={23}/></span><div className="empty-compact-copy"><h3>{t.quiet}</h3><p>{t.quietDesc}</p></div><button className="secondary-button" onClick={()=>openCreate()}>{t.firstBook} <ArrowRight size={16}/></button></div>}
