@@ -891,7 +891,7 @@ function App(){
             </div>}
         </div>}
         {isDemoBook(active)&&page===active.pages.length-1&&<div className="interactive-endings"><strong>{t.interactiveEnding}</strong>
-          <div>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
+          <div role="group" aria-label={t.interactiveEnding}>{(["friendship","discovery"] as const).map(id=><button type="button" key={id} className={active.endingChoice===id?"active":""} aria-pressed={active.endingChoice===id} onClick={()=>selectEnding(id)}>{endings[active.language||storyLang][id].title}</button>)}</div>
         </div>}
         {isDemoBook(active)&&page===active.pages.length-1&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
         {<article className="print-book" aria-hidden="true">
