@@ -804,12 +804,6 @@ function App(){
         {ru:"Волшебные истории каждый день",uz:"Har kuni sehrli hikoyalar",en:"Magical stories every day"},
         {ru:"Создавайте и сохраняйте сказки",uz:"Ertaklar yarating va saqlang",en:"Create and save stories"},
       ][onboardingStep][lang]}</h1>
-      <div className="welcome-language">
-        <label htmlFor="welcome-language-select">{t.interfaceLanguage}</label>
-        <select id="welcome-language-select" value={lang} onChange={event=>switchLang(event.target.value as Lang)}>
-          {languages.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
-        </select>
-      </div>
       <div className="welcome-dots" role="group" aria-label={({ru:"Экраны знакомства",uz:"Tanişuv sahifalari",en:"Introduction slides"} as const)[lang]}>{[0,1,2].map(n=><button key={n} type="button" className={n===onboardingStep?"active":""} onClick={()=>setOnboardingStep(n)} aria-label={({ru:`Экран ${n+1} из 3`,uz:`${n+1}-sahifa, jami 3`,en:`Slide ${n+1} of 3`} as const)[lang]} aria-current={n===onboardingStep?"step":undefined}/>)}</div>
       <button type="button" className="welcome-primary" onClick={()=>onboardingStep<2?setOnboardingStep(n=>n+1):finishOnboarding("home")}>{onboardingStep<2?({ru:"Начать",uz:"Boşlaş",en:"Get started"} as const)[lang]:({ru:"Открыть сказки",uz:"Ertaklarni oçiş",en:"Explore stories"} as const)[lang]} <Sparkles size={18}/></button>
       <button type="button" className="welcome-secondary" onClick={()=>finishOnboarding("account")}>{({ru:"У меня уже есть аккаунт",uz:"Menda akkaunt bor",en:"I already have an account"} as const)[lang]}</button>
