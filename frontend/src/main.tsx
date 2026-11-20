@@ -506,6 +506,16 @@ function App(){
   const generate=async(e:React.FormEvent)=>{
     e.preventDefault();
     if(busy)return;
+    // Pressing Enter inside an earlier wizard step must not bypass review and consent.
+    if(createStep!==3){
+      setError(({ru:"Завершите все шаги создания сказки.",uz:"Ertak yaratişning barça bosqiçlarini tugating.",en:"Complete all story creation steps first."} as const)[lang]);
+      return;
+    }
+    if(!name.trim()||prompt.trim().length<8){
+      setError(({ru:"Проверьте имя ребёнка и описание сюжета.",uz:"Bolaning ismi va syujet tavsifini tekşiring.",en:"Check the child's name and story idea."} as const)[lang]);
+      setCreateStep(!name.trim()?1:2);
+      return;
+    }
     setError("");
     setBusy(true);
     try{
