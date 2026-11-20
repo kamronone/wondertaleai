@@ -177,3 +177,19 @@ test("Health distinguishes disabled Safari storage from damaged data", () => wit
     else delete globalThis.sessionStorage;
   }
 }));
+
+
+test("Health warns when different browser stores contain the same book ID", () => withStorage(({device,session}) => {
+  device.setItem("wondertale-opt-in-books-v1", JSON.stringify([story(0,true)]));
+  session.setItem("wondertale-preview-books-v1", JSON.stringify([story(0,false)]));
+  assert.equal(getLocalLibraryHealth(), "corrupt");
+  assert.equal(getDemoBooks().length, 1);
+  assert.equal(JSON.parse(device.getItem("wondertale-opt-in-books-v1")).length, 1);
+  assert.equal(JSON.parse(session.getItem("wondertale-preview-books-v1")).length, 1);
+}));
+
+test("Health warns when duplicate IDs appear inside a single saved collection", () => withStorage(({device}) => {
+  device.setItem("wondertale-opt-in-books-v1", JSON.stringify([story(1,true),story(1,true)]));
+  assert.equal(getLocalLibraryHealth(), "corrupt");
+  assert.equal(getDemoBooks().length, 1);
+}));
