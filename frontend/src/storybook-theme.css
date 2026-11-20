@@ -787,3 +787,16 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
  .story-page-image>.story-image-fallback{max-height:360px;border-radius:14px}
  .book-tile>.story-image-fallback{min-height:110px;max-height:190px}
 }
+
+/* Reader pagination stays usable for long books and narrow phone screens. */
+.reader-page .pager-indicators{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;flex:1}
+.reader-page .pager-current{font-size:12px;font-weight:750;color:#63468c;white-space:nowrap;font-variant-numeric:tabular-nums}
+.reader-page .pager-jump{display:grid;place-items:center;min-width:30px;min-height:34px;padding:5px;border:1px solid #e5d7ef;border-radius:9px;background:#fff;color:#62458a;font-size:12px;font-weight:750}
+.reader-page .pager-jump:disabled{opacity:.4}
+@media(max-width:420px){
+ .reader-page .pager{gap:6px}
+ .reader-page .pager-indicators{gap:4px}
+ .reader-page .pager-jump{min-width:26px;min-height:32px;padding:3px;font-size:11px}
+ .reader-page .pager-current{font-size:11px}
+ .reader-page .pager>button{padding:8px 7px;min-height:42px}
+}
