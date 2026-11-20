@@ -17,18 +17,19 @@ export function StoryChildPicker({api,session,lang,onSelect}:Props){
  const [attempt,setAttempt]=useState(0);
  useEffect(()=>{
   const controller=new AbortController();
+  let mounted=true;
   const timeout=window.setTimeout(()=>controller.abort(),15000);
   setSelected("");setChildren([]);setLoading(true);setError(false);
   void fetch(api+"/api/children",{headers:{Authorization:"Bearer "+session},cache:"no-store",signal:controller.signal})
    .then(async response=>{if(!response.ok)throw Error("Profiles unavailable");return response.json() as Promise<unknown>;})
    .then(data=>{
-    if(controller.signal.aborted)return;
+    if(!mounted)return;
     if(!Array.isArray(data))throw Error("Invalid profiles");
     setChildren(data.filter((child):child is Child=>child&&typeof child.id==="string"&&typeof child.nickname==="string"&&Number.isInteger(child.age)&&child.age>=2&&child.age<=14));
    })
-   .catch(()=>{setError(true);})
-   .finally(()=>{window.clearTimeout(timeout);setLoading(false);});
-  return ()=>{window.clearTimeout(timeout);controller.abort();};
+   .catch(()=>{if(mounted)setError(true);})
+   .finally(()=>{window.clearTimeout(timeout);if(mounted)setLoading(false);});
+  return ()=>{mounted=false;window.clearTimeout(timeout);controller.abort();};
  },[api,session,attempt]);
  return <div className="story-child-picker">
   <label>{t.title}
