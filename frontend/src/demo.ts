@@ -65,7 +65,10 @@ export const saveDemoBooks=(books:DemoBook[])=>{
      let decoded:unknown;
      try{decoded=JSON.parse(previous);}
      catch{throw new Error("LOCAL_LIBRARY_SAVE_FAILED");}
-     if(!Array.isArray(decoded))throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
+     // Reading filters invalid entries and caps each storage at 20 books.
+     // Reject writes rather than silently discarding books omitted on read.
+     if(!Array.isArray(decoded)||decoded.length>20||
+        decoded.some(entry=>!isValidLocalBook(entry)))throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
    }
  }catch{
    throw new Error("LOCAL_LIBRARY_SAVE_FAILED");
