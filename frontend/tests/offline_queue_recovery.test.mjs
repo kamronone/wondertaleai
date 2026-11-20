@@ -70,3 +70,14 @@ test("Private-library refresh persists repaired pending pages before merge and r
  assert.match(app,/pendingProgress\.current=repairedProgress;\s*persistPending\(\);/);
  assert.match(app,/const merged=remote\.map\(book=>\(\{/);
 });
+
+test("A temporarily missing book cannot block other pending progress or favorites",async()=>{
+ const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
+ const flush=app.slice(app.indexOf("const flush=async()=>"),app.indexOf("const onOnline=()=>"));
+ assert.ok(flush.includes("await updatePrivateReadingProgress("));
+ assert.ok(flush.includes("await setPrivateFavorite("));
+ const misses=[...flush.matchAll(/if\(error instanceof PrivateBookNotFoundError\)continue;/g)];
+ assert.equal(misses.length,2,"Both progress and favorite loops must skip missing books");
+ assert.match(flush,/if\(error instanceof PrivateBookNotFoundError\)continue;\s*break;/);
+ assert.match(flush,/if\(disposed\|\|sessionEpoch\.current!==epoch\)break;/);
+});
