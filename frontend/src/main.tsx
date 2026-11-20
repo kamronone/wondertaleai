@@ -999,17 +999,10 @@ function App(){
           <button type="button" aria-pressed={readerFocusMode} className={readerFocusMode?"active":""} onClick={()=>{setReaderFocusMode(v=>!v);setReaderSettingsOpen(false);setEditingPage(false);}}>
             <BookOpen size={16}/>{readerFocusMode?({ru:"Обычное чтение",uz:"Oddiy oqish",en:"Show controls"} as const)[lang]:({ru:"Только сказка",uz:"Faqat ertak",en:"Focus reading"} as const)[lang]}
           </button>
-          {!readerFocusMode&&<button type="button" aria-expanded={readerSettingsOpen} onClick={()=>setReaderSettingsOpen(v=>!v)}>
+          {!readerFocusMode&&<button type="button" aria-expanded={readerSettingsOpen} aria-controls="reader-display-options" onClick={()=>setReaderSettingsOpen(v=>!v)}>
             <SlidersHorizontal size={16}/>{({ru:"Настройки",uz:"Sozlamalar",en:"Settings"} as const)[lang]}
           </button>}
         </div>
-        <div className="bedtime-controls" role="group" aria-label={({ru:"Таймер перед сном",uz:"Uxlash taymeri",en:"Bedtime timer"} as const)[lang]}>
-          <MoonStar size={16}/><span>{({ru:"Перед сном",uz:"Uyqu oldidan",en:"Bedtime"} as const)[lang]}</span>
-          {([10,20] as const).map(minutes=><button type="button" key={minutes} aria-pressed={bedtimeUntil!==null&&Math.abs(bedtimeUntil-Date.now()-minutes*60000)<60000} onClick={()=>{setReaderNightMode(true);setReaderWarmMode(false);setBedtimeUntil(Date.now()+minutes*60000);}}>{minutes} {({ru:"мин",uz:"daq",en:"min"} as const)[lang]}</button>)}
-          {bedtimeUntil!==null&&<button type="button" onClick={()=>setBedtimeUntil(null)}>{({ru:"Отменить",uz:"Bekor qilish",en:"Cancel"} as const)[lang]}</button>}
-        </div>
-        <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
-        <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         {readerSettingsOpen&&!readerFocusMode&&<div id="reader-display-options" className="reader-display-settings" role="group" aria-label={({ru:"Настройки чтения",uz:"Oqiş sozlamalari",en:"Reading settings"} as const)[lang]}>
           <span>{({ru:"Размер текста",uz:"Matn ölçami",en:"Text size"} as const)[lang]}</span>
           <div className="reader-font-controls">
@@ -1023,6 +1016,13 @@ function App(){
           <button type="button" className={"reader-warm-toggle"+(readerWarmMode&&!readerNightMode?" active":"")} aria-pressed={readerWarmMode&&!readerNightMode} onClick={()=>{setReaderWarmMode(value=>!value);setReaderNightMode(false);}}><BookOpen size={15}/>{({ru:"Тёплый фон",uz:"Iliq fon",en:"Warm background"} as const)[lang]}</button>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>{setReaderNightMode(v=>!v);setReaderWarmMode(false);}}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>}
+        <div className="bedtime-controls" role="group" aria-label={({ru:"Таймер перед сном",uz:"Uxlash taymeri",en:"Bedtime timer"} as const)[lang]}>
+          <MoonStar size={16}/><span>{({ru:"Перед сном",uz:"Uyqu oldidan",en:"Bedtime"} as const)[lang]}</span>
+          {([10,20] as const).map(minutes=><button type="button" key={minutes} aria-pressed={bedtimeUntil!==null&&Math.abs(bedtimeUntil-Date.now()-minutes*60000)<60000} onClick={()=>{setReaderNightMode(true);setReaderWarmMode(false);setBedtimeUntil(Date.now()+minutes*60000);}}>{minutes} {({ru:"мин",uz:"daq",en:"min"} as const)[lang]}</button>)}
+          {bedtimeUntil!==null&&<button type="button" onClick={()=>setBedtimeUntil(null)}>{({ru:"Отменить",uz:"Bekor qilish",en:"Cancel"} as const)[lang]}</button>}
+        </div>
+        <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
+        <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
