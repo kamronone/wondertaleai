@@ -131,6 +131,7 @@ function App(){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [usePersonalAi,setUsePersonalAi]=useState(false);
+  const [aiPagesCount,setAiPagesCount]=useState<8|12|20>(8);
 
   // Child profile details must never carry over between parent sessions.
   const clearChildDraft=()=>{setName("");setAge("5");setSecondHero("");setPhoto(null);};
@@ -517,7 +518,7 @@ function App(){
           name:name.trim(),age:Number(age),language:storyLang,
           classic_title:activeClassic?.title[storyLang]||"",
           idea:prompt.trim(),style,other_heroes:secondHero.trim()?[secondHero.trim()]:[],
-          pages_count:8,
+          pages_count:aiPagesCount,
         };
         const response=await fetch(API+"/api/books/generate",{
           method:"POST",
@@ -670,6 +671,7 @@ function App(){
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options">{languages.map(l=><button type="button" className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
           <div className="story-lang-field"><label>{({ru:"Режим создания",uz:"Yaratiş rejimi",en:"Creation mode"} as const)[lang]}</label><div className="story-lang-options"><button type="button" className={!usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(false)}>{({ru:"Демо",uz:"Demo",en:"Demo"} as const)[lang]}</button><button type="button" className={usePersonalAi?"active":""} onClick={()=>setUsePersonalAi(true)}>{({ru:"AI (аккаунт)",uz:"AI (akkaunt)",en:"AI (account)"} as const)[lang]}</button></div></div>
+          {usePersonalAi&&<label>{({ru:"Длина AI-сказки",uz:"AI ertak uzunligi",en:"AI story length"} as const)[lang]}<select value={aiPagesCount} onChange={e=>setAiPagesCount(Number(e.target.value) as 8|12|20)}><option value={8}>8 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={12}>12 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={20}>20 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option></select></label>}
           {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
           {!usePersonalAi&&<div className="device-save-option">
             <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
