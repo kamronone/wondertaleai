@@ -23,7 +23,7 @@ test("Parent reading suggestions do not claim to restrict child access", () => {
 
 test("Offline messaging and service worker never promise caching private books", () => {
   const app = read("../src/main.tsx");
-  const sw = read("../../public/sw.js");
+  const sw = read("../public/sw.js");
   assert.match(app, /private books are never stored in the PWA cache/);
   assert.match(sw, /const PRIVATE_PATH/);
   assert.match(sw, /request\.headers\.has\("Authorization"\)/);
