@@ -123,11 +123,16 @@ function App(){
     const touch=event.touches[0];
     readerTouchStart.current={x:touch.clientX,y:touch.clientY,identifier:touch.identifier};
   };
+  const onReaderTouchMove=(event:React.TouchEvent<HTMLElement>)=>{
+    // A second finger may enter outside the reader after the first touch.
+    // Once multi-touch is observed, the gesture cannot become a page turn.
+    if(event.touches.length!==1)readerTouchStart.current=null;
+  };
   const onReaderTouchEnd=(event:React.TouchEvent<HTMLElement>)=>{
     const start=readerTouchStart.current;
     readerTouchStart.current=null;
     // Only the finger that started the swipe may complete it.
-    if(!start||event.touches.length>0||!active||editingPage)return;
+    if(!start||event.touches.length!==0||event.changedTouches.length!==1||!active||editingPage)return;
     const touch=Array.from(event.changedTouches).find(item=>item.identifier===start.identifier);
     if(!touch)return;
     if(window.getSelection()?.toString().trim())return;
@@ -888,7 +893,7 @@ function App(){
           </div>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>setReaderNightMode(v=>!v)}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>
-        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":"")} onTouchStart={onReaderTouchStart} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
+        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":"")} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
             <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
