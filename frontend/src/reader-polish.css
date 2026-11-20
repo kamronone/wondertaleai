@@ -695,3 +695,35 @@
 @media(max-width:620px){
   .reader-page .story-page{scroll-margin-top:10px}
 }
+
+
+/* Mobile viewport: prevent flex-grow and duplicated bottom reservations from
+   creating a large empty block between the last page control and footer.
+   The fixed tab bar needs one reserved area, owned by .shell alone. */
+@media screen and (max-width:620px){
+  .shell{
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:calc(76px + env(safe-area-inset-bottom, 0px))!important;
+    justify-content:flex-start!important;
+  }
+  .shell > .topbar{margin:0 auto!important;flex:0 0 auto!important}
+  .shell > main{
+    flex:0 0 auto!important;
+    min-height:0!important;
+    margin:0 auto!important;
+    padding-bottom:12px!important;
+  }
+  .shell > footer{
+    flex:0 0 auto!important;
+    margin:0!important;
+    padding:12px 16px 14px!important;
+  }
+  .reader-page .pager{margin-bottom:4px!important}
+}
+/* Print output must keep the existing book layout without mobile tabbar gaps. */
+@media print{
+  .shell{min-height:0!important;padding-bottom:0!important}
+  .shell > main{padding-bottom:0!important}
+  .shell > footer{display:none!important}
+}
