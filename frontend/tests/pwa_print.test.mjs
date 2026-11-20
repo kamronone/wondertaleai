@@ -33,7 +33,7 @@ function serviceWorkerHarness({ optionalFailure = false } = {}) {
   };
   const caches = {
     open: async () => store,
-    match: async () => null,
+    match: async () => { throw Error("Cross-cache lookup is forbidden"); },
     keys: async () => [],
     delete: async () => true
   };
@@ -72,6 +72,14 @@ test("PWA never intercepts account APIs, authenticated requests, or other origin
   assert.equal(dispatchFetch(listeners, "/auth/login"), undefined);
   assert.equal(dispatchFetch(listeners, "/images/classics/ryaba.webp", { authorization: true }), undefined);
   assert.equal(dispatchFetch(listeners, "/images/classics/ryaba.webp", { origin: "https://another.example" }), undefined);
+});
+
+test("PWA public cache stays isolated from every other cache", async () => {
+  const { listeners, written } = serviceWorkerHarness();
+  const imageResponse = dispatchFetch(listeners, "/images/classics/ryaba.webp");
+  assert.ok(imageResponse);
+  await assert.doesNotReject(imageResponse);
+  assert.deepEqual(written, ["https://wondertale.example/images/classics/ryaba.webp"]);
 });
 
 test("PWA serves original public book artwork and app assets through its cache policy", async () => {
