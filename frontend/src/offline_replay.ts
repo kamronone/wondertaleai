@@ -34,7 +34,9 @@ export async function replayPendingChanges(options: ReplayOptions): Promise<void
       if (!isActive()) return;
       // 404 can mean replica lag. It must not starve other books.
       if (isMissingBook(error)) continue;
-      break;
+      // A real network or authorization failure must end this entire replay
+      // attempt. Otherwise favorites would issue doomed requests immediately.
+      return;
     }
   }
   for (const [id, favorite] of [...favorites]) {
