@@ -2,7 +2,7 @@
 export type PendingMetadata={progress:Record<string,number>;favorites:Record<string,boolean>};
 const prefix="wondertale:pending-metadata:v1:";
 const empty=():PendingMetadata=>({progress:{},favorites:{}});
-const validId=(id:string)=>/^[a-zA-Z0-9_-]{1,128}$/.test(id);
+const validId=(id:string)=>/^[a-zA-Z0-9_-]{1,128}$/.test(id)&&id!=="__proto__"&&id!=="constructor"&&id!=="prototype";
 const key=(owner:string)=>prefix+owner;
 export function readPendingMetadata(owner:string):PendingMetadata{
  if(!validId(owner))return empty();
@@ -13,9 +13,11 @@ export function readPendingMetadata(owner:string):PendingMetadata{
   if(!data||typeof data!=="object")return empty();
   const item=data as Partial<PendingMetadata>;
   const result=empty();
-  for(const [id,page] of Object.entries(item.progress??{}).slice(0,100))
+  const progress=item.progress&&typeof item.progress==="object"&&!Array.isArray(item.progress)?item.progress:{};
+  const favorites=item.favorites&&typeof item.favorites==="object"&&!Array.isArray(item.favorites)?item.favorites:{};
+  for(const [id,page] of Object.entries(progress).slice(0,100))
    if(validId(id)&&Number.isInteger(page)&&page>=0&&page<=99)result.progress[id]=page;
-  for(const [id,favorite] of Object.entries(item.favorites??{}).slice(0,100))
+  for(const [id,favorite] of Object.entries(favorites).slice(0,100))
    if(validId(id)&&typeof favorite==="boolean")result.favorites[id]=favorite;
   return result;
  }catch{return empty();}
