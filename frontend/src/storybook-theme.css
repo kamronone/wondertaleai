@@ -696,3 +696,26 @@ body{background:linear-gradient(180deg,#f2e9fa 0,#fff7fa 410px,#fffaf4 900px);co
 @media (prefers-reduced-motion:reduce){
   .create-page *, .reader-page *, .library-page *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* Reader phase 2: user-controlled text sizing and low-glare night reading. */
+.reader-display-settings{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0;padding:10px 12px;border:1px solid #e8dff3;border-radius:13px;background:#fffdfb}
+.reader-display-settings>span{font-size:12px;font-weight:650;color:#55446c}
+.reader-font-controls{display:inline-flex;gap:4px;padding:3px;border-radius:10px;background:#f3ecfa}
+.reader-font-controls button{display:inline-flex;align-items:center;justify-content:center;gap:1px;width:38px;height:35px;min-height:35px;border:0;border-radius:8px;background:transparent;color:#493467;font-size:15px;font-weight:750}
+.reader-font-controls button.active,.reader-night-toggle.active{background:#6246a1;color:white}
+.reader-font-controls button span{font-size:11px}
+.reader-night-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:39px;margin-left:auto;padding:8px 10px;border:1px solid #e4d8f2;border-radius:10px;background:#fff;color:#493467;font-size:12px;font-weight:650}
+.reader-page .story-page.reader-font-small .story-text{font-size:14px;line-height:1.65}
+.reader-page .story-page.reader-font-normal .story-text{font-size:17px;line-height:1.75}
+.reader-page .story-page.reader-font-large .story-text{font-size:21px;line-height:1.85}
+.reader-page .story-page.reader-night{background:#1d2032;color:#f4eddf;border-color:#35394c}
+.reader-page .story-page.reader-night .story-text{background:#1d2032;color:#f4eddf}
+.reader-page .story-page.reader-night .dropcap-star{color:#f6c979}
+@media(max-width:620px){
+  .reader-display-settings{gap:8px;padding:9px}
+  .reader-display-settings>span{width:100%}
+  .reader-night-toggle{margin-left:0}
+  .reader-page .story-page.reader-font-small .story-text{font-size:14px}
+  .reader-page .story-page.reader-font-normal .story-text{font-size:16px}
+  .reader-page .story-page.reader-font-large .story-text{font-size:20px}
+}
