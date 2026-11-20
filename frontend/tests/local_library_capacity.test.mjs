@@ -90,3 +90,30 @@ test("Device quota error leaves the existing saved books intact", () => withStor
   assert.throws(() => saveDemoBooks(makeBooks(4)), /LOCAL_LIBRARY_SAVE_FAILED/);
   assert.equal(local.getItem("wondertale-opt-in-books-v1"), previous);
 }));
+
+
+test("Corrupted saved JSON blocks updates without deleting either storage collection", () => withStores((local, session) => {
+  const damaged = '{"books":';
+  local.setItem("wondertale-opt-in-books-v1", damaged);
+  session.setItem("wondertale-preview-books-v1", JSON.stringify(makeBooks(2, false)));
+  const beforeSession = session.getItem("wondertale-preview-books-v1");
+  assert.throws(() => saveDemoBooks(makeBooks(2, false)), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), damaged);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
+}));
+
+test("Unexpected top-level JSON objects are preserved instead of replaced", () => withStores((local, session) => {
+  saveDemoBooks(makeBooks(2));
+  session.setItem("wondertale-preview-books-v1", '{"unexpected":"value"}');
+  const previousDevice = local.getItem("wondertale-opt-in-books-v1");
+  const previousSession = session.getItem("wondertale-preview-books-v1");
+  assert.throws(() => saveDemoBooks(makeBooks(1)), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), previousDevice);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), previousSession);
+}));
+
+test("Empty storage keys still allow new stories to be saved", () => withStores((local, session) => {
+  saveDemoBooks([...makeBooks(1), ...makeBooks(1, false)]);
+  assert.equal(JSON.parse(local.getItem("wondertale-opt-in-books-v1")).length, 1);
+  assert.equal(JSON.parse(session.getItem("wondertale-preview-books-v1")).length, 1);
+}));
