@@ -12,6 +12,7 @@ import { ClassicCover } from "./ClassicCover";
 import { AccountAction } from "./AccountAction";
 import { PricingPlans } from "./PricingPlans";
 import { ParentAccount } from "./ParentAccount";
+import { LegalCenter, type LegalDocument } from "./LegalCenter";
 import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, PrivateBookNotFoundError, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
@@ -42,7 +43,30 @@ function App(){
   useEffect(()=>{
     if(accountAction)window.history.replaceState(null,"",window.location.pathname+window.location.search);
   },[]);
-  const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account">("home");
+  const readLegalHash=():LegalDocument|null=>{
+    const match=window.location.hash.match(/^#legal\/(terms|privacy|copyright|parents)$/);
+    return match?match[1] as LegalDocument:null;
+  };
+  const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account"|"legal">(()=>readLegalHash()?"legal":"home");
+  const [legalDocument,setLegalDocument]=useState<LegalDocument>(()=>readLegalHash()||"terms");
+  const openLegal=(document:LegalDocument)=>{
+    setLegalDocument(document);setTab("legal");
+    window.history.replaceState(null,"",window.location.pathname+window.location.search+"#legal/"+document);
+  };
+  useEffect(()=>{
+    const onHash=()=>{
+      const doc=readLegalHash();
+      if(doc){setLegalDocument(doc);setTab("legal");}
+      else setTab(previous=>previous==="legal"?"home":previous);
+    };
+    window.addEventListener("hashchange",onHash);
+    return ()=>window.removeEventListener("hashchange",onHash);
+  },[]);
+  useEffect(()=>{
+    if(tab!=="legal"&&window.location.hash.startsWith("#legal/")){
+      window.history.replaceState(null,"",window.location.pathname+window.location.search);
+    }
+  },[tab]);
   const [isOnline,setIsOnline]=useState(()=>navigator.onLine);
   useEffect(()=>{
     const online=()=>setIsOnline(true);
@@ -242,10 +266,11 @@ function App(){
   const [photo,setPhoto]=useState<File|null>(null);
   const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
+  const [acceptedLegal,setAcceptedLegal]=useState(false);
   const [createStep,setCreateStep]=useState<1|2|3>(1);
   // Every new creation starts with the child, never with a stale confirmation step.
   const openCreate=(preservePreset=false)=>{
-    setCreateStep(1);setConsent(false);setUsePersonalAi(false);setError("");
+    setCreateStep(1);setConsent(false);setAcceptedLegal(false);setUsePersonalAi(false);setError("");
     // Avoid showing a previous child's personal details when starting a new story.
     setName("");setSecondHero("");setAge("5");setPhoto(null);
     if(!preservePreset){setClassicId(null);setPrompt("");setThemeIndex(0);setStyleIndex(0);}
@@ -680,6 +705,10 @@ function App(){
       setCreateStep(!name.trim()?1:2);
       return;
     }
+    if(!acceptedLegal){
+      setError(({ru:"Ознакомьтесь с условиями использования и политикой конфиденциальности.",uz:"Foydalanish shartlari va maxfiylik siyosati bilan tanishing.",en:"Please review and accept the terms and privacy policy."} as const)[lang]);
+      return;
+    }
     if(!consent){
       setError(({ru:"Подтвердите согласие перед созданием сказки.",uz:"Ertak yaratişdan oldin rozilikni tasdiqlang.",en:"Confirm your consent before creating a story."} as const)[lang]);
       return;
@@ -931,12 +960,15 @@ function App(){
             <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
           </div>}
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
+          <label className="consent legal-consent"><input required type="checkbox" checked={acceptedLegal} onChange={e=>setAcceptedLegal(e.target.checked)}/><span>{({ru:"Я ознакомился(-ась) с условиями и политикой конфиденциальности.",uz:"Foydalanish shartlari va maxfiylik siyosatini oqib chiqdim.",en:"I have read and accept the terms and privacy policy."} as const)[lang]}</span></label>
+          <div className="legal-consent-links"><button type="button" onClick={()=>openLegal("terms")}>{({ru:"Условия",uz:"Shartlar",en:"Terms"} as const)[lang]}</button><button type="button" onClick={()=>openLegal("privacy")}>{({ru:"Конфиденциальность",uz:"Maxfiylik",en:"Privacy"} as const)[lang]}</button><button type="button" onClick={()=>openLegal("parents")}>{({ru:"Данные детей",uz:"Bolalar malumoti",en:"Children's data"} as const)[lang]}</button></div>
           {!usePersonalAi&&<p className="notice">{activeClassic?t.classicDemo:t.demo}</p>}
           {error&&<p className="error" role="alert">{error}</p>}
-          <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(2)} disabled={busy}><ArrowLeft size={16}/>{t.back}</button><button className="primary-button full" disabled={busy||!consent} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button></div></>}
+          <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(2)} disabled={busy}><ArrowLeft size={16}/>{t.back}</button><button className="primary-button full" disabled={busy||!consent||!acceptedLegal} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button></div></>}
           {error&&createStep!==3&&<p className="error" role="alert">{error}</p>}
         </form>
       </section>}
+      {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab("home")}/>}
       {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<details className="account-plans-disclosure"><summary><Star size={16}/>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}<ChevronDown size={16}/></summary><PricingPlans lang={lang} api={API} session={privateToken}/></details></>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
         {!isOnline&&<div className="library-sync-warning" role="status">
@@ -1079,7 +1111,15 @@ function App(){
       {tab==="home"&&<section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>}
       <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></nav>
     </main>
-    <footer>© WonderTale AI</footer>
+    <footer className="site-legal-footer">
+      <span>© {new Date().getFullYear()} WonderTale AI · kamronone</span>
+      <nav aria-label={({ru:"Правовая информация",uz:"Huquqiy malumot",en:"Legal information"} as const)[lang]}>
+        <button type="button" onClick={()=>openLegal("terms")}>{({ru:"Условия",uz:"Shartlar",en:"Terms"} as const)[lang]}</button>
+        <button type="button" onClick={()=>openLegal("privacy")}>{({ru:"Конфиденциальность",uz:"Maxfiylik",en:"Privacy"} as const)[lang]}</button>
+        <button type="button" onClick={()=>openLegal("copyright")}>{({ru:"Авторские права",uz:"Mualliflik huquqi",en:"Copyright"} as const)[lang]}</button>
+        <button type="button" onClick={()=>openLegal("parents")}>{({ru:"Для родителей",uz:"Ota-onalar",en:"Parents"} as const)[lang]}</button>
+      </nav>
+    </footer>
   </div>;
 }
 function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boolean}){
