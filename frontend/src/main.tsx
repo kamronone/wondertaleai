@@ -765,6 +765,12 @@ function App(){
         {ru:"Волшебные истории каждый день",uz:"Har kuni sehrli hikoyalar",en:"Magical stories every day"},
         {ru:"Создавайте и сохраняйте сказки",uz:"Ertaklar yarating va saqlang",en:"Create and save stories"},
       ][onboardingStep][lang]}</h1>
+      <div className="welcome-language">
+        <label htmlFor="welcome-language-select">{t.interfaceLanguage}</label>
+        <select id="welcome-language-select" value={lang} onChange={event=>switchLang(event.target.value as Lang)}>
+          {languages.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+        </select>
+      </div>
       <div className="welcome-dots" role="group" aria-label="Onboarding slides">{[0,1,2].map(n=><button key={n} type="button" className={n===onboardingStep?"active":""} onClick={()=>setOnboardingStep(n)} aria-label={({ru:`Экран ${n+1} из 3`,uz:`${n+1}-sahifa, jami 3`,en:`Slide ${n+1} of 3`} as const)[lang]} aria-current={n===onboardingStep?"step":undefined}/>)}</div>
       <button type="button" className="welcome-primary" onClick={()=>onboardingStep<2?setOnboardingStep(n=>n+1):finishOnboarding("home")}>{onboardingStep<2?({ru:"Начать",uz:"Boşlaş",en:"Get started"} as const)[lang]:({ru:"Открыть сказки",uz:"Ertaklarni oçiş",en:"Explore stories"} as const)[lang]} <Sparkles size={18}/></button>
       <button type="button" className="welcome-secondary" onClick={()=>finishOnboarding("account")}>{({ru:"У меня уже есть аккаунт",uz:"Menda akkaunt bor",en:"I already have an account"} as const)[lang]}</button>
@@ -772,7 +778,7 @@ function App(){
   </section>;
   return <div className="shell">
     <header className="topbar">
-      <button className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
+      <button type="button" className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
       <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></div>
     </header>
     {!isOnline&&<div className="offline-status-banner" role="status">
@@ -823,7 +829,7 @@ function App(){
           <label>{t.world}</label><div className="chips">{themes.map((x,i)=><button type="button" key={x} className={"chip "+(themeIndex===i?"selected":"")} onClick={()=>setThemeIndex(i)}>{x}</button>)}</div>
           <label className="story-preset-label">{t.storyIdeas}</label>
           <div className="story-preset-actions">{storyPresets[storyLang].map(preset=><button type="button" key={preset.id} onClick={()=>{setClassicId(null);setPrompt(preset.idea);setThemeIndex(preset.id==="bedtime"?5:preset.id==="confidence"?4:0);}}>{preset.title}</button>)}</div>
-          <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>{const next=e.target.value;if(shouldDetachClassicOnEdit(next,storyLang,activeClassic?.prompt))setClassicId(null);setPrompt(next);}} placeholder={t.promptExample}/></label>
+          <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} aria-describedby="story-prompt-count" aria-invalid={prompt.trim().length<8} value={prompt} onChange={e=>{const next=e.target.value;if(shouldDetachClassicOnEdit(next,storyLang,activeClassic?.prompt))setClassicId(null);setPrompt(next);}} placeholder={t.promptExample}/></label><small id="story-prompt-count" className="story-character-counter" data-invalid={prompt.trim().length<8}>{prompt.trim().length} / 1200 · {({ru:"минимум 8 символов",uz:"kamida 8 belgi",en:"minimum 8 characters"} as const)[lang]}</small>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options" role="group" aria-label={t.storyLanguage}>{languages.map(l=><button type="button" aria-pressed={storyLang===l.id} className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
           <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(1)}><ArrowLeft size={16}/>{t.back}</button><button type="button" className="primary-button" onClick={()=>{if(prompt.trim().length<8){setError(({ru:"Опишите сюжет минимум 8 символами.",uz:"Syujetni kamida 8 ta belgi bilan yozing.",en:"Describe the plot in at least 8 characters."} as const)[lang]);return;}setError("");setCreateStep(3);}}>{t.next}<ArrowRight size={17}/></button></div></>}
