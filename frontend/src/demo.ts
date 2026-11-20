@@ -19,17 +19,26 @@ export const isValidLocalBook=(value:unknown):value is DemoBook=>{
      typeof p.image_url==="string"&&p.image_url.length<=40000&&
      Number.isInteger(p.number)&&p.number===index+1);
 };
-const readBooks=(getStore:()=>Storage,key:string):DemoBook[]=>{
+const readBooks=(getStore:()=>Storage,key:string,persistent:boolean):DemoBook[]=>{
  try{
-   // On iOS Safari, even accessing sessionStorage/localStorage can throw
-   // SecurityError when storage is disabled. Treat that mode as unavailable.
+   // Safari may throw SecurityError even when accessing the storage getter.
    const parsed:unknown=JSON.parse(getStore().getItem(key)||"[]");
-   return Array.isArray(parsed)?parsed.filter(isValidLocalBook).slice(0,20):[];
+   if(!Array.isArray(parsed))return [];
+   return parsed.filter(isValidLocalBook).slice(0,20).map((book:DemoBook)=>{
+     // The actual storage area, not untrusted JSON, determines persistence.
+     const safe:DemoBook={...book,savedOnDevice:persistent,favorite:book.favorite===true};
+     safe.lastPage=Number.isInteger(book.lastPage)&&Number(book.lastPage)>=0
+       ?Math.min(Number(book.lastPage),book.pages.length-1):0;
+     if(typeof book.originalEnding!=="string"||book.originalEnding.length>2200)delete safe.originalEnding;
+     if(book.endingChoice!=="friendship"&&book.endingChoice!=="discovery")delete safe.endingChoice;
+     if(book.language!=="ru"&&book.language!=="uz"&&book.language!=="en")delete safe.language;
+     return safe;
+   });
  }catch{return []}
 };
 export const getDemoBooks=():DemoBook[]=>{
- const session=readBooks(()=>sessionStorage,sessionKey);
- const saved=readBooks(()=>localStorage,deviceKey).map(b=>({...b,savedOnDevice:true}));
+ const session=readBooks(()=>sessionStorage,sessionKey,false);
+ const saved=readBooks(()=>localStorage,deviceKey,true);
  const found=new Set<string>();
  return [...saved,...session].filter(book=>{if(found.has(book.id))return false;found.add(book.id);return true;}).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,40);
 };
