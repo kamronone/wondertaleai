@@ -121,3 +121,25 @@ test("Empty storage keys still allow new stories to be saved", () => withStores(
   assert.equal(JSON.parse(local.getItem("wondertale-opt-in-books-v1")).length, 1);
   assert.equal(JSON.parse(session.getItem("wondertale-preview-books-v1")).length, 1);
 }));
+
+
+test("A malformed book inside valid JSON blocks overwriting the entire library", () => withStores((local, session) => {
+  const damaged = [...makeBooks(2), { id: "local-broken", title: "Missing pages" }];
+  local.setItem("wondertale-opt-in-books-v1", JSON.stringify(damaged));
+  session.setItem("wondertale-preview-books-v1", JSON.stringify(makeBooks(2, false)));
+  const beforeDevice = local.getItem("wondertale-opt-in-books-v1");
+  const beforeSession = session.getItem("wondertale-preview-books-v1");
+  assert.throws(() => saveDemoBooks(makeBooks(1)), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
+}));
+
+test("An older over-capacity book array remains untouched for recovery", () => withStores((local, session) => {
+  local.setItem("wondertale-opt-in-books-v1", JSON.stringify(makeBooks(21)));
+  session.setItem("wondertale-preview-books-v1", JSON.stringify(makeBooks(2, false)));
+  const beforeDevice = local.getItem("wondertale-opt-in-books-v1");
+  const beforeSession = session.getItem("wondertale-preview-books-v1");
+  assert.throws(() => saveDemoBooks(makeBooks(1)), /LOCAL_LIBRARY_SAVE_FAILED/);
+  assert.equal(local.getItem("wondertale-opt-in-books-v1"), beforeDevice);
+  assert.equal(session.getItem("wondertale-preview-books-v1"), beforeSession);
+}));
