@@ -44,3 +44,16 @@ test("Large corrupted artwork and excessive page counts are rejected", () => {
     number: i + 1, text: "Hello", image_url: ""
   })) }), false);
 });
+
+test("Legacy two-hero books and longer interactive endings are not lost", () => {
+  const longName = "A".repeat(60) + " and " + "B".repeat(45);
+  const chapter = "A".repeat(1750);
+  assert.equal(isValidLocalBook({ ...sample(), name: longName, title: longName + " and the Enchanted Garden",
+    pages: [{ number: 1, text: chapter, image_url: "/images/wondertale-hero.webp" }]
+  }), true);
+  assert.equal(isValidLocalBook({ ...sample(), name: "A".repeat(121) }), false);
+  assert.equal(isValidLocalBook({ ...sample(), pages: [
+    { number: 1, text: "A".repeat(2201), image_url: "" }
+  ] }), false);
+});
+
