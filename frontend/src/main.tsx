@@ -4,7 +4,7 @@ import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film
 import "./style.css";
 import "./storybook-theme.css";
 import "./reader-polish.css";
-import { createDemoBook, createDemoSequel, getDemoBooks, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
+import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
@@ -831,6 +831,12 @@ function App(){
       </section>}
       {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<PricingPlans lang={lang} api={API} session={privateToken}/></>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
+        {!privateToken&&getLocalLibraryHealth()==="corrupt"&&<div className="library-sync-warning" role="alert">
+          <span>{({ru:"Часть сохранённых сказок повреждена и временно не отображается. Мы не удаляем эти данные. Не очищайте данные Safari или PWA: это может уничтожить книги без возможности восстановления.",uz:"Saqlangan ertaklarning ayrimlari shikastlangan va vaqtincha ko‘rinmayapti. Ma’lumotlar o‘chirilmaydi. Safari yoki PWA ma’lumotlarini tozalamang: kitoblarni qaytarib bo‘lmasligi mumkin.",en:"Some saved stories are damaged and temporarily hidden. Their data has not been deleted. Do not clear Safari or PWA data: you may permanently lose the stories."} as const)[lang]}</span>
+        </div>}
+        {!privateToken&&getLocalLibraryHealth()==="unavailable"&&<div className="library-sync-warning" role="status">
+          <span>{({ru:"Хранилище браузера недоступно. Локальные сказки могут не отображаться, а изменения не сохранятся. Проверьте настройки Safari.",uz:"Brauzer xotirasi mavjud emas. Mahalliy ertaklar ko‘rinmasligi va o‘zgarishlar saqlanmasligi mumkin. Safari sozlamalarini tekshiring.",en:"Browser storage is unavailable. Local stories may be hidden and changes may not be saved. Check Safari settings."} as const)[lang]}</span>
+        </div>}
         <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
           <div className="reading-achievements-heading"><Star size={18}/><strong>{({ru:"Мои достижения",uz:"Mening yutuqlarim",en:"My achievements"} as const)[lang]}</strong></div>
           <div className="reading-achievements-grid">
