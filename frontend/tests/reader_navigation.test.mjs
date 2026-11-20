@@ -65,3 +65,12 @@ test("Reader opens stored books only after restoring a safe page index",async()=
   const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
   assert.match(app,/setPage\(resumeReaderPage\(book\.lastPage,book\.pages\.length\)\)/);
 });
+
+
+test("Private reading progress skips superseded queued pages before a network write",async()=>{
+  const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
+  assert.match(app,/pendingProgress\.current\.set\(bookId,page\);\s*persistPending\(\);/);
+  assert.match(app,/const write=next\.catch\(\(\)=>\{\}\)\.then\(async\(\)=>\{/);
+  assert.match(app,/if\(sessionEpoch\.current!==epoch\|\|pendingProgress\.current\.get\(bookId\)!==page\)return;\s*try\{\s*await updatePrivateReadingProgress/);
+  assert.match(app,/progressWrites\.current\.set\(bookId,write\)/);
+});
