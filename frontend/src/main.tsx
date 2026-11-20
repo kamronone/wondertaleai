@@ -186,6 +186,9 @@ function App(){
   const [readerWarmMode,setReaderWarmMode]=useState(()=>{
     try{return localStorage.getItem("wondertale_reader_warm_mode")==="true";}catch{return false;}
   });
+  const [readerBookStyle,setReaderBookStyle]=useState<"storybook"|"simple">(()=>{
+    try{return localStorage.getItem("wondertale_reader_book_style")==="simple"?"simple":"storybook";}catch{return "storybook";}
+  });
   const [readerFocusMode,setReaderFocusMode]=useState(false);
   const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
   const [wordGameAnswer,setWordGameAnswer]=useState<string|null>(null);
@@ -201,6 +204,7 @@ function App(){
     return ()=>window.clearTimeout(timeout);
   },[bedtimeUntil]);
   const [readerSettingsOpen,setReaderSettingsOpen]=useState(false);
+  useEffect(()=>{try{localStorage.setItem("wondertale_reader_book_style",readerBookStyle);}catch{/* Storage can be unavailable. */}},[readerBookStyle]);
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_font_scale",readerFontScale);}catch{/* Browser storage can be unavailable. */}},[readerFontScale]);
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_night_mode",String(readerNightMode));}catch{/* Browser storage can be unavailable. */}},[readerNightMode]);
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_warm_mode",String(readerWarmMode));}catch{/* Browser storage can be unavailable. */}},[readerWarmMode]);
@@ -1008,10 +1012,15 @@ function App(){
           <div className="reader-font-controls">
             {(["small","normal","large"] as const).map((size,index)=><button key={size} type="button" className={readerFontScale===size?"active":""} aria-pressed={readerFontScale===size} aria-label={({ru:["Мелкий текст","Обычный текст","Крупный текст"],uz:["Kiçik matn","Oddiy matn","Katta matn"],en:["Small text","Normal text","Large text"]} as const)[lang][index]} onClick={()=>setReaderFontScale(size)}>A<span aria-hidden="true">{index===0?"−":index===2?"+":""}</span></button>)}
           </div>
+          <div className="reader-book-style" role="group" aria-label={({ru:"Оформление страниц",uz:"Sahifa bezagi",en:"Page appearance"} as const)[lang]}>
+            <span>{({ru:"Оформление",uz:"Bezak",en:"Appearance"} as const)[lang]}</span>
+            <button type="button" aria-pressed={readerBookStyle==="storybook"} onClick={()=>setReaderBookStyle("storybook")}>{({ru:"Сказочная книга",uz:"Ertak kitobi",en:"Storybook"} as const)[lang]}</button>
+            <button type="button" aria-pressed={readerBookStyle==="simple"} onClick={()=>setReaderBookStyle("simple")}>{({ru:"Без украшений",uz:"Oddiy",en:"Minimal"} as const)[lang]}</button>
+          </div>
           <button type="button" className={"reader-warm-toggle"+(readerWarmMode&&!readerNightMode?" active":"")} aria-pressed={readerWarmMode&&!readerNightMode} onClick={()=>{setReaderWarmMode(value=>!value);setReaderNightMode(false);}}><BookOpen size={15}/>{({ru:"Тёплый фон",uz:"Iliq fon",en:"Warm background"} as const)[lang]}</button>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>{setReaderNightMode(v=>!v);setReaderWarmMode(false);}}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>}
-        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
+        <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div className="story-page-image"><StoryIllustration url={active.pages[page].image_url} alt={t.illustration+" "+(page+1)}/></div><div className="story-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
             <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
