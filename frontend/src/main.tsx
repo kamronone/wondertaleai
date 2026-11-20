@@ -69,7 +69,7 @@ function App(){
   const pendingProgress=useRef(new Map<string,number>());
   const pendingFavorites=useRef(new Map<string,boolean>());
   const flushing=useRef(false);
-  const recentlyCreated=useRef(new Set<string>());
+  const recentlyCreated=useRef(new Map<string,number>());
   const offlineOwner=useRef<string|null>(null);
   const persistPending=()=>{
     if(!offlineOwner.current)return;
@@ -314,19 +314,19 @@ function App(){
           favorite:pendingFavorites.current.get(book.id)??book.favorite,
           lastPage:pendingProgress.current.get(book.id)??book.lastPage
         }));
-        // A refresh can race with the POST response or a lagging replica.
-        // Retain recently created books until the server snapshot includes them.
-        setRemoteBooks(previous=>{
-          const missing=previous.filter(book=>!merged.some(item=>item.id===book.id)&&
-            recentlyCreated.current.has(book.id));
+        // Protect newly created books from eventual-consistency lag, but never
+        // retain a missing book forever after deletion or server reconciliation.
+        const now=Date.now();
+        for(const [id,createdAt] of recentlyCreated.current){
+          if(now-createdAt>120000||merged.some(book=>book.id===id))recentlyCreated.current.delete(id);
+        }
+        const preserve=(previous:RemoteBook[])=>{
+          const missing=previous.filter(book=>recentlyCreated.current.has(book.id)&&
+            !merged.some(item=>item.id===book.id));
           return [...missing,...merged];
-        });
-        setBooks(previous=>{
-          const missing=previous.filter(book=>!merged.some(item=>item.id===book.id)&&
-            recentlyCreated.current.has(book.id));
-          return [...missing,...merged];
-        });
-        for(const book of merged)recentlyCreated.current.delete(book.id);
+        };
+        setRemoteBooks(preserve);
+        setBooks(previous=>preserve(previous.filter(book=>!isDemoBook(book))));
       }catch(error){
         if(disposed||sessionEpoch.current!==epoch)return;
         if(error instanceof Error&&error.message==="Private account authorization expired"){
@@ -526,7 +526,7 @@ function App(){
             number:index+1,text:p.text,image_url:"/images/wondertale-hero.webp"
           })),mode:"private-account",favorite:false,lastPage:0
         };
-        recentlyCreated.current.add(created.id);
+        recentlyCreated.current.set(created.id,Date.now());
         setRemoteBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);
         setBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);
         openBook(created);
