@@ -30,6 +30,15 @@ function App(){
     if(accountAction)window.history.replaceState(null,"",window.location.pathname+window.location.search);
   },[]);
   const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account">("home");
+  const [isOnline,setIsOnline]=useState(()=>navigator.onLine);
+  useEffect(()=>{
+    const online=()=>setIsOnline(true);
+    const offline=()=>setIsOnline(false);
+    window.addEventListener("online",online);
+    window.addEventListener("offline",offline);
+    return ()=>{window.removeEventListener("online",online);window.removeEventListener("offline",offline);};
+  },[]);
+
   const [onboardingStep,setOnboardingStep]=useState(0);
   const welcomeTouchStart=useRef<{x:number;y:number}|null>(null);
   const onWelcomeTouchStart=(event:React.TouchEvent<HTMLElement>)=>{
@@ -587,6 +596,9 @@ function App(){
       <button className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
       <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></div>
     </header>
+    {!isOnline&&<div className="offline-status-banner" role="status">
+      {({ru:"Нет интернета. Сохранённые на устройстве сказки доступны, а AI и синхронизация временно не работают.",uz:"Internet yoq. Qurilmada saqlangan ertaklarni öqiş mumkin, AI va sinxronlaş vaqtinça işlamaydi.",en:"You're offline. Stories saved on this device remain available; AI and sync are paused."} as const)[lang]}
+    </div>}
     <main>
       {tab==="home"&&<>
         <div className="hero"><div className="hero-sky" aria-hidden="true"><img src="/images/wondertale-hero.webp" alt="" loading="eager" decoding="async"/></div><div className="hero-content"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
