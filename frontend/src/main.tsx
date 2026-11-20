@@ -230,7 +230,7 @@ function App(){
       if(sessionEpoch.current!==epoch)return;
       try{
         await updatePrivateReadingProgress(API,token,bookId,page);
-        if(pendingProgress.current.get(bookId)===page){pendingProgress.current.delete(bookId);persistPending();}
+        if(sessionEpoch.current===epoch&&pendingProgress.current.get(bookId)===page){pendingProgress.current.delete(bookId);persistPending();}
       }catch(error){
         if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
           pendingProgress.current.set(bookId,page);
@@ -265,7 +265,7 @@ function App(){
           if(pendingProgress.current.get(id)!==position)continue;
           try{
             await updatePrivateReadingProgress(API,privateToken,id,position);
-            if(pendingProgress.current.get(id)===position){pendingProgress.current.delete(id);persistPending();}
+            if(!disposed&&sessionEpoch.current===epoch&&pendingProgress.current.get(id)===position){pendingProgress.current.delete(id);persistPending();}
           }catch{break;}
         }
         for(const [id,favorite] of [...pendingFavorites.current]){
@@ -273,7 +273,7 @@ function App(){
           if(pendingFavorites.current.get(id)!==favorite)continue;
           try{
             await setPrivateFavorite(API,privateToken,id,favorite);
-            if(pendingFavorites.current.get(id)===favorite){pendingFavorites.current.delete(id);persistPending();}
+            if(!disposed&&sessionEpoch.current===epoch&&pendingFavorites.current.get(id)===favorite){pendingFavorites.current.delete(id);persistPending();}
           }catch{break;}
         }
       }finally{flushing.current=false;}
@@ -356,8 +356,8 @@ function App(){
       const favorite=!active.favorite;
       try{
         await setPrivateFavorite(API,privateToken,bookId,favorite);
-        pendingFavorites.current.delete(bookId);
-        persistPending();
+        if(sessionEpoch.current!==epoch)return;
+        if(pendingFavorites.current.get(bookId)===favorite){pendingFavorites.current.delete(bookId);persistPending();}
       }catch(error){
         if(sessionEpoch.current===epoch&&!(error instanceof Error&&error.message==="Private account authorization expired")){
           pendingFavorites.current.set(bookId,favorite);
