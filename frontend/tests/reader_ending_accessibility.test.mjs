@@ -15,5 +15,6 @@ test("The chosen ending is announced as a pressed button", () => {
 });
 
 test("Ending selection remains limited to the final page of local books", () => {
-  assert.match(app, /isDemoBook\(active\)&&page===active\.pages\.length-1&&<div className="interactive-endings"/);
+  assert.match(app, /page===active\.pages\.length-1&&<section className="reader-finale"/);
+  assert.match(app, /isDemoBook\(active\)&&readerEndActivity==="ending"&&<div className="interactive-endings"/);
 });
