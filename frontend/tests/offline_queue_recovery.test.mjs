@@ -123,3 +123,32 @@ test("Queue writer keeps the most recent hundred valid positions and favorites",
   assert.equal(recovered.favorites[ids[119]],false);
  });
 });
+
+test("Malformed entries before valid ones cannot hide saved offline edits",()=>{
+ withStorage(storage=>{
+  const invalid=Object.fromEntries(Array.from({length:105},(_,i)=>["bad_"+i,-1]));
+  const saved={
+   progress:{...invalid,"valid-last":7},
+   favorites:{...Object.fromEntries(Array.from({length:105},(_,i)=>["bad_"+i,"yes"])),"valid-last":true}
+  };
+  storage.set("wondertale:pending-metadata:v1:parent",JSON.stringify(saved));
+  assert.deepEqual(readPendingMetadata("parent"),{
+   progress:{"valid-last":7},
+   favorites:{"valid-last":true}
+  });
+ });
+});
+
+test("Recover the newest 100 valid records after filtering malformed entries",()=>{
+ withStorage(storage=>{
+  const progress=Object.fromEntries(Array.from({length:110},(_,i)=>["book_"+String(i).padStart(3,"0"),i%100]));
+  const favorites=Object.fromEntries(Array.from({length:110},(_,i)=>["book_"+String(i).padStart(3,"0"),i%2===0]));
+  storage.set("wondertale:pending-metadata:v1:parent",JSON.stringify({progress,favorites}));
+  const saved=readPendingMetadata("parent");
+  assert.equal(Object.keys(saved.progress).length,100);
+  assert.equal(Object.keys(saved.favorites).length,100);
+  assert.equal(saved.progress.book_000,undefined);
+  assert.equal(saved.progress.book_109,9);
+  assert.equal(saved.favorites.book_109,false);
+ });
+});
