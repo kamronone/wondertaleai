@@ -125,6 +125,7 @@ function App(){
   const [libraryRefreshAttempt,setLibraryRefreshAttempt]=useState(0);
   const [active,setActive]=useState<Book|null>(null);
   const [page,setPage]=useState(0);
+  const [editingPage,setEditingPage]=useState(false);
   const readerTouchStart=useRef<{x:number;y:number;identifier:number}|null>(null);
   const onReaderTouchStart=(event:React.TouchEvent<HTMLElement>)=>{
     // Never turn a page during a two-finger pinch or interrupted gesture.
@@ -217,7 +218,6 @@ function App(){
   const [favoritesOnly,setFavoritesOnly]=useState(false);
   const [libraryQuery,setLibraryQuery]=useState("");
   const [librarySort,setLibrarySort]=useState<LibrarySort>("newest");
-  const [editingPage,setEditingPage]=useState(false);
   const [pageDraft,setPageDraft]=useState("");
   const [speaking,setSpeaking]=useState(false);
   const [speechPaused,setSpeechPaused]=useState(false);
