@@ -96,6 +96,11 @@ function App(){
   const [libraryRefreshAttempt,setLibraryRefreshAttempt]=useState(0);
   const [active,setActive]=useState<Book|null>(null);
   const [page,setPage]=useState(0);
+  const [readerFontScale,setReaderFontScale]=useState<"small"|"normal"|"large">(()=>{
+    try{const saved=localStorage.getItem("wondertale_reader_font_scale");return saved==="small"||saved==="large"?saved:"normal";}catch{return "normal";}
+  });
+  const [readerNightMode,setReaderNightMode]=useState(false);
+  useEffect(()=>{try{localStorage.setItem("wondertale_reader_font_scale",readerFontScale);}catch{/* Browser storage can be unavailable. */}},[readerFontScale]);
   const [name,setName]=useState("");
   const [secondHero,setSecondHero]=useState("");
   const [age,setAge]=useState("5");
@@ -703,7 +708,14 @@ function App(){
         {error&&<p className="error" role="alert">{error}</p>}
         <div className="reader-title"><span className="reader-crown"><Crown size={19}/></span><span>{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}<h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length}</p></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
-        <div className="story-page"><div className="story-page-image"><img src={bookImage(active.pages[page].image_url)} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
+        <div className="reader-display-settings" role="group" aria-label={({ru:"Настройки чтения",uz:"Oqiş sozlamalari",en:"Reading settings"} as const)[lang]}>
+          <span>{({ru:"Размер текста",uz:"Matn ölçami",en:"Text size"} as const)[lang]}</span>
+          <div className="reader-font-controls">
+            {(["small","normal","large"] as const).map((size,index)=><button key={size} type="button" className={readerFontScale===size?"active":""} aria-pressed={readerFontScale===size} aria-label={({ru:["Мелкий текст","Обычный текст","Крупный текст"],uz:["Kiçik matn","Oddiy matn","Katta matn"],en:["Small text","Normal text","Large text"]} as const)[lang][index]} onClick={()=>setReaderFontScale(size)}>A<span aria-hidden="true">{index===0?"−":index===2?"+":""}</span></button>)}
+          </div>
+          <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>setReaderNightMode(v=>!v)}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
+        </div>
+        <div className={"story-page reader-font-"+readerFontScale+(readerNightMode?" reader-night":"")}><div className="story-page-image"><img src={bookImage(active.pages[page].image_url)} alt={t.illustration+" "+(page+1)} /></div><div className="story-text"><span className="dropcap-star">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
             <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
