@@ -19,15 +19,17 @@ export const isValidLocalBook=(value:unknown):value is DemoBook=>{
      typeof p.image_url==="string"&&p.image_url.length<=40000&&
      Number.isInteger(p.number)&&p.number===index+1);
 };
-const readBooks=(store:Storage,key:string):DemoBook[]=>{
+const readBooks=(getStore:()=>Storage,key:string):DemoBook[]=>{
  try{
-   const parsed:unknown=JSON.parse(store.getItem(key)||"[]");
+   // On iOS Safari, even accessing sessionStorage/localStorage can throw
+   // SecurityError when storage is disabled. Treat that mode as unavailable.
+   const parsed:unknown=JSON.parse(getStore().getItem(key)||"[]");
    return Array.isArray(parsed)?parsed.filter(isValidLocalBook).slice(0,20):[];
  }catch{return []}
 };
 export const getDemoBooks=():DemoBook[]=>{
- const session=readBooks(sessionStorage,sessionKey);
- const saved=readBooks(localStorage,deviceKey).map(b=>({...b,savedOnDevice:true}));
+ const session=readBooks(()=>sessionStorage,sessionKey);
+ const saved=readBooks(()=>localStorage,deviceKey).map(b=>({...b,savedOnDevice:true}));
  const found=new Set<string>();
  return [...saved,...session].filter(book=>{if(found.has(book.id))return false;found.add(book.id);return true;}).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,40);
 };
