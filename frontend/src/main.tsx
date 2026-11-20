@@ -798,6 +798,7 @@ function App(){
     <div className="welcome-art" aria-hidden="true"><img src="/images/wondertale-welcome.png" alt=""/></div>
     <div className="welcome-shade" aria-hidden="true"/>
     <div className="welcome-content">
+      <button type="button" className="welcome-skip" onClick={()=>finishOnboarding("home")}>{({ru:"Пропустить",uz:"Ötkazib yuboriş",en:"Skip intro"} as const)[lang]}</button>
       <div className="welcome-brand"><Crown size={27} fill="#ffd67a"/><span>WonderTale <strong>AI</strong></span></div>
       <h1>{[
         {ru:"Ваш ребёнок — герой собственной сказки",uz:"Farzandingiz öz ertagining qahramoni",en:"Your child is the hero of their own story"},
