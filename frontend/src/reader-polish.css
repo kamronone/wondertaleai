@@ -277,7 +277,7 @@
 
 /* WonderTale 2.0: coherent compact controls on phone and tablet. */
 .shell main,.shell .topbar{min-width:0}
-.shell button,.shell select,.shell input,.shell textarea{font:inherit}
+.shell button,.shell select,.shell input,.shell textarea{font-family:inherit}
 .shell button{transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}
 .shell button:focus-visible,.shell select:focus-visible,.shell input:focus-visible,.shell textarea:focus-visible{
   outline:3px solid #8355b9;outline-offset:3px;
@@ -300,7 +300,7 @@
 .welcome-screen .welcome-language label{margin:0;color:#fff;font-size:12px}
 .welcome-screen .welcome-language select{min-height:44px;width:auto;max-width:180px;background:#fff;color:#32204f;border:1px solid #b7a5db;border-radius:12px;font-size:14px}
 @media(max-width:620px){
-  .shell .hero{min-height:0}
+  .shell .hero{min-height:360px}
   .shell .hero-content{padding:20px 17px 24px}
   .shell .hero h1{font-size:clamp(25px,7.1vw,33px);line-height:1.14}
   .shell .hero p{font-size:13px;line-height:1.5}
@@ -322,4 +322,14 @@
 }
 @media(prefers-reduced-motion:reduce){
   .shell button,.shell .book-tile,.shell .classic-card{transition:none!important;animation:none!important;transform:none!important}
+}
+
+/* A clear end state for finished books without hiding reading progress. */
+.book-tile .read-progress{display:block;overflow-wrap:anywhere}
+.reading-achievements-summary{font-size:12px;color:#604778;margin:-4px 0 12px;font-weight:650}
+.reading-achievement.unlocked{border-color:#b7d8bd;background:linear-gradient(145deg,#fff,#f0faf1)}
+.reading-achievement.unlocked .reading-achievement-count{color:#34764e}
+@media(max-width:420px){
+  .shell .hero{min-height:330px}
+  .reading-achievements-summary{font-size:11px}
 }
