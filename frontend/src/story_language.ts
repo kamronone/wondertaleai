@@ -19,3 +19,16 @@ export const translateSelectedStoryPrompt = (
   if (!selectedPreset) return prompt;
   return storyPresets[to].find(preset => preset.id === selectedPreset.id)?.idea ?? prompt;
 };
+
+/**
+ * Leave a classic template without discarding edits made by the parent.
+ * An untouched stock prompt is cleared to start an original story.
+ */
+export const leaveClassicStoryPrompt = (
+  prompt: string,
+  language: Lang,
+  classicPrompts?: Record<Lang, string>
+): string => {
+  if (!classicPrompts) return prompt;
+  return prompt === classicPrompts[language] ? "" : prompt;
+};
