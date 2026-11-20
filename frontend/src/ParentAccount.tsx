@@ -100,7 +100,15 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
   }catch{setError(t.failed);}finally{setWorking(false);}
  };
  return <section className="parent-account-page">
-  <div className="parent-account-head"><span className="parent-account-symbol"><UserRound size={24}/></span><div><h2>{t.title}</h2><p>{t.subtitle}</p></div></div>
+  <div className="parent-account-hero">
+    <div className="parent-account-hero-art"><img src="/images/profile-story-hero.png" alt={({ru:"Ребёнок и лисёнок читают волшебную книгу",uz:"Bola va tulkicha sehrli kitob oqimoqda",en:"A child and a fox reading a magical book"} as const)[lang]} width={128} height={128} loading="eager" decoding="async"/></div>
+    <div className="parent-account-hero-copy">
+      <span className="parent-account-eyebrow">WonderTale AI</span>
+      <h2>{t.title}</h2>
+      <p>{t.subtitle}</p>
+      <span className="parent-account-author">{({ru:"Автор",uz:"Muallif",en:"Created by"} as const)[lang]}: Komron Giyosov</span>
+    </div>
+  </div>
   {(!api||apiReady===false)&&!session?<div className="parent-account-unavailable" role="status">
     <div className="parent-account-status"><ShieldCheck size={19}/><div><strong>{t.demo}</strong><span>{({ru:"Сказки на этом устройстве доступны без аккаунта.",uz:"Qurilmadagi ertaklarni akkauntsiz oqish mumkin.",en:"Stories on this device are available without an account."} as const)[lang]}</span></div></div>
     <details className="parent-account-help"><summary>{({ru:"Почему аккаунт недоступен?",uz:"Nega akkaunt ishlamayapti?",en:"Why is my account unavailable?"} as const)[lang]}</summary><p>{t.notReady}</p></details>
