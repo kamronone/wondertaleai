@@ -1,7 +1,18 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v7";
+const CACHE = "wondertale-public-v8";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
-const OPTIONAL_ART = ["/images/wondertale-hero.webp", "/images/wondertale-welcome.png"];
+// Public, bundled artwork only. Each asset is optional so offline installation
+// still succeeds when an image is missing or a connection is unreliable.
+const OPTIONAL_ART = [
+  "/images/wondertale-hero.webp",
+  "/images/wondertale-welcome.png",
+  "/images/features/recognizable-hero.png",
+  "/images/features/any-story.png",
+  "/images/features/real-book.png",
+  "/images/classics/kolobok.webp",
+  "/images/classics/ryaba.webp",
+  "/images/classics/red-hood.svg"
+];
 const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/|images\/features\/|images\/wondertale-(?:hero\.webp|welcome\.(?:png|svg))$)/;
 const PRIVATE_PATH = /^\/(?:api\/|auth\/|account\/)/;
 
