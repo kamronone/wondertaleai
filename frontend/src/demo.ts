@@ -107,11 +107,21 @@ export const saveDemoBooks=(books:DemoBook[])=>{
    // other one: Safari can reject even redundant writes when storage is full.
    const nextDevice=chosen.length?JSON.stringify(chosen):null;
    const nextSession=ephemeral.length?JSON.stringify(ephemeral):null;
-   if(nextDevice!==oldDevice){
+   // Loaded books gain safe default metadata and may be sorted differently.
+   // Compare normalized records by ID so old Safari saves do not cause a
+   // redundant write merely because those defaults were absent in JSON.
+   const comparable=(items:DemoBook[])=>JSON.stringify(
+     [...items].sort((a,b)=>a.id.localeCompare(b.id))
+   );
+   const deviceUnchanged=oldDevice===null?nextDevice===null:
+     comparable(readBooks(()=>localStorage,deviceKey,true))===comparable(chosen);
+   const sessionUnchanged=oldSession===null?nextSession===null:
+     comparable(readBooks(()=>sessionStorage,sessionKey,false))===comparable(ephemeral);
+   if(!deviceUnchanged){
      if(nextDevice===null)localStorage.removeItem(deviceKey);
      else localStorage.setItem(deviceKey,nextDevice);
    }
-   if(nextSession!==oldSession){
+   if(!sessionUnchanged){
      if(nextSession===null)sessionStorage.removeItem(sessionKey);
      else sessionStorage.setItem(sessionKey,nextSession);
    }
