@@ -17,6 +17,7 @@ import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { canAppendStoryEnding } from "./ending_length";
 import { translateSelectedStoryPrompt, leaveClassicStoryPrompt, shouldDetachClassicOnEdit } from "./story_language";
 import { getAuthenticatedOwner, normalizePendingProgress, readPendingMetadata, writePendingMetadata } from "./offline_queue";
+import { replayPendingChanges } from "./offline_replay";
 import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
 import { nextReaderPage, resumeReaderPage, swipeDirection } from "./reader_navigation";
@@ -407,35 +408,16 @@ function App(){
       if(flushing.current===epoch||!navigator.onLine||disposed)return;
       flushing.current=epoch;
       try{
-        for(const [id,position] of [...pendingProgress.current]){
-          if(disposed||sessionEpoch.current!==epoch)break;
-          // A queued write must not overtake an in-flight reader update.
-          await (progressWrites.current.get(id)??Promise.resolve()).catch(()=>{});
-          if(disposed||sessionEpoch.current!==epoch)break;
-          if(pendingProgress.current.get(id)!==position)continue;
-          try{
-            await updatePrivateReadingProgress(API,privateToken,id,position);
-            if(!disposed&&sessionEpoch.current===epoch&&pendingProgress.current.get(id)===position){pendingProgress.current.delete(id);persistPending();}
-          }catch(error){
-            // Read-replica lag or a removed book must not starve unrelated edits.
-            // Keep this item pending until the book becomes visible again.
-            if(error instanceof PrivateBookNotFoundError)continue;
-            break;
-          }
-        }
-        for(const [id,favorite] of [...pendingFavorites.current]){
-          if(disposed||sessionEpoch.current!==epoch)break;
-          if(pendingFavorites.current.get(id)!==favorite)continue;
-          try{
-            await setPrivateFavorite(API,privateToken,id,favorite);
-            if(!disposed&&sessionEpoch.current===epoch&&pendingFavorites.current.get(id)===favorite){pendingFavorites.current.delete(id);persistPending();}
-          }catch(error){
-            // Read-replica lag or a removed book must not starve unrelated edits.
-            // Keep this item pending until the book becomes visible again.
-            if(error instanceof PrivateBookNotFoundError)continue;
-            break;
-          }
-        }
+        await replayPendingChanges({
+          progress:pendingProgress.current,
+          favorites:pendingFavorites.current,
+          isActive:()=>!disposed&&sessionEpoch.current===epoch&&navigator.onLine,
+          isMissingBook:error=>error instanceof PrivateBookNotFoundError,
+          waitForProgress:id=>(progressWrites.current.get(id)??Promise.resolve()).catch(()=>{}),
+          sendProgress:(id,page)=>updatePrivateReadingProgress(API,privateToken,id,page),
+          sendFavorite:(id,favorite)=>setPrivateFavorite(API,privateToken,id,favorite),
+          persist:persistPending
+        });
       }finally{if(flushing.current===epoch)flushing.current=null;}
     };
     const onOnline=()=>{void flush();};
