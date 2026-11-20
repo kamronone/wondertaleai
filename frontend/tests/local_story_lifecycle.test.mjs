@@ -147,3 +147,74 @@ test("Unchanged persistent books are not rewritten when ephemeral progress chang
  assert.equal(getDemoBooks().find(book=>book.id===transient.id)?.lastPage,2);
  assert.ok(getDemoBooks().some(book=>book.id===saved.id));
 }));
+
+test("A failed temporary-book write does not roll back an unchanged permanent library",()=>withBrowserStores(({device,session})=>{
+ const saved=create(true);
+ const temporary=create(false);
+ const beforeDevice=device.getItem("wondertale-opt-in-books-v1");
+ let deviceWrites=0;
+ const deviceSet=device.setItem;
+ const deviceRemove=device.removeItem;
+ const sessionSet=session.setItem;
+ device.setItem=()=>{deviceWrites++;throw Error("Persistent storage is full");};
+ device.removeItem=()=>{deviceWrites++;throw Error("Persistent storage is full");};
+ session.setItem=()=>{throw Error("Session storage is full");};
+ try{
+  assert.throws(()=>saveDemoBooks(getDemoBooks().map(book=>
+   book.id===temporary.id?{...book,lastPage:2}:book
+  )),/LOCAL_LIBRARY_SAVE_FAILED/);
+ }finally{
+  device.setItem=deviceSet;
+  device.removeItem=deviceRemove;
+  session.setItem=sessionSet;
+ }
+ assert.equal(deviceWrites,0);
+ assert.equal(device.getItem("wondertale-opt-in-books-v1"),beforeDevice);
+ assert.equal(getDemoBooks().find(book=>book.id===saved.id)?.lastPage,0);
+}));
+
+test("A failed permanent-book write does not roll back an unchanged temporary library",()=>withBrowserStores(({device,session})=>{
+ const saved=create(true);
+ const temporary=create(false);
+ const beforeSession=session.getItem("wondertale-preview-books-v1");
+ let sessionWrites=0;
+ const sessionSet=session.setItem;
+ const sessionRemove=session.removeItem;
+ const deviceSet=device.setItem;
+ session.setItem=()=>{sessionWrites++;throw Error("Session storage is full");};
+ session.removeItem=()=>{sessionWrites++;throw Error("Session storage is full");};
+ device.setItem=()=>{throw Error("Permanent storage is full");};
+ try{
+  assert.throws(()=>saveDemoBooks(getDemoBooks().map(book=>
+   book.id===saved.id?{...book,lastPage:2}:book
+  )),/LOCAL_LIBRARY_SAVE_FAILED/);
+ }finally{
+  device.setItem=deviceSet;
+  session.setItem=sessionSet;
+  session.removeItem=sessionRemove;
+ }
+ assert.equal(sessionWrites,0);
+ assert.equal(session.getItem("wondertale-preview-books-v1"),beforeSession);
+ assert.ok(getDemoBooks().some(book=>book.id===temporary.id));
+}));
+
+test("A partially applied browser-storage write is restored after throwing",()=>withBrowserStores(({device,session})=>{
+ const saved=create(true);
+ const temporary=create(false);
+ const previousDevice=device.getItem("wondertale-opt-in-books-v1");
+ const previousSession=session.getItem("wondertale-preview-books-v1");
+ const original=session.setItem;
+ let first=true;
+ session.setItem=(key,value)=>{
+  original(key,value);
+  if(first){first=false;throw Error("Storage wrapper threw after writing");}
+ };
+ try{
+  assert.throws(()=>saveDemoBooks(getDemoBooks().map(book=>
+   book.id===saved.id?{...book,lastPage:2}:
+   book.id===temporary.id?{...book,lastPage:3}:book
+  )),/LOCAL_LIBRARY_SAVE_FAILED/);
+ }finally{session.setItem=original;}
+ assert.equal(device.getItem("wondertale-opt-in-books-v1"),previousDevice);
+ assert.equal(session.getItem("wondertale-preview-books-v1"),previousSession);
+}));
