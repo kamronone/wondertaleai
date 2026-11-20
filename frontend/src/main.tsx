@@ -14,7 +14,7 @@ import { ParentAccount } from "./ParentAccount";
 import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
-import { translateSelectedStoryPrompt, leaveClassicStoryPrompt } from "./story_language";
+import { translateSelectedStoryPrompt, leaveClassicStoryPrompt, shouldDetachClassicOnEdit } from "./story_language";
 import { getAuthenticatedOwner, readPendingMetadata, writePendingMetadata } from "./offline_queue";
 import { resolveBookImage } from "./book_images";
 import { printFullBook } from "./print_book";
@@ -799,7 +799,7 @@ function App(){
           <label>{t.world}</label><div className="chips">{themes.map((x,i)=><button type="button" key={x} className={"chip "+(themeIndex===i?"selected":"")} onClick={()=>setThemeIndex(i)}>{x}</button>)}</div>
           <label className="story-preset-label">{t.storyIdeas}</label>
           <div className="story-preset-actions">{storyPresets[storyLang].map(preset=><button type="button" key={preset.id} onClick={()=>{setClassicId(null);setPrompt(preset.idea);setThemeIndex(preset.id==="bedtime"?5:preset.id==="confidence"?4:0);}}>{preset.title}</button>)}</div>
-          <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t.promptExample}/></label>
+          <label>{t.about}<textarea required minLength={8} maxLength={1200} rows={4} value={prompt} onChange={e=>{const next=e.target.value;if(shouldDetachClassicOnEdit(next,storyLang,activeClassic?.prompt))setClassicId(null);setPrompt(next);}} placeholder={t.promptExample}/></label>
           <label>{t.style}<select value={styleIndex} onChange={e=>setStyleIndex(Number(e.target.value))}>{styles.map((x,i)=><option key={x} value={i}>{x}</option>)}</select></label>
           <div className="story-lang-field"><label>{t.storyLanguage}</label><div className="story-lang-options" role="group" aria-label={t.storyLanguage}>{languages.map(l=><button type="button" aria-pressed={storyLang===l.id} className={storyLang===l.id?"active":""} key={l.id} onClick={()=>changeStoryLanguage(l.id)}>{l.id.toUpperCase()} {storyLang===l.id&&<CheckCircle2 size={15}/>}</button>)}</div></div>
           <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(1)}><ArrowLeft size={16}/>{t.back}</button><button type="button" className="primary-button" onClick={()=>{if(prompt.trim().length<8){setError(({ru:"Опишите сюжет минимум 8 символами.",uz:"Syujetni kamida 8 ta belgi bilan yozing.",en:"Describe the plot in at least 8 characters."} as const)[lang]);return;}setError("");setCreateStep(3);}}>{t.next}<ArrowRight size={17}/></button></div></>}
