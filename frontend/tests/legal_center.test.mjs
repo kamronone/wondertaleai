@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 const legal=readFileSync(new URL("../src/LegalCenter.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/reader-polish.css",import.meta.url),"utf8");
+const menu=readFileSync(new URL("../src/ProfileLegalMenu.tsx",import.meta.url),"utf8");
 
 test("RU/UZ/EN legal pages include terms privacy copyright and child protection",()=>{
   for(const title of ["Условия использования","Политика конфиденциальности","Авторские права","Правила для родителей и детей","Foydalanish shartlari","Maxfiylik siyosati","Mualliflik huquqi","Ota-onalar uchun qoidalar","Terms of use","Privacy policy","Copyright and intellectual property","Parents and child safety"]){
@@ -17,7 +18,8 @@ test("legal document links can be opened directly from a browser hash",()=>{
   assert.match(app,/hashchange/);
   assert.match(app,/#legal\//);
   assert.match(app,/className="site-legal-footer"/);
-  assert.match(app,/onClick=\{\(\)=>openLegal\("copyright"\)\}/);
+  assert.match(app,/<ProfileLegalMenu lang=\{lang\} onOpen=\{openLegal\}\/>/);
+  assert.match(menu,/\{id:"copyright",Icon:Copyright\}/);
   assert.match(app,/<LegalCenter lang=\{lang\} document=\{legalDocument\}/);
 });
 
