@@ -192,3 +192,47 @@ def test_postgres_concurrent_book_writes_obey_quota(monkeypatch):
         with secure_main.connection() as c:
             secure_main.sql(c,"DELETE FROM parents WHERE email=?",(new_email,))
             c.commit()
+
+
+def test_postgres_ai_queue_claims_distinct_jobs_with_two_workers(monkeypatch):
+    """Two workers cannot claim the same queued request; no provider network."""
+    from concurrent.futures import ThreadPoolExecutor
+    from ai_generation import GeneratedStory
+    email=f"pg-queue-{uuid.uuid4().hex}@example.com"
+    reg=client.post("/api/auth/register",json={"email":email,"password":PASSWORD})
+    assert reg.status_code==201,reg.text
+    auth=bearer(reg.json()["access_token"])
+    monkeypatch.setenv("ENABLE_AI_JOBS","true")
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    monkeypatch.setenv("OPENAI_API_KEY","isolated-mock-no-network")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("MAX_AI_STORIES_PER_DAY","200")
+    generated=[]
+    def fake_model(body):
+        generated.append(body.idea)
+        return GeneratedStory(
+            title="A Friendly Moon",language="en",
+            pages=["A gentle magical story teaches friends to help each other."]*8
+        )
+    monkeypatch.setattr(secure_main,"generate_story",fake_model)
+    try:
+        ids=[]
+        for n in range(2):
+            result=client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":"job"+uuid.uuid4().hex},json={
+                "name":"Alex","age":7,"language":"en",
+                "idea":f"The magical forest adventure number {n} welcomes new friends"
+            })
+            assert result.status_code==202,result.text
+            ids.append(result.json()["id"])
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            processed=list(pool.map(lambda _:secure_main.process_one_queued_ai_job(),range(2)))
+        assert sorted(processed)==sorted(ids)
+        assert len(generated)==2
+        assert client.get("/api/books/jobs",headers=auth).status_code==200
+        assert len(client.get("/api/books",headers=auth).json())==2
+        assert all(client.get("/api/books/jobs/"+job_id,headers=auth).json()["status"]=="completed" for job_id in ids)
+        assert secure_main.process_one_queued_ai_job() is None
+    finally:
+        with secure_main.connection() as c:
+            secure_main.sql(c,"DELETE FROM parents WHERE email=?",(email,))
+            c.commit()
