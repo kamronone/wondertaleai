@@ -33,6 +33,34 @@ the child's name, photos, story text or parent identifiers in the prompt.
 The briefs are **generic**, not yet scene-accurate illustrations of the story.
 No prompt is transmitted externally.
 
+## Private PNG pilot storage (code only)
+
+A limited, **database-backed** image asset path is now implemented.
+`backend/private_illustration_media.py` accepts decoded PNG/JPEG/WebP input
+from an internal trusted caller, checks the file size and pixel dimensions,
+and re-encodes pixels as a metadata-free PNG (at most 3 MB, 2048 pixels per
+edge, 4 million pixels total). It does not call an image provider or perform
+content moderation.
+
+The trusted worker-only Python function
+`save_private_illustration_asset(job_id, image_bytes)` accepts media
+**only for an already-claimed `processing` illustration job**. It stores
+sanitized bytes and a SHA-256 checksum in the database in the same transaction
+as marking the job completed. There is **no public upload route**.
+
+`GET /api/illustrations/media/{job_id}` requires the parent's bearer token
+and verifies both the completed job and exact book ownership before returning
+PNG bytes with `Cache-Control: private, no-store`. A wrong owner gets 404.
+On book or account deletion, database foreign-key cascades delete the image
+bytes. Migration: `008_private_illustration_assets.sql`.
+
+This is a **small-pilot engineering foundation**, not a scalable media
+service. The private database must be encrypted, access controlled and
+backed up appropriately. Larger workloads should move binary data into
+private object storage with short-lived, owner-validated access. The
+actual image generation worker, content safety/moderation, spending
+limits, parental consent review and production delivery remain unfinished.
+
 ## Release blockers
 
 1. Review the parental agreement and data-processing obligations for minors.
