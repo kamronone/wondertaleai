@@ -7,6 +7,7 @@ import "./reader-polish.css";
 import "./bedtime-games.css";
 import "./profile-concept-three.css";
 import "./ai-jobs.css";
+import "./illustration-consent.css";
 import "./library-concept-two.css";
 import "./library-mobile-fixes.css";
 import "./library-final-polish.css";
@@ -22,6 +23,7 @@ import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, 
 import { checkAiStoryAccess } from "./ai_preflight";
 import {enqueueAiJob} from "./ai_jobs";
 import {AiJobsPanel} from "./AiJobsPanel";
+import {IllustrationConsentPanel} from "./IllustrationConsentPanel";
 import {PrivateReaderIllustration} from "./PrivateReaderIllustration";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -1074,6 +1076,9 @@ function App(){
       {tab==="account"&&<section className="profile-concept-three">
         <ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>
         {AI_JOBS_ENABLED&&privateToken&&API&&<AiJobsPanel key={privateToken} api={API} session={privateToken} lang={lang} refreshVersion={aiJobsRefresh} onOpenLibrary={()=>{setLibraryRefreshAttempt(v=>v+1);setTab("library");}}/>}
+        {import.meta.env.VITE_ENABLE_AI_ILLUSTRATION_CONSENT==="true"&&privateToken&&API&&
+          <IllustrationConsentPanel key={privateToken} api={API} session={privateToken} lang={lang}
+            onOpenPrivacy={()=>openLegal("privacy")} onOpenParents={()=>openLegal("parents")}/>}
         <ProfileLegalMenu lang={lang} onOpen={openLegal}/>
         {syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}
         <details className="account-plans-disclosure">
