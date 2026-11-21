@@ -11,16 +11,11 @@ const rule = (selector, from = 0) => {
   return css.slice(start, css.indexOf("}", start) + 1);
 };
 
-test("page picker does not trigger iOS Safari focus autozoom", () => {
-  const selector = ".reader-page .reader-page-jump>select";
-  const base = rule(selector);
-  const mobile = rule(selector, css.indexOf("@media(max-width:620px)"));
-  for (const entry of [base, mobile]) {
-    assert.match(entry, /font-size:16px;/);
-    assert.match(entry, /min-height:44px;/);
-  }
-  assert.match(app, /<label htmlFor="reader-page-jump-select">/);
-  assert.match(app, /<select id="reader-page-jump-select"/);
+test("reader uses compact page navigation without the redundant dropdown", () => {
+  assert.doesNotMatch(app, /reader-page-jump-select|className="reader-page-jump"/);
+  assert.doesNotMatch(css, /\.reader-page-jump/);
+  assert.match(app, /className="pager"/);
+  assert.match(app, /className="pager-mobile-current"/);
 });
 
 test("bedtime summary and action buttons are comfortable touch targets", () => {
