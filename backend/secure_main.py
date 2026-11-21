@@ -46,7 +46,7 @@ if DATABASE_URL.startswith("postgres://"):
 IS_PG = DATABASE_URL.startswith("postgresql://")
 app = FastAPI(title="WonderTale Secure API", docs_url=None, redoc_url=None)
 origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if x.strip()]
-app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,allow_methods=["GET","POST","PUT","DELETE"],allow_headers=["Authorization","Content-Type"])
+app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,allow_methods=["GET","POST","PUT","DELETE"],allow_headers=["Authorization","Content-Type","Idempotency-Key"])
 
 @app.middleware("http")
 async def protect_private_responses(request, call_next):
@@ -87,6 +87,8 @@ def init_schema():
         sql(c, "CREATE TABLE IF NOT EXISTS ai_idempotency (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, created_at TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending', PRIMARY KEY(owner_id,request_key))")
         sql(c, "CREATE TABLE IF NOT EXISTS ai_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, UNIQUE(owner_id,request_key))")
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
+        sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
+        sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         # Existing preview databases may already have the ledger without state.
         # Preserve completed tombstones so deleting a book does not make an
         # old, paid request look like a new in-flight operation.
@@ -899,6 +901,81 @@ def process_one_queued_ai_job():
             sql(c,"UPDATE ai_jobs SET status='needs_review',completed_at=?,payload='' WHERE id=? AND status='processing'",(datetime.now(timezone.utc).isoformat(),job_id))
             c.commit()
         return job_id
+
+
+class IllustrationRequest(BaseModel):
+    book_id: str=Field(min_length=36,max_length=36)
+    page_number: int=Field(ge=1,le=20)
+    style: str=Field(default="watercolor",pattern=r"^(watercolor|storybook|pencil)$")
+
+
+@app.post("/api/illustrations/jobs",status_code=202)
+def request_private_illustration(body:IllustrationRequest,owner:str=Depends(current_parent)):
+    """Queue an illustration for an existing private story page, without AI calls.
+
+    The feature is intentionally off until private storage, image moderation,
+    consent and a separate billed provider worker are reviewed.
+    """
+    if os.getenv("ENABLE_AI_ILLUSTRATIONS","false").lower()!="true":
+        raise HTTPException(503,"AI illustrations are not enabled")
+    if not re.fullmatch(r"[0-9a-f-]{36}",body.book_id):
+        raise HTTPException(422,"Invalid book ID")
+    allowed={v.strip().lower() for v in os.getenv("AI_ALLOWED_EMAILS","").split(",") if v.strip()}
+    with connection() as c:
+        if IS_PG:
+            parent=sql(c,"SELECT email FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+        else:
+            c.execute("BEGIN IMMEDIATE")
+            parent=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
+        if not parent or parent[0].lower() not in allowed:
+            raise HTTPException(403,"AI illustrations are not enabled for this account")
+        row=sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(body.book_id,owner)).fetchone()
+        if not row:
+            raise HTTPException(404,"Book not found")
+        try:
+            data=json.loads(row[0])
+            pages=data.get("pages") if isinstance(data,dict) else None
+        except (ValueError,TypeError):
+            pages=None
+        if not isinstance(pages,list) or body.page_number>len(pages):
+            raise HTTPException(422,"The book page cannot be illustrated")
+        selected=pages[body.page_number-1]
+        if not isinstance(selected,dict) or not isinstance(selected.get("text"),str) or not selected["text"].strip():
+            raise HTTPException(422,"The book page has no text")
+        existing=sql(c,"SELECT id,status FROM illustration_jobs WHERE owner_id=? AND book_id=? AND page_number=? AND style=?",(owner,body.book_id,body.page_number,body.style)).fetchone()
+        if existing:
+            return {"id":existing[0],"status":existing[1],"book_id":body.book_id,"page_number":body.page_number}
+        # A bounded backlog prevents account-level job flooding before costs
+        # can be reconciled. Enqueueing alone never invokes a provider.
+        count=sql(c,"SELECT COUNT(*) FROM illustration_jobs WHERE owner_id=? AND status IN ('queued','processing')",(owner,)).fetchone()[0]
+        if count>=2:
+            raise HTTPException(429,"Too many unfinished illustration jobs")
+        job_id=str(uuid.uuid4())
+        now=datetime.now(timezone.utc).isoformat()
+        sql(c,"INSERT INTO illustration_jobs(id,owner_id,book_id,page_number,style,status,created_at) VALUES(?,?,?,?,?,'queued',?)",(job_id,owner,body.book_id,body.page_number,body.style,now))
+        c.commit()
+    return {"id":job_id,"status":"queued","book_id":body.book_id,"page_number":body.page_number}
+
+
+@app.get("/api/illustrations/jobs")
+def list_private_illustrations(owner:str=Depends(current_parent)):
+    with connection() as c:
+        rows=sql(c,"SELECT id,status,book_id,page_number FROM illustration_jobs WHERE owner_id=? ORDER BY created_at DESC,id DESC LIMIT 20",(owner,)).fetchall()
+    return [{"id":r[0],"status":r[1],"book_id":r[2],"page_number":r[3]} for r in rows]
+
+
+@app.delete("/api/illustrations/jobs/{job_id}",status_code=204)
+def cancel_private_illustration(job_id:str,owner:str=Depends(current_parent)):
+    if not re.fullmatch(r"[0-9a-f-]{36}",job_id):
+        raise HTTPException(404,"Illustration job not found")
+    with connection() as c:
+        removed=sql(c,"DELETE FROM illustration_jobs WHERE id=? AND owner_id=? AND status='queued'",(job_id,owner))
+        if removed.rowcount:
+            c.commit()
+            return
+        if not sql(c,"SELECT status FROM illustration_jobs WHERE id=? AND owner_id=?",(job_id,owner)).fetchone():
+            raise HTTPException(404,"Illustration job not found")
+        raise HTTPException(409,"Only queued illustration jobs can be canceled")
 
 
 @app.delete("/api/me",status_code=204)
