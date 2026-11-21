@@ -211,6 +211,35 @@ stopped. Confirm provider usage and transaction history in an authorized
 operator workflow before making any decision. The report is deliberately
 unavailable in Production and must not be published to a client.
 
+## Manual provider billing reconciliation (operator-only)
+
+Migration `012_illustration_billing_reviews.sql` introduces a minimal,
+job-scoped reconciliation record. The trusted Python module
+`illustration_billing_reconciliation.py` can record exactly one manual
+finding per **terminal** illustration job: `charged`, `not_charged`, or
+`unknown`. A confirmed charge requires a positive amount in
+**micro-USD** (one USD = 1,000,000 micro-USD); verified non-charges require
+zero; unknown charges must not include an amount.
+
+The operator provides a SHA-256 digest of separately retained billing
+evidence, not a sensitive provider invoice or customer data. The database
+keeps no child details or provider credentials in the review, and deletion
+of a job/book/parent cascades to its review. Subsequent conflicting reviews
+are rejected rather than overwriting the original.
+
+Access requires `ENABLE_ILLUSTRATION_BILLING_RECONCILIATION=true` and
+`APP_ENV=development|preview|staging`. There is **no public endpoint**,
+automatic provider billing lookup, retry, refund or quota adjustment.
+`billing_review_snapshot()` only aggregates operator-entered results;
+it is not a substitute for the provider's billing dashboard. Direct
+database writes should be restricted to a dedicated trusted operator role
+and audited separately.
+
+A manual finding **never** changes the status of an uncertain job and
+**never** automatically starts a second image generation. The review
+exists to help an operator decide what actually happened before any
+separately authorized remediation.
+
 ## Release blockers
 
 1. Review the parental agreement and data-processing obligations for minors.
