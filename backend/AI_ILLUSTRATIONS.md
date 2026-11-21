@@ -1,7 +1,7 @@
 # Private AI illustration foundation
 
-**Status: preparation only. No external image model, provider SDK call, media
-upload, rendering worker, preview deployment, or billable request is enabled.**
+**Status: isolated code only. A provider adapter exists, but no live model
+calls, automatic worker, deployment or production image generation is enabled.**
 
 The feature is gated by `ENABLE_AI_ILLUSTRATIONS=true`, which is **false
 by default**. Do not enable it for real families until a consent, storage,
@@ -91,6 +91,39 @@ rows are persistent and consume quota even if a renderer crashes.
 
 Migration: `009_illustration_daily_quotas.sql`. Tests inject synthetic PNG
 bytes and mock moderation, and never contact an AI provider.
+
+## OpenAI Images adapter (isolated, not deployed)
+
+`backend/openai_illustration_provider.py` now contains a validated adapter for
+OpenAI Images API using the pilot model `gpt-image-1.5`, 1024×1024 PNG,
+one output per invocation, no automatic retries, and a 90-second client
+deadline. It accepts only the original curated fictional briefs from
+`illustration_planning.py`. Provider output is a single base64-encoded image,
+decoded with strict size/type checks, sanitized and metadata-stripped before
+the caller may persist it. The adapter does **not** log a child's name,
+private story text, API key, prompts, provider outputs or decoded images.
+
+Three environment switches must all be enabled:
+`ENABLE_AI_ILLUSTRATIONS=true`,
+`ENABLE_AI_ILLUSTRATIONS_WORKER=true`, and
+`ENABLE_OPENAI_IMAGE_PROVIDER=true`. The last flag defaults to **false**
+and this adapter refuses `APP_ENV=production`. The pilot model cannot be
+changed by simply editing `OPENAI_IMAGE_MODEL` in runtime configuration.
+Calls require a server-side `OPENAI_API_KEY`; do not supply that key to Vite.
+
+**The adapter is not attached to an automatic runner, HTTP route or
+scheduled job**. A human-reviewed, independently working prompt-safety
+reviewer and **output-image safety reviewer** must be connected to the
+existing `process_one_illustration_job` worker before a real request is
+permitted. A mock callback returning `True` is sufficient for tests
+**only**, not live child-facing generation. The adapter does not implement
+provider-side content moderation, cost estimation, provider idempotency or
+billing reconciliation.
+
+A full live pilot also needs parental consent, approved text/image safety
+policy, budget alerts, a controlled worker host, and verification that the
+intended model/account permissions are available. No provider requests are
+performed by CI or by importing this module.
 
 ## Release blockers
 
