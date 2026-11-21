@@ -19,16 +19,18 @@ test("hotspot position follows the image content with object-fit contain",()=>{
  assert.match(source,/\(width-drawnW\)\/2\+drawnW\*position\.x/);
  assert.match(source,/\(height-drawnH\)\/2\+drawnH\*position\.y/);
  assert.match(source,/new ResizeObserver\(update\)/);
+ assert.match(source,/querySelector<HTMLImageElement>\("img\.wt-reader-picture"\)/);
  assert.match(source,/addEventListener\("load",update\)/);
  assert.match(source,/observer\?\.disconnect\(\)/);
 });
 
-test("hotspots preserve accessible image zoom and story navigation",()=>{
+test("hotspots preserve ordinary inline images and story navigation",()=>{
  assert.match(app,/import \{CharacterHotspot\} from "\.\/CharacterHotspot"/);
  assert.match(app,/<CharacterHotspot classicId=/);
  assert.match(app,/!readerFocusMode&&!readerNightMode&&bedtimeUntil===null/);
  assert.match(app,/classicAnimatedPage\(\(active as DemoBook\)\.classicId/);
  assert.match(source,/onTouchStart=\{event=>event\.stopPropagation\(\)\}/);
+ assert.doesNotMatch(source,/wt-reader-image-open|zoomOpen|createPortal/);
  assert.match(source,/onTouchEnd=\{event=>event\.stopPropagation\(\)\}/);
  assert.match(source,/onClick=\{event=>\{event\.stopPropagation\(\);setVisibleReaction/);
  assert.match(source,/role="status" aria-live="polite"/);
