@@ -25,7 +25,7 @@ import {enqueueAiJob} from "./ai_jobs";
 import {AiJobsPanel} from "./AiJobsPanel";
 import {IllustrationConsentPanel} from "./IllustrationConsentPanel";
 import {PrivateReaderIllustration} from "./PrivateReaderIllustration";
-import {classicReaderImage} from "./classic_page_art";
+import {classicReaderImage,classicPngFallback} from "./classic_page_art";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
@@ -1289,10 +1289,12 @@ function App(){
   </div>;
 }
 function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boolean}){
- const [failed,setFailed]=useState(false);
- const src=bookImage(url);
- useEffect(()=>setFailed(false),[src]);
- if(failed)return <svg className="story-image-fallback" viewBox="0 0 640 420" role="img" aria-label={alt} xmlns="http://www.w3.org/2000/svg">
+ const [failed,setFailed]=useState(0);
+ const originalSrc=bookImage(url);
+ const offlineFallback=classicPngFallback(originalSrc);
+ const src=failed===1&&offlineFallback?offlineFallback:originalSrc;
+ useEffect(()=>setFailed(0),[originalSrc]);
+ if(failed>=2||(failed===1&&!offlineFallback))return <svg className="story-image-fallback" viewBox="0 0 640 420" role="img" aria-label={alt} xmlns="http://www.w3.org/2000/svg">
    <defs><linearGradient id="story-fallback-sky" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#eadcff"/><stop offset="1" stopColor="#ffe9c9"/></linearGradient></defs>
    <rect width="640" height="420" fill="url(#story-fallback-sky)"/>
    <circle cx="490" cy="105" r="53" fill="#fff8dc"/>
@@ -1302,7 +1304,7 @@ function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boo
    <path d="M320 275 V355" stroke="#7757aa" strokeWidth="9"/>
    <g fill="#fff8dc"><circle cx="108" cy="95" r="7"/><circle cx="175" cy="150" r="5"/><circle cx="360" cy="77" r="6"/><circle cx="565" cy="185" r="5"/></g>
  </svg>;
- return <img src={src} alt={alt} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(true)}/>;
+ return <img src={src} alt={alt} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(value=>value+1)}/>;
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  const [coverFailed,setCoverFailed]=useState(false);
