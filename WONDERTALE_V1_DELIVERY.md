@@ -21,7 +21,7 @@ Working branch: `fix/private-book-access`. Do not merge to main or deploy Produc
 - [ ] Real iPhone Safari/PWA smoke test, including page gestures, media failures and offline relaunch.
 - [ ] Full TypeScript build and automated tests passing (Vercel build-rate-limit currently blocks validation).
 - [ ] Additional per-page character animations for every story; only four real GIFs are installed.
-- [x] Existing speech synthesis reader has user-selectable slow/normal/fast rates and optional page advance after narration.\n- [ ] Professionally recorded narration with character-specific voices, word highlighting, and verified continuous iPhone playback.
+- [x] Existing speech synthesis reader has user-selectable slow/normal/fast rates and optional page advance after narration.\n- [x] Browser word-boundary highlighting with Unicode-aware text slicing and graceful fallback when Safari gives no boundary event.\n- [ ] Professionally recorded narration with character-specific voices and verified continuous iPhone playback.
 - [x] Four optional story-aware interaction choices below illustrated pages, separate from image zoom.
 - [x] Accessible character-reaction hotspots on four public classic scenes, positioned using the rendered PNG/GIF's actual fitted bounds. Tapping elsewhere no longer opens an image viewer.\n- [ ] Full character-specific animated reactions (new dedicated animation frames per action), plus real-device hotspot placement and accessibility verification.
 - [x] Two local family reader preferences: extra activities and ambient sound, with storage-failure feedback.\n- [ ] Protected parental controls, parent authentication, cross-device settings and age-based content audits.
@@ -79,3 +79,10 @@ Those changes are not proof that `ertakcha.netlify.app` is running the branch.
 - Optional, default-off setting advances one page after a **naturally completed** narration. It does not auto-speak the next page, does not turn past the last page, and is canceled when manually stopping or changing pages.
 - Browser voices depend on iOS device language packs; character-specific recorded voices and synchronized word highlighting are not implemented.
 - Source-level inspection completed; actual iPhone speech behavior and full frontend builds remain pending.
+
+## Reader speech highlighting (current branch)
+
+- Word highlighting uses the real `SpeechSynthesisUtterance.onboundary` character position, never a guessed timer.
+- No boundary event means no highlight. This is expected on some iPhone voices; narration continues normally.
+- Highlight clears on stop, error, page navigation, and natural speech completion. Screen-reader live announcements are suppressed while TTS runs.
+- Does not create character-specific speech recordings or promise guaranteed iOS per-word sync.
