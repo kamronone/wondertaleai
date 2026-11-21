@@ -13,6 +13,7 @@ import "./library-exact-reference.css";
 import "./library-screenshot-fixes.css";
 import "./create-reference.css";
 import "./create-step-two.css";
+import "./create-step-one-button.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -958,7 +959,7 @@ function App(){
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
           {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
           </div></details>
-          <div className="wizard-step-actions"><button type="button" className="primary-button" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}if(heroNameTooLong){setError(heroNameLengthError);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
+          <div className="wizard-step-actions wizard-step-one-actions"><button type="button" className="primary-button wizard-step-one-next" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}if(heroNameTooLong){setError(heroNameLengthError);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
           {createStep===2&&<div className="wizard-step-two"><div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
           <div className="wizard-step-two-section-label"><BookOpen size={17} aria-hidden="true"/><strong>{({ru:"Выберите основу сказки",uz:"Ertak asosini tanlang",en:"Choose a story foundation"} as const)[lang]}</strong></div>
           <div className="classic-choice" role="group" aria-label={t.classicFormTitle}><button type="button" aria-pressed={!classicId} className={!classicId?"active":""} onClick={()=>{setPrompt(previous=>leaveClassicStoryPrompt(previous,storyLang,activeClassic?.prompt));setClassicId(null);}}>{t.classicCustom}</button>{classics.map(item=><button type="button" aria-pressed={classicId===item.id} className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
