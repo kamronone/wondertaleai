@@ -4,7 +4,8 @@ import {readFileSync} from "node:fs";
 
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/library-concept-two.css",import.meta.url),"utf8");
-const illustration=readFileSync(new URL("../public/images/library-magic-castle.png",import.meta.url));
+const illustration=readFileSync(new URL("../public/images/library-story-castle-premium.png",import.meta.url));
+const polished=readFileSync(new URL("../src/library-final-polish.css",import.meta.url),"utf8");
 
 test("chosen library design is actually rendered and CSS is loaded",()=>{
  assert.match(app,/import "\.\/library-concept-two\.css"/);
@@ -14,13 +15,14 @@ test("chosen library design is actually rendered and CSS is loaded",()=>{
  assert.match(app,/className="library-concept-metrics"/);
 });
 
-test("library search and shelf filters work for empty and populated accounts",()=>{
+test("library search remains visible while shelf filters appear only when books exist",()=>{
  assert.match(app,/value=\{libraryQuery\} onChange=\{event=>setLibraryQuery\(event\.target\.value\)\}/);
  assert.match(app,/libraryShelf,setLibraryShelf/);
  for(const shelf of ["all","favorites","saved","recent"])
    assert.ok(app.includes('libraryShelf==="'+shelf+'"'),shelf);
  assert.match(app,/onClick=\{\(\)=>changeLibraryShelf\("favorites"\)\}/);
  assert.match(app,/onClick=\{\(\)=>changeLibraryShelf\("saved"\)\}/);
+ assert.match(app,/\{books\.length>0&&<div className="library-filters library-concept-chips"/);
  assert.match(app,/isDemoBook\(book\)&&Boolean\(book\.savedOnDevice\)/);
  assert.match(app,/if\(next==="recent"\)setLibrarySort\("newest"\)/);
 });
@@ -33,12 +35,17 @@ test("data is scoped to active session books, not a global saved list",()=>{
 
 test("empty state uses book artwork and only one primary create action",()=>{
  assert.match(app,/className="empty library-concept-empty"/);
- assert.match(app,/src="\/images\/library-magic-castle\.png"/);
+ assert.match(app,/src="\/images\/library-story-castle-premium\.png"/);
  assert.doesNotMatch(app,/className="library-concept-fox-art"/);
- assert.match(app,/className="primary-button library-concept-create"/);
+ assert.match(app,/className="primary-button library-empty-quick-create"/);
+ assert.match(app,/\{books\.length===0&&<div className="library-empty-quickbar"/);
+ assert.match(app,/\{books\.length>0&&<div className="library-concept-metrics"/);
  assert.match(app,/\{books\.length>0&&<button className="primary-button add-book"/);
  assert.deepEqual([...illustration.subarray(0,8)],[137,80,78,71,13,10,26,10]);
- assert.ok(illustration.length>2000);
+ assert.ok(illustration.length>12000);
+ assert.match(app,/import "\.\/library-final-polish\.css"/);
+ assert.match(polished,/\.library-empty-quickbar/);
+ assert.match(polished,/\.library-empty-copy/);
 });
 
 test("screenshot layout fixes remove nested search borders and clipped mobile filters",()=>{
