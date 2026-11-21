@@ -340,3 +340,14 @@
 .reader-page .reader-family-preferences small[role="alert"]{
   color:#995353;
 }
+
+.reading-achievements .reading-achievement-next{
+  display:block;
+  margin:4px 0 6px;
+  color:#826b90;
+  font-size:11px;
+  line-height:1.3;
+}
+.reading-achievements .reading-achievement.unlocked .reading-achievement-next{
+  color:#56795e;
+}
