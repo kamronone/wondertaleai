@@ -18,7 +18,8 @@ export async function checkAiStoryAccess(
     const raw:unknown=await response.json();
     if(!raw||typeof raw!=="object")return "unavailable";
     const status=raw as BillingStatus;
-    if(status.ai_pilot_access!==true)return "not-allowed";
+    if(typeof status.ai_pilot_access!=="boolean")return "unavailable";
+    if(status.ai_pilot_access===false)return "not-allowed";
     if(typeof status.ai_remaining_today!=="number"||
        !Number.isFinite(status.ai_remaining_today)||
        status.ai_remaining_today<0)return "unavailable";
