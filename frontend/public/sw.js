@@ -1,5 +1,6 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v12";
+const CACHE = "wondertale-public-v13";
+const STORY_OFFLINE_CACHE = "wondertale-offline-stories-v1";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 // Public, bundled artwork only. Each asset is optional so offline installation
 // still succeeds when an image is missing or a connection is unreliable.
@@ -44,7 +45,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key.startsWith("wondertale-") && key !== CACHE).map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => key.startsWith("wondertale-") && key !== CACHE && key !== STORY_OFFLINE_CACHE).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
@@ -77,9 +78,9 @@ self.addEventListener("fetch", event => {
           await cache.put(request, response.clone()).catch(() => {});
           return response;
         }
-        return (await cache.match(request)) || response;
+        return (await cache.match(request)) || (await caches.open(STORY_OFFLINE_CACHE)).match(request) || response;
       } catch {
-        return (await cache.match(request)) || Response.error();
+        return (await cache.match(request)) || (await caches.open(STORY_OFFLINE_CACHE)).match(request) || Response.error();
       }
     })());
     return;
@@ -99,7 +100,7 @@ self.addEventListener("fetch", event => {
         }
         return response;
       } catch {
-        return (await cache.match(request)) || Response.error();
+        return (await cache.match(request)) || (await caches.open(STORY_OFFLINE_CACHE)).match(request) || Response.error();
       }
     })());
     return;
