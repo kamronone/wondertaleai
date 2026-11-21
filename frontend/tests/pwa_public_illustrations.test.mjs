@@ -30,7 +30,7 @@ test("generated and personal images stay outside the offline public cache", () =
 });
 
 test("service worker public cache version advances for this allowlist", () => {
-  assert.match(source, /const CACHE = "wondertale-public-v12"/);
+  assert.match(source, /const CACHE = "wondertale-public-v13"/);
 });
 
 test("classic page PNGs use network-first freshness and never cache bad responses", () => {
@@ -50,4 +50,10 @@ test("character GIFs use network-first caching and validate GIF responses",()=>{
   const gif=source.indexOf("Animated character GIFs are public book art");
   const generic=source.indexOf("if (PUBLIC_ASSET.test(url.pathname))");
   assert.ok(gif>=0&&gif<generic);
+});
+
+test("user-downloaded offline classic art is preserved across service-worker updates",()=>{
+  assert.match(source,/const STORY_OFFLINE_CACHE = "wondertale-offline-stories-v1"/);
+  assert.ok(source.includes("key !== STORY_OFFLINE_CACHE"));
+  assert.ok(source.includes("caches.open(STORY_OFFLINE_CACHE)"));
 });
