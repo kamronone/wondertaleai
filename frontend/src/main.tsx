@@ -26,6 +26,7 @@ import "./reader-image-lightbox.css";
 import "./reader-mobile-v1.css";
 import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
 import {StorySceneInteraction} from "./StorySceneInteraction";
+import {readFamilyReadingPreferences,saveFamilyReadingPreferences} from "./reader_family_preferences";
 import {CharacterHotspot} from "./CharacterHotspot";
 import {canDownloadClassicArt,hasClassicOfflineArt,downloadClassicOfflineArt} from "./reader_offline_art";
 import { readerZoomLabels } from "./reader_zoom_labels";
@@ -298,6 +299,7 @@ function App(){
     setAmbienceOn(false);
   };
   const toggleAmbience=()=>{
+    if(!familyReadingPreferences.ambientSoundAllowed)return;
     if(ambiencePlayback.current){stopAmbience();return;}
     const classicId=isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined;
     const playback=startReaderAmbience(readerAmbienceForClassic(classicId));
@@ -319,6 +321,22 @@ function App(){
     document.addEventListener("visibilitychange",pause);
     return ()=>{document.removeEventListener("visibilitychange",pause);ambiencePlayback.current?.stop();};
   },[]);
+  const [familyReadingPreferences,setFamilyReadingPreferences]=useState(readFamilyReadingPreferences);
+  const [familyPreferencesError,setFamilyPreferencesError]=useState(false);
+  const changeFamilyReadingPreference=(key:"extraActivities"|"ambientSoundAllowed")=>{
+    const next={...familyReadingPreferences,[key]:!familyReadingPreferences[key]};
+    if(saveFamilyReadingPreferences(next)){
+      setFamilyReadingPreferences(next);
+      setFamilyPreferencesError(false);
+    }else setFamilyPreferencesError(true);
+  };
+  useEffect(()=>{
+    if(!familyReadingPreferences.ambientSoundAllowed&&ambiencePlayback.current){
+      ambiencePlayback.current.stop();
+      ambiencePlayback.current=null;
+      setAmbienceOn(false);
+    }
+  },[familyReadingPreferences.ambientSoundAllowed]);
   const [readerFocusMode,setReaderFocusMode]=useState(false);
   const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
   const [wordGameAnswer,setWordGameAnswer]=useState<string|null>(null);
@@ -1318,6 +1336,19 @@ function App(){
             </button>
             {offlineArtError&&<small role="alert">{({ru:"Не получилось скачать все картинки. Проверьте интернет и попробуйте снова.",uz:"Barcha rasmlar yuklanmadi. Internetni tekshirib qayta urinib ko'ring.",en:"Some pictures could not download. Check your connection and retry."} as const)[lang]}</small>}
           </div>}
+          <fieldset className="reader-family-preferences">
+            <legend>{({ru:"Настройки для семьи",uz:"Oila uchun sozlamalar",en:"Family reading settings"} as const)[lang]}</legend>
+            <label>
+              <input type="checkbox" checked={familyReadingPreferences.extraActivities} onChange={()=>changeFamilyReadingPreference("extraActivities")}/>
+              <span>{({ru:"Показывать игры и реакции героев",uz:"O'yinlar va qahramon javoblarini ko'rsatish",en:"Show games and character reactions"} as const)[lang]}</span>
+            </label>
+            <label>
+              <input type="checkbox" checked={familyReadingPreferences.ambientSoundAllowed} onChange={()=>changeFamilyReadingPreference("ambientSoundAllowed")}/>
+              <span>{({ru:"Разрешить звуки сказки",uz:"Ertak tovushlariga ruxsat berish",en:"Allow story ambience"} as const)[lang]}</span>
+            </label>
+            <small>{({ru:"Настройки действуют только на этом устройстве. Это не защищённый родительский контроль.",uz:"Sozlamalar faqat shu qurilmada amal qiladi. Bu himoyalangan ota-ona nazorati emas.",en:"Settings apply only on this device. These are not protected parental controls."} as const)[lang]}</small>
+            {familyPreferencesError&&<small role="alert">{({ru:"Не удалось сохранить настройки.",uz:"Sozlamalarni saqlab bo'lmadi.",en:"Could not save preferences."} as const)[lang]}</small>}
+          </fieldset>
           <button type="button" className={"reader-warm-toggle"+(readerWarmMode&&!readerNightMode?" active":"")} aria-pressed={readerWarmMode&&!readerNightMode} onClick={()=>{setReaderWarmMode(value=>!value);setReaderNightMode(false);}}><BookOpen size={15}/>{({ru:"Тёплый фон",uz:"Iliq fon",en:"Warm background"} as const)[lang]}</button>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>{setReaderNightMode(v=>!v);setReaderWarmMode(false);}}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>}
@@ -1331,7 +1362,7 @@ function App(){
         </details>}
         <div className="reader-title"><div className="reader-book-meta"><span className="reader-crown"><Crown size={16}/></span><span className="reader-child-label">{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}</div><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length} · {Math.round(((page+1)/Math.max(1,active.pages.length))*100)}%</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
-        {!readerNightMode&&bedtimeUntil===null&&<button type="button" className={"reader-ambience-button"+(ambienceOn?" active":"")} aria-pressed={ambienceOn} onClick={toggleAmbience}>
+        {!readerNightMode&&bedtimeUntil===null&&familyReadingPreferences.ambientSoundAllowed&&<button type="button" className={"reader-ambience-button"+(ambienceOn?" active":"")} aria-pressed={ambienceOn} onClick={toggleAmbience}>
           <Music2 size={16} aria-hidden="true"/>
           {ambienceOn
             ?({ru:"Выключить звуки сказки",uz:"Ertak tovushlarini o'chirish",en:"Stop story sounds"} as const)[lang]
@@ -1349,11 +1380,11 @@ function App(){
       ?({ru:"Остановить героев",uz:"Qahramonlarni to'xtatish",en:"Pause characters"} as const)[lang]
       :({ru:"Оживить героев",uz:"Qahramonlarni jonlantirish",en:"Animate characters"} as const)[lang]}
   </button>}
-{isDemoBook(active)&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
+{isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
   classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page)&&
   <CharacterHotspot classicId={(active as DemoBook).classicId} page={page+1} lang={lang} />}
 <div className="wt-art-effects" aria-hidden="true">{readerArtMotion!=="off"&&!readerNightMode&&bedtimeUntil===null&&Array.from({length:6},(_,i)=><span className="wt-art-particle" key={i} style={{"--wt-x":(14+i*13)+"%","--wt-y":(18+i%3*22)+"%","--wt-dur":(9+i%4*2)+"s","--wt-delay":(-i*1.8)+"s"} as React.CSSProperties}/>)}</div></div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
-        {isDemoBook(active)&&!readerNightMode&&bedtimeUntil===null&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
+        {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
         {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
