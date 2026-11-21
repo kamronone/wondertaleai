@@ -842,6 +842,22 @@ def ai_job_for_parent(job_id:str,owner:str=Depends(current_parent)):
     return _ai_job_status(row)
 
 
+@app.delete("/api/books/jobs/{job_id}",status_code=204)
+def cancel_queued_ai_job(job_id:str,owner:str=Depends(current_parent)):
+    """Only a not-yet-claimed job can be canceled without billing ambiguity."""
+    if not re.fullmatch(r"[0-9a-f-]{36}",job_id):
+        raise HTTPException(404,"AI job not found")
+    with connection() as c:
+        deleted=sql(c,"DELETE FROM ai_jobs WHERE id=? AND owner_id=? AND status='queued'",(job_id,owner))
+        if deleted.rowcount==1:
+            c.commit()
+            return
+        exists=sql(c,"SELECT status FROM ai_jobs WHERE id=? AND owner_id=?",(job_id,owner)).fetchone()
+        if not exists:
+            raise HTTPException(404,"AI job not found")
+        raise HTTPException(409,"Only queued jobs can be canceled")
+
+
 def process_one_queued_ai_job():
     """Called only from an operator-managed worker, not from an HTTP handler.
 
