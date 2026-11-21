@@ -276,9 +276,9 @@ def test_parent_registration_login_logout_and_private_story_flow(api, monkeypatc
     client, module, existing_parent, existing_headers = api
     monkeypatch.setenv("ENABLE_REGISTRATION", "true")
     monkeypatch.setenv("REQUIRE_EMAIL_VERIFICATION", "false")
-    monkeypatch.setenv("AI_ALLOWED_EMAILS", "new-parent@test.invalid")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS", "new-parent@example.com")
 
-    credentials = {"email": "new-parent@test.invalid", "password": "long-test-password-2026"}
+    credentials = {"email": "new-parent@example.com", "password": "long-test-password-2026"}
     registration = client.post("/api/auth/register", json=credentials)
     assert registration.status_code == 201, registration.text
     token = registration.json()["access_token"]
