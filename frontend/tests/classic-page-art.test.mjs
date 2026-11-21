@@ -43,6 +43,8 @@ test("never replace custom or private images",()=>{
  const data="data:image/svg+xml;charset=utf-8,%3Csvg%3Ecustom%3C%2Fsvg%3E";
  assert.equal(exports.classicReaderImage("cinderella",custom,0),custom);
  assert.equal(exports.classicReaderImage("cinderella",data,3),data);
+ const legacy="data:image/svg+xml;charset=utf-8,%3Csvg%20aria-label%3D%22Fairy-tale%20illustration%22%3E%3C%2Fsvg%3E";
+ assert.equal(exports.classicReaderImage("three-pigs",legacy,0),"/images/classics/three-pigs/pages/page-1.png");
  assert.equal(exports.classicReaderImage(undefined,custom,0),custom);
  assert.equal(exports.classicReaderImage("unknown",custom,0),custom);
 });
