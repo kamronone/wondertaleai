@@ -8,7 +8,7 @@ const css=readFileSync(new URL("../src/reader-book-variants.css",import.meta.url
 test("reader offers selectable open, classic, modern and minimal appearances",()=>{
  assert.match(app,/import "\.\/reader-book-variants\.css"/);
  assert.match(app,/\["spread","classic","storybook","simple"\] as const/);
- assert.match(app,/className="reader-book-variant"/);
+ assert.match(app,/className=\{"reader-book-variant"\+/);
  assert.match(app,/aria-pressed=\{readerBookStyle===variant\}/);
  assert.match(app,/onClick=\{\(\)=>setReaderBookStyle\(variant\)\}/);
  assert.match(app,/book-style-"\+readerBookStyle/);
