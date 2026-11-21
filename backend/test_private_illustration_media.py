@@ -221,3 +221,85 @@ def test_worker_disabled_and_moderation_fail_closed(api,monkeypatch):
     assert result==queued.json()["id"]
     assert not called
     assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="failed"
+
+
+def test_approved_runner_end_to_end_with_mock_image_and_moderation(api,monkeypatch):
+    import base64
+    from types import SimpleNamespace
+    from approved_illustration_runner import run_one_approved_illustration
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("APP_ENV","preview")
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS_WORKER","true")
+    monkeypatch.setenv("ENABLE_OPENAI_IMAGE_PROVIDER","true")
+    monkeypatch.setenv("ENABLE_OPENAI_IMAGE_MODERATION","true")
+    monkeypatch.setenv("MAX_ILLUSTRATIONS_PER_DAY","1")
+    monkeypatch.setenv("MAX_PARENT_ILLUSTRATIONS_PER_DAY","1")
+    book=create_book(auth)
+    created=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"storybook"
+    })
+    assert created.status_code==202,created.text
+    job=created.json()["id"]
+    class ImageClient:
+        def __init__(self):self.calls=0
+        def generate(self,**kwargs):
+            self.calls+=1
+            return SimpleNamespace(data=[SimpleNamespace(b64_json=base64.b64encode(fake_png()).decode())])
+    class ModerationClient:
+        def __init__(self,deny_image=False):
+            self.calls=[]
+            self.deny_image=deny_image
+        def create(self,**kwargs):
+            self.calls.append(kwargs)
+            flagged=self.deny_image and kwargs["input"][0]["type"]=="image_url"
+            return SimpleNamespace(results=[SimpleNamespace(flagged=flagged,categories={
+                "violence":flagged,"sexual":False
+            })])
+    images=ImageClient()
+    moderation=ModerationClient()
+    completed=run_one_approved_illustration(
+        image_client=SimpleNamespace(images=images),
+        moderation_client=SimpleNamespace(moderations=moderation)
+    )
+    assert completed==job
+    assert images.calls==1
+    assert [req["input"][0]["type"] for req in moderation.calls]==["text","image_url"]
+    assert client.get("/api/illustrations/media/"+job,headers=auth).status_code==200
+    assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="completed"
+
+
+def test_approved_runner_rejects_mock_flagged_output_without_saving(api,monkeypatch):
+    import base64
+    from types import SimpleNamespace
+    from approved_illustration_runner import run_one_approved_illustration
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("APP_ENV","preview")
+    for name in ("ENABLE_AI_ILLUSTRATIONS_WORKER","ENABLE_OPENAI_IMAGE_PROVIDER","ENABLE_OPENAI_IMAGE_MODERATION"):
+        monkeypatch.setenv(name,"true")
+    monkeypatch.setenv("MAX_ILLUSTRATIONS_PER_DAY","1")
+    monkeypatch.setenv("MAX_PARENT_ILLUSTRATIONS_PER_DAY","1")
+    book=create_book(auth)
+    created=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"pencil"
+    })
+    assert created.status_code==202
+    job=created.json()["id"]
+    class Images:
+        def generate(self,**kwargs):
+            return SimpleNamespace(data=[SimpleNamespace(b64_json=base64.b64encode(fake_png()).decode())])
+    class Moderations:
+        def create(self,**kwargs):
+            flagged=kwargs["input"][0]["type"]=="image_url"
+            return SimpleNamespace(results=[SimpleNamespace(
+                flagged=flagged,categories={"violence":flagged,"sexual":False})])
+    result=run_one_approved_illustration(
+        image_client=SimpleNamespace(images=Images()),
+        moderation_client=SimpleNamespace(moderations=Moderations())
+    )
+    assert result==job
+    assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="failed"
+    assert client.get("/api/illustrations/media/"+job,headers=auth).status_code==404
