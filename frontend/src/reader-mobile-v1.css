@@ -280,3 +280,19 @@
 @media print{
   .reader-page .story-page-image .wt-character-hotspot-layer{display:none!important}
 }
+
+.reader-page .story-page-image .wt-character-hotspot.is-reacting{
+  background:#9a58ce;
+  border-color:#fff1b8;
+  animation:wt-character-tapped 550ms ease-out 1;
+}
+@keyframes wt-character-tapped{
+  0%{transform:translate(-50%,-50%) scale(1)}
+  45%{transform:translate(-50%,-50%) scale(1.18)}
+  100%{transform:translate(-50%,-50%) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .story-page-image .wt-character-hotspot.is-reacting{
+    animation:none!important;
+  }
+}
