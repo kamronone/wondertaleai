@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/library-concept-two.css",import.meta.url),"utf8");
-const illustration=readFileSync(new URL("../public/images/library-castle-book.svg",import.meta.url),"utf8");
+const illustration=readFileSync(new URL("../public/images/library-magic-castle.png",import.meta.url));
 
 test("chosen library design is actually rendered and CSS is loaded",()=>{
  assert.match(app,/import "\.\/library-concept-two\.css"/);
@@ -33,12 +33,20 @@ test("data is scoped to active session books, not a global saved list",()=>{
 
 test("empty state uses book artwork and only one primary create action",()=>{
  assert.match(app,/className="empty library-concept-empty"/);
- assert.match(app,/src="\/images\/library-castle-book\.svg"/);
- assert.match(app,/src="\/images\/profile-story-hero\.png"/);
+ assert.match(app,/src="\/images\/library-magic-castle\.png"/);
+ assert.doesNotMatch(app,/className="library-concept-fox-art"/);
  assert.match(app,/className="primary-button library-concept-create"/);
  assert.match(app,/\{books\.length>0&&<button className="primary-button add-book"/);
- assert.match(illustration,/<svg /);
- assert.match(illustration,/Magical castle over an open fairy-tale book/);
+ assert.deepEqual([...illustration.subarray(0,8)],[137,80,78,71,13,10,26,10]);
+ assert.ok(illustration.length>2000);
+});
+
+test("screenshot layout fixes remove nested search borders and clipped mobile filters",()=>{
+ const fixes=readFileSync(new URL("../src/library-mobile-fixes.css",import.meta.url),"utf8");
+ assert.match(fixes,/input\[type="search"\]/);
+ assert.match(fixes,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
+ assert.match(fixes,/\.library-concept-art/);
+ assert.match(fixes,/height:auto!important/);
 });
 
 test("responsive library does not reintroduce forced empty heights or bottom padding",()=>{
