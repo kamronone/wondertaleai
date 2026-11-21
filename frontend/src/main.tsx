@@ -143,6 +143,7 @@ function App(){
   const flushing=useRef<number|null>(null);
   const recentlyCreated=useRef(new Map<string,number>());
   const transferAbort=useRef<AbortController|null>(null);
+  const aiRetry=useRef<{token:string;payload:string;key:string}|null>(null);
   const offlineOwner=useRef<string|null>(null);
   const persistPending=()=>{
     if(!offlineOwner.current)return;
@@ -336,6 +337,7 @@ function App(){
       const owner=await getAuthenticatedOwner(API,token);
       const remote=await loadPrivateBooks(API,token);
       if(loginAttempt.current!==attempt)return false;
+      aiRetry.current=null;
       transferAbort.current?.abort();
       transferAbort.current=null;
       setSyncBusy(false);
@@ -363,6 +365,7 @@ function App(){
     }catch{return false;}
   };
   const logoutParent=()=>{
+    aiRetry.current=null;
     transferAbort.current?.abort();
     transferAbort.current=null;
     setSyncBusy(false);
@@ -786,7 +789,9 @@ function App(){
         if(photo){
           throw new Error(({ru:"AI-генерация пока не принимает фото ребёнка. Удалите фото и повторите.",uz:"AI hozirça bolaning rasmini qabul qilmaydi. Rasmni olib taşlang.",en:"AI generation does not accept child photos yet. Remove the photo first."} as const)[lang]);
         }
-        const aiAccess=await checkAiStoryAccess(API,privateToken);
+        // A retry after a lost HTTP response must reach the server with its
+        // original key, even if the first request consumed the daily quota.
+        const aiAccess=aiRetry.current?.token===privateToken?"ready":await checkAiStoryAccess(API,privateToken);
         if(sessionEpoch.current!==epoch)return;
         if(aiAccess!=="ready"){
           const messages={
@@ -803,10 +808,15 @@ function App(){
           idea:storyIdeaWithHero,style,other_heroes:secondHero.trim()?[secondHero.trim()]:[],
           pages_count:aiPagesCount,
         };
+        const payload=JSON.stringify(data);
+        const retry=aiRetry.current;
+        const key=retry?.token===privateToken&&retry.payload===payload
+          ?retry.key:crypto.randomUUID().replaceAll("-","");
+        aiRetry.current={token:privateToken,payload,key};
         const response=await fetch(API+"/api/books/generate",{
           method:"POST",
-          headers:{"Authorization":"Bearer "+privateToken,"Content-Type":"application/json"},
-          body:JSON.stringify(data),
+          headers:{"Authorization":"Bearer "+privateToken,"Content-Type":"application/json","Idempotency-Key":key},
+          body:payload,
           signal:AbortSignal.timeout(120000),
         });
         if(!response.ok){
@@ -814,6 +824,12 @@ function App(){
             throw new Error(({ru:"Сессия истекла. Войдите в аккаунт родителя снова.",uz:"Sessiya tugadi. Ota-ona akkauntiga qayta kiring.",en:"Your session has expired. Sign in to the parent account again."} as const)[lang]);
           }
           if(response.status===409){
+            // Same-key pending responses must not be mistaken for a full library.
+            // Preserve the key so a later retry cannot start another paid call.
+            const details=await response.json().catch(()=>({}));
+            if(details?.detail==="Story generation is already processing"){
+              throw new Error(({ru:"Сказка ещё создаётся. Повторите позже: новый запрос не будет оплачен повторно.",uz:"Ertak hali yaratilmoqda. Keyinroq qayta urining: yangi AI so'rovi yuborilmaydi.",en:"Your story is still processing. Retry later without paying for another request."} as const)[lang]);
+            }
             throw new Error(({ru:"Библиотека заполнена. Удалите ненужную сказку перед созданием новой.",uz:"Kutubxona tölgan. Yangi ertakdan oldin keraksizini öçiring.",en:"Your library is full. Delete a story before creating another."} as const)[lang]);
           }
           if(response.status===403){
@@ -841,6 +857,7 @@ function App(){
              p.text.trim().length>=70&&p.text.length<=1200&&
              (p.image_url===""||typeof p.image_url==="undefined")))throw new Error(t.generateError);
         if(sessionEpoch.current!==epoch)return;
+        aiRetry.current=null;
         // POST succeeded: show the saved story immediately even if the follow-up
         // library GET fails. Never encourage a duplicate paid generation.
         const created:RemoteBook={
