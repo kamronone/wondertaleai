@@ -162,3 +162,10 @@
 @media print{
   .reader-page .story-page-image .wt-character-motion-control{display:none!important}
 }
+
+/* Individual characters already move inside the GIF itself.
+   Never zoom a GIF: it would crop the picture frame. */
+.reader-page .story-page-image.wt-living-art > img.wt-character-gif{
+  animation:none!important;
+  transform:none!important;
+}
