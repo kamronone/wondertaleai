@@ -29,3 +29,13 @@ test("all four book modes and private image wrappers are supported",()=>{
  assert.ok(css.includes(".story-page-image > div > img"));
  assert.ok(css.includes(".story-page-image .story-image-fallback"));
 });
+
+test("reader applies inline important sizing to defeat old mobile height limits",()=>{
+  assert.match(app,/readerFullWidth=false/);
+  assert.match(app,/node\.style\.setProperty\("max-height","none","important"\)/);
+  assert.match(app,/node\.style\.setProperty\("width","100%","important"\)/);
+  assert.match(app,/node\.style\.setProperty\("height","auto","important"\)/);
+  assert.match(app,/node\.style\.setProperty\("object-fit","contain","important"\)/);
+  const calls=app.match(/alt=\{t\.illustration\+" "\+\(page\+1\)\} readerFullWidth/g)||[];
+  assert.equal(calls.length,2,"Both private fallback and local reader illustration must be full-width");
+});
