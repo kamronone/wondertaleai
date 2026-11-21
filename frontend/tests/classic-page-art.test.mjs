@@ -14,7 +14,8 @@ const fakeClassics=[
  {id:"red-hood",title:{ru:"Красная Шапочка"}},
  {id:"cinderella",title:{ru:"Золушка"}},
  {id:"three-pigs",title:{ru:"Три поросёнка"}},
- {id:"snow-white",title:{ru:"Белоснежка"}}
+ {id:"snow-white",title:{ru:"Белоснежка"}},
+ {id:"ugly-duckling",title:{ru:"Гадкий утёнок"}}
 ];
 vm.runInNewContext(javascript,{
  exports,
