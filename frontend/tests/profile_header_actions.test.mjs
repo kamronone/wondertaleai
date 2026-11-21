@@ -13,6 +13,14 @@ test("profile uses reference topbar and retains original header elsewhere",()=>{
   assert.match(app,/onPrivacy=\{\(\)=>openLegal\("privacy"\)\}/);
 });
 
+test("profile header keeps brand and tools without redundant back button",()=>{
+  assert.doesNotMatch(header,/className="profile-mockup-back"/);
+  assert.doesNotMatch(header,/<ArrowLeft/);
+  assert.doesNotMatch(app,/onBack=\{\(\)=>setTab\("home"\)\}/);
+  assert.match(header,/className="profile-mockup-brand"/);
+  assert.match(header,/className="profile-mockup-tools"/);
+});
+
 test("notification and settings icons expose meaningful panels",()=>{
   assert.match(header,/aria-controls="profile-notification-panel"/);
   assert.match(header,/aria-controls="profile-settings-panel"/);
