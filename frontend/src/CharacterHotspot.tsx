@@ -37,21 +37,21 @@ export function characterHotspotForPage(classicId:string|undefined,page:number):
 }
 
 function imagePoint(container:HTMLElement,position:Position):{left:number;top:number}|null{
-  const button=container.querySelector<HTMLButtonElement>(".wt-reader-image-open");
-  const image=button?.querySelector<HTMLImageElement>("img");
-  if(!button||!image?.naturalWidth||!image.naturalHeight)return null;
-  const width=button.clientWidth,height=button.clientHeight;
+  const image=container.querySelector<HTMLImageElement>("img.wt-reader-picture");
+  if(!image?.naturalWidth||!image.naturalHeight)return null;
+  const rect=image.getBoundingClientRect();
+  const width=rect.width,height=rect.height;
   if(width<=0||height<=0)return null;
   const scale=Math.min(width/image.naturalWidth,height/image.naturalHeight);
   const drawnW=image.naturalWidth*scale,drawnH=image.naturalHeight*scale;
-  const containerRect=container.getBoundingClientRect(),buttonRect=button.getBoundingClientRect();
+  const containerRect=container.getBoundingClientRect();
   return {
-    left:buttonRect.left-containerRect.left+(width-drawnW)/2+drawnW*position.x,
-    top:buttonRect.top-containerRect.top+(height-drawnH)/2+drawnH*position.y
+    left:rect.left-containerRect.left+(width-drawnW)/2+drawnW*position.x,
+    top:rect.top-containerRect.top+(height-drawnH)/2+drawnH*position.y
   };
 }
 
-/** Placed on the actual rendered image, leaving the rest of the picture tap-to-zoom.
+/** Placed on the actual rendered image, without making the rest of the picture interactive.
  * Reaction text is local only: no network calls, analytics, child records or speech.
  */
 export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:string|undefined;page:number;lang:Lang;enabled?:boolean}){
@@ -65,7 +65,7 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
     const stage=ref.current?.parentElement;
     if(!stage)return;
     const update=()=>setPoint(imagePoint(stage,reaction.position));
-    const picture=stage.querySelector<HTMLImageElement>(".wt-reader-image-open img");
+    const picture=stage.querySelector<HTMLImageElement>("img.wt-reader-picture");
     picture?.addEventListener("load",update);
     window.addEventListener("resize",update);
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(update):null;
