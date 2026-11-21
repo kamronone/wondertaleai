@@ -203,11 +203,7 @@ function App(){
     const previous=previousReaderPageRef.current;
     previousReaderPageRef.current={id:active.id,page};
     if(previous?.id===active.id&&previous.page!==page){
-      const element=storyPageRef.current;
-      if(element){
-        const targetTop=window.scrollY+element.getBoundingClientRect().top-12;
-        window.scrollTo({top:Math.max(0,targetTop),behavior:"instant"});
-      }
+      storyPageRef.current?.scrollIntoView({behavior:"auto",block:"start"});
     }
   },[tab,active?.id,page]);
   useEffect(()=>{
