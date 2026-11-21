@@ -84,7 +84,15 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS sessions_owner_idx ON sessions(owner_id)")
         sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
-        sql(c, "CREATE TABLE IF NOT EXISTS ai_idempotency (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, created_at TEXT NOT NULL, PRIMARY KEY(owner_id,request_key))")
+        sql(c, "CREATE TABLE IF NOT EXISTS ai_idempotency (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, created_at TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending', PRIMARY KEY(owner_id,request_key))")
+        # Existing preview databases may already have the ledger without state.
+        # Preserve completed tombstones so deleting a book does not make an
+        # old, paid request look like a new in-flight operation.
+        if IS_PG:
+            sql(c, "ALTER TABLE ai_idempotency ADD COLUMN IF NOT EXISTS state TEXT NOT NULL DEFAULT 'pending'")
+        elif "state" not in [row[1] for row in c.execute("PRAGMA table_info(ai_idempotency)")]:
+            c.execute("ALTER TABLE ai_idempotency ADD COLUMN state TEXT NOT NULL DEFAULT 'pending'")
+        sql(c, "UPDATE ai_idempotency SET state='completed' WHERE book_id IS NOT NULL AND state='pending'")
         sql(c, "CREATE TABLE IF NOT EXISTS parent_email_status (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, verified_at TEXT)")
         sql(c, "CREATE TABLE IF NOT EXISTS email_action_tokens (token_digest TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, purpose TEXT NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER, issued_at INTEGER NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS email_action_owner_idx ON email_action_tokens(owner_id,purpose,issued_at)")
@@ -610,9 +618,11 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             if inserted:
                 c.commit()
             else:
-                existing=sql(c,"SELECT payload_digest,book_id FROM ai_idempotency WHERE owner_id=? AND request_key=?",(owner,request_key)).fetchone()
+                existing=sql(c,"SELECT payload_digest,book_id,state FROM ai_idempotency WHERE owner_id=? AND request_key=?",(owner,request_key)).fetchone()
                 if not existing or existing[0]!=payload_digest:
                     raise HTTPException(409,"Idempotency key was used for another request")
+                if existing[2]=="completed" and not existing[1]:
+                    raise HTTPException(409,"Previously generated book was deleted")
                 if not existing[1]:
                     raise HTTPException(409,"Story generation is already processing")
                 old=sql(c,"SELECT id,title,story,created_at FROM books WHERE id=? AND owner_id=?",(existing[1],owner)).fetchone()
@@ -702,7 +712,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                 raise HTTPException(409,"Library limit reached")
             sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps(story_document,ensure_ascii=False),now))
             if request_key:
-                sql(c,"UPDATE ai_idempotency SET book_id=? WHERE owner_id=? AND request_key=? AND payload_digest=?",(bid,owner,request_key,payload_digest))
+                sql(c,"UPDATE ai_idempotency SET book_id=?,state='completed' WHERE owner_id=? AND request_key=? AND payload_digest=?",(bid,owner,request_key,payload_digest))
             c.commit()
     except Exception as exc:
         # A successfully generated story can still fail to save, for example
@@ -734,10 +744,12 @@ def generation_request_status(request_key:str,owner:str=Depends(current_parent))
     if not re.fullmatch(r"[A-Za-z0-9_-]{16,128}",request_key):
         raise HTTPException(404,"Generation request not found")
     with connection() as c:
-        row=sql(c,"SELECT book_id,created_at FROM ai_idempotency WHERE owner_id=? AND request_key=?",(owner,request_key)).fetchone()
+        row=sql(c,"SELECT book_id,created_at,state FROM ai_idempotency WHERE owner_id=? AND request_key=?",(owner,request_key)).fetchone()
         if not row:
             raise HTTPException(404,"Generation request not found")
-        book_id,created_at=row
+        book_id,created_at,state=row
+        if state=="completed" and not book_id:
+            return {"status":"unavailable","book_id":None}
         if book_id:
             book=sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
             if book:
