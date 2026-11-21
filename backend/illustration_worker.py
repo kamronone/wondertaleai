@@ -5,6 +5,7 @@ both an independent content moderator and a renderer. A reservation is never
 automatically refunded or retried after the renderer can have been called.
 """
 import os
+import uuid
 from datetime import datetime, timezone
 from typing import Callable
 
@@ -27,7 +28,7 @@ def _finish(job_id:str,state:str)->None:
                (state,now,job_id))
         if changed.rowcount==1:
             db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
-                   (__import__("uuid").uuid4().hex,job_id,state,now))
+                   (uuid.uuid4().hex,job_id,state,now))
         c.commit()
 
 def illustration_emergency_paused(connection=None)->bool:
@@ -105,7 +106,7 @@ def process_one_illustration_job(
             db.sql(c,"UPDATE illustration_jobs SET status='failed',completed_at=? WHERE id=?",
                    (now,job_id))
             db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
-                   (__import__("uuid").uuid4().hex,job_id,"failed",now))
+                   (uuid.uuid4().hex,job_id,"failed",now))
             c.commit()
             return job_id
         # The two conditional upserts must commit with the claim, so workers
@@ -120,7 +121,7 @@ def process_one_illustration_job(
             db.sql(c,"UPDATE illustration_jobs SET status='failed',completed_at=? WHERE id=?",
                    (now,job_id))
             db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
-                   (__import__("uuid").uuid4().hex,job_id,"failed",now))
+                   (uuid.uuid4().hex,job_id,"failed",now))
             c.commit()
             return job_id
         reserved_parent=db.sql(c,(
@@ -136,14 +137,14 @@ def process_one_illustration_job(
             db.sql(c,"UPDATE illustration_jobs SET status='failed',completed_at=? WHERE id=?",
                    (now,job_id))
             db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
-                   (__import__("uuid").uuid4().hex,job_id,"failed",now))
+                   (uuid.uuid4().hex,job_id,"failed",now))
             c.commit()
             return job_id
         started=_now()
         db.sql(c,"UPDATE illustration_jobs SET status='processing',started_at=? "
                  "WHERE id=? AND status='queued'",(started,job_id))
         db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
-               (__import__("uuid").uuid4().hex,job_id,"processing",started))
+               (uuid.uuid4().hex,job_id,"processing",started))
         c.commit()
 
     # Build only a generic original fictional scene; never transmit private
