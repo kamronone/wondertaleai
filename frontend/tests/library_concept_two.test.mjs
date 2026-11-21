@@ -82,3 +82,14 @@ test("reference CSS places four filter pills in a row on iPhone",()=>{
  assert.match(exact,/\.library-concept-chips[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
  assert.match(exact,/\.library-concept-art[\s\S]*?aspect-ratio:480\/285!important/);
 });
+
+test("iPhone screenshot fixes keep filters readable and the create action above navigation",()=>{
+ const fixes=readFileSync(new URL("../src/library-screenshot-fixes.css",import.meta.url),"utf8");
+ assert.match(app,/import "\.\/library-screenshot-fixes\.css"/);
+ assert.match(app,/uz:"Sevimlilar"/);
+ assert.match(fixes,/\.library-concept-chips>button\{[\s\S]*?overflow:visible!important/);
+ assert.match(fixes,/@media\(max-width:620px\)/);
+ assert.match(fixes,/\.library-concept-art\{[\s\S]*?width:min\(245px,100%\)!important/);
+ assert.match(fixes,/\.library-concept-create\{[\s\S]*?min-height:43px!important/);
+ assert.match(fixes,/mask-image:linear-gradient/);
+});
