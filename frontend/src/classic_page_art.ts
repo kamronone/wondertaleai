@@ -59,7 +59,7 @@ export function classicReaderImage(classicId:string|undefined,imageUrl:string,pa
  if(!classicId||!ids.has(classicId))return imageUrl;
  const oldAsset=imageUrl==="/images/classics/"+classicId+".webp"||imageUrl==="/images/classics/"+classicId+".svg";
  const oldRedHood=/^\/images\/classics\/red-hood\/(?:pages|watercolor)\/page-[1-8]\.png$/.test(imageUrl);
- const vectorPlaceholder=imageUrl.startsWith("data:image/svg+xml;charset=utf-8,");
- if(!oldAsset&&!oldRedHood&&!vectorPlaceholder&&!(!imageUrl))return imageUrl;
+ // Data URLs may contain personalized artwork; never override them.
+ if(!oldAsset&&!oldRedHood&&imageUrl.trim()!=="")return imageUrl;
  return classicPageArtwork(classicId,pageIndex)||imageUrl;
 }
