@@ -848,7 +848,7 @@ function App(){
     try{if(isDemoBook(book)){saveDemoBooks(getDemoBooks().filter(b=>b.id!==book.id));}else{if(!privateToken)throw new Error("Parent login required");const r=await fetch(API+"/api/books/"+book.id,{method:"DELETE",headers:{Authorization:"Bearer "+privateToken}});if(!r.ok)throw new Error("Ошибка удаления");pendingProgress.current.delete(book.id);pendingFavorites.current.delete(book.id);recentlyCreated.current.delete(book.id);persistPending();setRemoteBooks(prev=>prev.filter(b=>b.id!==book.id));}setBooks(prev=>prev.filter(b=>b.id!==book.id));setTab("library");setActive(null);}
     catch{setError(t.deleteError);}
   };
-  const shownBooks=discoverBooks(books,libraryQuery,favoritesOnly,libraryShelf==="recent"?"newest":librarySort).filter(book=>(libraryAge==="all"||book.age<=Number(libraryAge))&&(libraryShelf!=="saved"||(isDemoBook(book)&&Boolean(book.savedOnDevice))));
+  const shownBooks=discoverBooks(books,libraryQuery,favoritesOnly,librarySort).filter(book=>(libraryAge==="all"||book.age<=Number(libraryAge))&&(libraryShelf!=="saved"||(isDemoBook(book)&&Boolean(book.savedOnDevice))));
   const changeLibraryShelf=(next:"all"|"favorites"|"saved"|"recent")=>{
     setLibraryShelf(next);
     setFavoritesOnly(next==="favorites");
