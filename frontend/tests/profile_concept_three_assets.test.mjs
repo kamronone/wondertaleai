@@ -38,3 +38,12 @@ test("legal menu and plans remain clickable and separate from footer",()=>{
  const footer=app.slice(app.indexOf('<footer className="site-legal-footer">'),app.indexOf('</footer>',app.indexOf('<footer className="site-legal-footer">')));
  assert.doesNotMatch(footer,/<nav|openLegal/);
 });
+
+test("tariff row is compact and expands with a right-side chevron",()=>{
+ assert.match(app,/<ChevronRight size=\{19\} className="profile-plan-chevron"/);
+ const tariff=layout.slice(layout.lastIndexOf("/* Tariff row:"));
+ assert.match(tariff,/\.account-plans-disclosure > summary\s*\{[^}]*min-height:58px/s);
+ assert.match(tariff,/\.profile-plan-icon\s*\{[^}]*width:38px/s);
+ assert.match(tariff,/\.profile-plan-copy strong\s*\{[^}]*font-size:13px/s);
+ assert.match(tariff,/\.account-plans-disclosure\[open\] \.profile-plan-chevron\s*\{[^}]*rotate\(90deg\)/s);
+});
