@@ -983,7 +983,7 @@ function App(){
           <summary>
             <span className="profile-plan-icon"><Crown size={22} aria-hidden="true"/></span>
             <span className="profile-plan-copy"><strong>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}</strong><small>{({ru:"Дополнительные возможности сервиса",uz:"Qoshimcha imkoniyatlar va tariflar",en:"Available plans and extra features"} as const)[lang]}</small></span>
-            <ChevronDown size={19} className="profile-plan-chevron" aria-hidden="true"/>
+            <ChevronRight size={19} className="profile-plan-chevron" aria-hidden="true"/>
           </summary>
           <PricingPlans lang={lang} api={API} session={privateToken}/>
         </details>
