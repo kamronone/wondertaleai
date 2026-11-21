@@ -473,7 +473,44 @@ function uglyDucklingStory(name:string,language:Lang):Story {
  const title=({ru:`${name} и Гадкий утёнок`,uz:`${name} va Xunuk o'rdakcha`,en:`${name} and the Ugly Duckling`} as const)[language];
  return {title,pages:pages[language]};
 }
+function bremenStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `Старый ослик мечтал стать музыкантом в Бремене. Однажды ${name} услышал его песню и предложил идти вместе. Впереди лежала широкая дорога между зелёными лугами.`,
+   `На дороге они встретили доброго пса, которому тоже хотелось найти новых друзей. Пёс с радостью присоединился к ним и стал отбивать ритм хвостом.`,
+   `Вскоре за кустом показался кот. Он ловко прыгнул на бревно и замурлыкал весёлую мелодию. ${name} пригласил его в маленький оркестр, и путешественников стало четверо.`,
+   `Под вечер друзья встретили петуха с громким звонким голосом. Теперь ослик, пёс, кот и петух могли исполнить целую песню. ${name} помог придумать мелодию, и все дружно отправились дальше.`,
+   `В лесу стемнело. Вдалеке друзья увидели дом с освещёнными окнами. Они решили вежливо спросить, можно ли переночевать, но сначала осторожно посмотрели, кто находится внутри.`,
+   `Друзья исполнили свою громкую песню у окна. Незнакомцы в доме испугались неожиданного концерта и поспешно ушли. ${name} заглянул внутрь и убедился, что теперь там безопасно.`,
+   `Музыканты устроились в уютном доме, согрелись у камина и потренировали новую песню. ${name} помог расставить маленькие инструменты, а петух дирижировал с подоконника.`,
+   `Утром друзья выступили перед лесными соседями. Все хлопали в ладоши и подпевали. Ослик понял, что музыка и настоящая дружба уже подарили ему счастье, даже без большого концертного зала.`
+  ],
+  uz:[
+   `Qari eshak Bremen shahrida musiqachi bo'lishni orzu qilardi. Bir kuni ${name} uning qo'shig'ini eshitib, birga yo'lga chiqishni taklif qildi. Ular yashil o'tloqlar orasidan yurishdi.`,
+   `Yo'lda ular yangi do'st izlayotgan mehribon itni uchratishdi. It mamnun bo'lib ularga qo'shildi va dumini likillatib, kuyga ritm berdi.`,
+   `Ko'p o'tmay butalar orasidan mushuk chiqdi. U yog'och ustiga sakrab, quvnoq kuy xirgoyi qildi. ${name} uni kichik orkestrga taklif qildi.`,
+   `Kechga yaqin do'stlar ovozi jarangdor xo'rozni uchratishdi. Endi eshak, it, mushuk va xo'roz birga qo'shiq kuylay olardi. ${name} ularga yangi kuy topishda yordam berdi.`,
+   `O'rmonda qorong'i tushdi. Uzoqda derazalari yoritilgan uy ko'rindi. Do'stlar tunashga ruxsat so'rashni o'ylashdi, ammo avval uyda kim borligini bilishga qaror qilishdi.`,
+   `Do'stlar deraza yonida baland ovozda qo'shiq aytishdi. Uydagi notanishlar kutilmagan konsertdan cho'chib chiqib ketishdi. ${name} ichkariga qarab, joy xavfsiz ekanini tekshirdi.`,
+   `Musiqachilar shinam uyga joylashib, kamin yonida isinishdi. ${name} asboblarni tartibga soldi, xo'roz esa deraza yonida turib qo'shiqni boshqardi.`,
+   `Ertalab do'stlar o'rmondagi qo'shnilarga konsert berishdi. Hamma xursand bo'lib, ularga qo'shilib kuyladi. Eshak katta sahnasiz ham musiqa va do'stlik baxt keltirishini tushundi.`
+  ],
+  en:[
+   `An old donkey dreamed of becoming a musician in Bremen. One day ${name} heard him singing and suggested traveling together. A broad road stretched through green meadows ahead.`,
+   `On the road they met a friendly dog looking for new companions. He gladly joined them and wagged his tail in time with the donkey's song.`,
+   `Soon a cat appeared from behind the bushes. He leaped onto a log and purred a cheerful melody. ${name} invited him to join their little band.`,
+   `At sunset they met a rooster with a wonderfully loud voice. Now the donkey, dog, cat and rooster could sing a whole song together. ${name} helped them invent a new tune.`,
+   `As the forest grew dark, the friends saw a house with glowing windows. They hoped to ask for shelter, but first they carefully looked to see who was inside.`,
+   `The friends performed their loudest song outside the window. The strangers in the house were startled by the unexpected concert and ran away. ${name} checked that it was safe before they entered.`,
+   `The musicians settled into the cozy house, warmed themselves by the fireplace and practiced a new song. ${name} arranged their instruments while the rooster conducted from the windowsill.`,
+   `In the morning they performed for their forest neighbors. Everyone clapped and sang along. The donkey realized that music and friendship had already brought him joy, even without a grand concert hall.`
+  ]
+ };
+ const title=({ru:`${name} и Бременские музыканты`,uz:`${name} va Bremen musiqachilari`,en:`${name} and the Bremen Town Musicians`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="bremen")return bremenStory(name,language);
  if(id==="ugly-duckling")return uglyDucklingStory(name,language);
  if(id==="snow-white")return snowWhiteStory(name,language);
  if(id==="cinderella")return cinderellaStory(name,language);
@@ -524,7 +561,7 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
 
 /** Legacy copies must only be updated after explicit user confirmation. */
 export function canRefreshClassicDemoStory(book:DemoBook):boolean {
- if(!["cinderella","three-pigs","snow-white","ugly-duckling"].includes(book.classicId||""))return false;
+ if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(book.classicId||""))return false;
  if(book.pages.length!==8)return false;
  const start=book.pages[0]?.text||"";
  return start.startsWith("Однажды "+book.name+" открыл волшебную книгу.")||
