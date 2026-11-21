@@ -411,6 +411,16 @@ function App(){
   const [pageDraft,setPageDraft]=useState("");
   const [speaking,setSpeaking]=useState(false);
   const [speechPaused,setSpeechPaused]=useState(false);
+  const [readerSpeechSpeed,setReaderSpeechSpeed]=useState<"slow"|"normal"|"fast">(()=>{
+    try{
+      const saved=localStorage.getItem("wondertale_reader_speech_speed");
+      return saved==="slow"||saved==="fast"?saved:"normal";
+    }catch{return "normal";}
+  });
+  useEffect(()=>{
+    try{localStorage.setItem("wondertale_reader_speech_speed",readerSpeechSpeed);}
+    catch{/* Speech remains usable if iPhone private browsing blocks storage. */}
+  },[readerSpeechSpeed]);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const libraryHealth=getLocalLibraryHealth();
@@ -780,7 +790,7 @@ function App(){
     const voice=engine.getVoices().find(v=>v.lang.toLowerCase()===utterance.lang.toLowerCase())
       ||engine.getVoices().find(v=>v.lang.toLowerCase().split("-")[0]===utterance.lang.toLowerCase().split("-")[0]);
     if(voice)utterance.voice=voice;
-    utterance.rate=0.86;
+    utterance.rate=({slow:.75,normal:.9,fast:1.1} as const)[readerSpeechSpeed];
     utterance.onend=()=>{setSpeaking(false);setSpeechPaused(false);};
     utterance.onerror=event=>{
       setSpeaking(false);setSpeechPaused(false);
@@ -1309,6 +1319,15 @@ function App(){
           </button>}
         </div>
         {readerSettingsOpen&&!readerFocusMode&&<div id="reader-display-options" className="reader-display-settings" role="group" aria-label={({ru:"Настройки чтения",uz:"Oqiş sozlamalari",en:"Reading settings"} as const)[lang]}>
+          <fieldset className="reader-speech-speed">
+            <legend>{({ru:"Скорость озвучки",uz:"Ovoz tezligi",en:"Narration speed"} as const)[lang]}</legend>
+            <div role="group" aria-label={({ru:"Скорость голоса",uz:"Ovoz tezligi",en:"Voice speed"} as const)[lang]}>
+              {(["slow","normal","fast"] as const).map((speed,index)=><button type="button" key={speed} aria-pressed={readerSpeechSpeed===speed} className={readerSpeechSpeed===speed?"active":""} onClick={()=>{if(speaking&&"speechSynthesis" in window){window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);}setReaderSpeechSpeed(speed);}}>
+                {({ru:["Медленно","Обычно","Быстро"],uz:["Sekin","Oddiy","Tez"],en:["Slow","Normal","Fast"]} as const)[lang][index]}
+              </button>)}
+            </div>
+            <small>{({ru:"Изменение скорости остановит текущую озвучку. Нажмите «Слушать», чтобы начать заново.",uz:"Tezlikni o'zgartirish hozirgi ovozni to'xtatadi. Qayta boshlash uchun «Tinglash»ni bosing.",en:"Changing speed stops current narration. Tap Listen to restart."} as const)[lang]}</small>
+          </fieldset>
           <span>{({ru:"Размер текста",uz:"Matn ölçami",en:"Text size"} as const)[lang]}</span>
           <div className="reader-font-controls">
             {(["small","normal","large"] as const).map((size,index)=><button key={size} type="button" className={readerFontScale===size?"active":""} aria-pressed={readerFontScale===size} aria-label={({ru:["Мелкий текст","Обычный текст","Крупный текст"],uz:["Kiçik matn","Oddiy matn","Katta matn"],en:["Small text","Normal text","Large text"]} as const)[lang][index]} onClick={()=>setReaderFontScale(size)}>A<span aria-hidden="true">{index===0?"−":index===2?"+":""}</span></button>)}
