@@ -394,3 +394,22 @@
 @media print{
   .reader-page .wt-motion-inline-row{display:none!important}
 }
+
+/* Opt-in deployment diagnostic: visible only with ?wt_version=1. */
+.wt-build-debug{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px 10px;
+  margin:8px auto;
+  padding:8px 12px;
+  max-width:700px;
+  border:1px solid #ded2e7;
+  border-radius:10px;
+  background:#fffaf3;
+  color:#654575;
+  font-size:11px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+.wt-build-debug strong{font-size:12px}
