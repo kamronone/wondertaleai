@@ -446,10 +446,9 @@ function App(){
   const speechAdvanceArmed=useRef(false);
   const speechRun=useRef(0);
   useEffect(()=>{
-    const stopOnBackground=(force=false)=>{
+    const stopOnBackground=()=>{
       // Safari may suspend speech silently while the screen is locked.
       // Cancel rather than leaving a stuck Play/Pause button or advancing a page.
-      if(!force&&document.visibilityState!=="hidden")return;
       speechRun.current++;
       speechAdvanceArmed.current=false;
       if("speechSynthesis" in window)window.speechSynthesis.cancel();
@@ -457,11 +456,15 @@ function App(){
       setSpeaking(false);
       setSpeechPaused(false);
     };
-    document.addEventListener("visibilitychange",stopOnBackground);
-    const onPageHide=()=>stopOnBackground(true);
+    // Both DOM listeners must accept Event, not a boolean control flag.
+    const onVisibilityChange=()=>{
+      if(document.visibilityState==="hidden")stopOnBackground();
+    };
+    const onPageHide=()=>stopOnBackground();
+    document.addEventListener("visibilitychange",onVisibilityChange);
     window.addEventListener("pagehide",onPageHide);
     return ()=>{
-      document.removeEventListener("visibilitychange",stopOnBackground);
+      document.removeEventListener("visibilitychange",onVisibilityChange);
       window.removeEventListener("pagehide",onPageHide);
     };
   },[]);
