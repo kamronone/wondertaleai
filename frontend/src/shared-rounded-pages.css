@@ -81,3 +81,35 @@
     border-radius:24px 24px 0 0!important;
   }
 }
+
+/* iPhone visual fix: legacy storybook-theme.css sets .shell background:#fff!important.
+   That white shows through both transparent top corners, making the rounding
+   look unchanged. Paint the area immediately behind the corners dark instead. */
+.shell:has(> main > .library-page.library-concept-two){
+  background:linear-gradient(to bottom,#201849 0,#201849 110px,#f9efff 110px,#f9efff 100%)!important;
+}
+.shell > main:has(> .library-page.library-concept-two){
+  background:#f9efff!important;
+  border-radius:32px 32px 0 0!important;
+  margin-top:0!important;
+  box-shadow:none!important;
+}
+.shell > main > .library-page.library-concept-two{
+  border-radius:32px 32px 0 0!important;
+  background:linear-gradient(160deg,#f9efff 0%,#f7edff 67%,#f3e4fc 100%)!important;
+}
+@media(max-width:620px){
+  .shell:has(> main > .library-page.library-concept-two){
+    background:linear-gradient(to bottom,#201849 0,#201849 108px,#f9efff 108px,#f9efff 100%)!important;
+  }
+  .shell > main:has(> .library-page.library-concept-two),
+  .shell > main > .library-page.library-concept-two{
+    border-radius:29px 29px 0 0!important;
+  }
+}
+@media(max-width:360px){
+  .shell > main:has(> .library-page.library-concept-two),
+  .shell > main > .library-page.library-concept-two{
+    border-radius:24px 24px 0 0!important;
+  }
+}
