@@ -22,10 +22,10 @@ Working branch: `fix/private-book-access`. Do not merge to main or deploy Produc
 - [ ] Full TypeScript build and automated tests passing (Vercel build-rate-limit currently blocks validation).
 - [ ] Additional per-page character animations for every story; only four real GIFs are installed.
 - [ ] Professionally recorded narration with character-specific voices and per-word highlighting.
-- [ ] Interactive character hotspots with story-aware safe actions, separate from image zoom.
+- [x] Four optional story-aware interaction choices below illustrated pages, separate from image zoom.\n- [ ] Image-coordinate character hotspots and on-character reactions; this requires per-image scene layers and accessibility review.
 - [ ] Comprehensive parental controls and age-based content audits.
 - [ ] Complete offline packs (narration, all story images, optional sounds, media storage quota UX).
-- [ ] Reading-achievement flow and child-friendly rewards UX audit.
+- [x] Existing library achievements and optional story-ending branch confirmed in audit.\n- [ ] Child-friendly rewards UX audit, positive feedback and progression review.
 - [ ] Final accessibility, privacy, security, performance and release-readiness review.
 
 ## Release gates
@@ -41,3 +41,11 @@ Working branch: `fix/private-book-access`. Do not merge to main or deploy Produc
 The soundscape is synthesized atmosphere, not recorded character dialogue.
 Offline image downloads cover only the three classics with eight confirmed bundled PNGs each, plus optional GIFs.
 Those changes are not proof that `ertakcha.netlify.app` is running the branch.
+
+## Latest scene-interaction implementation
+
+- StorySceneInteraction uses a fixed allowlist: three-pigs pages 4/7, cinderella page 5, red-hood page 1.
+- Two clear actions are localized in RU/UZ/EN on each supported page.
+- Choices are local and optional. They never rewrite the book, request child data or overlap picture zoom.
+- Hide scene actions during focus/bedtime/night reading.
+- Per-character image-coordinate animation hotspots are not implemented yet; do not describe these choices as tap-to-animate on characters.
