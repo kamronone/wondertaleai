@@ -1,0 +1,326 @@
+/* Reader styles. All four appearances are CSS-only; the same page content
+   stays mounted, so bookmarks, audio and page navigation are unchanged. */
+.reader-page .reader-book-variants{
+  width:100%;
+  min-width:0;
+  margin:12px 0 4px;
+  padding:0;
+  border:0;
+}
+.reader-page .reader-book-variants legend{
+  margin:0 0 9px;
+  padding:0;
+  color:#52346f;
+  font-size:13px;
+  font-weight:800;
+}
+.reader-page .reader-book-variant-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+}
+.reader-page .reader-book-variant{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  align-items:center;
+  gap:6px;
+  box-sizing:border-box;
+  min-width:0;
+  width:100%;
+  min-height:104px;
+  margin:0;
+  padding:9px 6px 11px;
+  border:1px solid #e3d3ed;
+  border-radius:13px;
+  background:#fff;
+  color:#5d417a;
+  font-family:inherit;
+  font-size:11px;
+  line-height:1.22;
+  cursor:pointer;
+  overflow-wrap:anywhere;
+}
+.reader-page .reader-book-variant strong{
+  max-width:100%;
+  font-size:11px;
+  font-weight:750;
+  text-align:center;
+}
+.reader-page .reader-book-variant.selected{
+  border:2px solid #853dc1;
+  padding:8px 5px 10px;
+  background:#f7eaff;
+  color:#572786;
+}
+.reader-page .reader-book-variant:focus-visible{
+  outline:3px solid #8c4cc4;
+  outline-offset:2px;
+}
+.reader-page .reader-book-selected-icon{
+  position:absolute;
+  top:3px;
+  right:3px;
+  color:#7635aa;
+  background:#fff;
+  border-radius:50%;
+}
+.reader-page .reader-book-variants>small{
+  display:block;
+  margin-top:9px;
+  color:#806b91;
+  font-size:11px;
+  line-height:1.35;
+}
+.reader-page .reader-variant-preview{
+  position:relative;
+  display:block;
+  width:min(100%,85px);
+  height:57px;
+  border-radius:7px;
+  overflow:hidden;
+  background:#faf0fc;
+  border:1px solid #e7d4ed;
+}
+.reader-page .reader-variant-preview i{display:block;position:absolute}
+.reader-page .reader-variant-preview-spread{
+  background:linear-gradient(90deg,#fbefd5 0%,#fff8ea 47%,#ccaa8c 49%,#fff9ef 52%,#ffedce 100%);
+  box-shadow:inset 0 0 0 3px #f7d9af;
+}
+.reader-page .reader-variant-preview-spread i:first-child{left:8%;top:14%;width:35%;height:70%;border-radius:3px;background:linear-gradient(140deg,#7840b6,#ecb7f7)}
+.reader-page .reader-variant-preview-spread i:nth-child(2){left:56%;top:25%;width:33%;height:3px;background:#99725f;box-shadow:0 8px #be9881,0 16px #be9881,0 24px #be9881}
+.reader-page .reader-variant-preview-classic{background:#fff1d6;border:3px double #c69b5d}
+.reader-page .reader-variant-preview-classic i:first-child{left:13%;top:9%;width:74%;height:44%;border-radius:4px;background:linear-gradient(140deg,#9150c2,#eaaeea)}
+.reader-page .reader-variant-preview-classic i:nth-child(2){left:20%;top:63%;width:60%;height:3px;background:#a5826a;box-shadow:0 7px #a5826a,0 14px #a5826a}
+.reader-page .reader-variant-preview-storybook{background:#fff8f1}
+.reader-page .reader-variant-preview-storybook i:first-child{left:7%;top:7%;width:86%;height:50%;border-radius:4px;background:linear-gradient(135deg,#6b38a6,#ce97ef)}
+.reader-page .reader-variant-preview-storybook i:nth-child(2){left:12%;top:68%;width:76%;height:3px;background:#a7889d;box-shadow:0 8px #a7889d}
+.reader-page .reader-variant-preview-simple{background:#fff}
+.reader-page .reader-variant-preview-simple i:first-child{left:10%;top:16%;width:80%;height:4px;background:#a18eae;box-shadow:0 10px #c5bacd,0 20px #c5bacd,0 30px #c5bacd}
+/* Version 1: an open, illustrated book with a visual central binding. */
+.reader-page .story-page.book-style-spread{
+  position:relative!important;
+  isolation:isolate;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:0!important;
+  width:100%;
+  min-width:0;
+  border:5px double #cda675!important;
+  border-radius:21px 21px 29px 29px!important;
+  background:linear-gradient(90deg,#fff2d9 0%,#fff9ed 47%,#d9c1a1 49.8%,#fff8e7 51.3%,#fff0d4 100%)!important;
+  box-shadow:0 7px 0 #c89b68,0 12px 25px rgba(86,49,81,.14)!important;
+  overflow:hidden!important;
+}
+.reader-page .story-page.book-style-spread::before{
+  content:"";
+  position:absolute;
+  z-index:2;
+  top:2%;bottom:2%;left:50%;
+  width:2px;
+  pointer-events:none;
+  background:linear-gradient(#dbb67e,#b69c87 50%,#dbb67e);
+  box-shadow:0 0 7px rgba(117,77,57,.12);
+}
+.reader-page .story-page.book-style-spread .story-page-image{
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  min-width:0;
+  padding:15px 12px!important;
+  background:transparent!important;
+}
+.reader-page .story-page.book-style-spread .story-page-image img,
+.reader-page .story-page.book-style-spread .story-page-image .story-image-fallback{
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:470px!important;
+  border-radius:13px!important;
+  object-fit:contain!important;
+  box-shadow:0 3px 12px rgba(98,64,99,.14)!important;
+}
+.reader-page .story-page.book-style-spread .story-text{
+  box-sizing:border-box;
+  align-self:center;
+  min-width:0;
+  margin:0!important;
+  padding:25px 22px!important;
+  background:transparent!important;
+  color:#4d3052!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(15px,1.9vw,20px)!important;
+  line-height:1.7!important;
+  overflow-wrap:anywhere;
+}
+/* Version 2: a parchment book, portrait illustration with traditional text. */
+.reader-page .story-page.book-style-classic{
+  border:5px double #d6ad70!important;
+  border-radius:20px 20px 25px 25px!important;
+  background:linear-gradient(145deg,#fffaf0,#fff2da)!important;
+  box-shadow:0 6px 0 #dcba8c,0 10px 22px rgba(102,75,61,.1)!important;
+  overflow:hidden!important;
+}
+.reader-page .story-page.book-style-classic .story-page-image{
+  background:transparent!important;
+  padding:17px 17px 4px!important;
+}
+.reader-page .story-page.book-style-classic .story-page-image img,
+.reader-page .story-page.book-style-classic .story-page-image .story-image-fallback{
+  display:block;
+  width:100%!important;
+  max-height:min(45dvh,360px)!important;
+  height:auto!important;
+  border-radius:13px!important;
+  object-fit:contain!important;
+  box-shadow:0 4px 12px rgba(90,62,79,.13)!important;
+}
+.reader-page .story-page.book-style-classic .story-text{
+  margin:0!important;
+  padding:20px 22px 26px!important;
+  background:transparent!important;
+  color:#4a2d45!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(16px,2vw,20px)!important;
+  line-height:1.77!important;
+}
+/* Version 3: modern compact illustrated card, useful on smaller iPhones. */
+.reader-page .story-page.book-style-storybook{
+  border:1px solid #ebcdac!important;
+  border-radius:18px!important;
+  background:linear-gradient(145deg,#fff5f8,#fff8ed)!important;
+  box-shadow:0 6px 18px rgba(107,75,125,.09)!important;
+  overflow:hidden!important;
+}
+.reader-page .story-page.book-style-storybook .story-page-image{
+  padding:10px 10px 0!important;
+  background:transparent!important;
+}
+.reader-page .story-page.book-style-storybook .story-page-image img,
+.reader-page .story-page.book-style-storybook .story-page-image .story-image-fallback{
+  display:block;
+  width:100%!important;
+  height:auto!important;
+  max-height:min(40dvh,330px)!important;
+  object-fit:contain!important;
+  border-radius:13px!important;
+  box-shadow:none!important;
+}
+.reader-page .story-page.book-style-storybook .story-text{
+  margin:0!important;
+  padding:15px 17px 21px!important;
+  background:transparent!important;
+  color:#4b3053!important;
+  line-height:1.6!important;
+}
+/* Original plain setting remains supported. */
+.reader-page .story-page.book-style-simple{
+  border:1px solid #e4dce8!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.reader-page .story-page.book-style-simple .story-page-image{
+  background:#fff!important;
+  padding:8px 8px 0!important;
+}
+.reader-page .story-page.book-style-simple .story-page-image img{
+  box-shadow:none!important;
+  border-radius:8px!important;
+}
+.reader-page .story-page.book-style-simple .story-text{
+  background:#fff!important;
+  color:#33283e!important;
+  font-family:system-ui,-apple-system,sans-serif!important;
+  line-height:1.65!important;
+  padding:13px 15px 17px!important;
+}
+@media(max-width:700px){
+  .reader-page .reader-book-variant-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .reader-page .reader-book-variant{
+    min-height:82px;
+    flex-direction:row;
+    justify-content:flex-start;
+    padding:8px!important;
+    gap:9px;
+  }
+  .reader-page .reader-variant-preview{flex:0 0 57px;width:57px;height:49px}
+  .reader-page .reader-book-variant strong{flex:1;text-align:left;font-size:11px}
+  .reader-page .story-page.book-style-spread{
+    display:block!important;
+    border:4px double #cda675!important;
+    background:linear-gradient(90deg,#fff0d7 0,#fff8eb 6%,#fff6e7 94%,#f7e3c1 100%)!important;
+  }
+  .reader-page .story-page.book-style-spread::before{
+    top:auto;
+    bottom:0;
+    left:5%;
+    width:90%;
+    height:2px;
+    background:#c8a178;
+    opacity:.35;
+  }
+  .reader-page .story-page.book-style-spread .story-page-image{
+    padding:12px 12px 6px!important;
+    background:transparent!important;
+  }
+  .reader-page .story-page.book-style-spread .story-page-image img,
+  .reader-page .story-page.book-style-spread .story-page-image .story-image-fallback{
+    max-height:min(36dvh,290px)!important;
+  }
+  .reader-page .story-page.book-style-spread .story-text{
+    padding:15px 17px 22px!important;
+    font-size:clamp(15px,4vw,18px)!important;
+    line-height:1.63!important;
+  }
+  .reader-page .story-page.book-style-classic .story-page-image img,
+  .reader-page .story-page.book-style-classic .story-page-image .story-image-fallback{
+    max-height:min(36dvh,300px)!important;
+  }
+  .reader-page .story-page.book-style-classic .story-text{
+    padding:15px 17px 21px!important;
+    font-size:clamp(15px,4vw,18px)!important;
+    line-height:1.67!important;
+  }
+  .reader-page .story-page.book-style-storybook .story-page-image img,
+  .reader-page .story-page.book-style-storybook .story-page-image .story-image-fallback{
+    max-height:min(34dvh,260px)!important;
+  }
+}
+@media(max-width:380px){
+  .reader-page .reader-book-variant{gap:6px;padding:7px!important}
+  .reader-page .reader-variant-preview{flex-basis:48px;width:48px}
+}
+/* Preserve night/warm reading accessibility regardless of selected paper style. */
+.reader-page .story-page.reader-night{
+  background:#18192b!important;
+  border-color:#55506e!important;
+  box-shadow:none!important;
+}
+.reader-page .story-page.reader-night .story-page-image{background:#18192b!important}
+.reader-page .story-page.reader-night .story-text{
+  background:#18192b!important;
+  color:#f5efff!important;
+}
+.reader-page .story-page.reader-warm{
+  background:#faefd9!important;
+  border-color:#d3ad7a!important;
+}
+.reader-page .story-page.reader-warm .story-page-image,
+.reader-page .story-page.reader-warm .story-text{
+  background:#faefd9!important;
+  color:#493321!important;
+}
+@media print{
+  .reader-page .story-page.book-style-spread,
+  .reader-page .story-page.book-style-classic,
+  .reader-page .story-page.book-style-storybook{
+    box-shadow:none!important;
+    break-inside:avoid;
+  }
+  .reader-page .story-page.book-style-spread{display:block!important}
+}
