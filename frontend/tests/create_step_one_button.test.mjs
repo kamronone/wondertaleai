@@ -25,5 +25,5 @@ test("creation screen has rounded upper corners beneath the dark header on iPhon
  assert.match(layout,/\.shell:has\(> main > \.create-page\.create-reference-page\) > main\{/);
  assert.match(layout,/\.shell > main > \.create-page\.create-reference-page\{[\s\S]*?border-radius:32px 32px 0 0/);
  assert.match(layout,/border-radius:29px 29px 0 0!important/);
- assert.match(main,/className="back-button" onClick=\{\(\)=>setTab\("home"\)\}/);
+ assert.doesNotMatch(main,/className="back-button" onClick=\{\(\)=>setTab\("home"\)\}/);
 });
