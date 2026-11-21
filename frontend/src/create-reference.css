@@ -490,3 +490,36 @@
     padding-right:11px!important;
   }
 }
+
+/* Compact creation page: the global main { flex:1 } was stretching the
+   wizard to the viewport height, leaving a tall blank area after the
+   Ertak oqish card. The shell itself still reserves the fixed tabbar space. */
+.shell:has(> main > .create-page.create-reference-page) > main{
+  flex:0 0 auto!important;
+  min-height:0!important;
+  height:auto!important;
+  padding-bottom:0!important;
+  margin-bottom:0!important;
+}
+.shell > main > .create-page.create-reference-page{
+  min-height:0!important;
+  height:auto!important;
+  margin-bottom:0!important;
+}
+.shell:has(> main > .create-page.create-reference-page) > .site-legal-footer{
+  flex:0 0 auto;
+  margin-top:0!important;
+}
+@media(max-width:620px){
+  .shell:has(> main > .create-page.create-reference-page) > main{
+    padding:0!important;
+    min-height:0!important;
+  }
+  .shell > main > .create-page.create-reference-page{
+    padding-bottom:14px!important;
+  }
+  .shell:has(> main > .create-page.create-reference-page) > .site-legal-footer{
+    padding-top:11px!important;
+    padding-bottom:12px!important;
+  }
+}
