@@ -39,6 +39,13 @@ def test_generation_uses_private_provider_request(monkeypatch):
     assert len(responses.calls) == 1
     call = responses.calls[0]
     assert call["store"] is False
+    assert call["text"]["format"]["type"] == "json_schema"
+    assert call["text"]["format"]["strict"] is True
+    schema = call["text"]["format"]["schema"]
+    assert schema["required"] == ["title", "language", "pages"]
+    assert schema["properties"]["language"]["enum"] == ["uz"]
+    assert schema["properties"]["pages"]["items"]["type"] == "string"
+    assert schema["additionalProperties"] is False
     assert "photo" not in call["input"].lower()
     assert "Sam" in call["input"]
     assert "Ş ş" in call["instructions"]
@@ -68,3 +75,39 @@ def test_generation_is_disabled_without_explicit_opt_in(monkeypatch):
     )
     with pytest.raises(RuntimeError, match="disabled"):
         generate_story(payload, client=SimpleNamespace(responses=FakeResponses(_story())))
+
+
+@pytest.mark.parametrize("language,count", [("ru", 8), ("uz", 12), ("en", 20)])
+def test_strict_story_schema_is_language_scoped_and_page_count_is_verified(monkeypatch, language, count):
+    monkeypatch.setenv("ENABLE_TEXT_AI", "true")
+    responses = FakeResponses(_story(language, count))
+    payload = GenerateStoryInput(
+        name="Sam", age=7, language=language, pages_count=count,
+        idea="A gentle original adventure in the magical forest",
+    )
+    result = generate_story(payload, client=SimpleNamespace(responses=responses))
+    assert len(result.pages) == count
+    args = responses.calls[0]
+    assert args["text"]["format"]["schema"]["properties"]["language"]["enum"] == [language]
+    assert args["store"] is False
+
+
+def test_structured_generation_still_rejects_wrong_page_count(monkeypatch):
+    monkeypatch.setenv("ENABLE_TEXT_AI", "true")
+    payload = GenerateStoryInput(
+        name="Sam", age=7, language="en", pages_count=12,
+        idea="A gentle original adventure in the magical forest",
+    )
+    with pytest.raises(ValueError, match="valid story"):
+        generate_story(payload, client=SimpleNamespace(responses=FakeResponses(_story("en", 8))))
+
+
+def test_structured_generation_rejects_missing_or_non_json_model_output(monkeypatch):
+    monkeypatch.setenv("ENABLE_TEXT_AI", "true")
+    payload = GenerateStoryInput(
+        name="Sam", age=7, language="en",
+        idea="A gentle original adventure in the magical forest",
+    )
+    for output in ("", "This story is unavailable", '{"pages": []}'):
+        with pytest.raises(ValueError, match="valid story"):
+            generate_story(payload, client=SimpleNamespace(responses=FakeResponses(output)))
