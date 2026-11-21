@@ -24,7 +24,7 @@ test("story wizard buttons keep at least 44px touch targets on iPhones", () => {
     ".create-reference-page .wizard-step-two .story-preset-actions>button",
     ".create-reference-page .wizard-step-two-options>summary"
   ]) {
-    const i = creator.lastIndexOf(selector + "{");
+    const i = creator.indexOf(selector + "{", creator.indexOf("@media(max-width:620px)"));
     assert.ok(i >= 0, "Missing rule " + selector);
     const rule = creator.slice(i, creator.indexOf("}", i));
     assert.match(rule, /min-height:44px;/);
