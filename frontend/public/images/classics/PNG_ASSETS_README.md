@@ -28,7 +28,7 @@ Four actual animated GIFs are now committed directly to this working branch:
 
 - `red-hood/animations/red-hood-walk-wave.gif` — page 1, walking and waving
 - `three-pigs/animations/three-pigs-building.gif` — page 4, placing a brick
-- `three-pigs/animations/three-pigs-wolf.gif` — page 5, blowing at the house
+- `three-pigs/animations/three-pigs-wolf.gif` — page 7, blowing at the brick house
 - `cinderella/animations/cinderella-walking.gif` — page 5, walking and turning
 
 In the reader's **Magic** art setting these files load instead of the original page PNG.
