@@ -545,7 +545,44 @@ function hanselGretelStory(name:string,language:Lang):Story {
  const title=({ru:`${name}, Гензель и Гретель`,uz:`${name}, Genzel va Gretel`,en:`${name}, Hansel and Gretel`} as const)[language];
  return {title,pages:pages[language]};
 }
+function rapunzelStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `Высоко над лесом стояла башня с маленьким окошком. В ней жила Рапунцель, девушка с удивительно длинными золотыми волосами. ${name} услышал её красивое пение издалека.`,
+   `Рапунцель любила рассматривать звёзды и плести цветочные венки. Она мечтала увидеть мир за стенами башни. ${name} заметил у основания башни тропинку и решил помочь ей найти безопасный путь наружу.`,
+   `Однажды по лесу проезжал добрый юноша. Услышав пение Рапунцель, он остановился возле башни. ${name} рассказал ему, что девушка хочет увидеть лес и познакомиться с новыми друзьями.`,
+   `Рапунцель спустила из окна свои длинные золотые косы, чтобы поговорить с гостями. Но ${name} предложил сначала найти надёжную лестницу: безопасность важнее спешки.`,
+   `Друзья принесли крепкую лестницу и осторожно закрепили её у башни. Рапунцель впервые увидела цветы под самыми окнами и поняла, что скоро сможет выйти на прогулку.`,
+   `На рассвете Рапунцель спустилась из башни. ${name} и юноша встретили её на лесной полянке. Все вместе они пошли по тропинке, где пели птицы и расцветали первые весенние цветы.`,
+   `Друзья добрались до маленького дома у леса. Там они отдохнули, выпили чаю и договорились помогать друг другу. Рапунцель радовалась своему первому свободному дню.`,
+   `Рапунцель больше не была одинока. Она гуляла по саду, училась новому и пела любимые песни вместе с друзьями. ${name} понял: дружба помогает найти путь к самым светлым мечтам.`
+  ],
+  uz:[
+   `O'rmon ustida kichik derazali baland minora turardi. Unda nihoyatda uzun oltin sochli Rapunsel yashardi. ${name} uzoqdan uning chiroyli qo'shig'ini eshitdi.`,
+   `Rapunsel yulduzlarni tomosha qilishni va gullardan gulchambar yasashni yaxshi ko'rardi. U minoradan tashqaridagi olamni ko'rishni orzu qilardi. ${name} unga xavfsiz chiqish yo'lini topishga qaror qildi.`,
+   `Bir kuni mehribon yigit o'rmondan o'tayotib Rapunselning qo'shig'ini eshitdi. ${name} unga qizning o'rmonni ko'rish va do'stlar orttirish orzusi haqida aytdi.`,
+   `Rapunsel mehmonlar bilan gaplashish uchun uzun oltin sochlarini derazadan tushirdi. Ammo ${name} avval mustahkam narvon topishni taklif qildi, chunki xavfsizlik hammasidan muhim.`,
+   `Do'stlar mustahkam narvon olib kelib, minoraga ehtiyotkorlik bilan o'rnatishdi. Rapunsel pastdagi gullarga qarab, tez orada sayrga chiqa olishidan quvondi.`,
+   `Tong otganda Rapunsel minoradan tushdi. ${name} va yigit uni o'rmon maydonida kutib olishdi. Ular qushlar sayragan va bahor gullari ochilgan yo'ldan yurishdi.`,
+   `Do'stlar o'rmon yonidagi kichik uyga yetib borishdi. Ular dam olib, choy ichishdi va bir-biriga yordam berishga kelishishdi. Rapunsel ilk erkin kunidan xursand edi.`,
+   `Rapunsel endi yolg'iz emasdi. U bog'da sayr qilar, yangi narsalarni o'rganar va do'stlari bilan qo'shiq aytardi. ${name} do'stlik eng yorqin orzularga yo'l ochishini tushundi.`
+  ],
+  en:[
+   `High above the forest stood a tower with a tiny window. A girl named Rapunzel lived there, with wonderfully long golden hair. One day ${name} heard her beautiful singing from afar.`,
+   `Rapunzel loved watching the stars and weaving flower crowns. She dreamed of seeing the world outside the tower. ${name} found a path near its base and decided to help her explore safely.`,
+   `A kind young traveler passed through the forest and stopped to listen to Rapunzel's song. ${name} told him that she wished to see the trees and make new friends.`,
+   `Rapunzel lowered her long golden braids from the window to greet the visitors. But ${name} suggested finding a sturdy ladder first, because being careful mattered more than hurrying.`,
+   `The friends brought a strong ladder and secured it carefully against the tower. Rapunzel could see the flowers just below her window and smiled at the thought of her first walk outside.`,
+   `At sunrise Rapunzel climbed down the ladder. ${name} and the traveler welcomed her to a sunny clearing. Together they followed a path filled with birdsong and spring flowers.`,
+   `The friends reached a little cottage by the forest, where they rested, drank tea and promised to help each other. Rapunzel felt joyful on her first day exploring the world.`,
+   `Rapunzel was no longer alone. She wandered through gardens, learned new things and sang with her friends. ${name} learned that friendship helps make even the brightest dreams come true.`
+  ]
+ };
+ const title=({ru:`${name} и Рапунцель`,uz:`${name} va Rapunsel`,en:`${name} and Rapunzel`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="rapunzel")return rapunzelStory(name,language);
  if(id==="hansel-gretel")return hanselGretelStory(name,language);
  if(id==="bremen")return bremenStory(name,language);
  if(id==="ugly-duckling")return uglyDucklingStory(name,language);
@@ -598,7 +635,7 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
 
 /** Legacy copies must only be updated after explicit user confirmation. */
 export function canRefreshClassicDemoStory(book:DemoBook):boolean {
- if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel"].includes(book.classicId||""))return false;
+ if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel","rapunzel"].includes(book.classicId||""))return false;
  if(book.pages.length!==8)return false;
  const start=book.pages[0]?.text||"";
  return start.startsWith("Однажды "+book.name+" открыл волшебную книгу.")||
