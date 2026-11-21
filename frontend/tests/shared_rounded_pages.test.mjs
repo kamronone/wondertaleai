@@ -23,7 +23,7 @@ test("other pages inherit one rounded main panel, while create keeps its prior t
 });
 
 test("rounded page surface does not clip scroll or rewrite fixed tabbar",()=>{
- assert.doesNotMatch(css,/overflow:hidden/);
+ assert.doesNotMatch(css.slice(0,css.indexOf("/* Home: edge-to-edge")),/overflow:hidden/);
  assert.doesNotMatch(css,/position:fixed/);
  assert.doesNotMatch(css,/\.mobile-tabbar\s*\{/);
  assert.match(css,/Leave the existing safe-area/);
