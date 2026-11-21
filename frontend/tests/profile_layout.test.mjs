@@ -10,7 +10,7 @@ test("offline demo account status is compact, with extra details on demand",()=>
   assert.match(profile,/className="parent-account-status"/);
   assert.match(profile,/<details className="parent-account-unavailable">/);
   assert.match(profile,/onClick=\{\(\)=>setReadinessAttempt\(n=>n\+1\)\}/);
-  assert.match(concept,/\.profile-concept-three \.parent-account-status\{/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-status\s*\{/);
 });
 
 test("reading suggestions are collapsed by default while remaining accessible",()=>{
@@ -41,7 +41,7 @@ test("profile keeps technical details and duplicate sync notice out of primary v
   assert.match(profile,/className="parent-account-help-content"/);
   const reading=profile.slice(profile.indexOf('<details className="parent-account-reading-section">'));
   assert.match(reading,/<p className="parent-account-footnote">\{t\.privacy\}<\/p>[\s\S]*?<\/details>/);
-  assert.match(concept,/\.profile-concept-three \.parent-account-unavailable > summary\{/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-unavailable > summary\s*\{/);
 });
 
 test("parent demo status and recommendation controls have compact mobile dimensions",()=>{
@@ -54,6 +54,6 @@ test("parent demo status and recommendation controls have compact mobile dimensi
 test("mockup hero includes decorative castle and existing real PNG",()=>{
   assert.match(profile,/className="parent-account-castle"/);
   assert.match(profile,/src="\/images\/profile-story-hero\.png"/);
-  assert.match(concept,/\.profile-concept-three \.parent-account-hero\{/);
-  assert.match(concept,/\.profile-concept-three \.parent-account-hero-art\{/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-hero\s*\{/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-hero-art\s*\{/);
 });
