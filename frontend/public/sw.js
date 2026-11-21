@@ -1,5 +1,5 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v10";
+const CACHE = "wondertale-public-v11";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 // Public, bundled artwork only. Each asset is optional so offline installation
 // still succeeds when an image is missing or a connection is unreliable.
@@ -62,6 +62,26 @@ self.addEventListener("fetch", event => {
         return (await cache.match("/index.html")) || Response.error();
       })
     );
+    return;
+  }
+
+  // Classic reader images can be updated after an initial deployment.
+  // Prefer current server bytes. Keep only successful PNGs offline and never
+  // cache missing-image responses (404/HTML SPA rewrites) as illustrations.
+  if (/^\/images\/classics\/[a-z0-9-]+\/pages\/page-[1-8]\.png$/.test(url.pathname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const response = await fetch(request);
+        const type = response.headers.get("content-type") || "";
+        if (response.ok && response.type === "basic" && /image\/png/i.test(type)) {
+          await cache.put(request, response.clone()).catch(() => {});
+        }
+        return response;
+      } catch {
+        return (await cache.match(request)) || Response.error();
+      }
+    })());
     return;
   }
 
