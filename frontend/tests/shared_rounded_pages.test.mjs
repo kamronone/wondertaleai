@@ -44,3 +44,15 @@ test("dark header actually shows behind the rounded library corners",()=>{
  assert.match(patch,/main:has\(> \.library-page\.library-concept-two\)\{[^}]*background:#f9efff!important/s);
  assert.match(patch,/border-radius:29px 29px 0 0!important/);
 });
+
+test("home hero starts flush below header with one pair of rounded top corners",()=>{
+ const home=css.slice(css.lastIndexOf("/* Home: edge-to-edge"));
+ assert.match(home,/\.shell > main:has\(> \.hero\)\{/);
+ assert.match(home,/padding-top:0!important/);
+ assert.match(home,/\.shell > main > \.hero\{/);
+ assert.match(home,/overflow:hidden!important/);
+ assert.match(home,/width:calc\(100% \+ 26px\)!important/);
+ assert.match(home,/border-radius:29px 29px 0 0!important/);
+ assert.match(app,/className="hero"/);
+ assert.match(app,/className="hero-sky"/);
+});
