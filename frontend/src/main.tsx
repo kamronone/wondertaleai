@@ -57,6 +57,7 @@ import { discoverBooks, type LibrarySort } from "./library_discovery";
 import { getReadingAchievements } from "./reading_achievements";
 import { StoryBranchQuest } from "./StoryBranchQuest";
 import { CharacterBuilder } from "./CharacterBuilder";
+import {spokenWordRange,spokenTextParts,type SpokenRange} from "./reader_speech_highlight";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -412,6 +413,7 @@ function App(){
   const [pageDraft,setPageDraft]=useState("");
   const [speaking,setSpeaking]=useState(false);
   const [speechPaused,setSpeechPaused]=useState(false);
+  const [spokenRange,setSpokenRange]=useState<SpokenRange|null>(null);
   const [readerAutoNext,setReaderAutoNext]=useState(()=>{
     try{return localStorage.getItem("wondertale_reader_auto_next")==="true";}
     catch{return false;}
@@ -571,6 +573,7 @@ function App(){
   useEffect(()=>{
     speechAdvanceArmed.current=false;
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
+    setSpokenRange(null);
     setSpeaking(false);setSpeechPaused(false);setEditingPage(false);
   },[tab,page,active?.id]);
   useEffect(()=>{
@@ -793,6 +796,7 @@ function App(){
       return;
     }
     engine.cancel();
+    setSpokenRange(null);
     setError("");
     const utterance=new SpeechSynthesisUtterance(active.pages[page].text);
     utterance.lang=({ru:"ru-RU",uz:"uz-UZ",en:"en-US"} as const)[active.language||storyLang];
@@ -803,14 +807,22 @@ function App(){
     if(voice)utterance.voice=voice;
     utterance.rate=({slow:.75,normal:.9,fast:1.1} as const)[readerSpeechSpeed];
     speechAdvanceArmed.current=true;
+    // iOS Safari does not consistently emit word boundaries. In that case
+    // keep the paragraph unchanged rather than inventing a reading position.
+    utterance.onboundary=event=>{
+      if(!speechAdvanceArmed.current||event.name==="sentence")return;
+      setSpokenRange(spokenWordRange(utterance.text,event.charIndex,event.charLength));
+    };
     utterance.onend=()=>{
       const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1;
       speechAdvanceArmed.current=false;
+      setSpokenRange(null);
       setSpeaking(false);setSpeechPaused(false);
       if(mayAdvance)setPage(previous=>Math.min(active.pages.length-1,previous+1));
     };
     utterance.onerror=event=>{
       speechAdvanceArmed.current=false;
+      setSpokenRange(null);
       setSpeaking(false);setSpeechPaused(false);
       if(event.error!=="canceled"&&event.error!=="interrupted")setError(t.noVoice);
     };
@@ -818,6 +830,7 @@ function App(){
     engine.speak(utterance);
   };
   const stopSpeech=()=>{
+    setSpokenRange(null);
     speechAdvanceArmed.current=false;
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpeaking(false);setSpeechPaused(false);
@@ -1430,7 +1443,11 @@ function App(){
     {readerArtMotion==="magic"
       ?({ru:"Остановить героев",uz:"Qahramonlarni to'xtatish",en:"Pause characters"} as const)[lang]
       :({ru:"Оживить героев",uz:"Qahramonlarni jonlantirish",en:"Animate characters"} as const)[lang]}
-  </button></div>}<div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
+  </button></div>}<div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{(()=>{
+  const text=active.pages[page].text;
+  const parts=spokenTextParts(text,spokenRange);
+  return parts.active?<>{parts.before}<mark className="wt-spoken-word">{parts.active}</mark>{parts.after}</>:text;
+})()}</div></div>
         {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
         {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
         {isDemoBook(active)&&<div className="story-edit-zone">
