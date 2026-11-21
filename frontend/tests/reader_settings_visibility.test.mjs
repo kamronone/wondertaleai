@@ -22,6 +22,7 @@ test("mobile styles keep the expanded panel visible",()=>{
 
 test("font size, book appearance and night modes are still real controls",()=>{
   assert.match(app,/onClick=\{\(\)=>setReaderFontScale\(size\)\}/);
-  assert.match(app,/onClick=\{\(\)=>setReaderBookStyle\("simple"\)\}/);
+  assert.match(app,/onClick=\{\(\)=>setReaderBookStyle\(variant\)\}/);
+  assert.match(app,/\["spread","classic","storybook","simple"\] as const/);
   assert.match(app,/onClick=\{\(\)=>\{setReaderNightMode\(v=>!v\)/);
 });
