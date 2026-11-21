@@ -24,6 +24,7 @@ import "./reader-image-fullwidth.css";
 import "./reader-living-art.css";
 import "./reader-image-lightbox.css";
 import { readerZoomLabels } from "./reader_zoom_labels";
+import { clampReaderZoom, readerFingerDistance } from "./reader_zoom_gestures";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
 import {enqueueAiJob} from "./ai_jobs";
@@ -1341,6 +1342,41 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
  const [failed,setFailed]=useState(0);
  const [zoomOpen,setZoomOpen]=useState(false);
  const [zoomScale,setZoomScale]=useState(1);
+ const [zoomPan,setZoomPan]=useState({x:0,y:0});
+ const pinch=useRef<{distance:number;scale:number}|null>(null);
+ const drag=useRef<{x:number;y:number;panX:number;panY:number}|null>(null);
+ const lastTap=useRef(0);
+ const startZoomTouch=(event:React.TouchEvent<HTMLDivElement>)=>{
+   event.stopPropagation();
+   if(event.touches.length===2){
+     pinch.current={distance:readerFingerDistance(event.touches[0],event.touches[1]),scale:zoomScale};
+     drag.current=null;
+   }else if(event.touches.length===1){
+     drag.current={x:event.touches[0].clientX,y:event.touches[0].clientY,panX:zoomPan.x,panY:zoomPan.y};
+   }
+ };
+ const moveZoomTouch=(event:React.TouchEvent<HTMLDivElement>)=>{
+   event.stopPropagation();
+   if(event.touches.length===2&&pinch.current?.distance){
+     setZoomScale(clampReaderZoom(pinch.current.scale*readerFingerDistance(event.touches[0],event.touches[1])/pinch.current.distance));
+   }else if(event.touches.length===1&&drag.current&&zoomScale>1){
+     const limitX=(window.innerWidth*(zoomScale-1))/2;
+     const limitY=(window.innerHeight*(zoomScale-1))/2;
+     setZoomPan({
+       x:Math.max(-limitX,Math.min(limitX,drag.current.panX+event.touches[0].clientX-drag.current.x)),
+       y:Math.max(-limitY,Math.min(limitY,drag.current.panY+event.touches[0].clientY-drag.current.y))
+     });
+   }
+ };
+ const endZoomTouch=(event:React.TouchEvent<HTMLDivElement>)=>{
+   event.stopPropagation();
+   if(event.touches.length<2)pinch.current=null;
+   if(event.touches.length===0){
+     drag.current=null;
+     if(zoomScale<=1)setZoomPan({x:0,y:0});
+   }
+ };
+ const toggleDoubleTapZoom=()=>{setZoomScale(current=>current>1?1:2);setZoomPan({x:0,y:0});};
  const openButtonRef=useRef<HTMLButtonElement|null>(null);
  const closeButtonRef=useRef<HTMLButtonElement|null>(null);
  useEffect(()=>{
@@ -1365,7 +1401,7 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
      openButtonRef.current?.focus();
    };
  },[zoomOpen]);
- useEffect(()=>{setZoomOpen(false);setZoomScale(1);},[url,animatedUrl]);
+ useEffect(()=>{setZoomOpen(false);setZoomScale(1);setZoomPan({x:0,y:0});},[url,animatedUrl]);
  const originalSrc=bookImage(url);
  const offlineFallback=classicPngFallback(originalSrc);
  // Frame GIF -> original PNG -> built-in offline SVG. Never animate private photos.
@@ -1384,7 +1420,7 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
  const image=<img src={src} alt={alt} className={(readerFullWidth?"wt-reader-picture ":"")+(animatedUrl&&failed===0?"wt-character-gif":"")} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(value=>value+1)}/>;
  if(!readerFullWidth)return image;
  return <>
-   <button type="button" ref={openButtonRef} className="wt-reader-image-open" onClick={()=>{setZoomScale(1);setZoomOpen(true);}} aria-label={zoomCopy.open+": "+alt} title={zoomCopy.open}>
+   <button type="button" ref={openButtonRef} className="wt-reader-image-open" onClick={()=>{setZoomScale(1);setZoomPan({x:0,y:0});setZoomOpen(true);}} aria-label={zoomCopy.open+": "+alt} title={zoomCopy.open}>
      {image}
      <span className="wt-reader-image-magnifier" aria-hidden="true"><ZoomIn size={17}/></span>
    </button>
@@ -1393,8 +1429,8 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
        <div className="wt-reader-image-lightbox-toolbar">
          <button type="button" ref={closeButtonRef} className="wt-reader-lightbox-close" onClick={()=>setZoomOpen(false)} aria-label={zoomCopy.close}><X size={24}/></button>
        </div>
-       <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()}>
-         <img src={src} alt={alt} className="wt-reader-image-lightbox-img" style={{transform:"scale("+zoomScale+")"}} onError={()=>setFailed(value=>value+1)}/>
+       <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()} onTouchStart={startZoomTouch} onTouchMove={moveZoomTouch} onTouchEnd={endZoomTouch} onTouchCancel={endZoomTouch} onDoubleClick={toggleDoubleTapZoom}>
+         <img src={src} alt={alt} className="wt-reader-image-lightbox-img" style={{transform:"translate("+zoomPan.x+"px,"+zoomPan.y+"px) scale("+zoomScale+")"}} onError={()=>setFailed(value=>value+1)}/>
        </div>
        <div className="wt-reader-lightbox-zoom" onClick={event=>event.stopPropagation()}>
          <button type="button" onClick={()=>setZoomScale(value=>Math.max(1,Number((value-.25).toFixed(2))))} disabled={zoomScale<=1} aria-label={zoomCopy.decrease}><ZoomOut size={21}/></button>
