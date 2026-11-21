@@ -1,0 +1,51 @@
+/* WonderTale: matching rounded page surfaces across Home, Library, Reader,
+   Profile and Legal pages. The create wizard keeps its existing own surface.
+   A single surface on <main> avoids nested card clipping or broken scrolling. */
+.shell:has(> main:not(:has(> .create-page.create-reference-page))){
+  background:linear-gradient(180deg,#28164d 0,#28164d 118px,#f8f1ff 118px,#f8f1ff 100%);
+}
+.shell > main:not(:has(> .create-page.create-reference-page)){
+  box-sizing:border-box;
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  width:100%;
+  max-width:1120px;
+  margin:0 auto;
+  border-radius:32px 32px 0 0;
+  background:linear-gradient(165deg,#fcf8ff 0%,#f8f0ff 53%,#f6efff 100%);
+  /* Keep the individual route's content padding; only standardize the surface. */
+}
+.shell > main:not(:has(> .create-page.create-reference-page)) > .library-page.library-concept-two,
+.shell > main:not(:has(> .create-page.create-reference-page)) > .profile-concept-three,
+.shell > main:not(:has(> .create-page.create-reference-page)) > .reader-page{
+  border-top-left-radius:inherit;
+  border-top-right-radius:inherit;
+}
+@media(max-width:620px){
+  .shell > main:not(:has(> .create-page.create-reference-page)){
+    border-radius:29px 29px 0 0;
+    padding-top:13px;
+    /* Leave the existing safe-area and fixed tabbar bottom padding untouched. */
+  }
+  .shell > main:not(:has(> .create-page.create-reference-page)) > .library-page.library-concept-two,
+  .shell > main:not(:has(> .create-page.create-reference-page)) > .profile-concept-three,
+  .shell > main:not(:has(> .create-page.create-reference-page)) > .reader-page{
+    border-top-left-radius:29px;
+    border-top-right-radius:29px;
+  }
+  .shell > main:not(:has(> .create-page.create-reference-page)) > .profile-concept-three{
+    padding-top:5px;
+  }
+}
+@media(max-width:360px){
+  .shell > main:not(:has(> .create-page.create-reference-page)){
+    border-radius:24px 24px 0 0;
+  }
+  .shell > main:not(:has(> .create-page.create-reference-page)) > .library-page.library-concept-two,
+  .shell > main:not(:has(> .create-page.create-reference-page)) > .profile-concept-three,
+  .shell > main:not(:has(> .create-page.create-reference-page)) > .reader-page{
+    border-top-left-radius:24px;
+    border-top-right-radius:24px;
+  }
+}
