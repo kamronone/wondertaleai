@@ -93,6 +93,8 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
         sql(c, "INSERT INTO illustration_runtime_control(singleton,paused,updated_at) VALUES(1,0,?) ON CONFLICT(singleton) DO NOTHING",(datetime.now(timezone.utc).isoformat(),))
+        sql(c, "CREATE TABLE IF NOT EXISTS illustration_job_events (id TEXT PRIMARY KEY, job_id TEXT NOT NULL REFERENCES illustration_jobs(id) ON DELETE CASCADE, event TEXT NOT NULL, created_at TEXT NOT NULL)")
+        sql(c, "CREATE INDEX IF NOT EXISTS illustration_events_job_created_idx ON illustration_job_events(job_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_daily_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_parent_quota (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, day TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner_id,day))")
         media_type="BYTEA" if IS_PG else "BLOB"
@@ -962,6 +964,7 @@ def request_private_illustration(body:IllustrationRequest,owner:str=Depends(curr
         job_id=str(uuid.uuid4())
         now=datetime.now(timezone.utc).isoformat()
         sql(c,"INSERT INTO illustration_jobs(id,owner_id,book_id,page_number,style,status,created_at) VALUES(?,?,?,?,?,'queued',?)",(job_id,owner,body.book_id,body.page_number,body.style,now))
+        sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",(str(uuid.uuid4()),job_id,"queued",now))
         c.commit()
     return {"id":job_id,"status":"queued","book_id":body.book_id,"page_number":body.page_number}
 
@@ -1031,6 +1034,7 @@ def save_private_illustration_asset(job_id:str,payload:bytes)->str:
         now=datetime.now(timezone.utc).isoformat()
         sql(c,"INSERT INTO illustration_assets(job_id,owner_id,book_id,png_bytes,sha256,byte_length,created_at) VALUES(?,?,?,?,?,?,?)",(job_id,owner,book_id,clean,digest,len(clean),now))
         sql(c,"UPDATE illustration_jobs SET status='completed',completed_at=?,storage_key=NULL WHERE id=? AND status='processing'",(now,job_id))
+        sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",(str(uuid.uuid4()),job_id,"completed",now))
         c.commit()
     return digest
 
