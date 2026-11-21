@@ -107,8 +107,9 @@ def process_one_illustration_job(
         image=renderer(prompt)
         if not isinstance(image,bytes):
             raise ValueError("Renderer returned invalid media")
-        # A separate content moderator must also inspect the rendered image
-        # in a real provider adapter before this function can be used live.
+        if image_moderator(image) is not True:
+            _finish(job_id,"failed")
+            return job_id
         db.save_private_illustration_asset(job_id,image)
     except Exception:
         # No automatic retry or refund; the provider may have charged.
