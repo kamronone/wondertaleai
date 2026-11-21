@@ -133,7 +133,7 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
           <div className="wt-reader-image-lightbox-toolbar">
             <button type="button" ref={closeRef} onClick={()=>setZoomOpen(false)} aria-label={zoomCopy.close}><X size={24}/></button>
           </div>
-          <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()} onTouchStart={startZoomTouch} onTouchMove={moveZoomTouch} onTouchEnd={endZoomTouch} onTouchCancel={endZoomTouch} onDoubleClick={toggleDoubleTapZoom}>
+          <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()} onTouchStart={startZoomTouch} onTouchMove={moveZoomTouch} onTouchEnd={endZoomTouch} onTouchCancel={endZoomTouch} onDoubleClick={()=>{if(!window.matchMedia("(pointer:coarse)").matches)toggleDoubleTapZoom();}}>
             <img src={image.blobUrl} alt={alt} className="wt-reader-image-lightbox-img" style={{transform:"translate("+zoomPan.x+"px,"+zoomPan.y+"px) scale("+zoomScale+")"}}
               onError={()=>{setZoomOpen(false);setImage(null);}}/>
           </div>
