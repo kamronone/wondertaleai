@@ -42,3 +42,8 @@ test("reader plays original GIF only in magic mode, with static PNG fallback",()
   assert.match(app,/readerFullWidth animatedUrl=/);
   assert.match(app,/reduceArtMotion/);
 });
+
+test("animated wolf appears only at the brick-house chapter",()=>{
+ assert.match(pageArt,/"three-pigs":\{4:"three-pigs-building",7:"three-pigs-wolf"\}/);
+ assert.doesNotMatch(pageArt,/"three-pigs":\{4:"three-pigs-building",5:"three-pigs-wolf"\}/);
+});
