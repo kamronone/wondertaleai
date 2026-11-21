@@ -422,3 +422,92 @@
     padding:7px 5px!important;
   }
 }
+
+/* Final wizard step: constrain both action buttons inside the card.
+   Override legacy .full and global 64px navigation styles on mobile. */
+.create-page.create-reference-page .form-card .wizard-step-actions.wizard-step-three-actions{
+  display:grid!important;
+  grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  gap:9px!important;
+  margin:12px 0 0!important;
+  padding:0!important;
+}
+.create-page.create-reference-page .form-card .wizard-step-three-actions>button,
+.create-page.create-reference-page .form-card .wizard-step-three-actions>.primary-button.full,
+.create-page.create-reference-page .form-card .wizard-step-three-actions>.secondary-button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  grid-column:auto!important;
+  flex:1 1 0!important;
+  position:static!important;
+  left:auto!important;
+  right:auto!important;
+  transform:none!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  min-height:48px!important;
+  height:auto!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:9px 8px!important;
+  border-radius:13px!important;
+  font-size:12px!important;
+  line-height:1.28!important;
+  font-weight:750!important;
+  text-align:center!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+.create-page.create-reference-page .form-card .wizard-step-three-actions>.primary-button.full{
+  background:linear-gradient(110deg,#a042ce,#7826b9)!important;
+  color:#fff!important;
+  border:1px solid transparent!important;
+  box-shadow:0 4px 12px rgba(127,50,180,.14)!important;
+}
+.create-page.create-reference-page .form-card .wizard-step-three-actions>.secondary-button{
+  border:1px solid #dcc8ec!important;
+  background:#fff!important;
+  color:#6d4b86!important;
+  box-shadow:none!important;
+}
+.create-page.create-reference-page .form-card .wizard-step-three-actions>button svg{
+  flex:0 0 15px!important;
+  width:15px!important;
+  height:15px!important;
+}
+.create-page.create-reference-page .form-card .wizard-step-three-actions>button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+@media(max-width:620px){
+  .create-page.create-reference-page .form-card .wizard-step-actions.wizard-step-three-actions{
+    gap:7px!important;
+    grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)!important;
+  }
+  .create-page.create-reference-page .form-card .wizard-step-three-actions>button{
+    min-height:46px!important;
+    padding:8px 6px!important;
+    font-size:11px!important;
+  }
+}
+@media(max-width:360px){
+  .create-page.create-reference-page .form-card .wizard-step-actions.wizard-step-three-actions{
+    gap:5px!important;
+    grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr)!important;
+  }
+  .create-page.create-reference-page .form-card .wizard-step-three-actions>button{
+    padding:8px 4px!important;
+    font-size:10px!important;
+  }
+}
