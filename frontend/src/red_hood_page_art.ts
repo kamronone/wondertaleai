@@ -88,3 +88,9 @@ export function redHoodPageArtwork(pageIndex:number):string{
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><title>Little Red Riding Hood, page ${current+1}</title>${defs}<rect width="800" height="600" fill="#fff6e7"/><g filter="url(#shadow)">${scene(current)}</g></svg>`;
  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
 }
+
+/** Public, bundled PNG for a given reading page, no network API or account token. */
+export function redHoodPagePng(pageIndex:number):string{
+ const page=Math.max(1,Math.min(8,Math.trunc(Number.isFinite(pageIndex)?pageIndex:0)+1));
+ return "/images/classics/red-hood/pages/page-"+page+".png";
+}
