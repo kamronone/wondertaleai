@@ -365,7 +365,44 @@ function threePigsStory(name:string,language:Lang):Story {
  return {title,pages:pages[language]};
 }
 
+function cinderellaStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `Золушка жила в уютном домике, но каждый день ей приходилось много работать. Однажды ${name} заглянул к ней в гости и помог подмести пол. Три маленьких мышонка весело носили ленточки и тряпочки.`,
+   `Мачеха и сёстры собирались на королевский бал. Золушка тоже мечтала увидеть дворец. ${name} помог ей закончить домашние дела, а мышата сложили чистое бельё в корзинку.`,
+   `Когда стемнело, в саду появилась добрая фея. Она взмахнула волшебной палочкой, и большая тыква засверкала золотыми искрами. ${name} с удивлением наблюдал, как начинается чудо.`,
+   `Тыква превратилась в карету, а простое платье Золушки стало сияющим голубым нарядом. Фея подарила ей хрустальные туфельки и напомнила, что волшебство закончится ровно в полночь.`,
+   `Золушка приехала во дворец. В зале играла музыка, сверкали люстры, а гости танцевали. Принц пригласил Золушку на танец. ${name} радовался вместе с ними этому прекрасному вечеру.`,
+   `Во время праздника Золушка и принц вышли на балкон. Они разговаривали о доброте, мечтах и дружбе. ${name} услышал, как часы начали отбивать полночь, и поспешил предупредить Золушку.`,
+   `Золушка побежала вниз по широкой дворцовой лестнице. Одна хрустальная туфелька соскользнула со ступеньки, но останавливаться было некогда. ${name} помог ей найти дорогу к карете.`,
+   `На следующий день принц нашёл Золушку по хрустальной туфельке. Все радостно улыбались. ${name} был счастлив, что искренность и доброе сердце помогли друзьям найти друг друга.`
+  ],
+  uz:[
+   `Zolushka kichik uyda yashardi va har kuni ko'p ish qilardi. Bir kuni ${name} uning yoniga kelib, polni supurishga yordam berdi. Uchta kichik sichqoncha esa tasma va matolarni tashirdi.`,
+   `O'gay ona va opalar qirollik bazmiga tayyorlanishdi. Zolushka ham saroyni ko'rishni orzu qilardi. ${name} unga uy ishlarini tugatishda yordam berdi, sichqonchalar kiyimlarni yig'ishtirishdi.`,
+   `Kech tushganda bog'da mehribon pari paydo bo'ldi. U sehrli tayoqchasini silkitdi va katta qovoq oltin uchqunlar bilan porladi. ${name} bu mo'jizani hayrat bilan kuzatdi.`,
+   `Qovoq aravaga, oddiy ko'ylak esa yarqiragan havorang libosga aylandi. Pari Zolushkaga billur tuflichalar berdi va sehr yarim tunda tugashini eslatdi.`,
+   `Zolushka saroyga yetib keldi. Zalda musiqa yangrar, qandillar porlar, mehmonlar raqs tushardi. Shahzoda Zolushkani raqsga taklif qildi. ${name} ular bilan birga quvondi.`,
+   `Bazm davomida Zolushka va shahzoda ayvonda suhbatlashishdi. Ular mehr, orzular va do'stlik haqida gapirishdi. ${name} soat yarim tunni urayotganini eshitib, Zolushkani ogohlantirdi.`,
+   `Zolushka saroy zinapoyasidan shoshilib tushdi. Uning bir billur tuflichasi zinada qolib ketdi. ${name} unga aravaga boradigan yo'lni topishda yordam berdi.`,
+   `Ertasi kuni shahzoda billur tuflicha yordamida Zolushkani topdi. Hamma xursand bo'ldi. ${name} yaxshilik va samimiyat do'stlarni birlashtirganidan quvondi.`
+  ],
+  en:[
+   `Cinderella lived in a cozy cottage, but she had many chores each day. One morning ${name} visited and helped sweep the floor. Three little mice carried ribbons and cloths to make the work more cheerful.`,
+   `Her stepmother and stepsisters prepared for the royal ball. Cinderella dreamed of seeing the palace too. ${name} helped her finish the chores while the mice folded the clean linen.`,
+   `At dusk a kind fairy godmother appeared in the garden. She waved her wand and a big pumpkin began to sparkle. ${name} watched in amazement as the magic began.`,
+   `The pumpkin became a carriage, and Cinderella's simple dress turned into a shimmering blue gown. The fairy gave her glass slippers and reminded her that the magic would end at midnight.`,
+   `Cinderella arrived at the palace. Music filled the ballroom, chandeliers sparkled, and guests danced. The prince invited Cinderella to dance, and ${name} was delighted to see her so happy.`,
+   `Later Cinderella and the prince talked on a balcony about kindness and dreams. ${name} heard the clock begin to strike midnight and hurried to warn Cinderella.`,
+   `Cinderella rushed down the grand staircase. One glass slipper slipped off onto a step, but she had to keep going. ${name} helped her find the way to the carriage.`,
+   `The next day the prince found Cinderella with the help of the glass slipper. Everyone smiled. ${name} was glad that kindness and honesty had brought the friends together.`
+  ]
+ };
+ const title=({ru:`Золушка и ${name}`,uz:`${name} va Zolushka`,en:`${name} and Cinderella`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="cinderella")return cinderellaStory(name,language);
  if(id==="three-pigs")return threePigsStory(name,language);
  if(id==="red-hood")return redHoodStory(name,language);
  const classic=classics.find(c=>c.id===id);
