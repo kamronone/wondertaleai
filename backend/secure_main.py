@@ -52,7 +52,7 @@ app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,
 async def protect_private_responses(request, call_next):
     """Prevent private books, sessions and account responses from being cached."""
     response=await call_next(request)
-    if request.url.path.startswith(("/api/books", "/api/auth", "/api/me", "/api/children", "/api/billing")):
+    if request.url.path.startswith(("/api/books", "/api/auth", "/api/me", "/api/children", "/api/billing", "/api/ai")):
         response.headers["Cache-Control"]="private, no-store"
         response.headers["Pragma"]="no-cache"
         response.headers["X-Content-Type-Options"]="nosniff"
@@ -823,7 +823,7 @@ def enqueue_ai_story(body:GenerateStoryInput,owner:str=Depends(current_parent),
     return {"id":job_id,"status":"queued","book_id":None}
 
 
-@app.get("/api/books/jobs")
+@app.get("/api/ai/jobs")
 def list_parent_ai_jobs(owner:str=Depends(current_parent)):
     """Recovery after a browser reload: no prompts, keys, or private story text."""
     with connection() as c:
