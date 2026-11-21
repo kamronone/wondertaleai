@@ -150,6 +150,43 @@ real provider responses, incident response and budgeting controls. Failures
 after the potentially paid call remain `needs_review` rather than being
 retried automatically.
 
+## Pilot emergency stop and attempt monitoring
+
+The worker has a **persistent operator kill switch** in
+`illustration_runtime_control` (migration
+`010_illustration_emergency_stop.sql`). A private PostgreSQL operator may
+pause all pending work by running this SQL in an authenticated, restricted
+database session:
+
+```sql
+UPDATE illustration_runtime_control
+SET paused=1, updated_at=NOW()::text WHERE singleton=1;
+```
+
+Re-enable only after investigating incidents and explicitly approving
+resumption:
+
+```sql
+UPDATE illustration_runtime_control
+SET paused=0, updated_at=NOW()::text WHERE singleton=1;
+```
+
+A separate `ILLUSTRATION_EMERGENCY_STOP=true` environment flag also pauses
+work without writing to the database. If the database control cannot be read,
+the worker **fails closed**. Worker checks occur before claiming, immediately
+before a possibly billable provider call, and before saving its result. This
+does **not cancel an API call already in flight**, nor can it guarantee that a
+provider did not bill it. Such jobs need manual reconciliation.
+
+`illustration_worker.illustration_attempt_snapshot()` is an **internal-only**
+diagnostic function returning daily reserved call counts, aggregate job
+statuses and the pause state. It intentionally returns no account addresses,
+child names, prompts, or images. Counts are **not actual money spent** or a
+provider billing reconciliation; quota reservations can include failed or
+uncertain calls. Do not expose this function through a public HTTP route.
+
+No dashboard, scheduler, or production worker has been enabled.
+
 ## Release blockers
 
 1. Review the parental agreement and data-processing obligations for minors.
