@@ -509,7 +509,44 @@ function bremenStory(name:string,language:Lang):Story {
  const title=({ru:`${name} и Бременские музыканты`,uz:`${name} va Bremen musiqachilari`,en:`${name} and the Bremen Town Musicians`} as const)[language];
  return {title,pages:pages[language]};
 }
+function hanselGretelStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `Однажды брат и сестра, Гензель и Гретель, отправились по лесной тропинке. ${name} пошёл вместе с ними. Друзья взяли корзинку с едой и договорились не расходиться далеко друг от друга.`,
+   `Гензель оставлял на дорожке светлые камешки, чтобы найти дорогу домой. ${name} помогал запоминать развилки, а Гретель прислушивалась к пению птиц. Вместе они не боялись приключений.`,
+   `За деревьями показался удивительный пряничный домик. Его крыша была покрыта сладкой глазурью, а окна украшали леденцы. Гретель удивилась, но ${name} напомнил, что в чужой дом нельзя входить без разрешения.`,
+   `Хозяйка домика вышла навстречу и предложила гостям угощения. Друзья вежливо поблагодарили её, но решили сначала узнать, где находятся и как вернуться домой.`,
+   `Гензель и Гретель заметили, что хозяйка не хочет отпускать их из домика. ${name} предложил действовать спокойно: друзья нашли открытое окно, собрались вместе и осторожно вышли в сад.`,
+   `На улице светило солнце. Друзья увидели знакомую тропинку за пряничным забором. Они быстро ушли от странного домика и больше не стали разговаривать с его недоброй хозяйкой.`,
+   `Гензель вспомнил о камешках, оставленных на тропинке. ${name} помог найти последний поворот, а Гретель заметила знакомый старый дуб. Впереди уже виднелась родная деревня.`,
+   `Дома их встретили с объятиями. Гензель и Гретель поблагодарили ${name} за дружбу и внимательность. В тот вечер они узнали: вместе легче найти дорогу и справиться с любой неожиданностью.`
+  ],
+  uz:[
+   `Bir kuni aka-singil Genzel va Gretel o'rmon so'qmog'iga chiqishdi. ${name} ham ularga qo'shildi. Do'stlar oziq-ovqat solingan savatni olib, bir-biridan uzoqlashmaslikka kelishishdi.`,
+   `Genzel uyga qaytish yo'lini topish uchun so'qmoqqa oq toshchalar tashlab bordi. ${name} burilishlarni eslab qoldi, Gretel esa qushlarning ovoziga quloq soldi.`,
+   `Daraxtlar orasidan ajoyib shirinlik uyi ko'rindi. Tomi shirin sir bilan qoplangan, derazalari esa konfetlar bilan bezatilgan edi. ${name} begonaning uyiga ruxsatsiz kirmaslikni eslatdi.`,
+   `Uyning egasi tashqariga chiqib, mehmonlarni shirinlikka taklif qildi. Do'stlar muloyim rahmat aytishdi, ammo avval uyga qaytish yo'lini so'rashga qaror qilishdi.`,
+   `Genzel va Gretel uy egasi ularni qo'yib yuborgisi kelmayotganini sezishdi. ${name} xotirjam harakat qilishni taklif qildi. Ular birga ochiq derazani topib, bog'ga chiqishdi.`,
+   `Tashqarida quyosh porlardi. Do'stlar shirinlik devori ortida tanish so'qmoqni ko'rishdi. Ular g'alati uydan uzoqlashib, o'rmon yo'liga qaytishdi.`,
+   `Genzel so'qmoqqa tashlagan toshchalarni esladi. ${name} oxirgi burilishni topdi, Gretel esa tanish katta eman daraxtini ko'rdi. Oldinda qishloq ko'rina boshladi.`,
+   `Uyda ularni quvonch bilan kutib olishdi. Genzel va Gretel ${name}ga do'stligi va e'tibori uchun rahmat aytishdi. Ular hamjihatlik bilan qiyinchiliklarni yengish mumkinligini bilishdi.`
+  ],
+  en:[
+   `One day Hansel and Gretel set off along a forest path. ${name} joined them, carrying a basket of snacks. They promised to stay together and watch out for one another.`,
+   `Hansel dropped pale pebbles along the path so they could find their way home. ${name} remembered the crossroads while Gretel listened to the birds and watched for familiar trees.`,
+   `Behind the trees stood an amazing gingerbread cottage. Its roof was covered in icing and its windows glittered with candy. ${name} reminded the friends to ask permission before approaching a stranger's home.`,
+   `The cottage's owner stepped outside and offered the visitors sweets. The children thanked her politely, but first asked for directions back to their village.`,
+   `Hansel and Gretel realized the owner did not want them to leave. ${name} suggested staying calm. Together they found an open window, gathered their things, and slipped safely into the garden.`,
+   `The sun was shining beyond the candy fence. The friends spotted a familiar path, hurried away from the strange cottage, and decided not to follow the unfriendly owner again.`,
+   `Hansel remembered the pebbles along their route. ${name} found the last turning while Gretel recognized an old oak tree. Their home village was just ahead.`,
+   `At home their family welcomed them with warm hugs. Hansel and Gretel thanked ${name} for being such a good friend. Together they had learned how kindness and careful thinking can help everyone find their way.`
+  ]
+ };
+ const title=({ru:`${name}, Гензель и Гретель`,uz:`${name}, Genzel va Gretel`,en:`${name}, Hansel and Gretel`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="hansel-gretel")return hanselGretelStory(name,language);
  if(id==="bremen")return bremenStory(name,language);
  if(id==="ugly-duckling")return uglyDucklingStory(name,language);
  if(id==="snow-white")return snowWhiteStory(name,language);
@@ -561,7 +598,7 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
 
 /** Legacy copies must only be updated after explicit user confirmation. */
 export function canRefreshClassicDemoStory(book:DemoBook):boolean {
- if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(book.classicId||""))return false;
+ if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel"].includes(book.classicId||""))return false;
  if(book.pages.length!==8)return false;
  const start=book.pages[0]?.text||"";
  return start.startsWith("Однажды "+book.name+" открыл волшебную книгу.")||
