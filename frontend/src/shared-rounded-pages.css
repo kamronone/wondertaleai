@@ -49,3 +49,35 @@
     border-top-right-radius:24px;
   }
 }
+
+/* Library screenshot fix: avoid a white rounded main surface enclosing
+   a second purple rounded library panel. Use one continuous surface. */
+.shell > main:has(> .library-page.library-concept-two){
+  padding-top:0!important;
+  background:#f9efff;
+  border-radius:32px 32px 0 0;
+}
+.shell > main > .library-page.library-concept-two{
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  margin:0;
+  border-radius:32px 32px 0 0;
+}
+@media(max-width:620px){
+  .shell > main:has(> .library-page.library-concept-two){
+    padding-top:0!important;
+    border-radius:29px 29px 0 0;
+    background:#f9efff;
+  }
+  .shell > main > .library-page.library-concept-two{
+    margin:0!important;
+    border-radius:29px 29px 0 0!important;
+  }
+}
+@media(max-width:360px){
+  .shell > main:has(> .library-page.library-concept-two),
+  .shell > main > .library-page.library-concept-two{
+    border-radius:24px 24px 0 0!important;
+  }
+}
