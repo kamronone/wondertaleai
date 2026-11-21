@@ -167,7 +167,7 @@ test("page-turn motion remounts only image and text, retaining the reader scroll
   assert.match(app,/className="story-page-image reader-turn-image"/);
   assert.match(app,/className="story-text reader-turn-text"/);
   assert.match(app,/ref=\{storyPageRef\}/);
-  assert.match(app,/window\.scrollTo\(\{top:Math\.max\(0,targetTop\),behavior:"instant"\}\)/);
+  assert.match(app,/storyPageRef\.current\?\.scrollIntoView\(\{behavior:"auto",block:"start"\}\)/);
   assert.match(css,/@keyframes wt-reader-image-in/);
   assert.match(css,/@keyframes wt-reader-text-in/);
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
