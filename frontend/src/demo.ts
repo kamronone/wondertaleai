@@ -292,7 +292,44 @@ const sceneDetail:Record<Lang,string[]>={
  ]
 };
 const enrich=(story:Story,lang:Lang):Story=>({...story,pages:story.pages.map((text,i)=>text+" "+sceneDetail[lang][i])});
+const redHoodStory=(name:string,language:Lang):Story=>{
+ const pages:Record<Lang,string[]>={
+  ru:[
+   "Мама Красной Шапочки собрала корзинку с пирожками и вареньем для бабушки. "+name+" помог завязать красную ленту на ручке корзины и пообещал не сходить с тропинки.",
+   "Красная Шапочка и "+name+" отправились через солнечный лес. По обе стороны дорожки распускались цветы, а над ручьём кружили бабочки. Друзья шли вместе и любовались природой.",
+   "На развилке появился хитрый волк. Он вежливо спросил, куда направляются друзья, но "+name+" заметил его подозрительную улыбку. Красная Шапочка решила быть осторожнее.",
+   "Волк первым добрался до бабушкиного домика и спрятался под одеялом, надев её чепчик и круглые очки. Он надеялся обмануть гостей, но совсем не походил на настоящую бабушку.",
+   "Красная Шапочка вошла в спальню и удивилась большим ушам и глазам «бабушки». "+name+" вспомнил их встречу на тропинке и тихонько предложил позвать на помощь.",
+   "Добрый лесник услышал голоса возле домика и пришёл на помощь. Волк понял, что его хитрость раскрыта, и убежал в лес. Никто не пострадал.",
+   "Настоящая бабушка крепко обняла Красную Шапочку и поблагодарила "+name+" за внимательность. Лесник улыбнулся, а корзинка с угощением наконец оказалась на столе.",
+   "Вечером друзья пили чай, слушали бабушкины истории и радовались счастливому дню. "+name+" запомнил важное правило: в дороге нужно быть внимательным и просить помощи, если что-то кажется странным."
+  ],
+  uz:[
+   "Qizil qalpoqchaning onasi buvisiga non va murabbo solingan savat tayyorladi. "+name+" savatga qizil tasma bog‘lashga yordam berdi va yo‘ldan chetga chiqmaslikka so‘z berdi.",
+   "Qizil qalpoqcha va "+name+" quyoshli o‘rmon bo‘ylab yo‘lga tushdi. So‘qmoq chetida gullar ochilgan, soy ustida kapalaklar uchardi. Do‘stlar birga sayr qilishdi.",
+   "Yo‘l ayrilishida ayyor bo‘ri paydo bo‘ldi. U muloyim gapirsa-da, "+name+" uning shubhali tabassumini payqadi. Qizil qalpoqcha ehtiyotkor bo‘lishga qaror qildi.",
+   "Bo‘ri buvisining uyiga oldin yetib borib, ko‘rpaga burkandi. U buvining qalpog‘i va ko‘zoynagini taqib, mehmonlarni aldamoqchi bo‘ldi.",
+   "Qizil qalpoqcha xonaga kirib, «buvijon»ning katta quloqlari va ko‘zlariga hayron qoldi. "+name+" o‘rmonda uchratgan bo‘rini eslab, yordam chaqirishni maslahat berdi.",
+   "Mehribon o‘rmonchi uydan eshitilgan ovozlarni payqab, yordamga keldi. Bo‘rining hiylasi fosh bo‘ldi va u o‘rmonga qochdi. Hech kim zarar ko‘rmadi.",
+   "Haqiqiy buvijon Qizil qalpoqchani quchoqlab, "+name+"ga hushyorligi uchun rahmat aytdi. O‘rmonchi kulib qo‘ydi, sovg‘alar esa dasturxonga qo‘yildi.",
+   "Kechqurun do‘stlar birga choy ichib, buvijonning hikoyalarini tinglashdi. "+name+" muhim saboq oldi: yo‘lda ehtiyotkor bo‘lish va kerak bo‘lsa, yordam so‘rash lozim."
+  ],
+  en:[
+   "Little Red Riding Hood's mother packed bread and jam for Grandma. "+name+" helped tie a ribbon onto the basket and promised to stay on the path.",
+   "Little Red Riding Hood and "+name+" walked along a sunny forest trail. Flowers bloomed on both sides, and butterflies danced above a stream as the friends explored together.",
+   "A sly wolf appeared beside the path and asked where they were going. "+name+" noticed his suspicious smile, so Little Red Riding Hood decided to be extra careful.",
+   "The wolf reached Grandma's cottage first. Wearing her nightcap and spectacles, he hid beneath the quilt and hoped to fool the visitors.",
+   "Little Red Riding Hood entered the bedroom and wondered why 'Grandma' had such large ears and eyes. "+name+" remembered the wolf and suggested calling for help.",
+   "A kind woodsman heard the voices and came to help. The wolf's trick was discovered, and he ran away into the forest. Everyone was safe.",
+   "Grandma hugged Little Red Riding Hood and thanked "+name+" for paying attention. The woodsman smiled while the treats were placed on the table.",
+   "That evening, everyone enjoyed tea and Grandma's stories. "+name+" remembered to stay alert while traveling and to ask for help whenever something feels wrong."
+  ]
+ };
+ const title={ru:name+" и «Красная Шапочка»",uz:name+" va «Qizil qalpoqcha» ertagi",en:name+" and Little Red Riding Hood"}[language];
+ return {title,pages:pages[language]};
+};
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="red-hood")return redHoodStory(name,language);
  const classic=classics.find(c=>c.id===id);
  if(!classic)throw Error("Unknown classic");
  const beats=classicBeats[id]?.[language] ?? (
