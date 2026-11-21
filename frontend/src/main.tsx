@@ -24,6 +24,7 @@ import "./reader-image-fullwidth.css";
 import "./reader-living-art.css";
 import "./reader-image-lightbox.css";
 import "./reader-mobile-v1.css";
+import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
 import { readerZoomLabels } from "./reader_zoom_labels";
 import { clampReaderZoom, readerFingerDistance } from "./reader_zoom_gestures";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
@@ -262,6 +263,35 @@ function App(){
     update();
     mq.addEventListener?.("change",update);
     return ()=>mq.removeEventListener?.("change",update);
+  },[]);
+  const ambiencePlayback=useRef<AmbiencePlayback|null>(null);
+  const [ambienceOn,setAmbienceOn]=useState(false);
+  const stopAmbience=()=>{
+    ambiencePlayback.current?.stop();
+    ambiencePlayback.current=null;
+    setAmbienceOn(false);
+  };
+  const toggleAmbience=()=>{
+    if(ambiencePlayback.current){stopAmbience();return;}
+    const classicId=isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined;
+    const playback=startReaderAmbience(readerAmbienceForClassic(classicId));
+    if(playback){ambiencePlayback.current=playback;setAmbienceOn(true);}
+  };
+  useEffect(()=>{
+    ambiencePlayback.current?.stop();
+    ambiencePlayback.current=null;
+    setAmbienceOn(false);
+  },[active?.id,tab,readerNightMode,bedtimeUntil]);
+  useEffect(()=>{
+    const pause=()=>{
+      if(document.visibilityState!=="visible"){
+        ambiencePlayback.current?.stop();
+        ambiencePlayback.current=null;
+        setAmbienceOn(false);
+      }
+    };
+    document.addEventListener("visibilitychange",pause);
+    return ()=>{document.removeEventListener("visibilitychange",pause);ambiencePlayback.current?.stop();};
   },[]);
   const [readerFocusMode,setReaderFocusMode]=useState(false);
   const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
@@ -1264,6 +1294,12 @@ function App(){
         </details>}
         <div className="reader-title"><div className="reader-book-meta"><span className="reader-crown"><Crown size={16}/></span><span className="reader-child-label">{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}</div><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length} · {Math.round(((page+1)/Math.max(1,active.pages.length))*100)}%</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
+        {!readerNightMode&&bedtimeUntil===null&&<button type="button" className={"reader-ambience-button"+(ambienceOn?" active":"")} aria-pressed={ambienceOn} onClick={toggleAmbience}>
+          <Music2 size={16} aria-hidden="true"/>
+          {ambienceOn
+            ?({ru:"Выключить звуки сказки",uz:"Ertak tovushlarini o'chirish",en:"Stop story sounds"} as const)[lang]
+            :({ru:"Звуки сказки",uz:"Ertak tovushlari",en:"Story sounds"} as const)[lang]}
+        </button>}
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div key={active.id+":"+page+":image"} className={"story-page-image reader-turn-image wt-living-art wt-motion-"+(readerNightMode||bedtimeUntil!==null?"off":readerArtMotion)+" wt-art-"+(isDemoBook(active as DemoBook)&&["three-pigs","bremen","puss-boots"].includes((active as DemoBook).classicId||"")?"village":isDemoBook(active as DemoBook)&&["cinderella","rapunzel","sleeping-beauty","snow-white"].includes((active as DemoBook).classicId||"")?"palace":"forest")}>{active.mode==="private-account"&&privateToken&&API
           ?<PrivateReaderIllustration api={API} session={privateToken} bookId={active.id} pageNumber={page+1}
              alt={t.illustration+" "+(page+1)}
