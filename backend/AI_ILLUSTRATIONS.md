@@ -61,6 +61,37 @@ private object storage with short-lived, owner-validated access. The
 actual image generation worker, content safety/moderation, spending
 limits, parental consent review and production delivery remain unfinished.
 
+## Quota-gated worker foundation (not active)
+
+`illustration_worker.process_one_illustration_job` can claim **one** queued
+illustration from the private DB. This Python function is not called by any
+HTTP route or scheduled task and has **no real provider adapter**.
+
+It runs only if **both** `ENABLE_AI_ILLUSTRATIONS=true` and
+`ENABLE_AI_ILLUSTRATIONS_WORKER=true` are configured. Without positive
+integer caps in `MAX_ILLUSTRATIONS_PER_DAY` and
+`MAX_PARENT_ILLUSTRATIONS_PER_DAY` it refuses to start. Caps are clamped
+to at most 10 for this pilot foundation and default to **zero**.
+
+The worker requires three explicitly injected, trusted callbacks:
+`moderator(prompt)->bool`, `renderer(prompt)->bytes`, and
+`image_moderator(bytes)->bool`. It checks both the pilot email allowlist and
+book ownership *again at claim time*, atomically reserves the daily global
+and per-parent count, and calls the callbacks only after committing the claim.
+The prompt is an **original generic fictional scene**, with no page text,
+child name, email or other personally identifying information. A failed
+moderation result never publishes an image. Renderer errors and uncertain
+attempts are terminal; no automatic paid retries or quota refunds.
+
+This is **not verified provider-side billing protection** or a production
+content safety system. Actual text and image moderation services must be
+implemented, evaluated and monitored independently; any uncertain provider
+call requires human reconciliation before a deliberate new attempt. Quota
+rows are persistent and consume quota even if a renderer crashes.
+
+Migration: `009_illustration_daily_quotas.sql`. Tests inject synthetic PNG
+bytes and mock moderation, and never contact an AI provider.
+
 ## Release blockers
 
 1. Review the parental agreement and data-processing obligations for minors.
