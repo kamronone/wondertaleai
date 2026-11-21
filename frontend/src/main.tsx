@@ -58,6 +58,7 @@ import { getReadingAchievements } from "./reading_achievements";
 import { StoryBranchQuest } from "./StoryBranchQuest";
 import { CharacterBuilder } from "./CharacterBuilder";
 import {spokenWordRange,spokenTextParts,type SpokenRange} from "./reader_speech_highlight";
+import {voicesForStoryLanguage,preferredStoryVoice,parseStoredVoiceChoices,STORY_VOICE_STORAGE_KEY,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
@@ -414,6 +415,29 @@ function App(){
   const [speaking,setSpeaking]=useState(false);
   const [speechPaused,setSpeechPaused]=useState(false);
   const [spokenRange,setSpokenRange]=useState<SpokenRange|null>(null);
+  const [deviceVoices,setDeviceVoices]=useState<SpeechSynthesisVoice[]>([]);
+  const [voiceChoices,setVoiceChoices]=useState<Record<Lang,string>>(()=>{
+    try{return parseStoredVoiceChoices(localStorage.getItem(STORY_VOICE_STORAGE_KEY));}
+    catch{return parseStoredVoiceChoices(null);}
+  });
+  useEffect(()=>{
+    try{localStorage.setItem(STORY_VOICE_STORAGE_KEY,JSON.stringify(voiceChoices));}
+    catch{/* Voice selection stays usable without persistent storage. */}
+  },[voiceChoices]);
+  useEffect(()=>{
+    if(!("speechSynthesis" in window))return;
+    const engine=window.speechSynthesis;
+    const refresh=()=>setDeviceVoices(engine.getVoices());
+    refresh();
+    engine.addEventListener?.("voiceschanged",refresh);
+    const onVisible=()=>{if(document.visibilityState==="visible")refresh();};
+    document.addEventListener("visibilitychange",onVisible);
+    return ()=>{
+      engine.removeEventListener?.("voiceschanged",refresh);
+      document.removeEventListener("visibilitychange",onVisible);
+    };
+  },[]);
+
   const [readerAutoNext,setReaderAutoNext]=useState(()=>{
     try{return localStorage.getItem("wondertale_reader_auto_next")==="true";}
     catch{return false;}
@@ -799,12 +823,17 @@ function App(){
     setSpokenRange(null);
     setError("");
     const utterance=new SpeechSynthesisUtterance(active.pages[page].text);
-    utterance.lang=({ru:"ru-RU",uz:"uz-UZ",en:"en-US"} as const)[active.language||storyLang];
-    // Use a matching installed voice when the browser provides one.
-    // Never silently substitute an English voice for Uzbek or Russian.
-    const voice=engine.getVoices().find(v=>v.lang.toLowerCase()===utterance.lang.toLowerCase())
-      ||engine.getVoices().find(v=>v.lang.toLowerCase().split("-")[0]===utterance.lang.toLowerCase().split("-")[0]);
-    if(voice)utterance.voice=voice;
+    const narrationLanguage=active.language||storyLang;
+    utterance.lang=STORY_SPEECH_LOCALE[narrationLanguage];
+    // iOS may load voices asynchronously, including after the first tap.
+    // A voice from a different language must never be assigned.
+    const availableVoices=engine.getVoices();
+    const voice=preferredStoryVoice(availableVoices,narrationLanguage,voiceChoices[narrationLanguage]);
+    if(!voice){
+      setError(t.noVoice);
+      return;
+    }
+    utterance.voice=voice;
     utterance.rate=({slow:.75,normal:.9,fast:1.1} as const)[readerSpeechSpeed];
     speechAdvanceArmed.current=true;
     // iOS Safari does not consistently emit word boundaries. In that case
@@ -1351,6 +1380,25 @@ function App(){
           </button>}
         </div>
         {readerSettingsOpen&&!readerFocusMode&&<div id="reader-display-options" className="reader-display-settings" role="group" aria-label={({ru:"Настройки чтения",uz:"Oqiş sozlamalari",en:"Reading settings"} as const)[lang]}>
+          <div className="reader-voice-choice">
+            <label htmlFor="reader-voice-select">{({ru:"Голос сказки",uz:"Ertak ovozi",en:"Story narrator voice"} as const)[lang]}</label>
+            {(()=>{
+              const narrationLanguage=active.language||storyLang;
+              const matching=voicesForStoryLanguage(deviceVoices,narrationLanguage);
+              return matching.length
+                ?<select id="reader-voice-select" value={matching.some(voice=>voice.voiceURI===voiceChoices[narrationLanguage])?voiceChoices[narrationLanguage]:""} onChange={event=>{
+                  speechAdvanceArmed.current=false;
+                  if("speechSynthesis" in window)window.speechSynthesis.cancel();
+                  setSpokenRange(null);setSpeaking(false);setSpeechPaused(false);
+                  setVoiceChoices(current=>({...current,[narrationLanguage]:event.target.value}));
+                }}>
+                  <option value="">{({ru:"Автоматически",uz:"Avtomatik",en:"Automatic"} as const)[lang]}</option>
+                  {matching.map(voice=><option key={voice.voiceURI} value={voice.voiceURI}>{voice.name} ({voice.lang})</option>)}
+                </select>
+                :<p role="status">{({ru:"На устройстве пока нет голоса для языка этой сказки. Проверьте установленные голоса iPhone.",uz:"Bu ertak tili uchun ovoz topilmadi. iPhone ovoz sozlamalarini tekshiring.",en:"No voice is available for this story's language. Check installed iPhone voices."} as const)[lang]}</p>;
+            })()}
+            <small>{({ru:"Доступны только голоса на языке сказки. Список зависит от устройства и Safari.",uz:"Faqat ertak tilidagi ovozlar ko'rsatiladi. Ro'yxat qurilma va Safari'ga bog'liq.",en:"Only voices matching the story language are shown. Availability depends on your device and Safari."} as const)[lang]}</small>
+          </div>
           <fieldset className="reader-speech-speed">
             <legend>{({ru:"Скорость озвучки",uz:"Ovoz tezligi",en:"Narration speed"} as const)[lang]}</legend>
             <div role="group" aria-label={({ru:"Скорость голоса",uz:"Ovoz tezligi",en:"Voice speed"} as const)[lang]}>
