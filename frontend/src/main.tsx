@@ -1350,18 +1350,7 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
    <path d="M320 275 V355" stroke="#7757aa" strokeWidth="9"/>
    <g fill="#fff8dc"><circle cx="108" cy="95" r="7"/><circle cx="175" cy="150" r="5"/><circle cx="360" cy="77" r="6"/><circle cx="565" cy="185" r="5"/></g>
  </svg>;
- return <img src={src} alt={alt} className={animatedUrl&&failed===0?"wt-character-gif":undefined} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} ref={readerFullWidth?node=>{
-   if(!node)return;
-   // Inline important rules override legacy mobile book styles from the PWA.
-   node.style.setProperty("display","block","important");
-   node.style.setProperty("width","100%","important");
-   node.style.setProperty("max-width","100%","important");
-   node.style.setProperty("height","100%","important");
-   node.style.setProperty("max-height","100%","important");
-   node.style.setProperty("aspect-ratio","auto","important");
-   node.style.setProperty("object-fit","contain","important");
-   node.style.setProperty("margin","0 auto","important");
- }:undefined} onError={()=>setFailed(value=>value+1)}/>;
+ return <img src={src} alt={alt} className={(readerFullWidth?"wt-reader-picture ":"")+(animatedUrl&&failed===0?"wt-character-gif":"")} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(value=>value+1)}/>;
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  const [coverFailed,setCoverFailed]=useState(false);
