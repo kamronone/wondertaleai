@@ -9,7 +9,7 @@ const images=read("../src/book_images.ts");
 test("red hood has eight distinct local visual scene choices",()=>{
  assert.match(art,/export function redHoodPageArtwork/);
  assert.match(art,/export function redHoodPagePng/);
- assert.match(art,/images\\/classics\\/red-hood\\/pages\\/page-/);
+ assert.ok(art.includes("/images/classics/red-hood/pages/page-"));
  for(let i=0;i<8;i++)assert.match(art,new RegExp("case "+i+":|default:return"));
  assert.match(art,/encodeURIComponent\(svg\)/);
  assert.match(images,/data:image\/svg\+xml;charset=utf-8,/);
@@ -19,7 +19,9 @@ test("every new Red Riding Hood page gets its own artwork, other classics unchan
  assert.match(demo,/classicId,savedOnDevice:saveOnDevice/);
 });
 test("existing browser-saved classics display upgraded per-page artwork",()=>{
- assert.match(main,/redHoodReaderImage\(isDemoBook/);\n assert.match(art,/export function redHoodReaderImage/);\n assert.match(art,/return oldCover\|\|localVector\|\|builtinPage \? redHoodPagePng\(pageIndex\) : imageUrl/);
+ assert.match(main,/redHoodReaderImage\(isDemoBook/);
+ assert.match(art,/export function redHoodReaderImage/);
+ assert.match(art,/return oldCover\|\|localVector\|\|builtinPage \? redHoodPagePng\(pageIndex\) : imageUrl/);
  assert.match(main,/PrivateReaderIllustration/);
 });
 test("offline illustrations do not use private child photos or external network",()=>{
