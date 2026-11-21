@@ -19,6 +19,7 @@ import "./create-step-one-button.css";
 import "./shared-rounded-pages.css";
 import "./reader-book-variants.css";
 import "./reader-page-turn.css";
+import "./reader-image-fullwidth.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
 import {enqueueAiJob} from "./ai_jobs";
