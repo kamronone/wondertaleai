@@ -1253,6 +1253,10 @@ function App(){
             {readingStats.entries.map(item=><div className={"reading-achievement"+(item.count>=item.goal?" unlocked":"")} key={item.id} aria-label={item.count>=item.goal?achievementLabels[item.id]+" ✓":achievementLabels[item.id]}>
               <div className="reading-achievement-count"><Star size={15} fill={item.count>=item.goal?"currentColor":"none"}/><strong>{item.count}</strong><small>/ {item.goal}</small></div>
               <span>{achievementLabels[item.id]}</span>
+              <small className="reading-achievement-next" aria-live="off">{item.unlocked
+                ?({ru:"Награда открыта",uz:"Yutuq ochildi",en:"Achievement unlocked"} as const)[lang]
+                :({ru:"До награды:",uz:"Yutuqqacha:",en:"To unlock:"} as const)[lang]+" "+Math.max(0,item.goal-item.count)}
+              </small>
               <div className="reading-achievement-track" role="progressbar" aria-label={achievementLabels[item.id]} aria-valuemin={0} aria-valuemax={item.goal} aria-valuenow={Math.min(item.count,item.goal)}><span style={{width:Math.min(100,item.count/item.goal*100)+"%"}}/></div>
             </div>)}
           </div>
