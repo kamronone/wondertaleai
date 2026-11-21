@@ -95,3 +95,11 @@ Those changes are not proof that `ertakcha.netlify.app` is running the branch.
 - Changing voices stops current playback; no speech is started without the user's tap. Does not require network services or paid voice APIs.
 - Device-voice quality and availability vary. This does **not** provide character-specific recorded voices.
 - Full frontend test run, Netlify build and real iPhone Safari verification are still required.
+
+## Safari speech lifecycle hardening
+
+- Speech generation IDs ignore stale `onend`, `onerror`, and `onboundary` callbacks from canceled utterances. A canceled narration must never advance the book unexpectedly.
+- When the page becomes hidden or receives `pagehide` (screen lock, app switch, Safari navigation), browser speech is deliberately canceled and the Play/Pause state resets. Playback must be restarted by the reader, not promised to continue in the background.
+- Exceptions from `speechSynthesis.speak()` restore controls and show the existing localized voice-unavailable error.
+- Regression coverage: `frontend/tests/reader_safari_speech_lifecycle.test.mjs`.
+- Full frontend build and on-device Safari checks remain unverified until a successful Netlify Preview is available.
