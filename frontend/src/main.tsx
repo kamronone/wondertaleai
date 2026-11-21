@@ -334,7 +334,8 @@ function App(){
       }));
       clearChildDraft();
       // Search and favorites from the previous parent must not filter the new library.
-      setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
+      setLibraryShelf("all");setLibraryAge("all");
+    setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
       setPrivateToken(token);setRemoteBooks(merged);setBooks(merged);setActive(null);setPage(0);setEditingPage(false);setPageDraft("");setError("");setSyncMessage("");setTab("home");
       return true;
     }catch{return false;}
@@ -349,6 +350,7 @@ function App(){
     recentlyCreated.current.clear();
     const token=privateToken;
     clearChildDraft();
+    setLibraryShelf("all");setLibraryAge("all");
     setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
     setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setPage(0);setEditingPage(false);setPageDraft("");setError("");setSyncMessage("");setTab("home");
     if(token&&API)void fetch(API+"/api/auth/logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>{});
@@ -386,7 +388,8 @@ function App(){
         pendingProgress.current.clear();pendingFavorites.current.clear();
         offlineOwner.current=null;recentlyCreated.current.clear();
         clearChildDraft();
-        setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
+        setLibraryShelf("all");setLibraryAge("all");
+    setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
         setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setPage(0);setTab("home");
         setSyncMessage({
           ru:"Сессия истекла. Войдите снова, чтобы перенести сохранённые книги.",
@@ -551,7 +554,8 @@ function App(){
           pendingProgress.current.clear();pendingFavorites.current.clear();
           offlineOwner.current=null;recentlyCreated.current.clear();
           clearChildDraft();
-          setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
+          setLibraryShelf("all");setLibraryAge("all");
+    setLibraryQuery("");setLibrarySort("newest");setFavoritesOnly(false);
           setPrivateToken(null);setRemoteBooks([]);setBooks(getDemoBooks());setActive(null);setPage(0);setTab("home");
           setSyncMessage({
             ru:"Сессия истекла. Войдите снова.",
@@ -1017,7 +1021,7 @@ function App(){
           </label>
           <div className="library-filters library-concept-chips" role="group" aria-label={t.library}>
             <button type="button" aria-pressed={libraryShelf==="all"} className={libraryShelf==="all"?"active":""} onClick={()=>changeLibraryShelf("all")}><Library size={15}/>{({ru:"Все",uz:"Barchasi",en:"All"} as const)[lang]}</button>
-            <button type="button" aria-pressed={libraryShelf==="favorites"} className={libraryShelf==="favorites"?"active":""} onClick={()=>changeLibraryShelf("favorites")}><Heart size={15}/>{t.favorites}</button>
+            <button type="button" aria-pressed={favoritesOnly} className={libraryShelf==="favorites"?"active":""} onClick={()=>changeLibraryShelf("favorites")}><Heart size={15}/>{t.favorites}</button>
             <button type="button" aria-pressed={libraryShelf==="saved"} className={libraryShelf==="saved"?"active":""} onClick={()=>changeLibraryShelf("saved")}><Download size={15}/>{({ru:"На устройстве",uz:"Saqlangan",en:"On device"} as const)[lang]}</button>
             <button type="button" aria-pressed={libraryShelf==="recent"} className={libraryShelf==="recent"?"active":""} onClick={()=>changeLibraryShelf("recent")}><PlayCircle size={15}/>{({ru:"Недавние",uz:"Songgi",en:"Recent"} as const)[lang]}</button>
           </div>
