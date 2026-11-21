@@ -8,6 +8,7 @@ import "./bedtime-games.css";
 import "./profile-concept-three.css";
 import "./library-concept-two.css";
 import "./library-mobile-fixes.css";
+import "./library-final-polish.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
