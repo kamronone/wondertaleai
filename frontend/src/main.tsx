@@ -1345,7 +1345,6 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
  const [zoomPan,setZoomPan]=useState({x:0,y:0});
  const pinch=useRef<{distance:number;scale:number}|null>(null);
  const drag=useRef<{x:number;y:number;panX:number;panY:number}|null>(null);
- const lastTap=useRef(0);
  const startZoomTouch=(event:React.TouchEvent<HTMLDivElement>)=>{
    event.stopPropagation();
    if(event.touches.length===2){
