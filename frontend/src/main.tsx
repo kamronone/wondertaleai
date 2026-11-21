@@ -1020,14 +1020,18 @@ function App(){
             <span className="sr-only">{({ru:"Поиск по сказкам",uz:"Ertaklarni qidirish",en:"Search stories"} as const)[lang]}</span>
             <input type="search" value={libraryQuery} onChange={event=>setLibraryQuery(event.target.value)} placeholder={({ru:"Поиск по сказкам...",uz:"Ertaklar ichidan qidirish...",en:"Search stories..."} as const)[lang]}/>
           </label>
-          <div className="library-filters library-concept-chips" role="group" aria-label={t.library}>
+          {books.length>0&&<div className="library-filters library-concept-chips" role="group" aria-label={t.library}>
             <button type="button" aria-pressed={libraryShelf==="all"} className={libraryShelf==="all"?"active":""} onClick={()=>changeLibraryShelf("all")}><Library size={15}/>{({ru:"Все",uz:"Barchasi",en:"All"} as const)[lang]}</button>
             <button type="button" aria-pressed={favoritesOnly} className={libraryShelf==="favorites"?"active":""} onClick={()=>changeLibraryShelf("favorites")}><Heart size={15}/>{t.favorites}</button>
             <button type="button" aria-pressed={libraryShelf==="saved"} className={libraryShelf==="saved"?"active":""} onClick={()=>changeLibraryShelf("saved")}><Download size={15}/>{({ru:"На устройстве",uz:"Saqlangan",en:"On device"} as const)[lang]}</button>
             <button type="button" aria-pressed={libraryShelf==="recent"} className={libraryShelf==="recent"?"active":""} onClick={()=>changeLibraryShelf("recent")}><PlayCircle size={15}/>{({ru:"Недавние",uz:"Songgi",en:"Recent"} as const)[lang]}</button>
-          </div>
+          </div>}
         </div>
-        <div className="library-concept-metrics">
+        {books.length===0&&<div className="library-empty-quickbar">
+          <button className="primary-button library-empty-quick-create" type="button" onClick={()=>openCreate()}><Plus size={17}/>{t.newStory}</button>
+          <span className="library-empty-quick-progress"><Star size={16}/>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]} {readingStats.unlocked}/{readingStats.total}</span>
+        </div>}
+        {books.length>0&&<div className="library-concept-metrics">
         <details className="library-achievements-disclosure">
           <summary><Star size={18}/><span>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]}</span><strong>{readingStats.unlocked}/{readingStats.total}</strong><ChevronDown size={16}/></summary>
         <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
@@ -1053,7 +1057,7 @@ function App(){
             <span>{({ru:"Читали",uz:"Oqilganlar",en:"Read"} as const)[lang]}</span>
             <strong>{books.filter(book=>(book.lastPage??0)>0).length}</strong>
           </div>
-        </div>
+        </div>}
         {books.some(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1)&&<div className="library-resume">
           <div className="library-resume-text"><BookOpen size={17}/><span>{({ru:"Продолжить чтение",uz:"Oqishni davom ettirish",en:"Continue reading"} as const)[lang]}</span></div>
           {books.filter(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1).slice(0,1).map(book=><button key={book.id} type="button" onClick={()=>openBook(book)}><span>{book.title}</span><ArrowRight size={17}/></button>)}
@@ -1080,10 +1084,10 @@ function App(){
         </>}
         {shownBooks.length?<div className="book-grid">{shownBooks.map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:books.length?<div className="library-empty-results"><Search size={24}/><p>{({ru:"Ничего не найдено. Попробуйте другой запрос или фильтр.",uz:"Hech narsa topilmadi. Boshqa soz yoki filtrni sinab koring.",en:"No matching stories. Try a different search or filter."} as const)[lang]}</p><button type="button" onClick={()=>{setLibraryQuery("");changeLibraryShelf("all");setLibrarySort("newest");setLibraryAge("all");}}>{({ru:"Сбросить фильтры",uz:"Filtrlarni tozalash",en:"Clear filters"} as const)[lang]}</button></div>:<div className="empty library-concept-empty">
           <div className="library-concept-art" aria-hidden="true">
-            <img className="library-concept-castle-art" src="/images/library-magic-castle.png" alt="" width={360} height={270} loading="lazy" decoding="async"/>
+            <img className="library-concept-castle-art" src="/images/library-story-castle-premium.png" alt="" width={480} height={360} loading="lazy" decoding="async"/>
           </div>
-          <h3>{t.empty}</h3><p>{t.emptyDesc}</p>
-          <button className="primary-button library-concept-create" type="button" onClick={()=>openCreate()}><Plus size={18}/>{t.newStory}</button>
+          <div className="library-empty-copy"><h3>{t.empty}</h3><p>{t.emptyDesc}</p></div>
+
         </div>}</section>}
       {tab==="reader"&&active&&<section className={"reader-page"+(readerFocusMode?" reader-focused":"")}>
         <div className="reader-toolbar"><button className="back-button" onClick={()=>setTab("library")}><ArrowLeft size={17}/> {t.backLibrary}</button><div className="reader-actions"><button className="icon-button" type="button" onClick={()=>void printFullBook()} title={t.savePdf} aria-label={t.savePdf}><Download size={19}/></button>{(isDemoBook(active)||privateToken)&&<button className="icon-button" onClick={()=>void toggleFavorite()} title={active.favorite?t.unfavorite:t.favorite} aria-label={active.favorite?t.unfavorite:t.favorite}><Heart size={19} fill={active.favorite?"currentColor":"none"}/></button>}<button className="icon-button dangerous" type="button" onClick={()=>deleteBook(active)} title={t.delete} aria-label={t.delete}><Trash2 size={19}/></button></div></div>
