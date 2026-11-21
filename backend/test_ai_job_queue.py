@@ -78,3 +78,37 @@ def test_queue_is_bounded_and_denies_anonymous_users(api,monkeypatch):
         assert r.status_code==202,r.text
     assert client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=body).status_code==429
     assert client.get("/api/billing/status",headers=auth).json()["ai_used_today"]==0
+
+def test_worker_failure_is_not_retried(api,monkeypatch):
+    client,module,register=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    calls=[]
+    def failing(_data):
+        calls.append(1)
+        raise RuntimeError("Mocked unavailable model")
+    monkeypatch.setattr(module,"generate_story",failing)
+    queued=client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=payload())
+    assert queued.status_code==202
+    job_id=queued.json()["id"]
+    assert module.process_one_queued_ai_job()==job_id
+    assert module.process_one_queued_ai_job() is None
+    assert client.get("/api/books/jobs/"+job_id,headers=auth).json()["status"]=="failed"
+    assert len(calls)==1
+    assert client.get("/api/books",headers=auth).json()==[]
+
+
+def test_stalled_worker_needs_review_without_another_request(api,monkeypatch):
+    from datetime import datetime,timedelta,timezone
+    client,module,register=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    queued=client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=payload())
+    assert queued.status_code==202
+    job_id=queued.json()["id"]
+    with module.connection() as c:
+        started=(datetime.now(timezone.utc)-timedelta(minutes=10)).isoformat()
+        module.sql(c,"UPDATE ai_jobs SET status='processing',started_at=? WHERE id=?",(started,job_id))
+        c.commit()
+    assert client.get("/api/books/jobs/"+job_id,headers=auth).json()["status"]=="needs_review"
+    assert module.process_one_queued_ai_job() is None
