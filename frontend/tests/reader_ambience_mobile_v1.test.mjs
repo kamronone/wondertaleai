@@ -37,7 +37,10 @@ test("mobile reader remains compact and keeps sufficiently sized touch targets",
  assert.match(css,/min-height:44px!important/);
  assert.match(css,/\.reader-page \.reader-audio-toolbar>button/);
  assert.match(css,/\.reader-page \.reader-ambience-button/);
- assert.match(css,/padding-bottom:calc\(102px/);
+ // A separate shell reserves the bottom fixed nav. Duplicating 102px here
+ // created a huge blank area on narrow iPhones.
+ assert.match(css,/\.reader-page\{[\s\S]*?padding-bottom:8px/);
+ assert.doesNotMatch(css,/padding-bottom:calc\(102px/);
 });
 test("SSR-safe unsupported WebAudio returns no playback",()=>{
  assert.equal(startReaderAmbience("forest"),null);
