@@ -18,6 +18,7 @@ import "./shared-rounded-pages.css";
 import "./reader-book-variants.css";
 import "./reader-page-turn.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
+import { checkAiStoryAccess } from "./ai_preflight";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
@@ -770,6 +771,17 @@ function App(){
         }
         if(photo){
           throw new Error(({ru:"AI-генерация пока не принимает фото ребёнка. Удалите фото и повторите.",uz:"AI hozirça bolaning rasmini qabul qilmaydi. Rasmni olib taşlang.",en:"AI generation does not accept child photos yet. Remove the photo first."} as const)[lang]);
+        }
+        const aiAccess=await checkAiStoryAccess(API,privateToken);
+        if(sessionEpoch.current!==epoch)return;
+        if(aiAccess!=="ready"){
+          const messages={
+            login:{ru:"Сессия закончилась. Войдите в аккаунт родителя снова.",uz:"Sessiya tugadi. Ota-ona akkauntiga qayta kiring.",en:"Session expired. Sign in to your parent account again."},
+            unavailable:{ru:"Не удалось проверить доступность AI. Проверьте соединение и повторите.",uz:"AI holatini tekşirib bölmadi. Internetni tekşirib qayta urining.",en:"Cannot check AI availability. Check your connection and retry."},
+            "not-allowed":{ru:"AI-генерация пока недоступна для этого аккаунта. Демо-сказки по-прежнему работают.",uz:"AI yaratiş bu akkaunt uçun hali mavjud emas. Demo ertaklar işlaydi.",en:"AI generation is not yet available for this account. Demo stories still work."},
+            limit:{ru:"Сегодняшний лимит AI-сказок исчерпан. Попробуйте завтра.",uz:"Bugungi AI ertaklar limiti tugadi. Ertaga qayta urining.",en:"Today's AI story quota is exhausted. Try again tomorrow."},
+          } as const;
+          throw new Error(messages[aiAccess][lang]);
         }
         const data={
           name:name.trim(),age:Number(age),language:storyLang,
