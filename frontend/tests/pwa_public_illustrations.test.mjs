@@ -33,8 +33,11 @@ test("service worker public cache version advances for this allowlist", () => {
   assert.match(source, /const CACHE = "wondertale-public-v11"/);
 });
 
-test("classic page PNGs use network-first freshness and do not cache failed responses", () => {
-  assert.match(source, /if \(\/\^\\\/images\\\/classics\\\/[a-z0-9-]\+\\\/pages\\\/page-\[1-8\]\\\.png\$\/\.test\(url\.pathname\)\)/);
-  assert.match(source, /if \(response\.ok && response\.type === "basic" && \/image\\\/png\/i\.test\(type\)\)/);
-  assert.match(source, /return \(await cache\.match\(request\)\) \|\| Response\.error\(\)/);
+test("classic page PNGs use network-first freshness and never cache bad responses", () => {
+  assert.ok(source.includes(String.raw`if (/^\/images\/classics\/[a-z0-9-]+\/pages\/page-[1-8]\.png$/.test(url.pathname))`));
+  assert.ok(source.includes('if (response.ok && response.type === "basic" && /image\\/png/i.test(type))'));
+  assert.ok(source.includes('return (await cache.match(request)) || Response.error();'));
+  const networkFirst=source.indexOf("if (/^\\/images\\/classics");
+  const genericCache=source.indexOf("if (PUBLIC_ASSET.test(url.pathname))");
+  assert.ok(networkFirst>=0 && genericCache>networkFirst,"Network-first branch must precede cache-first handler");
 });
