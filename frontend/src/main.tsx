@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronRight, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
+import { createPortal } from "react-dom";
+import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronRight, ChevronUp, Volume2, PauseCircle, Square, Play, Star, ZoomIn, ZoomOut, X } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
 import "./reader-polish.css";
@@ -1335,6 +1336,24 @@ function App(){
 }
 function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl=null}:{url:string;alt:string;lazy?:boolean;readerFullWidth?:boolean;animatedUrl?:string|null}){
  const [failed,setFailed]=useState(0);
+ const [zoomOpen,setZoomOpen]=useState(false);
+ const [zoomScale,setZoomScale]=useState(1);
+ const openButtonRef=useRef<HTMLButtonElement|null>(null);
+ const closeButtonRef=useRef<HTMLButtonElement|null>(null);
+ useEffect(()=>{
+   if(!zoomOpen)return;
+   const previousOverflow=document.body.style.overflow;
+   document.body.style.overflow="hidden";
+   const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape"){event.preventDefault();setZoomOpen(false);}};
+   document.addEventListener("keydown",onKey);
+   closeButtonRef.current?.focus();
+   return ()=>{
+     document.body.style.overflow=previousOverflow;
+     document.removeEventListener("keydown",onKey);
+     openButtonRef.current?.focus();
+   };
+ },[zoomOpen]);
+ useEffect(()=>{setZoomOpen(false);setZoomScale(1);},[url,animatedUrl]);
  const originalSrc=bookImage(url);
  const offlineFallback=classicPngFallback(originalSrc);
  // Frame GIF -> original PNG -> built-in offline SVG. Never animate private photos.
@@ -1350,7 +1369,30 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
    <path d="M320 275 V355" stroke="#7757aa" strokeWidth="9"/>
    <g fill="#fff8dc"><circle cx="108" cy="95" r="7"/><circle cx="175" cy="150" r="5"/><circle cx="360" cy="77" r="6"/><circle cx="565" cy="185" r="5"/></g>
  </svg>;
- return <img src={src} alt={alt} className={(readerFullWidth?"wt-reader-picture ":"")+(animatedUrl&&failed===0?"wt-character-gif":"")} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(value=>value+1)}/>;
+ const image=<img src={src} alt={alt} className={(readerFullWidth?"wt-reader-picture ":"")+(animatedUrl&&failed===0?"wt-character-gif":"")} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(value=>value+1)}/>;
+ if(!readerFullWidth)return image;
+ return <>
+   <button type="button" ref={openButtonRef} className="wt-reader-image-open" onClick={()=>{setZoomScale(1);setZoomOpen(true);}} aria-label={"Увеличить: "+alt} title="Увеличить иллюстрацию">
+     {image}
+     <span className="wt-reader-image-magnifier" aria-hidden="true"><ZoomIn size={17}/></span>
+   </button>
+   {zoomOpen&&createPortal(
+     <div className="wt-reader-image-lightbox" role="dialog" aria-modal="true" aria-label={alt} onClick={()=>setZoomOpen(false)}>
+       <div className="wt-reader-image-lightbox-toolbar">
+         <button type="button" ref={closeButtonRef} className="wt-reader-lightbox-close" onClick={()=>setZoomOpen(false)} aria-label="Закрыть увеличенное изображение"><X size={24}/></button>
+       </div>
+       <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()}>
+         <img src={src} alt={alt} className="wt-reader-image-lightbox-img" style={{transform:"scale("+zoomScale+")"}} onError={()=>setFailed(value=>value+1)}/>
+       </div>
+       <div className="wt-reader-lightbox-zoom" onClick={event=>event.stopPropagation()}>
+         <button type="button" onClick={()=>setZoomScale(value=>Math.max(1,Number((value-.25).toFixed(2))))} disabled={zoomScale<=1} aria-label="Уменьшить изображение"><ZoomOut size={21}/></button>
+         <span aria-live="polite">{Math.round(zoomScale*100)}%</span>
+         <button type="button" onClick={()=>setZoomScale(value=>Math.min(3,Number((value+.25).toFixed(2))))} disabled={zoomScale>=3} aria-label="Увеличить изображение"><ZoomIn size={21}/></button>
+       </div>
+     </div>,
+     document.body
+   )}
+ </>;
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  const [coverFailed,setCoverFailed]=useState(false);
