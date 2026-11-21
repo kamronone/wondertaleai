@@ -30,13 +30,13 @@ test("generated and personal images stay outside the offline public cache", () =
 });
 
 test("service worker public cache version advances for this allowlist", () => {
-  assert.match(source, /const CACHE = "wondertale-public-v13"/);
+  assert.match(source, /const CACHE = "wondertale-public-v14"/);
 });
 
 test("classic page PNGs use network-first freshness and never cache bad responses", () => {
   assert.ok(source.includes(String.raw`if (/^\/images\/classics\/[a-z0-9-]+\/pages\/page-[1-8]\.png$/.test(url.pathname))`));
   assert.ok(source.includes('if (response.ok && response.type === "basic" && /image\\/png/i.test(type))'));
-  assert.ok(source.includes('return (await cache.match(request)) || Response.error();'));
+  assert.ok(source.includes('(await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || Response.error();'));
   const networkFirst=source.indexOf("if (/^\\/images\\/classics");
   const genericCache=source.indexOf("if (PUBLIC_ASSET.test(url.pathname))");
   assert.ok(networkFirst>=0 && genericCache>networkFirst,"Network-first branch must precede cache-first handler");
@@ -46,7 +46,7 @@ test("character GIFs use network-first caching and validate GIF responses",()=>{
   assert.ok(source.includes("Animated character GIFs are public book art"));
   assert.ok(source.includes("animations") && source.includes(".gif$"));
   assert.ok(source.includes("gif/i.test(type)"));
-  assert.ok(source.includes("return (await cache.match(request)) || response;"));
+  assert.ok(source.includes('(await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || response;'));
   const gif=source.indexOf("Animated character GIFs are public book art");
   const generic=source.indexOf("if (PUBLIC_ASSET.test(url.pathname))");
   assert.ok(gif>=0&&gif<generic);
