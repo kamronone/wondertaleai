@@ -1,4 +1,4 @@
-import { ArrowLeft, Bell, BellOff, Check, ChevronRight, Globe2, Settings, ShieldCheck, X } from "lucide-react";
+import { Bell, BellOff, Check, ChevronRight, Globe2, Settings, ShieldCheck, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Lang } from "./i18n";
 
@@ -29,9 +29,9 @@ const words={
 } as const;
 
 export function ProfileHeader({
- lang,onLanguage,onBack,onPrivacy
+ lang,onLanguage,onPrivacy
 }:{
- lang:Lang;onLanguage:(language:Lang)=>void;onBack:()=>void;onPrivacy:()=>void
+ lang:Lang;onLanguage:(language:Lang)=>void;onPrivacy:()=>void
 }){
  const [open,setOpen]=useState<OpenPanel>(null);
  const [permission,setPermission]=useState<NotificationPermission|"unsupported">(()=>{
@@ -62,7 +62,6 @@ export function ProfileHeader({
  };
  const status=permission==="granted"?labels.granted:permission==="denied"?labels.denied:permission==="default"?labels.default:labels.unsupported;
  return <header className="profile-mockup-topbar" ref={containerRef}>
-   <button type="button" className="profile-mockup-back" aria-label={labels.back} onClick={onBack}><ArrowLeft size={23}/></button>
    <div className="profile-mockup-brand">
      <img src="/icons/icon-192.png" width={44} height={44} alt="" loading="eager"/>
      <span><strong>WonderTale <em>AI</em></strong><small>AI STORY STUDIO</small></span>
