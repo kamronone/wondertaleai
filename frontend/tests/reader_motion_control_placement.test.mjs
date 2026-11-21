@@ -16,7 +16,8 @@ test("character GIF controls do not cover the picture",()=>{
  assert.match(css,/max-width:100%/);
 });
 test("no empty row appears on pages without a character GIF",()=>{
- assert.match(app,/classicAnimatedPage\(\(active as DemoBook\)\.classicId,[\s\S]{0,220}page\)&&!reduceArtMotion/);
+ assert.ok(app.includes("classicAnimatedPage((active as DemoBook).classicId"));
+ assert.ok(app.includes(")&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&"));
  assert.match(app,/bedtimeUntil===null&&\s*<div className="wt-motion-inline-row">/);
 });
 test("in-reader art remains inline and never reopens the removed zoom modal",()=>{
