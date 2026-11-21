@@ -3,6 +3,7 @@ import {createPortal} from "react-dom";
 import {ZoomIn,ZoomOut,X} from "lucide-react";
 import {loadPrivatePageIllustration} from "./private_illustration";
 import {readerZoomLabels} from "./reader_zoom_labels";
+import {clampReaderZoom,readerFingerDistance} from "./reader_zoom_gestures";
 
 /** Fetch only the visible page; never leak private media in public image URLs. */
 export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fallback}:{
@@ -17,12 +18,44 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
   const [image,setImage]=useState<{blobUrl:string;key:string}|null>(null);
   const [zoomOpen,setZoomOpen]=useState(false);
   const [zoomScale,setZoomScale]=useState(1);
+  const [zoomPan,setZoomPan]=useState({x:0,y:0});
+  const pinch=useRef<{distance:number;scale:number}|null>(null);
+  const drag=useRef<{x:number;y:number;panX:number;panY:number}|null>(null);
+  const startZoomTouch=(event:import("react").TouchEvent<HTMLDivElement>)=>{
+    event.stopPropagation();
+    if(event.touches.length===2){
+      pinch.current={distance:readerFingerDistance(event.touches[0],event.touches[1]),scale:zoomScale};
+      drag.current=null;
+    }else if(event.touches.length===1){
+      drag.current={x:event.touches[0].clientX,y:event.touches[0].clientY,panX:zoomPan.x,panY:zoomPan.y};
+    }
+  };
+  const moveZoomTouch=(event:import("react").TouchEvent<HTMLDivElement>)=>{
+    event.stopPropagation();
+    if(event.touches.length===2&&pinch.current?.distance){
+      setZoomScale(clampReaderZoom(pinch.current.scale*readerFingerDistance(event.touches[0],event.touches[1])/pinch.current.distance));
+    }else if(event.touches.length===1&&drag.current&&zoomScale>1){
+      const limitX=(window.innerWidth*(zoomScale-1))/2;
+      const limitY=(window.innerHeight*(zoomScale-1))/2;
+      setZoomPan({
+        x:Math.max(-limitX,Math.min(limitX,drag.current.panX+event.touches[0].clientX-drag.current.x)),
+        y:Math.max(-limitY,Math.min(limitY,drag.current.panY+event.touches[0].clientY-drag.current.y))
+      });
+    }
+  };
+  const endZoomTouch=(event:import("react").TouchEvent<HTMLDivElement>)=>{
+    event.stopPropagation();
+    if(event.touches.length<2)pinch.current=null;
+    if(event.touches.length===0){drag.current=null;if(zoomScale<=1)setZoomPan({x:0,y:0});}
+  };
+  const toggleDoubleTapZoom=()=>{setZoomScale(current=>current>1?1:2);setZoomPan({x:0,y:0});};
   const openRef=useRef<HTMLButtonElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
   const key=[api,session,bookId,pageNumber].join("|");
   useEffect(()=>{
     setZoomOpen(false);
     setZoomScale(1);
+    setZoomPan({x:0,y:0});
     const controller=new AbortController();
     let currentUrl:string|null=null;
     setImage(null);
@@ -70,7 +103,7 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
 
   return image?.key===key
     ?<>
-      <button type="button" className="wt-reader-image-open" ref={openRef} onClick={()=>{setZoomScale(1);setZoomOpen(true);}} aria-label={zoomCopy.open+": "+alt}>
+      <button type="button" className="wt-reader-image-open" ref={openRef} onClick={()=>{setZoomScale(1);setZoomPan({x:0,y:0});setZoomOpen(true);}} aria-label={zoomCopy.open+": "+alt}>
         <img src={image.blobUrl} alt={alt} decoding="async" className="private-reader-illustration wt-reader-picture"
           onError={()=>{setZoomOpen(false);setImage(null);}}/>
         <span className="wt-reader-image-magnifier" aria-hidden="true"><ZoomIn size={17}/></span>
@@ -82,8 +115,8 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
           <div className="wt-reader-image-lightbox-toolbar">
             <button type="button" ref={closeRef} onClick={()=>setZoomOpen(false)} aria-label={zoomCopy.close}><X size={24}/></button>
           </div>
-          <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()}>
-            <img src={image.blobUrl} alt={alt} className="wt-reader-image-lightbox-img" style={{transform:"scale("+zoomScale+")"}}
+          <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()} onTouchStart={startZoomTouch} onTouchMove={moveZoomTouch} onTouchEnd={endZoomTouch} onTouchCancel={endZoomTouch} onDoubleClick={toggleDoubleTapZoom}>
+            <img src={image.blobUrl} alt={alt} className="wt-reader-image-lightbox-img" style={{transform:"translate("+zoomPan.x+"px,"+zoomPan.y+"px) scale("+zoomScale+")"}}
               onError={()=>{setZoomOpen(false);setImage(null);}}/>
           </div>
           <div className="wt-reader-lightbox-zoom" onClick={event=>event.stopPropagation()}>
