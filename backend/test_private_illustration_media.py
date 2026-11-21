@@ -368,3 +368,60 @@ def test_illustration_kill_switch_interrupts_after_prompt_review(api,monkeypatch
     assert not calls
     assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="needs_review"
     assert client.get("/api/illustrations/media/"+job,headers=auth).status_code==404
+
+
+
+def test_illustration_audit_tracks_lifecycle_without_personal_data(api,monkeypatch):
+    from illustration_worker import process_one_illustration_job
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS_WORKER","true")
+    monkeypatch.setenv("MAX_ILLUSTRATIONS_PER_DAY","1")
+    monkeypatch.setenv("MAX_PARENT_ILLUSTRATIONS_PER_DAY","1")
+    book=create_book(auth)
+    queued=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"watercolor"
+    })
+    assert queued.status_code==202,queued.text
+    job=queued.json()["id"]
+    assert process_one_illustration_job(renderer=lambda _:fake_png(),
+        moderator=lambda _:True,image_moderator=lambda _:True)==job
+    with module.connection() as c:
+        rows=module.sql(c,"SELECT event FROM illustration_job_events WHERE job_id=? ORDER BY created_at,id",(job,)).fetchall()
+    # Exact order is a lifecycle contract, not a per-process print log.
+    assert sorted(event[0] for event in rows)==["completed","processing","queued"]
+    assert client.delete("/api/books/"+book,headers=auth).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_job_events WHERE job_id=?",(job,)).fetchone()[0]==0
+
+
+def test_read_only_reconciliation_reports_stalled_job_without_retry(api,monkeypatch):
+    from datetime import datetime,timedelta,timezone
+    from illustration_reconciliation import unresolved_illustration_report
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    book=create_book(auth)
+    queued=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"pencil"
+    })
+    assert queued.status_code==202,queued.text
+    job=queued.json()["id"]
+    old=(datetime.now(timezone.utc)-timedelta(minutes=9)).isoformat()
+    with module.connection() as c:
+        module.sql(c,"UPDATE illustration_jobs SET status='processing',started_at=? WHERE id=?",(old,job))
+        c.commit()
+    report=unresolved_illustration_report(older_than_seconds=180)
+    assert len(report["unresolved"])==1
+    assert report["unresolved"][0]["job_id"]==job
+    assert report["unresolved"][0]["status"]=="needs_review"
+    assert report["unresolved"][0]["age_seconds"]>=180
+    assert "example.com" not in str(report)
+    assert "Alex" not in str(report)
+    assert "Friendly moon" not in str(report)
+    assert report["attempts"]["reserved_attempts_today"]==0
+    assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="processing"
+    monkeypatch.setenv("APP_ENV","production")
+    with pytest.raises(RuntimeError,match="refuse production"):
+        unresolved_illustration_report()
