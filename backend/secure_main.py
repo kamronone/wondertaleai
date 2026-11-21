@@ -89,6 +89,7 @@ def init_schema():
         sql(c, "CREATE TABLE IF NOT EXISTS ai_idempotency (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, created_at TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending', PRIMARY KEY(owner_id,request_key))")
         sql(c, "CREATE TABLE IF NOT EXISTS ai_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, UNIQUE(owner_id,request_key))")
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
+        sql(c, "CREATE TABLE IF NOT EXISTS illustration_parent_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
@@ -916,6 +917,67 @@ def process_one_queued_ai_job():
         return job_id
 
 
+ILLUSTRATION_CONSENT_VERSION="illustration-pilot-v1"
+
+
+def illustration_consent_active(owner:str,c=None)->bool:
+    """No implicit or inherited consent. Check current policy revision."""
+    try:
+        if c is not None:
+            row=sql(c,"SELECT policy_version,granted_at,revoked_at FROM illustration_parent_consent WHERE owner_id=?",(owner,)).fetchone()
+        else:
+            with connection() as db:
+                row=sql(db,"SELECT policy_version,granted_at,revoked_at FROM illustration_parent_consent WHERE owner_id=?",(owner,)).fetchone()
+        return bool(row and row[0]==ILLUSTRATION_CONSENT_VERSION and row[1] and not row[2])
+    except Exception:
+        return False
+
+
+class IllustrationConsentRequest(BaseModel):
+    agreed: bool
+    policy_version: str=Field(min_length=1,max_length=64)
+
+
+@app.get("/api/illustrations/consent")
+def get_illustration_consent(owner:str=Depends(current_parent)):
+    return {"agreed":illustration_consent_active(owner),"policy_version":ILLUSTRATION_CONSENT_VERSION}
+
+
+@app.post("/api/illustrations/consent")
+def update_illustration_consent(body:IllustrationConsentRequest,owner:str=Depends(current_parent)):
+    """Explicit opt-in or revocation by the signed-in parent.
+
+    Revocation removes unstarted jobs and quarantines in-flight jobs, without
+    refunding quotas or erasing past image assets.
+    """
+    if body.policy_version!=ILLUSTRATION_CONSENT_VERSION:
+        raise HTTPException(422,"Consent policy version is outdated")
+    now=datetime.now(timezone.utc).isoformat()
+    with connection() as c:
+        if IS_PG:
+            if not sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone():
+                raise HTTPException(404,"Parent not found")
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        if body.agreed:
+            sql(c,("INSERT INTO illustration_parent_consent(owner_id,policy_version,granted_at,revoked_at) "
+                   "VALUES(?,?,?,NULL) ON CONFLICT(owner_id) DO UPDATE SET policy_version=excluded.policy_version,granted_at=excluded.granted_at,revoked_at=NULL"),
+                (owner,ILLUSTRATION_CONSENT_VERSION,now))
+        else:
+            sql(c,("INSERT INTO illustration_parent_consent(owner_id,policy_version,granted_at,revoked_at) "
+                   "VALUES(?,?,NULL,?) ON CONFLICT(owner_id) DO UPDATE SET policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
+                (owner,ILLUSTRATION_CONSENT_VERSION,now))
+            sql(c,"DELETE FROM illustration_jobs WHERE owner_id=? AND status='queued'",(owner,))
+            rows=sql(c,"SELECT id FROM illustration_jobs WHERE owner_id=? AND status='processing'",(owner,)).fetchall()
+            for (job_id,) in rows:
+                changed=sql(c,"UPDATE illustration_jobs SET status='needs_review',completed_at=? WHERE id=? AND status='processing'",(now,job_id))
+                if changed.rowcount:
+                    sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
+                        (str(uuid.uuid4()),job_id,"needs_review",now))
+        c.commit()
+    return {"agreed":body.agreed,"policy_version":ILLUSTRATION_CONSENT_VERSION}
+
+
 class IllustrationRequest(BaseModel):
     book_id: str=Field(min_length=36,max_length=36)
     page_number: int=Field(ge=1,le=20)
@@ -942,6 +1004,8 @@ def request_private_illustration(body:IllustrationRequest,owner:str=Depends(curr
             parent=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
         if not parent or parent[0].lower() not in allowed:
             raise HTTPException(403,"AI illustrations are not enabled for this account")
+        if not illustration_consent_active(owner,c):
+            raise HTTPException(403,"Parental illustration consent is required")
         row=sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(body.book_id,owner)).fetchone()
         if not row:
             raise HTTPException(404,"Book not found")
@@ -1029,6 +1093,8 @@ def save_private_illustration_asset(job_id:str,payload:bytes)->str:
         row=sql(c,query,(job_id,)).fetchone()
         if not row or row[2]!="processing":
             raise ValueError("Illustration job is not processing")
+        if not illustration_consent_active(row[0],c):
+            raise ValueError("Parental illustration consent is not active")
         owner,book_id,_=row
         # The image belongs to the exact same owner and private book as the job.
         if not sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone():
