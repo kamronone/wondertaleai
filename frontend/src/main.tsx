@@ -19,6 +19,8 @@ import "./reader-book-variants.css";
 import "./reader-page-turn.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
+import {enqueueAiJob} from "./ai_jobs";
+import {AiJobsPanel} from "./AiJobsPanel";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
@@ -46,6 +48,8 @@ import { CharacterBuilder } from "./CharacterBuilder";
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
+// Disabled by default until a separate trusted AI worker is provisioned.
+const AI_JOBS_ENABLED=import.meta.env.VITE_ENABLE_AI_JOB_QUEUE==="true";
 const bookImage=(url:string)=>resolveBookImage(url,API);
 
 function App(){
@@ -321,6 +325,7 @@ function App(){
     :({ru:"Не удалось сохранить изменения на этом устройстве. Проверьте свободное место и настройки браузера.",uz:"Özgarişlarni qurilmaga saqlab bölmadi. Böş xotira va brauzer sozlamalarini tekşiring.",en:"Could not save changes on this device. Check available storage and browser settings."} as const)[lang];
   const [usePersonalAi,setUsePersonalAi]=useState(false);
   const [aiPagesCount,setAiPagesCount]=useState<8|12|20>(8);
+  const [aiJobsRefresh,setAiJobsRefresh]=useState(0);
 
   // Child profile details must never carry over between parent sessions.
   const clearChildDraft=()=>{setName("");setAge("5");setSecondHero("");setPhoto(null);};
@@ -814,6 +819,17 @@ function App(){
         const key=retry?.token===privateToken&&retry.payload===payload
           ?retry.key:crypto.randomUUID().replaceAll("-","");
         aiRetry.current={token:privateToken,payload,key};
+        if(AI_JOBS_ENABLED){
+          const queued=await enqueueAiJob(API,privateToken,data,key,AbortSignal.timeout(15000));
+          if(sessionEpoch.current!==epoch)return;
+          aiRetry.current=null;
+          setAiJobsRefresh(v=>v+1);
+          setTab("account");
+          setSyncMessage(queued.status==="queued"
+            ?({ru:"Сказка добавлена в очередь. Следите за статусом в профиле.",uz:"Ertak navbatga qöşildi. Holatini profilda kuzating.",en:"Your story is queued. Track its status in your profile."} as const)[lang]
+            :({ru:"Статус сказки обновлён.",uz:"Ertak holati yangilandi.",en:"Story status updated."} as const)[lang]);
+          return;
+        }
         const response=await fetch(API+"/api/books/generate",{
           method:"POST",
           headers:{"Authorization":"Bearer "+privateToken,"Content-Type":"application/json","Idempotency-Key":key},
@@ -1055,6 +1071,7 @@ function App(){
       {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab(legalReturnTab)}/>}
       {tab==="account"&&<section className="profile-concept-three">
         <ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>
+        {AI_JOBS_ENABLED&&privateToken&&API&&<AiJobsPanel key={privateToken} api={API} session={privateToken} lang={lang} refreshVersion={aiJobsRefresh} onOpenLibrary={()=>{setLibraryRefreshAttempt(v=>v+1);setTab("library");}}/>}
         <ProfileLegalMenu lang={lang} onOpen={openLegal}/>
         {syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}
         <details className="account-plans-disclosure">
