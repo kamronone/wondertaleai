@@ -513,3 +513,81 @@ def test_invalid_ai_idempotency_key_rejected_without_provider(monkeypatch):
     for key in ("short","a space "+"x"*15,"x"*129):
         response=client.post("/api/books/generate",headers={**headers(token),"Idempotency-Key":key},json=data)
         assert response.status_code==422
+
+
+def test_ai_generation_request_status_is_owner_scoped(monkeypatch):
+    import uuid
+    from ai_generation import GeneratedStory
+    email_a="job-owner-"+uuid.uuid4().hex+"@example.com"
+    email_b="job-foreign-"+uuid.uuid4().hex+"@example.com"
+    a=signup(email_a)
+    b=signup(email_b)
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    monkeypatch.setenv("OPENAI_API_KEY","fake-no-network")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email_a)
+    monkeypatch.setenv("MAX_AI_STORIES_PER_DAY","200")
+    monkeypatch.setattr(secure_main,"generate_story",lambda req:GeneratedStory(
+        title="A kind hidden garden",language=req.language,
+        pages=["A calm adventure with friendly animals in a colorful peaceful garden."]*8
+    ))
+    key="generation-"+uuid.uuid4().hex
+    body={"name":"Alex","age":7,"language":"en","idea":"Help a little star find a hidden garden"}
+    unauth=client.get("/api/books/generation-requests/"+key)
+    assert unauth.status_code==401
+    assert client.get("/api/books/generation-requests/"+key,headers=headers(b)).status_code==404
+    created=client.post("/api/books/generate",headers={**headers(a),"Idempotency-Key":key},json=body)
+    assert created.status_code==201,created.text
+    completed=client.get("/api/books/generation-requests/"+key,headers=headers(a))
+    assert completed.status_code==200
+    assert completed.json()=={"status":"completed","book_id":created.json()["id"]}
+    assert completed.headers["Cache-Control"]=="private, no-store"
+    assert client.get("/api/books/generation-requests/"+key,headers=headers(b)).status_code==404
+    assert client.delete("/api/books/"+created.json()["id"],headers=headers(a)).status_code==204
+    deleted=client.get("/api/books/generation-requests/"+key,headers=headers(a))
+    assert deleted.status_code==200 and deleted.json()=={"status":"unavailable","book_id":None}
+
+
+def test_uncertain_old_ai_generation_is_not_automatically_retried(monkeypatch):
+    import hashlib
+    import uuid
+    from datetime import datetime, timedelta, timezone
+    email="ai-stale-"+uuid.uuid4().hex+"@example.com"
+    token=signup(email)
+    key="stale-"+uuid.uuid4().hex
+    data=secure_main.GenerateStoryInput(
+        name="Alex",age=6,language="en",
+        idea="The adventure starts in a gentle magical forest"
+    )
+    with secure_main.connection() as c:
+        owner=secure_main.sql(c,"SELECT id FROM parents WHERE email=?",(email,)).fetchone()[0]
+        digest=hashlib.sha256(data.model_dump_json().encode()).hexdigest()
+        created=(datetime.now(timezone.utc)-timedelta(minutes=10)).isoformat()
+        secure_main.sql(c,"INSERT INTO ai_idempotency(owner_id,request_key,payload_digest,book_id,created_at) VALUES(?,?,?,NULL,?)",(owner,key,digest,created))
+        c.commit()
+    state=client.get("/api/books/generation-requests/"+key,headers=headers(token))
+    assert state.status_code==200 and state.json()["status"]=="needs_review"
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    monkeypatch.setenv("OPENAI_API_KEY","fake-no-network")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setattr(secure_main,"generate_story",lambda _data: (_ for _ in ()).throw(AssertionError("Must not call model")))
+    retried=client.post("/api/books/generate",headers={**headers(token),"Idempotency-Key":key},json=data.model_dump())
+    assert retried.status_code==409
+    assert client.get("/api/billing/status",headers=headers(token)).json()["ai_used_today"]==0
+
+
+def test_full_library_does_not_leave_stuck_ai_idempotency_marker(monkeypatch):
+    import uuid
+    email="ai-full-library-"+uuid.uuid4().hex+"@example.com"
+    token=signup(email)
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    monkeypatch.setenv("OPENAI_API_KEY","fake-no-network")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("MAX_AI_STORIES_PER_DAY","200")
+    monkeypatch.setattr(secure_main,"MAX_BOOKS_PER_PARENT",0)
+    monkeypatch.setattr(secure_main,"generate_story",lambda _data: (_ for _ in ()).throw(AssertionError("Must not call model")))
+    key="library-full-"+uuid.uuid4().hex
+    data={"name":"Alex","age":6,"language":"en","idea":"A little fox visits a friendly magical forest"}
+    response=client.post("/api/books/generate",headers={**headers(token),"Idempotency-Key":key},json=data)
+    assert response.status_code==409
+    assert client.get("/api/books/generation-requests/"+key,headers=headers(token)).status_code==404
+    assert client.get("/api/billing/status",headers=headers(token)).json()["ai_used_today"]==0
