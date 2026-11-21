@@ -81,7 +81,7 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
   return <div className="wt-character-hotspot-layer" ref={ref}>
     {point&&<button
       type="button"
-      className="wt-character-hotspot"
+      className={"wt-character-hotspot"+(visibleReaction?" is-reacting":"")}
       style={{left:point.left,top:point.top}}
       aria-label={reaction.label[lang]}
       title={reaction.label[lang]}
