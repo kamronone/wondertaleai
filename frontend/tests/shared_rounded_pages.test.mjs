@@ -36,3 +36,11 @@ test("library uses one rounded panel without the extra white strip",()=>{
  assert.match(css,/main > \.library-page\.library-concept-two\{[^}]*max-width:100%/s);
  assert.match(css,/border-radius:29px 29px 0 0!important/);
 });
+
+test("dark header actually shows behind the rounded library corners",()=>{
+ const patch=css.slice(css.lastIndexOf("/* iPhone visual fix:"));
+ assert.match(patch,/\.shell:has\(> main > \.library-page\.library-concept-two\)\{/);
+ assert.match(patch,/background:linear-gradient\(to bottom,#201849 0,#201849 110px,#f9efff 110px,#f9efff 100%\)!important/);
+ assert.match(patch,/main:has\(> \.library-page\.library-concept-two\)\{[^}]*background:#f9efff!important/s);
+ assert.match(patch,/border-radius:29px 29px 0 0!important/);
+});
