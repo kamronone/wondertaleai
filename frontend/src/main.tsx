@@ -1241,8 +1241,8 @@ function App(){
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div key={active.id+":"+page+":image"} className="story-page-image reader-turn-image">{active.mode==="private-account"&&privateToken&&API
           ?<PrivateReaderIllustration api={API} session={privateToken} bookId={active.id} pageNumber={page+1}
              alt={t.illustration+" "+(page+1)}
-             fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}/>
-          :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}
+             fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth/>}/>
+          :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth/>}
 </div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
         {isDemoBook(active)&&<div className="story-edit-zone">
@@ -1305,7 +1305,7 @@ function App(){
     </footer>
   </div>;
 }
-function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boolean}){
+function StoryIllustration({url,alt,lazy=false,readerFullWidth=false}:{url:string;alt:string;lazy?:boolean;readerFullWidth?:boolean}){
  const [failed,setFailed]=useState(0);
  const originalSrc=bookImage(url);
  const offlineFallback=classicPngFallback(originalSrc);
@@ -1321,7 +1321,18 @@ function StoryIllustration({url,alt,lazy=false}:{url:string;alt:string;lazy?:boo
    <path d="M320 275 V355" stroke="#7757aa" strokeWidth="9"/>
    <g fill="#fff8dc"><circle cx="108" cy="95" r="7"/><circle cx="175" cy="150" r="5"/><circle cx="360" cy="77" r="6"/><circle cx="565" cy="185" r="5"/></g>
  </svg>;
- return <img src={src} alt={alt} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(value=>value+1)}/>;
+ return <img src={src} alt={alt} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} ref={readerFullWidth?node=>{
+   if(!node)return;
+   // Inline important rules override legacy mobile book styles from the PWA.
+   node.style.setProperty("display","block","important");
+   node.style.setProperty("width","100%","important");
+   node.style.setProperty("max-width","100%","important");
+   node.style.setProperty("height","auto","important");
+   node.style.setProperty("max-height","none","important");
+   node.style.setProperty("aspect-ratio","auto","important");
+   node.style.setProperty("object-fit","contain","important");
+   node.style.setProperty("margin","0 auto","important");
+ }:undefined} onError={()=>setFailed(value=>value+1)}/>;
 }
 function ClassicTile({item,lang,onPick,action}:{item:Classic;lang:Lang;onPick:()=>void;action:string}){
  const [coverFailed,setCoverFailed]=useState(false);
