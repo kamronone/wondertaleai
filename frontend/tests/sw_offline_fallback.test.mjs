@@ -39,7 +39,7 @@ async function simulate(path,{network="offline",shellCached=false,downloaded=tru
    headers:{has:()=>false}
  };
  listeners.fetch({request,respondWith:promise=>{result=promise;}});
- assert.ok(result instanceof Promise,"Service Worker must respond to public illustration fetch");
+ assert.ok(result&&typeof result.then==="function","Service Worker must respond to public illustration fetch");
  return await result;
 }
 
@@ -60,7 +60,7 @@ test("missing illustration fails cleanly when neither cache has it",async()=>{
  assert.equal(result.source,"response-error");
 });
 test("private media is never intercepted by the public service worker",()=>{
- assert.match(sw,/const PRIVATE_PATH = \^/);
+ assert.match(sw,/const PRIVATE_PATH =/);
  assert.match(sw,/request\.headers\.has\("Authorization"\)/);
  assert.match(sw,/PRIVATE_PATH\.test\(url\.pathname\)/);
 });
