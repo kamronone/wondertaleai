@@ -240,6 +240,33 @@ A manual finding **never** changes the status of an uncertain job and
 exists to help an operator decide what actually happened before any
 separately authorized remediation.
 
+## Parental consent (versioned opt-in)
+
+Migration `013_illustration_parent_consent.sql` stores an explicit, owner-scoped
+consent record. A new parent has **no consent**. Authenticated endpoints:
+`GET /api/illustrations/consent` returns current consent and policy version;
+`POST /api/illustrations/consent` accepts
+`{"agreed":true,"policy_version":"illustration-pilot-v1"}` or `agreed:false`
+to revoke it. A different policy revision is rejected, and upgrading the
+policy requires a fresh explicit grant.
+
+Creating illustration jobs requires **both** the existing feature/pilot
+allowlist and current parental consent. A worker rechecks current consent
+before claiming a job, before the potentially paid provider call, and before
+committing the image to the private database.
+
+Revocation atomically deletes **queued** illustration jobs and quarantines
+`processing` jobs as `needs_review`. Jobs already sent to an external
+provider cannot be cancelled reliably, and their usage must still be
+reconciled manually; no automatic retry/refund occurs. Previously saved
+images are **not deleted merely by revoking future generation consent**.
+They remain private and are deleted with their book or parent account.
+
+This API alone is **not a compliant parental-consent UX**. The user-facing
+product still needs a clear, localized explanation of generation, retention,
+cost and external processors, a visible agreement control, age-appropriate
+notices and legally reviewed terms before any real child-facing pilot.
+
 ## Release blockers
 
 1. Review the parental agreement and data-processing obligations for minors.
