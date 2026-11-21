@@ -13,7 +13,7 @@ test("reader PNG and GIF open in a portal without navigation",()=>{
  assert.match(main,/className="wt-reader-image-open"/);
  assert.match(main,/className="wt-reader-image-lightbox-img"/);
  assert.match(main,/src=\{src\} alt=\{alt\} className="wt-reader-image-lightbox-img"/);
- assert.match(main,/onClick=\{\(\)=>\{setZoomScale\(1\);setZoomOpen\(true\);\}\}/);
+ assert.match(main,/onClick=\{\(\)=>\{setZoomScale\(1\);setZoomPan\(\{x:0,y:0\}\);setZoomOpen\(true\);\}\}/);
  assert.match(main,/event\.key==="Escape"/);
  assert.match(main,/event\.key==="Tab"/);
  assert.match(main,/onTouchEnd=\{event=>event\.stopPropagation\(\)\}/);
