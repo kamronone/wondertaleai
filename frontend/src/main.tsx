@@ -1196,12 +1196,6 @@ function App(){
           {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><StoryIllustration url={item.image_url} alt={t.illustration+" "+(index+1)}/><p>{item.text}</p></section>)}
         </article>}
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span className="pager-indicators" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length}><span className="pager-mobile-current" aria-live="polite">{page+1} / {active.pages.length}</span>{active.pages.length<=7?active.pages.map((_,i)=><button type="button" key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)} aria-current={i===page?"page":undefined}/>):<><button type="button" className="pager-jump" disabled={page===0} onClick={()=>setPage(0)} aria-label={t.page+" 1"}>1</button><span className="pager-current" aria-live="polite">{page+1} / {active.pages.length}</span><button type="button" className="pager-jump" disabled={page===active.pages.length-1} onClick={()=>setPage(active.pages.length-1)} aria-label={t.page+" "+active.pages.length}>{active.pages.length}</button></>}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
-        {active.pages.length>=8&&<div className="reader-page-jump">
-          <label htmlFor="reader-page-jump-select">{({ru:"Быстрый переход",uz:"Sahifaga o'tish",en:"Jump to page"} as const)[lang]}</label>
-          <select id="reader-page-jump-select" value={page} onChange={event=>setPage(Number(event.target.value))} aria-label={({ru:"Перейти к странице",uz:"Sahifani tanlash",en:"Choose a page"} as const)[lang]}>
-            {active.pages.map((_,index)=><option key={index} value={index}>{t.page} {index+1} / {active.pages.length}</option>)}
-          </select>
-        </div>}
       </section>}
       {tab==="home"&&<section className="install-panel compact-install">
         <div className="install-icon"><img src="/icons/icon-192.png" alt="WonderTale AI"/></div>
