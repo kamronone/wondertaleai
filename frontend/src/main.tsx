@@ -23,6 +23,7 @@ import "./reader-page-turn.css";
 import "./reader-image-fullwidth.css";
 import "./reader-living-art.css";
 import "./reader-image-lightbox.css";
+import { readerZoomLabels } from "./reader_zoom_labels";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
 import {enqueueAiJob} from "./ai_jobs";
@@ -1336,6 +1337,7 @@ function App(){
   </div>;
 }
 function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl=null}:{url:string;alt:string;lazy?:boolean;readerFullWidth?:boolean;animatedUrl?:string|null}){
+ const zoomCopy=readerZoomLabels(document.documentElement.lang);
  const [failed,setFailed]=useState(0);
  const [zoomOpen,setZoomOpen]=useState(false);
  const [zoomScale,setZoomScale]=useState(1);
@@ -1382,22 +1384,22 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
  const image=<img src={src} alt={alt} className={(readerFullWidth?"wt-reader-picture ":"")+(animatedUrl&&failed===0?"wt-character-gif":"")} loading={lazy?"lazy":"eager"} decoding="async" fetchPriority={lazy?"low":"auto"} onError={()=>setFailed(value=>value+1)}/>;
  if(!readerFullWidth)return image;
  return <>
-   <button type="button" ref={openButtonRef} className="wt-reader-image-open" onClick={()=>{setZoomScale(1);setZoomOpen(true);}} aria-label={"Увеличить: "+alt} title="Увеличить иллюстрацию">
+   <button type="button" ref={openButtonRef} className="wt-reader-image-open" onClick={()=>{setZoomScale(1);setZoomOpen(true);}} aria-label={zoomCopy.open+": "+alt} title={zoomCopy.open}>
      {image}
      <span className="wt-reader-image-magnifier" aria-hidden="true"><ZoomIn size={17}/></span>
    </button>
    {zoomOpen&&createPortal(
      <div className="wt-reader-image-lightbox" role="dialog" aria-modal="true" aria-label={alt} onClick={event=>{event.stopPropagation();setZoomOpen(false);}} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
        <div className="wt-reader-image-lightbox-toolbar">
-         <button type="button" ref={closeButtonRef} className="wt-reader-lightbox-close" onClick={()=>setZoomOpen(false)} aria-label="Закрыть увеличенное изображение"><X size={24}/></button>
+         <button type="button" ref={closeButtonRef} className="wt-reader-lightbox-close" onClick={()=>setZoomOpen(false)} aria-label={zoomCopy.close}><X size={24}/></button>
        </div>
        <div className="wt-reader-image-lightbox-scroll" onClick={event=>event.stopPropagation()}>
          <img src={src} alt={alt} className="wt-reader-image-lightbox-img" style={{transform:"scale("+zoomScale+")"}} onError={()=>setFailed(value=>value+1)}/>
        </div>
        <div className="wt-reader-lightbox-zoom" onClick={event=>event.stopPropagation()}>
-         <button type="button" onClick={()=>setZoomScale(value=>Math.max(1,Number((value-.25).toFixed(2))))} disabled={zoomScale<=1} aria-label="Уменьшить изображение"><ZoomOut size={21}/></button>
+         <button type="button" onClick={()=>setZoomScale(value=>Math.max(1,Number((value-.25).toFixed(2))))} disabled={zoomScale<=1} aria-label={zoomCopy.decrease}><ZoomOut size={21}/></button>
          <span aria-live="polite">{Math.round(zoomScale*100)}%</span>
-         <button type="button" onClick={()=>setZoomScale(value=>Math.min(3,Number((value+.25).toFixed(2))))} disabled={zoomScale>=3} aria-label="Увеличить изображение"><ZoomIn size={21}/></button>
+         <button type="button" onClick={()=>setZoomScale(value=>Math.min(3,Number((value+.25).toFixed(2))))} disabled={zoomScale>=3} aria-label={zoomCopy.increase}><ZoomIn size={21}/></button>
        </div>
      </div>,
      document.body
