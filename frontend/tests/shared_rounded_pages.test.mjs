@@ -28,3 +28,11 @@ test("rounded page surface does not clip scroll or rewrite fixed tabbar",()=>{
  assert.doesNotMatch(css,/\.mobile-tabbar\s*\{/);
  assert.match(css,/Leave the existing safe-area/);
 });
+
+test("library uses one rounded panel without the extra white strip",()=>{
+ assert.match(css,/main:has\(> \.library-page\.library-concept-two\)\{/);
+ assert.match(css,/main:has\(> \.library-page\.library-concept-two\)\{[^}]*padding-top:0!important/s);
+ assert.match(css,/main:has\(> \.library-page\.library-concept-two\)\{[^}]*background:#f9efff/s);
+ assert.match(css,/main > \.library-page\.library-concept-two\{[^}]*max-width:100%/s);
+ assert.match(css,/border-radius:29px 29px 0 0!important/);
+});
