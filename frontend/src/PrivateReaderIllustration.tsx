@@ -124,7 +124,7 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
       <button type="button" className="wt-reader-image-open" ref={openRef} onClick={()=>{setZoomScale(1);setZoomPan({x:0,y:0});setZoomOpen(true);}} aria-label={zoomCopy.open+": "+alt}>
         <img src={image.blobUrl} alt={alt} decoding="async" className="private-reader-illustration wt-reader-picture"
           onError={()=>{setZoomOpen(false);setImage(null);}}/>
-        <span className="wt-reader-image-magnifier" aria-hidden="true"><ZoomIn size={17}/></span>
+        
       </button>
       {zoomOpen&&createPortal(
         <div className="wt-reader-image-lightbox" role="dialog" aria-modal="true" aria-label={alt}
