@@ -462,3 +462,50 @@
 @media(prefers-reduced-motion:reduce){
   .create-reference-page *{scroll-behavior:auto!important}
 }
+
+/* Match the approved mockup: the whole creation screen rises from the dark
+   header as a single light panel with rounded upper corners. */
+.shell:has(> main > .create-page.create-reference-page) > main{
+  box-sizing:border-box;
+  padding:0 0 100px!important;
+  margin:0 auto;
+  min-width:0;
+  overflow:visible;
+}
+.shell > main > .create-page.create-reference-page{
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  margin:0 auto;
+  padding:19px 23px 22px;
+  border-radius:32px 32px 0 0;
+  background:linear-gradient(155deg,#fcf8ff 0%,#f8efff 52%,#f5ecff 100%);
+}
+.shell:has(> main > .create-page.create-reference-page){
+  background:linear-gradient(180deg,#261344 0,#261344 116px,#f7efff 116px,#f7efff 100%);
+}
+@media(max-width:620px){
+  .shell:has(> main > .create-page.create-reference-page) > main{
+    padding:0 0 95px!important;
+  }
+  .shell > main > .create-page.create-reference-page{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:12px 13px 20px!important;
+    border-radius:29px 29px 0 0!important;
+    overflow:visible;
+  }
+  .create-reference-page .back-button{
+    min-height:37px;
+    margin:0 0 8px;
+    padding:6px 7px;
+  }
+}
+@media(max-width:360px){
+  .shell > main > .create-page.create-reference-page{
+    border-radius:24px 24px 0 0!important;
+    padding-left:11px!important;
+    padding-right:11px!important;
+  }
+}
