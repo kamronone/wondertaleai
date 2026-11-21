@@ -1,5 +1,5 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v11";
+const CACHE = "wondertale-public-v12";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 // Public, bundled artwork only. Each asset is optional so offline installation
 // still succeeds when an image is missing or a connection is unreliable.
@@ -62,6 +62,26 @@ self.addEventListener("fetch", event => {
         return (await cache.match("/index.html")) || Response.error();
       })
     );
+    return;
+  }
+
+  // Animated character GIFs are public book art, not user media.
+  // Fetch the latest version; allow offline playback only from a valid cached GIF.
+  if (/^\/images\/classics\/[a-z0-9-]+\/animations\/[a-z0-9-]+\.gif$/.test(url.pathname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const response = await fetch(request);
+        const type = response.headers.get("content-type") || "";
+        if (response.ok && response.type === "basic" && /image\/gif/i.test(type)) {
+          await cache.put(request, response.clone()).catch(() => {});
+          return response;
+        }
+        return (await cache.match(request)) || response;
+      } catch {
+        return (await cache.match(request)) || Response.error();
+      }
+    })());
     return;
   }
 
