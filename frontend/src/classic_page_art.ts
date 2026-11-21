@@ -7,6 +7,7 @@ import { uglyDucklingPageArtwork } from "./ugly_duckling_page_art";
 import { bremenPageArtwork } from "./bremen_page_art";
 import { hanselGretelPageArtwork } from "./hansel_gretel_page_art";
 import { rapunzelPageArtwork } from "./rapunzel_page_art";
+import { sleepingBeautyPageArtwork } from "./sleeping_beauty_page_art";
 
 /**
  * Offline, page-specific illustrations for the 30 built-in classics.
@@ -58,6 +59,7 @@ export function classicPageArtwork(classicId:string,pageIndex:number):string {
  if(classicId==="bremen")return bremenPageArtwork(pageIndex);
  if(classicId==="hansel-gretel")return hanselGretelPageArtwork(pageIndex);
  if(classicId==="rapunzel")return rapunzelPageArtwork(pageIndex);
+ if(classicId==="sleeping-beauty")return sleepingBeautyPageArtwork(pageIndex);
  const item=classics.find(x=>x.id===classicId);
  if(!item)return "";
  const page=Math.max(0,Math.min(29,Math.trunc(Number.isFinite(pageIndex)?pageIndex:0)));
