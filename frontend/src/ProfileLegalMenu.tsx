@@ -40,8 +40,8 @@ export function ProfileLegalMenu({lang,onOpen}:{lang:Lang;onOpen:(document:Legal
   const t=copy[lang];
   return <section className="profile-legal-menu" aria-labelledby="profile-legal-title">
     <div className="profile-legal-heading">
-      <h3 id="profile-legal-title">{t.heading}</h3>
-      <p>{t.description}</p>
+      <span className="profile-legal-heading-icon"><ShieldCheck size={23} aria-hidden="true"/></span>
+      <div><h3 id="profile-legal-title">{t.heading}</h3><p>{t.description}</p></div>
     </div>
     <nav className="profile-legal-links" aria-label={t.heading}>
       {documents.map(({id,Icon})=><button type="button" key={id} onClick={()=>onOpen(id)}>
