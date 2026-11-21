@@ -4,11 +4,14 @@ import {readFileSync} from "node:fs";
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/reader-polish.css",import.meta.url),"utf8");
 
-test("library achievements are optional rather than dominating the library viewport",()=>{
- assert.match(app,/<details className="library-achievements-disclosure">/);
+test("library achievements are optional and expand below the compact metrics",()=>{
+ assert.match(app,/className="library-achievements-toggle"/);
+ assert.match(app,/aria-expanded=\{showLibraryAchievements\}/);
+ assert.match(app,/\{showLibraryAchievements&&<div className="library-achievements-panel"/);
  assert.match(app,/<section className="reading-achievements"/);
  assert.doesNotMatch(app,/<details className="library-achievements-disclosure" open/);
- assert.match(css,/\.library-page \.library-achievements-disclosure>summary/);
+ const layout=readFileSync(new URL("../src/shared-rounded-pages.css",import.meta.url),"utf8");
+ assert.match(layout,/\.library-page\.library-concept-two>\.library-achievements-panel\{/);
 });
 
 test("continue reading reuses the current account library and existing openBook path",()=>{
