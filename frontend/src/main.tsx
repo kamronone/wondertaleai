@@ -10,6 +10,7 @@ import "./library-concept-two.css";
 import "./library-mobile-fixes.css";
 import "./library-final-polish.css";
 import "./library-exact-reference.css";
+import "./library-screenshot-fixes.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -1024,7 +1025,7 @@ function App(){
           </label>
           <div className="library-filters library-concept-chips" role="group" aria-label={t.library}>
             <button type="button" aria-pressed={libraryShelf==="all"} className={libraryShelf==="all"?"active":""} onClick={()=>changeLibraryShelf("all")}><Library size={15}/>{({ru:"Все",uz:"Barchasi",en:"All"} as const)[lang]}</button>
-            <button type="button" aria-pressed={favoritesOnly} className={libraryShelf==="favorites"?"active":""} onClick={()=>changeLibraryShelf("favorites")}><Heart size={15}/>{t.favorites}</button>
+            <button type="button" aria-pressed={favoritesOnly} className={libraryShelf==="favorites"?"active":""} title={t.favorites} onClick={()=>changeLibraryShelf("favorites")}><Heart size={15}/>{({ru:"Избранное",uz:"Sevimlilar",en:"Favorites"} as const)[lang]}</button>
             <button type="button" aria-pressed={libraryShelf==="saved"} className={libraryShelf==="saved"?"active":""} onClick={()=>changeLibraryShelf("saved")}><Download size={15}/>{({ru:"На устройстве",uz:"Yuklangan",en:"On device"} as const)[lang]}</button>
             <button type="button" aria-pressed={libraryShelf==="recent"} className={libraryShelf==="recent"?"active":""} onClick={()=>changeLibraryShelf("recent")}><PlayCircle size={15}/>{({ru:"Недавние",uz:"So\u0027nggi",en:"Recent"} as const)[lang]}</button>
           </div>
