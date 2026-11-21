@@ -125,7 +125,16 @@
   pointer-events: none;
 }
 
-.profile-concept-three .parent-account-castle svg { width: 100%; height: 100%; }
+.profile-concept-three .parent-account-castle img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 28%), linear-gradient(0deg, transparent 0%, black 18%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, black 28%);
+}
 
 /* The demo state is a readable expandable status card, not a fake toggle. */
 .profile-concept-three .parent-account-unavailable {
