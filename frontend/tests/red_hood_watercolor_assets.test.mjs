@@ -29,6 +29,6 @@ test("reader uses a versioned built-in path and preserves user-provided images",
   assert.match(reader,/classicReaderImage\(isDemoBook\(active as DemoBook\)/);
 });
 test("print version uses correct page-specific illustration too",()=>{
-  assert.match(reader,/print-book-cover[^\n]*redHoodReaderImage/);
+  assert.match(reader,/print-book-cover[^\n]*classicReaderImage/);
   assert.match(reader,/classicReaderImage\(isDemoBook\(active as DemoBook\)\?\(active as DemoBook\)\.classicId:undefined,item\.image_url,index\)/);
 });
