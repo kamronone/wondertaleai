@@ -66,6 +66,6 @@ export function classicReaderImage(classicId:string|undefined,imageUrl:string,pa
 
 /** When a bundled PNG has not yet been installed, use the deterministic local art. */
 export function classicPngFallback(url:string):string|null {
- const match=/^\\/images\\/classics\\/([a-z0-9-]+)\\/pages\\/page-([1-8])\\.png$/.exec(url);
+ const match = /^\/images\/classics\/([a-z0-9-]+)\/pages\/page-([1-8])\.png$/.exec(url);
  return match&&ids.has(match[1])?classicPageArtwork(match[1],Number(match[2])-1):null;
 }
