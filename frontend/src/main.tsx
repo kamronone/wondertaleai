@@ -15,6 +15,7 @@ import "./create-reference.css";
 import "./create-step-two.css";
 import "./create-step-one-button.css";
 import "./shared-rounded-pages.css";
+import "./reader-book-variants.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -224,8 +225,11 @@ function App(){
   const [readerWarmMode,setReaderWarmMode]=useState(()=>{
     try{return localStorage.getItem("wondertale_reader_warm_mode")==="true";}catch{return false;}
   });
-  const [readerBookStyle,setReaderBookStyle]=useState<"storybook"|"simple">(()=>{
-    try{return localStorage.getItem("wondertale_reader_book_style")==="simple"?"simple":"storybook";}catch{return "storybook";}
+  const [readerBookStyle,setReaderBookStyle]=useState<"storybook"|"classic"|"spread"|"simple">(()=>{
+    try{
+      const saved=localStorage.getItem("wondertale_reader_book_style");
+      return saved==="simple"||saved==="classic"||saved==="spread"?saved:"storybook";
+    }catch{return "storybook";}
   });
   const [readerFocusMode,setReaderFocusMode]=useState(false);
   const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
@@ -1124,11 +1128,17 @@ function App(){
           <div className="reader-font-controls">
             {(["small","normal","large"] as const).map((size,index)=><button key={size} type="button" className={readerFontScale===size?"active":""} aria-pressed={readerFontScale===size} aria-label={({ru:["Мелкий текст","Обычный текст","Крупный текст"],uz:["Kiçik matn","Oddiy matn","Katta matn"],en:["Small text","Normal text","Large text"]} as const)[lang][index]} onClick={()=>setReaderFontScale(size)}>A<span aria-hidden="true">{index===0?"−":index===2?"+":""}</span></button>)}
           </div>
-          <div className="reader-book-style" role="group" aria-label={({ru:"Оформление страниц",uz:"Sahifa bezagi",en:"Page appearance"} as const)[lang]}>
-            <span>{({ru:"Оформление",uz:"Bezak",en:"Appearance"} as const)[lang]}</span>
-            <button type="button" aria-pressed={readerBookStyle==="storybook"} onClick={()=>setReaderBookStyle("storybook")}>{({ru:"Сказочная книга",uz:"Ertak kitobi",en:"Storybook"} as const)[lang]}</button>
-            <button type="button" aria-pressed={readerBookStyle==="simple"} onClick={()=>setReaderBookStyle("simple")}>{({ru:"Без украшений",uz:"Oddiy",en:"Minimal"} as const)[lang]}</button>
-          </div>
+          <fieldset className="reader-book-variants" aria-label={({ru:"Выбор оформления книги",uz:"Kitob ko'rinishini tanlash",en:"Choose book layout"} as const)[lang]}>
+            <legend>{({ru:"Вид книги",uz:"Kitob ko'rinishi",en:"Book layout"} as const)[lang]}</legend>
+            <div className="reader-book-variant-grid">
+              {(["spread","classic","storybook","simple"] as const).map((variant,index)=><button type="button" key={variant} className={"reader-book-variant"+(readerBookStyle===variant?" selected":"")} aria-pressed={readerBookStyle===variant} onClick={()=>setReaderBookStyle(variant)}>
+                <span className={"reader-variant-preview reader-variant-preview-"+variant} aria-hidden="true"><i/><i/><i/></span>
+                <strong>{({ru:["Разворот","Классическая","Современная","Без украшений"],uz:["Kitob yoyilmasi","Klassik kitob","Zamonaviy","Oddiy"],en:["Open book","Classic","Modern","Minimal"]} as const)[lang][index]}</strong>
+                {readerBookStyle===variant&&<CheckCircle2 size={15} className="reader-book-selected-icon" aria-hidden="true"/>}
+              </button>)}
+            </div>
+            <small>{({ru:"Оформление меняется сразу. Текст и прогресс чтения сохраняются.",uz:"Ko'rinish darhol o'zgaradi. Matn va o'qish davomiyligi saqlanadi.",en:"Appearance changes instantly. Text and reading progress stay the same."} as const)[lang]}</small>
+          </fieldset>
           <button type="button" className={"reader-warm-toggle"+(readerWarmMode&&!readerNightMode?" active":"")} aria-pressed={readerWarmMode&&!readerNightMode} onClick={()=>{setReaderWarmMode(value=>!value);setReaderNightMode(false);}}><BookOpen size={15}/>{({ru:"Тёплый фон",uz:"Iliq fon",en:"Warm background"} as const)[lang]}</button>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>{setReaderNightMode(v=>!v);setReaderWarmMode(false);}}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>}
