@@ -437,7 +437,44 @@ function snowWhiteStory(name:string,language:Lang):Story {
  const title=({ru:`${name} и Белоснежка`,uz:`${name} va Oppog'oy`,en:`${name} and Snow White`} as const)[language];
  return {title,pages:pages[language]};
 }
+function uglyDucklingStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `В тёплом гнезде возле пруда вылупился необычный серый утёнок. ${name} заметил, что он немного отличается от жёлтых братьев, и ласково пожелал ему доброго утра.`,
+   `Утята отправились плавать по пруду. Серому малышу сначала было трудно, но ${name} поддерживал его с берега, а мама-утка показала безопасную дорожку между камышами.`,
+   `Некоторые птицы не понимали, почему утёнок выглядит иначе. Он загрустил и пошёл по лесной тропинке. ${name} напомнил ему, что каждый заслуживает доброты.`,
+   `Наступила холодная зима. ${name} нашёл для утёнка защищённое место у тёплого сарая и приносил корм. Друзья мечтали о весне и новых встречах.`,
+   `Весной снег растаял, а над озером появились прекрасные белые лебеди. Серый утёнок с удивлением наблюдал за ними. ${name} предложил подойти ближе и поздороваться.`,
+   `Утёнок посмотрел на своё отражение в чистой воде и увидел, что вырос в красивого белого лебедя! ${name} радостно улыбнулся: всё это время его друг менялся и рос.`,
+   `Лебеди приветливо приняли нового друга и пригласили его плавать вместе. ${name} наблюдал с берега, как они дружно скользят по воде и машут крыльями.`,
+   `В солнечный день молодой лебедь расправил большие белые крылья. Он поблагодарил ${name} за поддержку и понял, что настоящая красота начинается с доброты и принятия себя.`
+  ],
+  uz:[
+   `Ko'l yonidagi issiq uyada noodatiy kulrang o'rdakcha tuxumdan chiqdi. ${name} uning sariq jo'jalardan biroz farq qilishini payqab, mehr bilan salom berdi.`,
+   `O'rdakchalar ko'lda suzishga chiqishdi. Kulrang kichkintoy avval qiynaldi, ammo ${name} uni qirg'oqdan qo'llab-quvvatladi, ona o'rdak esa qamishlar orasidan xavfsiz yo'lni ko'rsatdi.`,
+   `Ba'zi qushlar o'rdakchaning nega boshqacha ko'rinishini tushunishmadi. U xafa bo'lib, o'rmon so'qmog'i bo'ylab ketdi. ${name} har kim mehrga loyiq ekanini eslatdi.`,
+   `Sovuq qish keldi. ${name} o'rdakchaga iliq ombor yonida pana joy topdi va unga yem olib keldi. Do'stlar bahorni intizorlik bilan kutishdi.`,
+   `Bahorda qor eridi, ko'lda chiroyli oqqushlar paydo bo'ldi. Kulrang o'rdakcha ularni hayrat bilan kuzatdi. ${name} ularga yaqinlashib, salom berishni taklif qildi.`,
+   `O'rdakcha tiniq suvdagi aksiga qarab, o'zi ham go'zal oqqushga aylanganini ko'rdi! ${name} quvonib jilmaydi: do'sti shu vaqt davomida o'sib, o'zgargan edi.`,
+   `Oqqushlar yangi do'stlarini iliq kutib olib, birga suzishga taklif qilishdi. ${name} ularning suvda qanot qoqib, ahil suzishini qirg'oqdan kuzatdi.`,
+   `Quyoshli kunda yosh oqqush katta oq qanotlarini yoydi. U ${name}ga yordami uchun rahmat aytdi va haqiqiy go'zallik mehr hamda o'zini qabul qilishdan boshlanishini tushundi.`
+  ],
+  en:[
+   `A very unusual gray duckling hatched in a warm nest beside the pond. ${name} noticed that the little one looked different from the yellow ducklings and gave him a kind welcome.`,
+   `The ducklings went swimming. The gray duckling was nervous at first, but ${name} encouraged him from the bank while Mother Duck showed the safest way through the reeds.`,
+   `Some birds did not understand why the duckling looked different. He felt sad and wandered down a forest path. ${name} reminded him that everyone deserves kindness.`,
+   `Winter came, bringing snow and cold winds. ${name} found a sheltered spot near a warm barn and brought food for the duckling. Together they hoped for spring.`,
+   `In spring the snow melted, and graceful white swans appeared on the lake. The duckling watched them with wonder. ${name} suggested swimming closer to say hello.`,
+   `When the duckling looked at his reflection, he discovered he had grown into a beautiful white swan! ${name} smiled with delight at how much his friend had changed.`,
+   `The swans welcomed their new friend and invited him to swim with them. ${name} watched from the shore as they glided happily across the water.`,
+   `On a sunny day the young swan spread his magnificent wings. He thanked ${name} for always being there and learned that true beauty begins with kindness and accepting yourself.`
+  ]
+ };
+ const title=({ru:`${name} и Гадкий утёнок`,uz:`${name} va Xunuk o'rdakcha`,en:`${name} and the Ugly Duckling`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="ugly-duckling")return uglyDucklingStory(name,language);
  if(id==="snow-white")return snowWhiteStory(name,language);
  if(id==="cinderella")return cinderellaStory(name,language);
  if(id==="three-pigs")return threePigsStory(name,language);
