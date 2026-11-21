@@ -61,5 +61,11 @@ export function classicReaderImage(classicId:string|undefined,imageUrl:string,pa
  const oldRedHood=/^\/images\/classics\/red-hood\/(?:pages|watercolor)\/page-[1-8]\.png$/.test(imageUrl);
  // Data URLs may contain personalized artwork; never override them.
  if(!oldAsset&&!oldRedHood&&imageUrl.trim()!=="")return imageUrl;
- return classicPageArtwork(classicId,pageIndex)||imageUrl;
+ return `/images/classics/${classicId}/pages/page-${Math.max(1,Math.min(8,Math.trunc(pageIndex)+1))}.png`;
+}
+
+/** When a bundled PNG has not yet been installed, use the deterministic local art. */
+export function classicPngFallback(url:string):string|null {
+ const match=/^\\/images\\/classics\\/([a-z0-9-]+)\\/pages\\/page-([1-8])\\.png$/.exec(url);
+ return match&&ids.has(match[1])?classicPageArtwork(match[1],Number(match[2])-1):null;
 }
