@@ -617,7 +617,43 @@ function sleepingBeautyStory(name:string,language:Lang):Story {
  const title=({ru:`${name} и Спящая красавица`,uz:`${name} va Uyqudagi go'zal`,en:`${name} and Sleeping Beauty`} as const)[language];
  return {title,pages:pages[language]};
 }
+function pussBootsStory(name:string,language:Lang):Story{
+ const pages:Record<Lang,string[]>={
+ ru:[
+ `Младшему сыну мельника достался в наследство умный рыжий кот. ${name} встретил кота возле мельницы. Кот попросил пару крепких сапог и маленькую сумку, обещая придумать необыкновенное приключение.`,
+ `Получив сапоги и шляпу, кот важно прошёлся по двору. ${name} помог ему собрать сумку, а молодой мельник удивился, каким уверенным стал его пушистый друг.`,
+ `Кот отправился по полям и собрал корзину спелых ягод для королевского стола. ${name} помог аккуратно донести подарки до ворот, и стражники впустили их во дворец.`,
+ `Король с удовольствием принял гостинцы и расспросил кота о его хозяине. Кот назвал молодого мельника маркизом Карабасом. ${name} заметил, как легко слова могут запутать людей, и напомнил другу говорить правду.`,
+ `Однажды королевская карета проезжала мимо реки. Мельник помог путникам выбраться на сухую дорожку, а ${name} познакомил его с королём и принцессой. Все поблагодарили юношу за доброту.`,
+ `Вдали виднелся большой старый замок. Кот решил разведать дорогу к нему. ${name} пошёл рядом и помог понять, кто живёт в замке и можно ли попросить там гостеприимства.`,
+ `Владельцу замка понравились находчивость кота и вежливость его друзей. Он пригласил гостей в сад. Молодой мельник рассказал королю о своей настоящей жизни, а кот больше не стал придумывать ему титулы.`,
+ `В конце дня все встретились у замка на дружеском празднике. Мельник благодарил ${name} и кота за поддержку, а кот гордо шагал в своих новых сапогах. Друзья поняли, что ум лучше всего служит доброте и честности.`
+ ],
+ uz:[
+ `Tegirmonchining kenja o'g'liga aqlli malla mushuk meros bo'lib qoldi. ${name} uni tegirmon yonida uchratdi. Mushuk mustahkam etik va kichik xalta so'rab, ajoyib sarguzashtni va'da qildi.`,
+ `Etik va shlyapa olgan mushuk hovlida mag'rur yurdi. ${name} uning xaltasini tayyorlashga yordam berdi. Yosh tegirmonchi do'stining qanchalik dadil bo'lib qolganiga hayron bo'ldi.`,
+ `Mushuk dalaga borib, qirollik dasturxoni uchun pishgan mevalar yig'di. ${name} sovg'alarni darvozagacha olib borishga yordam berdi va soqchilar ularni saroyga kiritishdi.`,
+ `Qirol sovg'alarni mamnuniyat bilan qabul qilib, mushukning xo'jayini haqida so'radi. Mushuk tegirmonchini Karabas markizi deb tanishtirdi. ${name} do'stiga doimo rost gapirish muhimligini eslatdi.`,
+ `Bir kuni qirollik aravasi daryo yonidan o'tdi. Tegirmonchi yo'lovchilarga quruq so'qmoqni ko'rsatdi. ${name} uni qirol va malikaga tanishtirdi. Hamma yigitga yaxshiligi uchun rahmat aytdi.`,
+ `Uzoqda katta eski qasr ko'rindi. Mushuk uning oldiga borib, yo'lni bilmoqchi bo'ldi. ${name} hamroh bo'lib, qasrda kim yashashini va mehmon bo'lish mumkinligini so'rashga yordam berdi.`,
+ `Qasr egasiga mushukning topqirligi va do'stlarining odobi yoqdi. U mehmonlarni bog'ga taklif qildi. Tegirmonchi qirolga o'zining haqiqiy hayoti haqida aytdi, mushuk esa endi unvon o'ylab topmadi.`,
+ `Kun oxirida do'stlar qasr oldida bayram qilishdi. Tegirmonchi ${name} va mushukka yordamlari uchun rahmat aytdi. Mushuk esa yangi etiklarida mag'rur yurdi. Hamma aql halollik va mehr bilan ishlatilsa, foydali ekanini tushundi.`
+ ],
+ en:[
+ `A clever ginger cat was all the youngest miller's son inherited. ${name} met the cat beside the old mill. The cat asked for a sturdy pair of boots and a little bag, promising an extraordinary adventure.`,
+ `With boots and a jaunty hat, the cat marched proudly across the yard. ${name} helped pack his bag, and the young miller wondered how his furry friend had become so confident.`,
+ `The cat wandered through the fields and gathered a basket of ripe berries for the royal table. ${name} helped carry the gifts to the palace gates, where the guards welcomed them inside.`,
+ `The king gladly accepted the presents and asked about the cat's master. The cat called the young miller the Marquis of Carabas. ${name} realized that such stories could confuse people and reminded the cat to be truthful.`,
+ `One day the royal carriage passed a river. The miller helped its travelers find a dry path. ${name} introduced him to the king and princess, who thanked the kind young man.`,
+ `An enormous old castle appeared in the distance. The cat set off to explore the road. ${name} came along to discover who lived there and whether they might ask for hospitality.`,
+ `The castle's owner admired the cat's cleverness and the visitors' good manners. He welcomed them into his garden. The miller honestly told the king about his life, and the cat stopped inventing grand titles.`,
+ `Everyone gathered near the castle for a friendly celebration. The miller thanked ${name} and the cat for their support, while the cat proudly strode about in his boots. They learned that cleverness works best alongside honesty and kindness.`
+ ]};
+ const title=({ru:`${name} и Кот в сапогах`,uz:`${name} va Etik kiygan mushuk`,en:`${name} and Puss in Boots`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="puss-boots")return pussBootsStory(name,language);
  if(id==="sleeping-beauty")return sleepingBeautyStory(name,language);
  if(id==="rapunzel")return rapunzelStory(name,language);
  if(id==="hansel-gretel")return hanselGretelStory(name,language);
@@ -672,7 +708,7 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
 
 /** Legacy copies must only be updated after explicit user confirmation. */
 export function canRefreshClassicDemoStory(book:DemoBook):boolean {
- if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel","rapunzel","sleeping-beauty"].includes(book.classicId||""))return false;
+ if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel","rapunzel","sleeping-beauty","puss-boots"].includes(book.classicId||""))return false;
  if(book.pages.length!==8)return false;
  const start=book.pages[0]?.text||"";
  return start.startsWith("Однажды "+book.name+" открыл волшебную книгу.")||
