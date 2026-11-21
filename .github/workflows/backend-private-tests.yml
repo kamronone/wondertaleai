@@ -1,0 +1,110 @@
+name: WonderTale private backend tests
+
+on:
+  push:
+    branches:
+      - fix/private-book-access
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-private-tests.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-private-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secure-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile Python sources
+        run: python -m compileall -q .
+      # Separate pytest processes prevent module-level SQLite fixtures and
+      # imported secure_main globals from contaminating unrelated suites.
+      # PostgreSQL integration is intentionally separate: it needs a dedicated
+      # disposable preview database and explicit operator opt-in.
+      - name: Test AI-generated library and import idempotency (mock provider)
+        run: python -m pytest -q test_generated_book_library.py test_device_import_idempotency.py test_ai_generation.py test_ai_job_queue.py test_illustration_planning.py test_private_illustration_media.py test_openai_illustration_provider.py test_illustration_moderation.py
+        env:
+          APP_ENV: development
+          REQUIRE_EMAIL_VERIFICATION: 'false'
+          ENABLE_TEXT_AI: 'true'
+          ENABLE_REGISTRATION: 'true'
+      - name: Test owner isolation, authorization, registration and quotas
+        run: python -m pytest -q tests/test_secure_api.py
+        env:
+          APP_ENV: development
+          ENABLE_TEXT_AI: 'false'
+          REQUIRE_EMAIL_VERIFICATION: 'false'
+      - name: Test email delivery and recovery contracts (mock mail)
+        run: python -m pytest -q tests/test_email_auth.py
+        env:
+          APP_ENV: development
+          ENABLE_TEXT_AI: 'false'
+          ENABLE_REGISTRATION: 'false'
+      - name: Test AI model response contracts (mock provider)
+        run: python -m pytest -q tests/test_ai_generation.py
+        env:
+          APP_ENV: development
+          ENABLE_TEXT_AI: 'false'
+          ENABLE_REGISTRATION: 'false'
+
+  postgres-integration:
+    # Throwaway PostgreSQL service on the GitHub runner. Never use a Neon,
+    # Vercel, staging or production DATABASE_URL for this job.
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wondertale_test
+          POSTGRES_PASSWORD: temporary_ci_only_password
+          POSTGRES_DB: wondertale_preview_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wondertale_test -d wondertale_preview_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: preview
+      ALLOW_WONDERTALE_PG_INTEGRATION_TESTS: '1'
+      PG_TEST_BRANCH_NAME: wondertale-preview
+      PG_TEST_DATABASE_URL: postgresql://wondertale_test:temporary_ci_only_password@127.0.0.1:5432/wondertale_preview_test
+      # The integration module creates synthetic accounts and owns cleanup.
+      # No Resend or OpenAI credentials are provided to this job.
+      ENABLE_TEXT_AI: 'false'
+      REQUIRE_EMAIL_VERIFICATION: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt
+      - name: PostgreSQL owner-isolation and concurrency integration
+        run: python -m pytest -q tests/test_postgres_integration.py

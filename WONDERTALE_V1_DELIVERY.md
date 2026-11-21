@@ -1,0 +1,113 @@
+# WonderTale AI / Ertakcha — 1.0 delivery checklist
+
+Working branch: `fix/private-book-access`. Do not merge to main or deploy Production without a separate release decision.
+
+## Implemented in the working branch
+
+- [x] Mobile reader illustration stage shared by PNG and GIF, without clipping.
+- [x] PNG, GIF and private account photos remain inline at consistent reader size; fullscreen image enlargement was removed by user request.
+- [x] Ordinary reading swipe/touch remains; custom image zoom gestures have been removed.
+- [x] Four original animated-character GIFs on story-specific pages.
+- [x] User-selectable illustration motion and reduced-motion support.
+- [x] Compact mobile reading toolbar, controls, title and safe bottom padding (reader-mobile-v1.css).
+- [x] Optional original, synthesized forest/wind/magic ambience (no playback before a tap).
+- [x] Opt-in offline illustration download for red-hood, cinderella and three-pigs only.
+- [x] PWA offline illustration cache persists independently from app-shell updates.
+- [x] Reader navigation, saved progress, favorites and classic book modes already exist.
+
+## Not yet fully complete or verified
+
+- [ ] Netlify build branch, logs, production settings and current live assets verified with Netlify access.
+- [ ] Real iPhone Safari/PWA smoke test, including page gestures, media failures and offline relaunch.
+- [ ] Full TypeScript build and automated tests passing (Vercel build-rate-limit currently blocks validation).
+- [ ] Additional per-page character animations for every story; only four real GIFs are installed.
+- [x] Existing speech synthesis reader has user-selectable slow/normal/fast rates and optional page advance after narration.\n- [x] Browser word-boundary highlighting with Unicode-aware text slicing and graceful fallback when Safari gives no boundary event.\n- [ ] Professionally recorded narration with character-specific voices and verified continuous iPhone playback.
+- [x] Four optional story-aware interaction choices below illustrated pages, separate from image zoom.
+- [x] Accessible character-reaction hotspots on four public classic scenes, positioned using the rendered PNG/GIF's actual fitted bounds. Tapping elsewhere no longer opens an image viewer.\n- [ ] Full character-specific animated reactions (new dedicated animation frames per action), plus real-device hotspot placement and accessibility verification.
+- [x] Two local family reader preferences: extra activities and ambient sound, with storage-failure feedback.\n- [ ] Protected parental controls, parent authentication, cross-device settings and age-based content audits.
+- [ ] Complete offline packs (narration, all story images, optional sounds, media storage quota UX).
+- [x] Existing library achievements and optional story-ending branch confirmed in audit.
+- [x] Existing achievement cards now show remaining progress or an unlocked message, without streak pressure.\n- [ ] Full child-friendly rewards UX audit, visual accessibility and progression review.
+- [ ] Final accessibility, privacy, security, performance and release-readiness review.
+
+## Release gates
+
+1. Verify Netlify deploy source branch and publish a separate preview or obtain explicit release permission.
+2. Run `cd frontend && npm ci && npm test && npm run build && npm run check:images:release`.
+3. Test on real iPhone: PNG/GIF consistency, fullscreen gestures, sound toggle, and airplane-mode reopening.
+4. Audit private-account media boundaries and storage before releasing.
+5. Merge/deploy only after the preview passes and release permission is granted.
+
+## Notes
+
+The soundscape is synthesized atmosphere, not recorded character dialogue.
+Offline image downloads cover only the three classics with eight confirmed bundled PNGs each, plus optional GIFs.
+Those changes are not proof that `ertakcha.netlify.app` is running the branch.
+
+## Latest scene-interaction implementation
+
+- StorySceneInteraction uses a fixed allowlist: three-pigs pages 4/7, cinderella page 5, red-hood page 1.
+- Two clear actions are localized in RU/UZ/EN on each supported page.
+- Choices are local and optional. They never rewrite the book, request child data or overlap picture zoom.
+- Hide scene actions during focus/bedtime/night reading.
+- Per-character image-coordinate animation hotspots are not implemented yet; do not describe these choices as tap-to-animate on characters.
+
+## Image character interaction increment
+
+- `CharacterHotspot.tsx` adds one small 44px reaction button over the illustrated character on red-hood page 1, cinderella page 5 and three-pigs pages 4/7.
+- Hotspot placement computes actual `object-fit:contain` bounds from loaded public PNG/GIF, with resize and load monitoring, so letterboxing does not shift the tap point.
+- The rest of the illustration remains non-clickable, and touch events from the hotspot do not turn story pages.
+- A tapped hotspot displays a localized short response, but no distinct new per-character animation is generated by the tap. Existing GIF playback remains unchanged.
+- Reduced motion is honored. Child names, private media, account data and analytics are not used by this feature.
+
+## Family and rewards increment
+
+- `reader_family_preferences.ts` only stores two booleans on the current device. No password, server-side authorization or child-profile policy has been added.
+- Family options appear in the existing reader settings. Turning off extra activities hides both the scene choices and character hotspots; turning off sound prevents WebAudio ambience and stops existing playback.
+- The existing six reading achievements still derive their counts from the visible account library. Cards now show remaining count and unlocked status, with no daily streak or punitive copy.
+- Release requires full build/test and real-device visual verification; source changes alone do not confirm deployment.
+
+## Reader image interaction decision
+
+- As requested, tapping a picture must **not** enlarge it. Fullscreen lightbox, click-to-zoom and image zoom gestures are removed from public and private reader components.
+- In-page illustration sizing and original character GIFs are retained, and existing direct-image character hotspots continue to work.
+- Old fullscreen viewer regression tests were replaced with inline-image and protected-media checks. Site deployment and full test/build remain unverified.
+
+## November 21: narration convenience update
+
+- Three persisted browser speech synthesis rates: slow 0.75, normal 0.9, fast 1.1. Changing speed stops the current utterance so the next Listen action uses the new rate.
+- Optional, default-off setting advances one page after a **naturally completed** narration. It does not auto-speak the next page, does not turn past the last page, and is canceled when manually stopping or changing pages.
+- Browser voices depend on iOS device language packs; character-specific recorded voices and synchronized word highlighting are not implemented.
+- Source-level inspection completed; actual iPhone speech behavior and full frontend builds remain pending.
+
+## Reader speech highlighting (current branch)
+
+- Word highlighting uses the real `SpeechSynthesisUtterance.onboundary` character position, never a guessed timer.
+- No boundary event means no highlight. This is expected on some iPhone voices; narration continues normally.
+- Highlight clears on stop, error, page navigation, and natural speech completion. Screen-reader live announcements are suppressed while TTS runs.
+- Does not create character-specific speech recordings or promise guaranteed iOS per-word sync.
+
+## iOS voice selection (latest)
+
+- Existing browser TTS now offers a native voice selector inside the reader settings, filtered to the story language RU / UZ / EN.
+- Selection persists by language on this device. Voice list updates on Safari's `voiceschanged` event and when the app becomes visible.
+- If an Uzbek/Russian/English voice for the selected language is unavailable, the reader shows its existing voice-unavailable message rather than selecting an unrelated-language voice.
+- Changing voices stops current playback; no speech is started without the user's tap. Does not require network services or paid voice APIs.
+- Device-voice quality and availability vary. This does **not** provide character-specific recorded voices.
+- Full frontend test run, Netlify build and real iPhone Safari verification are still required.
+
+## Safari speech lifecycle hardening
+
+- Speech generation IDs ignore stale `onend`, `onerror`, and `onboundary` callbacks from canceled utterances. A canceled narration must never advance the book unexpectedly.
+- When the page becomes hidden or receives `pagehide` (screen lock, app switch, Safari navigation), browser speech is deliberately canceled and the Play/Pause state resets. Playback must be restarted by the reader, not promised to continue in the background.
+- Exceptions from `speechSynthesis.speak()` restore controls and show the existing localized voice-unavailable error.
+- Regression coverage: `frontend/tests/reader_safari_speech_lifecycle.test.mjs`.
+- Full frontend build and on-device Safari checks remain unverified until a successful Netlify Preview is available.
+
+## Mobile reader final spacing pass
+
+- Removed a duplicate 102px bottom padding rule from the latest mobile reader stylesheet; the fixed tabbar safe-area reservation belongs to the shell only.
+- Normalized mobile previous/next buttons as equal flexible columns around a compact page counter with >=44px tap targets and line wrapping on narrow screens.
+- Updated the character GIF control placement regression test for the current markup: animated playback controls remain below the artwork, not on top of it.
+- Added `frontend/tests/reader_mobile_final_spacing.test.mjs` for footer spacing and small-phone pagination.
+- Static source checks passed. Full project build and actual iPhone Safari screenshot comparisons are still pending and should be treated as release gates.

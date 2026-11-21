@@ -1,0 +1,40 @@
+name: WonderTale frontend checks
+
+on:
+  # GitHub-hosted runners currently fail before any job step executes.
+  # Avoid repeated billed/failed runs from iterative branch commits.
+  # Use workflow_dispatch until repository Actions access is restored.
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-checks.yml'
+  workflow_dispatch:
+
+# Keep only the newest run for this working branch while deployment limits apply.
+concurrency:
+  group: wondertale-frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test story transfer and retry
+        run: npm test
+      - name: Typecheck, orthography and production build
+        run: npm run build

@@ -1,0 +1,156 @@
+import { useEffect, useState, type FormEvent } from "react";
+import { BookOpen, CheckCircle2, CloudUpload, KeyRound, LogOut, Mail, ShieldCheck, UserRound } from "lucide-react";
+import type { Lang } from "./i18n";
+import { FamilyProfiles } from "./FamilyProfiles";
+import { ParentReadingGuide } from "./ParentReadingGuide";
+
+type Mode="login"|"register"|"forgot";
+type Props={
+ lang:Lang; api:string; session:string|null; syncedCount:number; syncBusy:boolean;
+ onLogin:(token:string)=>Promise<boolean>;onLogout:()=>void;
+ onSync:()=>Promise<void>;
+};
+const copy={
+ ru:{title:"Аккаунт родителя",subtitle:"Семейная библиотека с защищённым доступом",notReady:"Сейчас не удаётся подключиться к серверу аккаунтов. Проверьте интернет и повторите попытку. Ваши сохранённые на устройстве сказки останутся в этом браузере.",demo:"Демонстрационный режим",email:"Электронная почта",password:"Пароль (не менее 12 символов)",login:"Войти",register:"Создать аккаунт",forgot:"Забыли пароль?",sendLink:"Отправить ссылку",back:"Назад ко входу",registerInfo:"После регистрации нужно подтвердить email по ссылке из письма.",registrationSent:"Проверьте почту: ссылка для подтверждения отправлена.",forgotSent:"Если аккаунт существует, на почту отправлена ссылка.",resend:"Отправить подтверждение ещё раз",resendSent:"Если email ожидает подтверждения, ссылка отправлена повторно.",unverified:"Сначала подтвердите email. Проверьте входящие или отправьте ссылку снова.",failed:"Не удалось выполнить запрос. Проверьте данные и подключение к серверу.",welcome:"Вы вошли в семейный аккаунт",sync:"Перенести мои сохранённые демосказки",syncDescription:"Копирование запускается только по вашему нажатию. Имя ребёнка и текст выбранных книг будут переданы в приватный аккаунт. Фото не передаётся.",syncNotice:"Для переноса используйте только собственное доверенное устройство.",syncDone:"Книг на сервере",logout:"Выйти",loading:"Выполняется…",privacy:"Демоистории не синхронизируются автоматически."},
+ uz:{title:"Ota-ona akkaunti",subtitle:"Oilaviy ertaklar kutubxonasi",notReady:"Hozir akkaunt serveriga ulanib bölmayapti. Internetni tekşiring va qayta urinib köring. Qurilmada saqlangan ertaklar brauzerda qoladi.",demo:"Demo rejimi",email:"Elektron poçta",password:"Parol (kamida 12 belgi)",login:"Kiriş",register:"Akkaunt yaratiş",forgot:"Parolni unutdingizmi?",sendLink:"Havola yuboriş",back:"Kirişga qaytiş",registerInfo:"Röyxatdan ötgandan söng email manzilni xatdagi havola orqali tasdiqlang.",registrationSent:"Emailni tekşiring: tasdiqlaş havolasi yuborildi.",forgotSent:"Akkaunt mavjud bölsa, emailga havola yuboriladi.",resend:"Tasdiqlaş xatini qayta yuboriş",resendSent:"Email hali tasdiqlanmagan bölsa, havola qayta yuborildi.",unverified:"Avval emailni tasdiqlang. Poçtangizni tekşiring yoki havolani qayta yuboring.",failed:"Sörov bajarilmadi. Ma’lumotlar va serverni tekşiring.",welcome:"Oilaviy akkauntga kirdingiz",sync:"Saqlangan demo ertaklarimni köçiriş",syncDescription:"Faqat siz bosganda nusxa olinadi. Bola ismi va ertak matni şaxsiy akkauntga yuboriladi. Surat yuborilmaydi.",syncNotice:"Faqat özingizning işonçli qurilmangizdan foydalaning.",syncDone:"Serverdagi kitoblar",logout:"Çiqiş",loading:"Bajarilmoqda…",privacy:"Demo ertaklar avtomatik sinxronlanmaydi."},
+ en:{title:"Parent account",subtitle:"Your private family story library",notReady:"Cannot reach the account server right now. Check your connection and try again. Stories saved on this device remain in your browser.",demo:"Demo mode",email:"Email address",password:"Password (at least 12 characters)",login:"Sign in",register:"Create account",forgot:"Forgot password?",sendLink:"Send recovery link",back:"Back to sign in",registerInfo:"After registration, confirm your email using the link sent to your inbox.",registrationSent:"Check your email for the confirmation link.",forgotSent:"If the account exists, a recovery link has been sent.",resend:"Resend confirmation email",resendSent:"If the email awaits confirmation, another link has been sent.",unverified:"Confirm your email first. Check your inbox or request another link.",failed:"Unable to complete the request. Check your details and connection.",welcome:"You are signed in to your family account",sync:"Transfer saved demo stories",syncDescription:"Transfer happens only when you choose it. Child names and story text are copied to your private account. Photos are never sent.",syncNotice:"Only transfer from your own trusted device.",syncDone:"Books on server",logout:"Sign out",loading:"Working…",privacy:"Demo stories never sync automatically."}
+};
+export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onLogout,onSync}:Props){
+ const t=copy[lang];
+ const [mode,setMode]=useState<Mode>("login");
+ const [email,setEmail]=useState("");
+ const [password,setPassword]=useState("");
+ const [working,setWorking]=useState(false);
+ const [notice,setNotice]=useState("");
+ const [error,setError]=useState("");
+ const [unverified,setUnverified]=useState(false);
+ const [apiReady,setApiReady]=useState<boolean|null>(null);
+ const [registrationEnabled,setRegistrationEnabled]=useState(false);
+ const [recoveryEnabled,setRecoveryEnabled]=useState(false);
+ const [readinessAttempt,setReadinessAttempt]=useState(0);
+ useEffect(()=>{
+  const onOnline=()=>setReadinessAttempt(n=>n+1);
+  const onVisible=()=>{if(document.visibilityState==="visible")setReadinessAttempt(n=>n+1);};
+  window.addEventListener("online",onOnline);
+  document.addEventListener("visibilitychange",onVisible);
+  return ()=>{window.removeEventListener("online",onOnline);document.removeEventListener("visibilitychange",onVisible);};
+ },[]);
+ useEffect(()=>{
+  if(!api){setApiReady(false);return;}
+  const controller=new AbortController();
+  setApiReady(null);
+  setRegistrationEnabled(false);
+  setRecoveryEnabled(false);
+  const timeout=setTimeout(()=>controller.abort(),8000);
+  fetch(api+"/api/ready",{signal:controller.signal,cache:"no-store"})
+   .then(async response=>{
+    if(!response.ok)return false;
+    const data:unknown=await response.json();
+    if(typeof data!=="object"||data===null)return false;
+    if(!controller.signal.aborted){setRegistrationEnabled("registration_enabled" in data&&data.registration_enabled===true);setRecoveryEnabled("password_recovery_enabled" in data&&data.password_recovery_enabled===true);}
+    return "ok" in data&&data.ok===true&&"database" in data&&data.database==="connected";
+   })
+   .then(ready=>{if(!controller.signal.aborted)setApiReady(ready);})
+   .catch(()=>{if(!controller.signal.aborted)setApiReady(false);})
+   .finally(()=>clearTimeout(timeout));
+  return ()=>{clearTimeout(timeout);controller.abort();};
+ },[api,readinessAttempt]);
+
+ const submit=async(e:FormEvent)=>{
+  e.preventDefault();
+  if(!api||apiReady!==true||working||(mode==="register"&&!registrationEnabled)||(mode==="forgot"&&!recoveryEnabled))return;
+  setWorking(true);setError("");setNotice("");setUnverified(false);
+  try{
+   const endpoint=mode==="login"?"/api/auth/login":mode==="register"?"/api/auth/register":"/api/auth/forgot-password";
+   const payload=mode==="forgot"?{email}:{email,password};
+   const res=await fetch(api+endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal:AbortSignal.timeout(12000)});
+   if(!res.ok){if(mode==="login"&&res.status===403){setUnverified(true);throw Error("Unverified");}throw Error("Request failed");}
+   const data=await res.json();
+   if(mode==="login"){
+    if(typeof data.access_token!=="string"||!await onLogin(data.access_token))throw Error("Invalid session");
+    setPassword("");
+   } else if(mode==="register"){
+    // Registration may return an immediate session when email verification is disabled.
+    // When verification is enabled the API returns {status:"verification_sent"} instead.
+    if(typeof data.access_token==="string"){
+     if(!await onLogin(data.access_token))throw Error("Invalid session");
+    }else if(data.status==="verification_sent"){
+     setNotice(t.registrationSent);
+    }else{
+     throw Error("Unexpected registration response");
+    }
+    setPassword("");
+   }else{
+    if(data.status!=="if_account_exists_email_sent")throw Error("Unexpected recovery response");
+    setNotice(t.forgotSent);
+    setPassword("");
+   }
+  }catch(e){setError(e instanceof Error&&e.message==="Unverified"?t.unverified:t.failed);}finally{setWorking(false);}
+ };
+ const resend=async()=>{
+  if(!api||apiReady!==true||working||!email.trim())return;
+  setWorking(true);setError("");setNotice("");
+  try{
+   const response=await fetch(api+"/api/auth/resend-verification",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email:email.trim()}),signal:AbortSignal.timeout(12000)
+   });
+   if(!response.ok)throw Error("Delivery request rejected");
+   setNotice(t.resendSent);setUnverified(false);
+  }catch{setError(t.failed);}finally{setWorking(false);}
+ };
+ return <section className="parent-account-page">
+  <div className="parent-account-hero">
+    <div className="parent-account-hero-art"><img src="/images/profile-story-hero.png" alt={({ru:"Ребёнок и лисёнок читают волшебную книгу",uz:"Bola va tulkicha sehrli kitob oqimoqda",en:"A child and a fox reading a magical book"} as const)[lang]} width={128} height={128} loading="eager" decoding="async"/></div>
+    <div className="parent-account-hero-copy">
+      <h2>{t.title}</h2>
+      <p>WonderTale AI</p>
+      <span className="parent-account-author"><UserRound size={15} aria-hidden="true"/>{({ru:"Автор",uz:"Muallif",en:"Created by"} as const)[lang]}: Komron Giyosov</span>
+    </div>
+    <div className="parent-account-castle" aria-hidden="true"><img src="/images/profile-castle.png" width={118} height={138} alt="" decoding="async"/></div>
+  </div>
+  {(!api||apiReady===false)&&!session?<details className="parent-account-unavailable">
+    <summary className="parent-account-summary">
+      <div className="parent-account-status">
+        <span className="parent-profile-sparkle" aria-hidden="true">✦</span>
+        <div><strong>{t.demo}</strong><span>{({ru:"Читайте сказки, сохранённые на устройстве.",uz:"Qurilmada saqlangan ertaklarni oqing.",en:"Read stories saved on this device."} as const)[lang]}</span></div>
+        <span className="parent-profile-demo-pill" aria-hidden="true"><span/></span>
+      </div>
+    </summary>
+    <div className="parent-account-help-content">
+      <strong>{({ru:"Почему аккаунт недоступен?",uz:"Nega akkaunt ishlamayapti?",en:"Why is my account unavailable?"} as const)[lang]}</strong>
+      <p>{t.notReady}</p>
+      {api&&<button type="button" className="parent-account-secondary" onClick={()=>setReadinessAttempt(n=>n+1)}>{({ru:"Повторить подключение",uz:"Qayta ulanish",en:"Retry connection"} as const)[lang]}</button>}
+    </div>
+   </details>:
+    apiReady===null&&!session?<div className="parent-account-unavailable" role="status"><p>{({ru:"Проверяем подключение аккаунта…",uz:"Akkaunt ulanişi tekşirilmoqda…",en:"Checking account availability…"} as const)[lang]}</p></div>:
+    session?<div className="parent-account-card"><div className="parent-account-success"><CheckCircle2 size={23}/><strong>{t.welcome}</strong></div>
+      <p className="parent-account-muted">{t.syncDescription}</p><p className="parent-account-muted">{t.syncNotice}</p>
+      <button type="button" className="parent-account-primary" onClick={()=>void onSync()} disabled={syncBusy}><CloudUpload size={17}/>{syncBusy?t.loading:t.sync}</button>
+      <p className="parent-account-muted">{t.syncDone}: {syncedCount}</p>
+      <button type="button" className="parent-account-secondary" onClick={onLogout}><LogOut size={16}/>{t.logout}</button>
+    </div>:
+    <form className="parent-account-card" onSubmit={submit}>
+      <div className="parent-account-mode">
+        <button type="button" className={mode==="login"?"active":""} onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.login}</button>
+        <button type="button" className={mode==="register"?"active":""} disabled={!registrationEnabled} onClick={()=>{setMode("register");setError("");setNotice("");}}>{t.register}</button>
+      </div>
+      {!registrationEnabled&&<p className="parent-account-muted">{({ru:"Регистрация временно закрыта.",uz:"Röyxatdan ötiş vaqtinça yopiq.",en:"Registration is temporarily closed."} as const)[lang]}</p>}
+      <label><Mail size={16}/>{t.email}<input type="email" autoComplete="email" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)} /></label>
+      {mode!=="forgot"&&<label><KeyRound size={16}/>{t.password}<input type="password" autoComplete={mode==="register"?"new-password":"current-password"} required minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)}/></label>}
+      {mode==="register"&&<p className="parent-account-muted">{t.registerInfo}</p>}
+      {notice&&<p className="parent-account-notice" role="status">{notice}</p>}
+      {error&&<p className="parent-account-error" role="alert">{error}</p>}
+      {unverified&&<button type="button" className="parent-account-secondary" disabled={working} onClick={()=>void resend()}>{t.resend}</button>}
+      {mode==="register"&&notice&&<button type="button" className="parent-account-textbtn" disabled={working||!recoveryEnabled} onClick={()=>void resend()}>{t.resend}</button>}
+      <button type="submit" className="parent-account-primary" disabled={working||apiReady!==true||(mode==="register"&&!registrationEnabled)||(mode==="forgot"&&!recoveryEnabled)}>{working?t.loading:mode==="forgot"?t.sendLink:mode==="register"?t.register:t.login}</button>
+      {mode==="login"?<button type="button" className="parent-account-textbtn" disabled={!recoveryEnabled} onClick={()=>{setMode("forgot");setError("");setNotice("");}}>{t.forgot}</button>:mode==="forgot"?<button type="button" className="parent-account-textbtn" onClick={()=>{setMode("login");setError("");setNotice("");}}>{t.back}</button>:null}
+    </form>}
+  {session&&api&&<FamilyProfiles key={session} api={api} session={session} lang={lang}/>}
+  {session&&<details className="parent-account-reading-section">
+    <summary><BookOpen size={18}/><span>{({ru:"Советы по чтению",uz:"Oqish tavsiyalari",en:"Reading tips"} as const)[lang]}</span><span className="parent-account-expand" aria-hidden="true">⌄</span></summary>
+    <ParentReadingGuide lang={lang}/>
+    <p className="parent-account-footnote">{t.privacy}</p>
+  </details>}
+ </section>;
+}
