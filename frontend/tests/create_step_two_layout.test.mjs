@@ -39,3 +39,16 @@ test("mobile topic choices fit without clipping and action buttons have equal he
  assert.match(css,/\.wizard-step-two>\.wizard-step-actions>button\{[^}]*min-height:45px/s);
  assert.match(css,/@media\(max-width:360px\)/);
 });
+
+test("step two Orqaga and Keyingi always fit side by side on an iPhone",()=>{
+ const scoped=css.slice(css.lastIndexOf("/* iPhone overflow correction:"));
+ assert.match(scoped,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
+ assert.match(scoped,/\.wizard-step-actions > \.primary-button/);
+ assert.match(scoped,/\.wizard-step-actions > \.secondary-button/);
+ assert.match(scoped,/min-width:0!important/);
+ assert.match(scoped,/max-width:100%!important/);
+ assert.match(scoped,/height:44px!important/);
+ assert.match(scoped,/@media\(max-width:360px\)/);
+ assert.match(app,/onClick=\{\(\)=>setCreateStep\(1\)\}/);
+ assert.match(app,/setCreateStep\(3\)/);
+});
