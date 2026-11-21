@@ -5,6 +5,7 @@ import "./style.css";
 import "./storybook-theme.css";
 import "./reader-polish.css";
 import "./bedtime-games.css";
+import "./profile-concept-three.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -876,7 +877,7 @@ function App(){
   return <div className="shell">
     <header className="topbar">
       <button type="button" className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
-      <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></div>
+      <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></div>
     </header>
     {!isOnline&&<div className="offline-status-banner" role="status">
       {({ru:"Нет интернета. Сохранённые на устройстве сказки доступны, а AI и синхронизация временно не работают.",uz:"Internet yoq. Qurilmada saqlangan ertaklarni öqiş mumkin, AI va sinxronlaş vaqtinça işlamaydi.",en:"You're offline. Stories saved on this device remain available; AI and sync are paused."} as const)[lang]}
@@ -972,7 +973,19 @@ function App(){
         </form>
       </section>}
       {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab(legalReturnTab)}/>}
-      {tab==="account"&&<><ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/><ProfileLegalMenu lang={lang} onOpen={openLegal}/>{syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}<details className="account-plans-disclosure"><summary><Star size={16}/>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}<ChevronDown size={16}/></summary><PricingPlans lang={lang} api={API} session={privateToken}/></details></>}
+      {tab==="account"&&<section className="profile-concept-three">
+        <ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>
+        <ProfileLegalMenu lang={lang} onOpen={openLegal}/>
+        {syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}
+        <details className="account-plans-disclosure">
+          <summary>
+            <span className="profile-plan-icon"><Crown size={22} aria-hidden="true"/></span>
+            <span className="profile-plan-copy"><strong>{({ru:"Тарифы и возможности",uz:"Tariflar va imkoniyatlar",en:"Plans and features"} as const)[lang]}</strong><small>{({ru:"Дополнительные возможности сервиса",uz:"Qoshimcha imkoniyatlar va tariflar",en:"Available plans and extra features"} as const)[lang]}</small></span>
+            <ChevronDown size={19} className="profile-plan-chevron" aria-hidden="true"/>
+          </summary>
+          <PricingPlans lang={lang} api={API} session={privateToken}/>
+        </details>
+      </section>}
       {tab==="library"&&<section className="library-page">{heading(t.libraryTitle,t.libraryDesc)}
         {!isOnline&&<div className="library-sync-warning" role="status">
           <span>{privateToken?({ru:"Нет интернета. Серверная библиотека может быть недоступна после перезапуска. Для офлайн-чтения используйте сохранённые на устройстве демосказки; приватные книги не кешируются PWA.",uz:"Internet yoq. Server kutubxonasi qayta ochilganda mavjud bolmasligi mumkin. Oflayn oqish uchun qurilmada saqlangan demo ertaklardan foydalaning; shaxsiy kitoblar PWA keshiga yozilmaydi.",en:"You are offline. Server books may be unavailable after restarting. Use stories saved on this device for offline reading; private books are never stored in the PWA cache."} as const)[lang]:({ru:"Нет интернета. Доступны только сказки, уже сохранённые на этом устройстве.",uz:"Internet yoq. Faqat qurilmada saqlangan ertaklar mavjud.",en:"You are offline. Only stories already saved on this device are available."} as const)[lang]}</span>
