@@ -36,6 +36,20 @@ test("zoom controls are translated and support iPhone safe areas",()=>{
   assert.match(src,/aria-label=\{zoomCopy\.close\}/);
  }
  assert.match(css,/env\(safe-area-inset-bottom\)/);
- assert.match(css,/touch-action:pan-x pan-y pinch-zoom/);
+ assert.match(css,/touch-action:none/);
  assert.match(css,/z-index:2147483646/);
+});
+
+test("touch zoom is wired for both public reader and private illustrations",()=>{
+ const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
+ const privateView=readFileSync(new URL("../src/PrivateReaderIllustration.tsx",import.meta.url),"utf8");
+ for(const source of [main,privateView]){
+  assert.match(source,/readerFingerDistance/);
+  assert.match(source,/clampReaderZoom/);
+  assert.match(source,/onTouchStart=\{startZoomTouch\}/);
+  assert.match(source,/onTouchMove=\{moveZoomTouch\}/);
+  assert.match(source,/onTouchEnd=\{endZoomTouch\}/);
+  assert.match(source,/onDoubleClick=\{toggleDoubleTapZoom\}/);
+  assert.match(source,/zoomPan\.x/);
+ }
 });
