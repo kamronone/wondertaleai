@@ -30,5 +30,11 @@ test("generated and personal images stay outside the offline public cache", () =
 });
 
 test("service worker public cache version advances for this allowlist", () => {
-  assert.match(source, /const CACHE = "wondertale-public-v10"/);
+  assert.match(source, /const CACHE = "wondertale-public-v11"/);
+});
+
+test("classic page PNGs use network-first freshness and do not cache failed responses", () => {
+  assert.match(source, /if \(\/\^\\\/images\\\/classics\\\/[a-z0-9-]\+\\\/pages\\\/page-\[1-8\]\\\.png\$\/\.test\(url\.pathname\)\)/);
+  assert.match(source, /if \(response\.ok && response\.type === "basic" && \/image\\\/png\/i\.test\(type\)\)/);
+  assert.match(source, /return \(await cache\.match\(request\)\) \|\| Response\.error\(\)/);
 });
