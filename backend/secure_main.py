@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi.responses import Response
+from private_illustration_media import normalize_private_illustration
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 from email_auth import verification_required, mail_configured, new_code, digest_code, send_account_email
@@ -89,6 +91,9 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
+        media_type="BYTEA" if IS_PG else "BLOB"
+        sql(c, f"CREATE TABLE IF NOT EXISTS illustration_assets (job_id TEXT PRIMARY KEY REFERENCES illustration_jobs(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, png_bytes {media_type} NOT NULL, sha256 TEXT NOT NULL, byte_length INTEGER NOT NULL, created_at TEXT NOT NULL)")
+        sql(c, "CREATE INDEX IF NOT EXISTS illustration_assets_owner_book_idx ON illustration_assets(owner_id,book_id)")
         # Existing preview databases may already have the ledger without state.
         # Preserve completed tombstones so deleting a book does not make an
         # old, paid request look like a new in-flight operation.
@@ -976,6 +981,57 @@ def cancel_private_illustration(job_id:str,owner:str=Depends(current_parent)):
         if not sql(c,"SELECT status FROM illustration_jobs WHERE id=? AND owner_id=?",(job_id,owner)).fetchone():
             raise HTTPException(404,"Illustration job not found")
         raise HTTPException(409,"Only queued illustration jobs can be canceled")
+
+
+def save_private_illustration_asset(job_id:str,payload:bytes)->str:
+    """Trusted worker-only commit; no route lets a browser upload bytes.
+
+    This function requires a job to be in processing state and writes the
+    sanitized image plus completion status in one transaction.
+    """
+    if os.getenv("ENABLE_AI_ILLUSTRATIONS","false").lower()!="true":
+        raise RuntimeError("Illustration generation is disabled")
+    if not re.fullmatch(r"[0-9a-f-]{36}",job_id):
+        raise ValueError("Invalid illustration job ID")
+    clean=normalize_private_illustration(payload)
+    digest=hashlib.sha256(clean).hexdigest()
+    with connection() as c:
+        query="SELECT owner_id,book_id,status FROM illustration_jobs WHERE id=?"
+        if IS_PG:
+            query+=" FOR UPDATE"
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        row=sql(c,query,(job_id,)).fetchone()
+        if not row or row[2]!="processing":
+            raise ValueError("Illustration job is not processing")
+        owner,book_id,_=row
+        # The image belongs to the exact same owner and private book as the job.
+        if not sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone():
+            raise ValueError("Original private book no longer exists")
+        now=datetime.now(timezone.utc).isoformat()
+        sql(c,"INSERT INTO illustration_assets(job_id,owner_id,book_id,png_bytes,sha256,byte_length,created_at) VALUES(?,?,?,?,?,?,?)",(job_id,owner,book_id,clean,digest,len(clean),now))
+        sql(c,"UPDATE illustration_jobs SET status='completed',completed_at=?,storage_key=NULL WHERE id=? AND status='processing'",(now,job_id))
+        c.commit()
+    return digest
+
+
+@app.get("/api/illustrations/media/{job_id}")
+def read_private_illustration_media(job_id:str,owner:str=Depends(current_parent)):
+    """Read an illustration through the owner-scoped API, never a public URL."""
+    if not re.fullmatch(r"[0-9a-f-]{36}",job_id):
+        raise HTTPException(404,"Illustration not found")
+    with connection() as c:
+        row=sql(c,"SELECT a.png_bytes,a.sha256,a.byte_length FROM illustration_assets a JOIN illustration_jobs j ON j.id=a.job_id JOIN books b ON b.id=j.book_id AND b.owner_id=j.owner_id WHERE a.job_id=? AND a.owner_id=? AND j.owner_id=? AND j.status='completed'",(job_id,owner,owner)).fetchone()
+    if not row:
+        raise HTTPException(404,"Illustration not found")
+    data=bytes(row[0])
+    if len(data)!=row[2] or hashlib.sha256(data).hexdigest()!=row[1]:
+        raise HTTPException(503,"Illustration failed integrity verification")
+    return Response(content=data,media_type="image/png",headers={
+        "Cache-Control":"private, no-store",
+        "X-Content-Type-Options":"nosniff",
+        "Content-Security-Policy":"default-src 'none'; sandbox",
+    })
 
 
 @app.delete("/api/me",status_code=204)
