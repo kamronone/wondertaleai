@@ -595,12 +595,6 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         parent=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
     if not parent or parent[0].lower() not in allowed:
         raise HTTPException(403,"AI access is not enabled for this account")
-    # Reject a full library before spending tokens on an AI provider request.
-    # Recheck under the insert lock below to handle concurrent requests.
-    with connection() as c:
-        existing_books=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
-    if existing_books>=MAX_BOOKS_PER_PARENT:
-        raise HTTPException(409,"Library limit reached")
     # Optional client request identifier prevents duplicate paid calls after a
     # lost HTTP response. The key never contains child data and is scoped to owner.
     # A crash leaves a pending marker instead of silently charging twice.
@@ -633,6 +627,13 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                 sql(c,"DELETE FROM ai_idempotency WHERE owner_id=? AND request_key=? AND book_id IS NULL",(owner,request_key))
                 c.commit()
 
+    # Replays of already saved books must work even when the library is full.
+    # Reject a new generation before spending tokens on an AI provider request.
+    # Recheck under the insert lock below to handle concurrent requests.
+    with connection() as c:
+        existing_books=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
+    if existing_books>=MAX_BOOKS_PER_PARENT:
+        raise HTTPException(409,"Library limit reached")
     today=datetime.now(timezone.utc).date().isoformat()
     # Global spending ceiling is separate from the per-parent quota.
     # The value is deliberately conservative until usage and billing are monitored.
