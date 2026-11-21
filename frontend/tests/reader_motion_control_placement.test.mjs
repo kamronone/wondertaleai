@@ -8,7 +8,7 @@ const css=readFileSync(new URL("../src/reader-mobile-v1.css",import.meta.url),"u
 test("character GIF controls do not cover the picture",()=>{
  const image=app.indexOf('className={"story-page-image reader-turn-image');
  const effects=app.indexOf('<div className="wt-art-effects"',image);
- const imageEnd=app.indexOf('</div></div>',effects);
+ const imageEnd=app.indexOf('</div></div>{isDemoBook(active as DemoBook)',effects);
  const row=app.indexOf('<div className="wt-motion-inline-row">',image);
  const storyText=app.indexOf('className="story-text reader-turn-text"',row);
  assert.ok(image>=0&&effects>image&&imageEnd>effects&&row>imageEnd&&storyText>row);
