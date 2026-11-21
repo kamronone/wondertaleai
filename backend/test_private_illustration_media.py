@@ -56,6 +56,10 @@ def test_media_owner_access_integrity_and_delete_cascade(api,monkeypatch):
     assert job.status_code==202,job.text
     job_id=job.json()["id"]
     route="/api/illustrations/media/"+job_id
+    lookup="/api/illustrations/books/"+book_id+"/pages/1"
+    assert client.get(lookup).status_code==401
+    assert client.get(lookup,headers=other).status_code==404
+    assert client.get(lookup,headers=auth).status_code==404
     assert client.get(route).status_code==401
     assert client.get(route,headers=other).status_code==404
     assert client.get(route,headers=auth).status_code==404
@@ -66,6 +70,12 @@ def test_media_owner_access_integrity_and_delete_cascade(api,monkeypatch):
         c.commit()
     digest=module.save_private_illustration_asset(job_id,fake_png())
     assert len(digest)==64
+    resolved=client.get(lookup,headers=auth)
+    assert resolved.status_code==200,resolved.text
+    assert resolved.json()=={"job_id":job_id}
+    assert resolved.headers["Cache-Control"]=="private, no-store"
+    assert client.get(lookup,headers=other).status_code==404
+    assert client.get("/api/illustrations/books/"+book_id+"/pages/20",headers=auth).status_code==404
     response=client.get(route,headers=auth)
     assert response.status_code==200,response.text
     assert response.headers["content-type"]=="image/png"
@@ -79,6 +89,7 @@ def test_media_owner_access_integrity_and_delete_cascade(api,monkeypatch):
         module.save_private_illustration_asset(job_id,fake_png())
     assert client.delete("/api/books/"+book_id,headers=auth).status_code==204
     assert client.get(route,headers=auth).status_code==404
+    assert client.get(lookup,headers=auth).status_code==404
     with module.connection() as c:
         assert module.sql(c,"SELECT COUNT(*) FROM illustration_assets WHERE job_id=?",(job_id,)).fetchone()[0]==0
 
