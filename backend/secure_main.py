@@ -91,6 +91,8 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
+        sql(c, "CREATE TABLE IF NOT EXISTS illustration_daily_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
+        sql(c, "CREATE TABLE IF NOT EXISTS illustration_parent_quota (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, day TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner_id,day))")
         media_type="BYTEA" if IS_PG else "BLOB"
         sql(c, f"CREATE TABLE IF NOT EXISTS illustration_assets (job_id TEXT PRIMARY KEY REFERENCES illustration_jobs(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, png_bytes {media_type} NOT NULL, sha256 TEXT NOT NULL, byte_length INTEGER NOT NULL, created_at TEXT NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_assets_owner_book_idx ON illustration_assets(owner_id,book_id)")
