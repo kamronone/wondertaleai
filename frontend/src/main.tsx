@@ -19,7 +19,7 @@ import "./create-step-one-button.css";
 import "./shared-rounded-pages.css";
 import "./reader-book-variants.css";
 import "./reader-page-turn.css";
-import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
+import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
 import {enqueueAiJob} from "./ai_jobs";
 import {AiJobsPanel} from "./AiJobsPanel";
@@ -721,6 +721,21 @@ function App(){
     try{applyLocalBookChange(revised);setEditingPage(false);setError("");}
     catch{setError(localSaveError);}
   };
+  const upgradeClassicStory=()=>{
+    if(!active||!isDemoBook(active)||!canRefreshClassicDemoStory(active as DemoBook))return;
+    const notice=({
+      ru:"Заменить старый текст сказки новым сюжетом? Отредактированные страницы могут измениться. Личные изображения сохранятся.",
+      uz:"Eski ertak matnini yangi hikoyaga almashtirasizmi? Tahrirlangan sahifalar o'zgarishi mumkin. Shaxsiy rasmlar saqlanadi.",
+      en:"Replace the old fairy-tale text with the new story? Edited pages may change. Your personal images will be preserved."
+    } as const)[lang];
+    if(!window.confirm(notice))return;
+    try{
+      const next=refreshClassicDemoStory(active as DemoBook);
+      applyLocalBookChange(next);
+      setEditingPage(false);
+      setError("");
+    }catch{setError(localSaveError);}
+  };
   const continueAdventure=()=>{
     if(!active||!isDemoBook(active))return;
     stopSpeech();
@@ -1228,6 +1243,7 @@ function App(){
              fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}/>
           :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}
 </div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
+        {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
             <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
