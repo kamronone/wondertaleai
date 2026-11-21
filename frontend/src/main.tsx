@@ -1443,7 +1443,7 @@ function App(){
     {readerArtMotion==="magic"
       ?({ru:"Остановить героев",uz:"Qahramonlarni to'xtatish",en:"Pause characters"} as const)[lang]
       :({ru:"Оживить героев",uz:"Qahramonlarni jonlantirish",en:"Animate characters"} as const)[lang]}
-  </button></div>}<div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{(()=>{
+  </button></div>}<div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live={speaking?"off":"polite"} aria-atomic={speaking?false:true}><span className="dropcap-star" aria-hidden="true">✦</span>{(()=>{
   const text=active.pages[page].text;
   const parts=spokenTextParts(text,spokenRange);
   return parts.active?<>{parts.before}<mark className="wt-spoken-word">{parts.active}</mark>{parts.after}</>:text;
