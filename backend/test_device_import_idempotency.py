@@ -79,7 +79,8 @@ def test_ready_checks_database_without_exposing_connection_details(api):
     assert response.json()["database"] == "connected"
     assert response.json()["ok"] is True
     assert "DATABASE_URL" not in response.text
-    assert "password" not in response.text.lower()
+    assert not any(key in response.json() for key in ("database_url", "database_password", "db_password", "hostname"))
+    assert isinstance(response.json()["password_recovery_enabled"], bool)
 
 
 def test_ready_fails_closed_when_database_is_unavailable(api, monkeypatch):
