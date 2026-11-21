@@ -1,6 +1,6 @@
 /* WonderTale 1.0 mobile reading hierarchy.
    Keep touch targets >= 44 px without letting toolbar buttons dominate artwork.
-   The four book modes and image/GIF lightbox remain independently usable. */
+   The four book modes remain usable; tapping art no longer opens a lightbox. */
 @media screen and (max-width:700px){
   .reader-page{
     min-width:0;
