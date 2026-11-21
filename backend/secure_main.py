@@ -95,6 +95,8 @@ def init_schema():
         sql(c, "INSERT INTO illustration_runtime_control(singleton,paused,updated_at) VALUES(1,0,?) ON CONFLICT(singleton) DO NOTHING",(datetime.now(timezone.utc).isoformat(),))
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_job_events (id TEXT PRIMARY KEY, job_id TEXT NOT NULL REFERENCES illustration_jobs(id) ON DELETE CASCADE, event TEXT NOT NULL, created_at TEXT NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_events_job_created_idx ON illustration_job_events(job_id,created_at)")
+        sql(c, "CREATE TABLE IF NOT EXISTS illustration_billing_reviews (job_id TEXT PRIMARY KEY REFERENCES illustration_jobs(id) ON DELETE CASCADE, charge_status TEXT NOT NULL CHECK(charge_status IN ('charged','not_charged','unknown')), amount_micro_usd INTEGER CHECK(amount_micro_usd>=0 AND amount_micro_usd<=100000000), evidence_sha256 TEXT NOT NULL, reviewed_at TEXT NOT NULL)")
+
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_daily_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_parent_quota (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, day TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner_id,day))")
         media_type="BYTEA" if IS_PG else "BLOB"
