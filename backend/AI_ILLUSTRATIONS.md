@@ -65,7 +65,7 @@ limits, parental consent review and production delivery remain unfinished.
 
 `illustration_worker.process_one_illustration_job` can claim **one** queued
 illustration from the private DB. This Python function is not called by any
-HTTP route or scheduled task and has **no real provider adapter**.
+HTTP route or scheduled task and has an **isolated provider adapter that is not automatically started**.
 
 It runs only if **both** `ENABLE_AI_ILLUSTRATIONS=true` and
 `ENABLE_AI_ILLUSTRATIONS_WORKER=true` are configured. Without positive
@@ -124,6 +124,31 @@ A full live pilot also needs parental consent, approved text/image safety
 policy, budget alerts, a controlled worker host, and verification that the
 intended model/account permissions are available. No provider requests are
 performed by CI or by importing this module.
+
+## Moderation integration (mock-tested; not enabled)
+
+`illustration_moderation.py` now supports separate **input text** and
+**output image** moderation through OpenAI's `omni-moderation-latest` API.
+The image is normalized to a stripped PNG and sent as an in-memory data URL.
+No public storage URL or child-identifying information is used. Missing,
+invalid, ambiguous or flagged moderation results **fail closed**.
+
+`approved_illustration_runner.py` wires those checks to the existing
+quota-reserving illustration worker and the OpenAI Images adapter, in order:
+`prompt moderation → one image generation → output moderation → private PNG`.
+It is a Python callable, **not** an HTTP route, scheduled worker or deployed
+service. It requires the existing three feature flags plus
+`ENABLE_OPENAI_IMAGE_MODERATION=true`, which defaults to **false**.
+Both adapters refuse Production. All CI testing injects fake provider clients,
+so no real keys, requests or usage charges are involved.
+
+The moderation API does not guarantee suitability for every child or every
+type of harmful imagery. Before any real pilot, the product needs independent
+child-focused human review criteria, consent and reporting workflows,
+documented false-negative testing, input/output moderation verification on
+real provider responses, incident response and budgeting controls. Failures
+after the potentially paid call remain `needs_review` rather than being
+retried automatically.
 
 ## Release blockers
 
