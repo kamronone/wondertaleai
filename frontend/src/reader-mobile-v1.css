@@ -462,3 +462,30 @@
   line-height:1.4;
   color:#746783;
 }
+
+.reader-page .reader-auto-next{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:44px;
+  padding:7px 10px;
+  margin:3px 0 11px;
+  border:1px solid #e3d6ec;
+  border-radius:12px;
+  background:#fffaf4;
+  color:#654585;
+  font-size:12px;
+  font-weight:650;
+  line-height:1.4;
+  cursor:pointer;
+}
+.reader-page .reader-auto-next input{
+  width:20px;
+  height:20px;
+  flex:0 0 20px;
+  accent-color:#7850aa;
+}
+.reader-page .reader-auto-next:focus-within{
+  outline:2px solid #ac87d5;
+  outline-offset:2px;
+}
