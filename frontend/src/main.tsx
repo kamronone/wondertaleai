@@ -304,6 +304,7 @@ function App(){
     const playback=startReaderAmbience(readerAmbienceForClassic(classicId));
     if(playback){ambiencePlayback.current=playback;setAmbienceOn(true);}
   };
+  const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
   useEffect(()=>{
     ambiencePlayback.current?.stop();
     ambiencePlayback.current=null;
@@ -337,7 +338,6 @@ function App(){
     }
   },[familyReadingPreferences.ambientSoundAllowed]);
   const [readerFocusMode,setReaderFocusMode]=useState(false);
-  const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
   const [wordGameAnswer,setWordGameAnswer]=useState<string|null>(null);
   const [readerEndActivity,setReaderEndActivity]=useState<"ending"|"adventure"|"game"|null>(null);
   useEffect(()=>{setWordGameAnswer(null);},[active?.id]);
