@@ -789,9 +789,17 @@ function App(){
         if(photo){
           throw new Error(({ru:"AI-генерация пока не принимает фото ребёнка. Удалите фото и повторите.",uz:"AI hozirça bolaning rasmini qabul qilmaydi. Rasmni olib taşlang.",en:"AI generation does not accept child photos yet. Remove the photo first."} as const)[lang]);
         }
-        // A retry after a lost HTTP response must reach the server with its
-        // original key, even if the first request consumed the daily quota.
-        const aiAccess=aiRetry.current?.token===privateToken?"ready":await checkAiStoryAccess(API,privateToken);
+        const data={
+          name:name.trim(),age:Number(age),language:storyLang,
+          classic_title:activeClassic?.title[storyLang]||"",
+          idea:storyIdeaWithHero,style,other_heroes:secondHero.trim()?[secondHero.trim()]:[],
+          pages_count:aiPagesCount,
+        };
+        const payload=JSON.stringify(data);
+        // Only an identical request in the same parent session can reuse its
+        // previous key and bypass a potentially already-spent daily quota.
+        const safeRetry=aiRetry.current?.token===privateToken&&aiRetry.current.payload===payload;
+        const aiAccess=safeRetry?"ready":await checkAiStoryAccess(API,privateToken);
         if(sessionEpoch.current!==epoch)return;
         if(aiAccess!=="ready"){
           const messages={
@@ -802,13 +810,6 @@ function App(){
           } as const;
           throw new Error(messages[aiAccess][lang]);
         }
-        const data={
-          name:name.trim(),age:Number(age),language:storyLang,
-          classic_title:activeClassic?.title[storyLang]||"",
-          idea:storyIdeaWithHero,style,other_heroes:secondHero.trim()?[secondHero.trim()]:[],
-          pages_count:aiPagesCount,
-        };
-        const payload=JSON.stringify(data);
         const retry=aiRetry.current;
         const key=retry?.token===privateToken&&retry.payload===payload
           ?retry.key:crypto.randomUUID().replaceAll("-","");
