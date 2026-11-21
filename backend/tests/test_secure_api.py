@@ -596,15 +596,11 @@ def test_full_library_does_not_leave_stuck_ai_idempotency_marker(monkeypatch):
 def test_private_illustrations_queue_owner_isolation_and_cancel(monkeypatch):
     import json
     import uuid
-    a=signup("image-a-"+uuid.uuid4().hex+"@example.com")
+    email_a="image-a-"+uuid.uuid4().hex+"@example.com"
+    a=signup(email_a)
     b=signup("image-b-"+uuid.uuid4().hex+"@example.com")
     monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS","true")
-    with secure_main.connection() as c:
-        email=secure_main.sql(c,"SELECT email FROM parents WHERE id=(SELECT owner_id FROM sessions WHERE id IN (SELECT id FROM sessions LIMIT 1))").fetchone()
-    # Resolve the account's real email through its signed /api/me response.
-    profile=client.get("/api/me",headers=headers(a))
-    assert profile.status_code==200
-    monkeypatch.setenv("AI_ALLOWED_EMAILS",profile.json()["email"])
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email_a)
     saved=client.post("/api/books",headers=headers(a),json={
         "title":"Forest friendship","child_name":"Alex","age":6,
         "story":json.dumps({"pages":[{"number":1,"text":"A very friendly fox visits the magical garden."}]})
