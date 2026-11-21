@@ -27,7 +27,7 @@ import {enqueueAiJob} from "./ai_jobs";
 import {AiJobsPanel} from "./AiJobsPanel";
 import {IllustrationConsentPanel} from "./IllustrationConsentPanel";
 import {PrivateReaderIllustration} from "./PrivateReaderIllustration";
-import {classicReaderImage,classicPngFallback} from "./classic_page_art";
+import {classicReaderImage,classicPngFallback,classicAnimatedPage} from "./classic_page_art";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
@@ -1253,8 +1253,8 @@ function App(){
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div key={active.id+":"+page+":image"} className={"story-page-image reader-turn-image wt-living-art wt-motion-"+(readerNightMode||bedtimeUntil!==null?"off":readerArtMotion)+" wt-art-"+(isDemoBook(active as DemoBook)&&["three-pigs","bremen","puss-boots"].includes((active as DemoBook).classicId||"")?"village":isDemoBook(active as DemoBook)&&["cinderella","rapunzel","sleeping-beauty","snow-white"].includes((active as DemoBook).classicId||"")?"palace":"forest")}>{active.mode==="private-account"&&privateToken&&API
           ?<PrivateReaderIllustration api={API} session={privateToken} bookId={active.id} pageNumber={page+1}
              alt={t.illustration+" "+(page+1)}
-             fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth/>}/>
-          :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth/>}
+             fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth animatedUrl={readerArtMotion==="magic"&&!readerNightMode&&bedtimeUntil===null&&isDemoBook(active as DemoBook)?classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page):null}/>}/>
+          :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth animatedUrl={readerArtMotion==="magic"&&!readerNightMode&&bedtimeUntil===null&&isDemoBook(active as DemoBook)?classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page):null}/>}
 <div className="wt-art-effects" aria-hidden="true">{readerArtMotion!=="off"&&!readerNightMode&&bedtimeUntil===null&&Array.from({length:6},(_,i)=><span className="wt-art-particle" key={i} style={{"--wt-x":(14+i*13)+"%","--wt-y":(18+i%3*22)+"%","--wt-dur":(9+i%4*2)+"s","--wt-delay":(-i*1.8)+"s"} as React.CSSProperties}/>)}</div></div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
         {isDemoBook(active)&&<div className="story-edit-zone">
@@ -1317,13 +1317,14 @@ function App(){
     </footer>
   </div>;
 }
-function StoryIllustration({url,alt,lazy=false,readerFullWidth=false}:{url:string;alt:string;lazy?:boolean;readerFullWidth?:boolean}){
+function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl=null}:{url:string;alt:string;lazy?:boolean;readerFullWidth?:boolean;animatedUrl?:string|null}){
  const [failed,setFailed]=useState(0);
  const originalSrc=bookImage(url);
  const offlineFallback=classicPngFallback(originalSrc);
- const src=failed===1&&offlineFallback?offlineFallback:originalSrc;
- useEffect(()=>setFailed(0),[originalSrc]);
- if(failed>=2||(failed===1&&!offlineFallback))return <svg className="story-image-fallback" viewBox="0 0 640 420" role="img" aria-label={alt} xmlns="http://www.w3.org/2000/svg">
+ // Frame GIF -> original PNG -> built-in offline SVG. Never animate private photos.
+ const src=animatedUrl&&failed===0?animatedUrl:failed<=(animatedUrl?1:0)?originalSrc:offlineFallback||originalSrc;
+ useEffect(()=>setFailed(0),[originalSrc,animatedUrl]);
+ if(failed>=(animatedUrl?3:2)||(failed===(animatedUrl?2:1)&&!offlineFallback))return <svg className="story-image-fallback" viewBox="0 0 640 420" role="img" aria-label={alt} xmlns="http://www.w3.org/2000/svg">
    <defs><linearGradient id="story-fallback-sky" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#eadcff"/><stop offset="1" stopColor="#ffe9c9"/></linearGradient></defs>
    <rect width="640" height="420" fill="url(#story-fallback-sky)"/>
    <circle cx="490" cy="105" r="53" fill="#fff8dc"/>
