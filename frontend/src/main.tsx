@@ -14,6 +14,7 @@ import "./library-screenshot-fixes.css";
 import "./create-reference.css";
 import "./create-step-two.css";
 import "./create-step-one-button.css";
+import "./create-round-progress.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -948,7 +949,17 @@ function App(){
       {tab==="create"&&<section className="create-page create-reference-page">
         <button className="back-button" onClick={()=>setTab("home")}><ArrowLeft size={17}/> {t.backHome}</button>
         <div className="create-reference-hero"><div className="create-reference-hero-copy">{heading(t.magic,t.magicDesc)}</div><img src="/images/create-hero-story.png" alt="" loading="eager" decoding="async" width={328} height={186}/></div>
-        <div className="wizard-progress" role="group" aria-label={({ru:"Этапы создания сказки",uz:"Ertak yaratiş bosqiçlari",en:"Story creation steps"} as const)[lang]}>{([1,2,3] as const).map((step,index)=><React.Fragment key={step}>{index>0&&<span className="progress-line"/>}<span className={"progress-step"+(createStep===step?" active":"")+(createStep>step?" completed":"")} aria-current={createStep===step?"step":undefined}><span>{step}</span>{step===1?t.heroStep:step===2?t.storyStep:t.createBook}</span></React.Fragment>)}</div><form onSubmit={generate} className="form-card" noValidate>
+        <nav className="wizard-progress wizard-progress-round" aria-label={({ru:"Этапы создания сказки",uz:"Ertak yaratish bosqichlari",en:"Story creation steps"} as const)[lang]}>
+          {([1,2,3] as const).map((step,index)=><React.Fragment key={step}>
+            {index>0&&<span className={"progress-line"+(step<=createStep?" progress-line-complete":"")} aria-hidden="true"/>}
+            <div className={"progress-step"+(createStep===step?" active":"")+(createStep>step?" completed":"")}>
+              <button type="button" className="wizard-progress-circle" aria-current={createStep===step?"step":undefined} aria-label={String(step)+". "+(step===1?t.heroStep:step===2?t.storyStep:t.createBook)} disabled={step>=createStep} onClick={()=>{setError("");setCreateStep(step);}}>
+                {step}
+              </button>
+              <span className="wizard-progress-label">{step===1?t.heroStep:step===2?t.storyStep:t.createBook}</span>
+            </div>
+          </React.Fragment>)}
+        </nav><form onSubmit={generate} className="form-card" noValidate>
           {createStep===1&&<><div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           {privateToken&&API&&<StoryChildPicker key={privateToken} api={API} session={privateToken} lang={lang} onSelect={child=>{if(child){setName(child.nickname);setAge(String(child.age));}}}/>}
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} aria-invalid={heroNameTooLong} aria-describedby={heroNameTooLong?"hero-name-limit":undefined} value={name} onChange={e=>{setName(e.target.value);if(error===heroNameLengthError)setError("");}} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
