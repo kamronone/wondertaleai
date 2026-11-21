@@ -187,6 +187,30 @@ uncertain calls. Do not expose this function through a public HTTP route.
 
 No dashboard, scheduler, or production worker has been enabled.
 
+## Private audit and operator reconciliation
+
+Migration `011_illustration_audit_events.sql` creates a minimal
+`illustration_job_events` table. The queue and trusted worker record
+`queued`, `processing`, `completed`, `failed` and `needs_review`
+transitions in the same transaction as the job status. No event contains a
+parent email, child's name, story text, image bytes or provider credentials.
+Events are automatically deleted when their related book, job or parent is
+deleted, avoiding orphaned personal identifiers.
+
+`illustration_reconciliation.unresolved_illustration_report()` is a
+**read-only Python function**, not an HTTP endpoint. It works only in
+development, Preview or staging, returns a bounded list of opaque identifiers
+for processing jobs older than a threshold, and includes aggregate counts
+of statuses and reserved attempts. It neither queries provider billing nor
+mutates any job. `needs_review` in this report is an operator diagnosis,
+not an automatic database state transition.
+
+**Do not automatically retry** a job found by this report or mark its
+reservation refundable. The provider may have charged before the worker
+stopped. Confirm provider usage and transaction history in an authorized
+operator workflow before making any decision. The report is deliberately
+unavailable in Production and must not be published to a client.
+
 ## Release blockers
 
 1. Review the parental agreement and data-processing obligations for minors.
