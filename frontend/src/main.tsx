@@ -23,6 +23,7 @@ import "./reader-page-turn.css";
 import "./reader-image-fullwidth.css";
 import "./reader-living-art.css";
 import "./reader-image-lightbox.css";
+import "./reader-mobile-v1.css";
 import { readerZoomLabels } from "./reader_zoom_labels";
 import { clampReaderZoom, readerFingerDistance } from "./reader_zoom_gestures";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
