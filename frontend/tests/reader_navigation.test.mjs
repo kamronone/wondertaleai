@@ -146,3 +146,16 @@ test("Pager, swipe and arrow navigation bring the new story page into view witho
   assert.match(app,/ref=\{storyPageRef\} onTouchStart=\{onReaderTouchStart\}/);
   assert.match(css,/\.reader-page \.story-page\{scroll-margin-top:14px\}/);
 });
+
+test("long books expose page chooser and reading percentage without replacing paging", async()=>{
+  const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
+  const layout=await readFile(new URL("../src/reader-book-variants.css",import.meta.url),"utf8");
+  assert.match(app,/Math\.round\(\(\(page\+1\)\/Math\.max\(1,active\.pages\.length\)\)\*100\)/);
+  assert.match(app,/active\.pages\.length>=8&&<div className="reader-page-jump"/);
+  assert.match(app,/id="reader-page-jump-select" value=\{page\}/);
+  assert.match(app,/onChange=\{event=>setPage\(Number\(event\.target\.value\)\)\}/);
+  assert.match(app,/active\.pages\.map\(\(_,index\)=><option key=\{index\} value=\{index\}/);
+  assert.match(app,/onClick=\{\(\)=>setPage\(p=>Math\.min\(active\.pages\.length-1,p\+1\)\)\}/);
+  assert.match(layout,/\.reader-page \.reader-page-jump\{/);
+  assert.match(layout,/@media\(max-width:620px\)/);
+});
