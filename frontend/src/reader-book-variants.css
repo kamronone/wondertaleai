@@ -315,6 +315,17 @@
   background:#faefd9!important;
   color:#493321!important;
 }
+/* Book appearance must not override the reader's explicit text-size setting.
+   Keep typography controls effective for children and low-vision readers. */
+.reader-page .story-page:is(.book-style-spread,.book-style-classic,.book-style-storybook,.book-style-simple).reader-font-small .story-text{
+  font-size:14px!important;
+}
+.reader-page .story-page:is(.book-style-spread,.book-style-classic,.book-style-storybook,.book-style-simple).reader-font-normal .story-text{
+  font-size:16px!important;
+}
+.reader-page .story-page:is(.book-style-spread,.book-style-classic,.book-style-storybook,.book-style-simple).reader-font-large .story-text{
+  font-size:20px!important;
+}
 @media print{
   .reader-page .story-page.book-style-spread,
   .reader-page .story-page.book-style-classic,
