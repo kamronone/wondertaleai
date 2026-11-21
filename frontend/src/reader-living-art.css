@@ -1,0 +1,117 @@
+/* Motion stays within the picture surface and never covers story text.
+   Artwork remains an original PNG/SVG; character limbs cannot move independently.
+   Full width and aspect ratio remain owned by reader-image-fullwidth.css. */
+.reader-page .story-page-image.wt-living-art{
+  position:relative!important;
+  isolation:isolate;
+  overflow:hidden;
+  --wt-art-speed:18s;
+}
+.reader-page .story-page-image.wt-living-art > img,
+.reader-page .story-page-image.wt-living-art > .story-image-fallback{
+  transform-origin:50% 50%;
+  backface-visibility:hidden;
+}
+.reader-page .story-page-image.wt-living-art.wt-motion-gentle > img,
+.reader-page .story-page-image.wt-living-art.wt-motion-gentle > .story-image-fallback{
+  animation:wt-art-breathe 20s ease-in-out infinite alternate;
+}
+.reader-page .story-page-image.wt-living-art.wt-motion-magic > img,
+.reader-page .story-page-image.wt-living-art.wt-motion-magic > .story-image-fallback{
+  animation:wt-art-breathe 12s ease-in-out infinite alternate;
+}
+@keyframes wt-art-breathe{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(-.35%,.15%,0) scale(1.012)}
+  100%{transform:translate3d(.4%,-.25%,0) scale(1.024)}
+}
+.reader-page .story-page-image .wt-art-effects{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+  overflow:hidden;
+  border-radius:inherit;
+  contain:paint;
+}
+.reader-page .story-page-image .wt-art-effects::before,
+.reader-page .story-page-image .wt-art-effects::after{
+  content:"";
+  position:absolute;
+  display:block;
+  border-radius:50%;
+  opacity:0;
+  will-change:transform,opacity;
+}
+.reader-page .wt-motion-gentle .wt-art-effects::before,
+.reader-page .wt-motion-magic .wt-art-effects::before{
+  width:18%;
+  aspect-ratio:1;
+  top:12%;
+  left:8%;
+  background:radial-gradient(circle,#fff9d899 0%,#f7d5a34d 23%,transparent 69%);
+  filter:blur(3px);
+  animation:wt-art-light 13s ease-in-out infinite;
+}
+.reader-page .wt-motion-magic .wt-art-effects::after{
+  width:35%;
+  aspect-ratio:1;
+  top:40%;
+  right:4%;
+  background:radial-gradient(circle,#fff6c599,transparent 70%);
+  animation:wt-art-light 11s ease-in-out -6s infinite;
+}
+@keyframes wt-art-light{
+  0%,100%{transform:translate3d(0,0,0) scale(.85);opacity:.05}
+  48%{transform:translate3d(24%,15%,0) scale(1.15);opacity:.55}
+}
+.reader-page .wt-art-particle{
+  position:absolute;
+  width:7px;
+  height:7px;
+  left:var(--wt-x);
+  top:var(--wt-y);
+  border-radius:50%;
+  opacity:0;
+  background:#fff6d7;
+  box-shadow:0 0 8px 3px #ffe6a87a;
+  animation:wt-art-float var(--wt-dur) ease-in-out var(--wt-delay) infinite;
+}
+.reader-page .wt-art-forest .wt-art-particle{background:#cbe9a6;box-shadow:0 0 7px #b8d49c80;border-radius:65% 2% 70% 5%;transform:rotate(30deg)}
+.reader-page .wt-art-village .wt-art-particle{background:#f4dfb1;box-shadow:0 0 6px #eac67b99}
+.reader-page .wt-art-palace .wt-art-particle{background:#fff0d7;box-shadow:0 0 10px 3px #ffe4ab90}
+.reader-page .wt-motion-gentle .wt-art-particle:nth-child(n+4){display:none}
+.reader-page .wt-motion-off .wt-art-effects{display:none}
+@keyframes wt-art-float{
+  0%,100%{opacity:0;translate:0 4px}
+  23%{opacity:.7}
+  75%{opacity:.55}
+  90%{opacity:0;translate:20px -48px}
+}
+.reader-page .wt-art-motion-toggle{
+  display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+  width:100%;margin:9px 0 6px;
+}
+.reader-page .wt-art-motion-toggle>span{font-size:12px;color:#6d517f;font-weight:750;flex:1 0 100%}
+.reader-page .wt-art-motion-toggle>button{
+  min-height:40px;flex:1 1 0;
+  border:1px solid #e3d1ee;border-radius:11px;
+  padding:8px 9px;background:#fff;color:#674780;
+  font-weight:700;font-size:12px;line-height:1.25;
+}
+.reader-page .wt-art-motion-toggle>button[aria-pressed="true"]{
+  color:#fff;background:#7850b0;border-color:#7850b0;
+}
+.reader-page .wt-art-motion-hint{display:block;font-size:11px;line-height:1.4;color:#7a6d89;margin:0 0 8px}
+@media (prefers-reduced-motion:reduce){
+  .reader-page .story-page-image.wt-living-art > img,
+  .reader-page .story-page-image.wt-living-art > .story-image-fallback,
+  .reader-page .story-page-image .wt-art-effects::before,
+  .reader-page .story-page-image .wt-art-effects::after,
+  .reader-page .wt-art-particle{animation:none!important;transform:none!important;translate:none!important;opacity:0!important}
+}
+@media print{
+  .reader-page .story-page-image.wt-living-art > img,
+  .reader-page .story-page-image.wt-living-art > .story-image-fallback{animation:none!important;transform:none!important}
+  .reader-page .wt-art-effects{display:none!important}
+}
