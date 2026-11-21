@@ -633,6 +633,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
     with connection() as c:
         existing_books=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
     if existing_books>=MAX_BOOKS_PER_PARENT:
+        release_claim()
         raise HTTPException(409,"Library limit reached")
     today=datetime.now(timezone.utc).date().isoformat()
     # Global spending ceiling is separate from the per-parent quota.
@@ -721,6 +722,38 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             raise exc
         raise HTTPException(503,"Unable to save this story. Please try later.")
     return {"id":bid,"title":generated.title,"language":generated.language,"pages":story_document["pages"],"created_at":now}
+
+@app.get("/api/books/generation-requests/{request_key}")
+def generation_request_status(request_key:str,owner:str=Depends(current_parent)):
+    """Safely reconcile a lost HTTP response without another paid model call.
+
+    The persistent key is owner-scoped. An unfinished operation older than
+    three minutes is UNKNOWN rather than retried: the server may have died
+    after the provider charged for an output but before saving it.
+    """
+    if not re.fullmatch(r"[A-Za-z0-9_-]{16,128}",request_key):
+        raise HTTPException(404,"Generation request not found")
+    with connection() as c:
+        row=sql(c,"SELECT book_id,created_at FROM ai_idempotency WHERE owner_id=? AND request_key=?",(owner,request_key)).fetchone()
+        if not row:
+            raise HTTPException(404,"Generation request not found")
+        book_id,created_at=row
+        if book_id:
+            book=sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
+            if book:
+                return {"status":"completed","book_id":book[0]}
+            return {"status":"unavailable","book_id":None}
+    try:
+        started=datetime.fromisoformat(created_at)
+        if started.tzinfo is None:
+            raise ValueError("Missing timezone")
+        age=(datetime.now(timezone.utc)-started).total_seconds()
+    except (ValueError,TypeError):
+        age=181
+    if age>180:
+        return {"status":"needs_review","book_id":None}
+    return {"status":"processing","book_id":None}
+
 
 @app.delete("/api/me",status_code=204)
 def delete_account(owner:str=Depends(current_parent)):
