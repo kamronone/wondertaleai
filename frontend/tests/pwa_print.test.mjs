@@ -122,7 +122,7 @@ test("PWA serves original public book artwork and app assets through its cache p
 
 test("Printable books include all pages with illustration fallback", () => {
   assert.match(mainSource, /active\.pages\.map\(\(item,index\)=>\s*<section className="print-book-page"/);
-  assert.match(mainSource, /<StoryIllustration url=\{redHoodReaderImage\(isDemoBook\(active as DemoBook\)\?\(active as DemoBook\)\.classicId:undefined,item\.image_url,index\)\}/);
+  assert.match(mainSource, /<StoryIllustration url=\{classicReaderImage\(isDemoBook\(active as DemoBook\)\?\(active as DemoBook\)\.classicId:undefined,item\.image_url,index\)\}/);
   assert.match(printCss, /@media print/);
   assert.match(printCss, /overflow:visible;/);
   assert.doesNotMatch(printCss, /height:265mm;\s*overflow:hidden/);

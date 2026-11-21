@@ -78,9 +78,9 @@ self.addEventListener("fetch", event => {
           await cache.put(request, response.clone()).catch(() => {});
           return response;
         }
-        return (await cache.match(request)) || (await caches.open(STORY_OFFLINE_CACHE)).match(request) || response;
+        return (await cache.match(request)) || (await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || response;
       } catch {
-        return (await cache.match(request)) || (await caches.open(STORY_OFFLINE_CACHE)).match(request) || Response.error();
+        return (await cache.match(request)) || (await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || Response.error();
       }
     })());
     return;
@@ -100,7 +100,7 @@ self.addEventListener("fetch", event => {
         }
         return response;
       } catch {
-        return (await cache.match(request)) || (await caches.open(STORY_OFFLINE_CACHE)).match(request) || Response.error();
+        return (await cache.match(request)) || (await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || Response.error();
       }
     })());
     return;

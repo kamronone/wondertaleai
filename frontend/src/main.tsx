@@ -303,11 +303,6 @@ function App(){
     if(playback){ambiencePlayback.current=playback;setAmbienceOn(true);}
   };
   useEffect(()=>{
-    ambiencePlayback.current?.stop();
-    ambiencePlayback.current=null;
-    setAmbienceOn(false);
-  },[active?.id,tab,readerNightMode,bedtimeUntil]);
-  useEffect(()=>{
     const pause=()=>{
       if(document.visibilityState!=="visible"){
         ambiencePlayback.current?.stop();
@@ -336,6 +331,11 @@ function App(){
   },[familyReadingPreferences.ambientSoundAllowed]);
   const [readerFocusMode,setReaderFocusMode]=useState(false);
   const [bedtimeUntil,setBedtimeUntil]=useState<number|null>(null);
+  useEffect(()=>{
+    ambiencePlayback.current?.stop();
+    ambiencePlayback.current=null;
+    setAmbienceOn(false);
+  },[active?.id,tab,readerNightMode,bedtimeUntil]);
   const [wordGameAnswer,setWordGameAnswer]=useState<string|null>(null);
   const [readerEndActivity,setReaderEndActivity]=useState<"ending"|"adventure"|"game"|null>(null);
   useEffect(()=>{setWordGameAnswer(null);},[active?.id]);
