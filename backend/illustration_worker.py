@@ -22,8 +22,12 @@ def _now()->str:
 
 def _finish(job_id:str,state:str)->None:
     with db.connection() as c:
-        db.sql(c,"UPDATE illustration_jobs SET status=?,completed_at=? WHERE id=? AND status='processing'",
-               (state,_now(),job_id))
+        now=_now()
+        changed=db.sql(c,"UPDATE illustration_jobs SET status=?,completed_at=? WHERE id=? AND status='processing'",
+               (state,now,job_id))
+        if changed.rowcount==1:
+            db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
+                   (__import__("uuid").uuid4().hex,job_id,state,now))
         c.commit()
 
 def illustration_emergency_paused(connection=None)->bool:
@@ -97,8 +101,11 @@ def process_one_illustration_job(
         allowed={e.strip().lower() for e in os.getenv("AI_ALLOWED_EMAILS","").split(",") if e.strip()}
         book=db.sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
         if not parent or parent[0].lower() not in allowed or not book:
+            now=_now()
             db.sql(c,"UPDATE illustration_jobs SET status='failed',completed_at=? WHERE id=?",
-                   (_now(),job_id))
+                   (now,job_id))
+            db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
+                   (__import__("uuid").uuid4().hex,job_id,"failed",now))
             c.commit()
             return job_id
         # The two conditional upserts must commit with the claim, so workers
@@ -109,8 +116,11 @@ def process_one_illustration_job(
             "WHERE illustration_daily_quota.used<? RETURNING used"
         ),(day,global_cap)).fetchone()
         if not reserved_global:
+            now=_now()
             db.sql(c,"UPDATE illustration_jobs SET status='failed',completed_at=? WHERE id=?",
-                   (_now(),job_id))
+                   (now,job_id))
+            db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
+                   (__import__("uuid").uuid4().hex,job_id,"failed",now))
             c.commit()
             return job_id
         reserved_parent=db.sql(c,(
@@ -122,12 +132,18 @@ def process_one_illustration_job(
             # This call has NOT reached the renderer; roll back reservation
             # changes by restoring its prior value in the same transaction.
             db.sql(c,"UPDATE illustration_daily_quota SET used=used-1 WHERE day=?",(day,))
+            now=_now()
             db.sql(c,"UPDATE illustration_jobs SET status='failed',completed_at=? WHERE id=?",
-                   (_now(),job_id))
+                   (now,job_id))
+            db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
+                   (__import__("uuid").uuid4().hex,job_id,"failed",now))
             c.commit()
             return job_id
+        started=_now()
         db.sql(c,"UPDATE illustration_jobs SET status='processing',started_at=? "
-                 "WHERE id=? AND status='queued'",(_now(),job_id))
+                 "WHERE id=? AND status='queued'",(started,job_id))
+        db.sql(c,"INSERT INTO illustration_job_events(id,job_id,event,created_at) VALUES(?,?,?,?)",
+               (__import__("uuid").uuid4().hex,job_id,"processing",started))
         c.commit()
 
     # Build only a generic original fictional scene; never transmit private
