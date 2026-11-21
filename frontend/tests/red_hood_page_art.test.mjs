@@ -15,15 +15,17 @@ test("red hood has eight distinct local visual scene choices",()=>{
  assert.match(images,/data:image\/svg\+xml;charset=utf-8,/);
 });
 test("every new Red Riding Hood page gets its own artwork, other classics unchanged",()=>{
- assert.match(demo,/classicId==="red-hood"\?redHoodPagePng\(index\):art\|\|illustration\(index\)/);
+ assert.match(demo,/classicId\?classicReaderImage\(classicId,art\|\|"",index\):illustration\(index\)/);
  assert.match(demo,/classicId,savedOnDevice:saveOnDevice/);
 });
-test("existing browser-saved classics display upgraded per-page artwork",()=>{
- assert.match(main,/redHoodReaderImage\(isDemoBook/);
- assert.match(art,/export function redHoodReaderImage/);
- assert.match(art,/return oldCover\|\|localVector\|\|builtinPage \? redHoodPagePng\(pageIndex\) : imageUrl/);
+test("existing browser-saved classics display updated page art without replacing user uploads",()=>{
+ assert.match(main,/classicReaderImage\(isDemoBook\(active as DemoBook\)/);
+ const mapping=read("../src/classic_page_art.ts");
+ assert.match(mapping,/export function classicReaderImage/);
+ assert.match(mapping,/if\(!oldAsset&&!oldRedHood&&!oldDemoVector&&imageUrl\.trim\(\)!==""\)return imageUrl/);
  assert.match(main,/PrivateReaderIllustration/);
 });
+
 test("offline illustrations do not use private child photos or external network",()=>{
  assert.doesNotMatch(art,/fetch\(|XMLHttpRequest|https:\/\/|localStorage|sessionStorage/);
  assert.match(art,/data:image\/svg\+xml;charset=utf-8,/);
