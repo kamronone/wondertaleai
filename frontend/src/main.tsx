@@ -9,6 +9,7 @@ import "./profile-concept-three.css";
 import "./library-concept-two.css";
 import "./library-mobile-fixes.css";
 import "./library-final-polish.css";
+import "./library-exact-reference.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -1021,18 +1022,14 @@ function App(){
             <span className="sr-only">{({ru:"Поиск по сказкам",uz:"Ertaklarni qidirish",en:"Search stories"} as const)[lang]}</span>
             <input type="search" value={libraryQuery} onChange={event=>setLibraryQuery(event.target.value)} placeholder={({ru:"Поиск по сказкам...",uz:"Ertaklar ichidan qidirish...",en:"Search stories..."} as const)[lang]}/>
           </label>
-          {books.length>0&&<div className="library-filters library-concept-chips" role="group" aria-label={t.library}>
+          <div className="library-filters library-concept-chips" role="group" aria-label={t.library}>
             <button type="button" aria-pressed={libraryShelf==="all"} className={libraryShelf==="all"?"active":""} onClick={()=>changeLibraryShelf("all")}><Library size={15}/>{({ru:"Все",uz:"Barchasi",en:"All"} as const)[lang]}</button>
             <button type="button" aria-pressed={favoritesOnly} className={libraryShelf==="favorites"?"active":""} onClick={()=>changeLibraryShelf("favorites")}><Heart size={15}/>{t.favorites}</button>
-            <button type="button" aria-pressed={libraryShelf==="saved"} className={libraryShelf==="saved"?"active":""} onClick={()=>changeLibraryShelf("saved")}><Download size={15}/>{({ru:"На устройстве",uz:"Saqlangan",en:"On device"} as const)[lang]}</button>
-            <button type="button" aria-pressed={libraryShelf==="recent"} className={libraryShelf==="recent"?"active":""} onClick={()=>changeLibraryShelf("recent")}><PlayCircle size={15}/>{({ru:"Недавние",uz:"Songgi",en:"Recent"} as const)[lang]}</button>
-          </div>}
+            <button type="button" aria-pressed={libraryShelf==="saved"} className={libraryShelf==="saved"?"active":""} onClick={()=>changeLibraryShelf("saved")}><Download size={15}/>{({ru:"На устройстве",uz:"Yuklangan",en:"On device"} as const)[lang]}</button>
+            <button type="button" aria-pressed={libraryShelf==="recent"} className={libraryShelf==="recent"?"active":""} onClick={()=>changeLibraryShelf("recent")}><PlayCircle size={15}/>{({ru:"Недавние",uz:"So\u0027nggi",en:"Recent"} as const)[lang]}</button>
+          </div>
         </div>
-        {books.length===0&&<div className="library-empty-quickbar">
-          <button className="primary-button library-empty-quick-create" type="button" onClick={()=>openCreate()}><Plus size={17}/>{t.newStory}</button>
-          <span className="library-empty-quick-progress"><Star size={16}/>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]} {readingStats.unlocked}/{readingStats.total}</span>
-        </div>}
-        {books.length>0&&<div className="library-concept-metrics">
+        <div className="library-concept-metrics">
         <details className="library-achievements-disclosure">
           <summary><Star size={18}/><span>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]}</span><strong>{readingStats.unlocked}/{readingStats.total}</strong><ChevronDown size={16}/></summary>
         <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
@@ -1058,7 +1055,7 @@ function App(){
             <span>{({ru:"Читали",uz:"Oqilganlar",en:"Read"} as const)[lang]}</span>
             <strong>{books.filter(book=>(book.lastPage??0)>0).length}</strong>
           </div>
-        </div>}
+        </div>
         {books.some(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1)&&<div className="library-resume">
           <div className="library-resume-text"><BookOpen size={17}/><span>{({ru:"Продолжить чтение",uz:"Oqishni davom ettirish",en:"Continue reading"} as const)[lang]}</span></div>
           {books.filter(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1).slice(0,1).map(book=><button key={book.id} type="button" onClick={()=>openBook(book)}><span>{book.title}</span><ArrowRight size={17}/></button>)}
@@ -1088,6 +1085,7 @@ function App(){
             <img className="library-concept-castle-art" src="/images/library-story-castle-premium.png" alt="" width={480} height={360} loading="lazy" decoding="async"/>
           </div>
           <div className="library-empty-copy"><h3>{t.empty}</h3><p>{t.emptyDesc}</p></div>
+          <button className="primary-button library-concept-create" type="button" onClick={()=>openCreate()}><Plus size={19}/>{t.newStory}</button>
 
         </div>}</section>}
       {tab==="reader"&&active&&<section className={"reader-page"+(readerFocusMode?" reader-focused":"")}>
