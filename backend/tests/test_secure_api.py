@@ -29,6 +29,21 @@ def test_requires_authentication():
     assert client.post("/api/books",json={"title":"x","child_name":"x","age":5,"story":"hi"}).status_code==401
     assert client.get("/api/me",headers=headers("invalid")).status_code==401
 
+def test_private_billing_and_auth_responses_are_never_cacheable():
+    token = signup("no-cache-parent@example.com")
+    paths = ["/api/me", "/api/books", "/api/books/favorites",
+             "/api/books/progress", "/api/children", "/api/billing/status"]
+    for path in paths:
+        response = client.get(path, headers=headers(token))
+        assert response.status_code == 200, (path, response.text)
+        assert response.headers.get("Cache-Control") == "private, no-store", path
+        assert response.headers.get("Pragma") == "no-cache", path
+        assert response.headers.get("X-Content-Type-Options") == "nosniff", path
+    unauthenticated = client.get("/api/billing/status")
+    assert unauthenticated.status_code == 401
+    assert unauthenticated.headers.get("Cache-Control") == "private, no-store"
+
+
 def test_parent_isolation_and_revocation():
     a=signup("parent-a@example.com")
     b=signup("parent-b@example.com")
