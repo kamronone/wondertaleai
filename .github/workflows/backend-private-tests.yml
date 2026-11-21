@@ -36,10 +36,32 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Compile Python sources
         run: python -m compileall -q .
-      - name: Test private API without external providers
+      # Separate pytest processes prevent module-level SQLite fixtures and
+      # imported secure_main globals from contaminating unrelated suites.
+      # PostgreSQL integration is intentionally separate: it needs a dedicated
+      # disposable preview database and explicit operator opt-in.
+      - name: Test AI-generated library and import idempotency (mock provider)
         run: python -m pytest -q test_generated_book_library.py test_device_import_idempotency.py test_ai_generation.py
         env:
           APP_ENV: development
           REQUIRE_EMAIL_VERIFICATION: 'false'
           ENABLE_TEXT_AI: 'true'
           ENABLE_REGISTRATION: 'true'
+      - name: Test owner isolation, authorization, registration and quotas
+        run: python -m pytest -q tests/test_secure_api.py
+        env:
+          APP_ENV: development
+          ENABLE_TEXT_AI: 'false'
+          REQUIRE_EMAIL_VERIFICATION: 'false'
+      - name: Test email delivery and recovery contracts (mock mail)
+        run: python -m pytest -q tests/test_email_auth.py
+        env:
+          APP_ENV: development
+          ENABLE_TEXT_AI: 'false'
+          ENABLE_REGISTRATION: 'false'
+      - name: Test AI model response contracts (mock provider)
+        run: python -m pytest -q tests/test_ai_generation.py
+        env:
+          APP_ENV: development
+          ENABLE_TEXT_AI: 'false'
+          ENABLE_REGISTRATION: 'false'
