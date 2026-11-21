@@ -160,3 +160,116 @@
     border-radius:24px 24px 0 0!important;
   }
 }
+
+/* Library achievements: expansion belongs BELOW the three statistics cells.
+   Never let long explanatory copy stretch or overlap a metric. */
+.library-page.library-concept-two .library-concept-metrics>.library-achievements-toggle{
+  position:relative;
+  display:grid!important;
+  grid-template-columns:24px minmax(0,1fr)!important;
+  grid-template-rows:auto auto;
+  column-gap:7px!important;
+  row-gap:0!important;
+  align-content:center!important;
+  align-items:center!important;
+  box-sizing:border-box!important;
+  min-width:0!important;
+  width:100%!important;
+  min-height:66px!important;
+  margin:0!important;
+  padding:10px 8px!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  color:#593b77!important;
+  text-align:left!important;
+  cursor:pointer;
+}
+.library-page.library-concept-two .library-achievements-toggle svg:first-child{
+  grid-column:1;
+  grid-row:1/span 2;
+  width:22px!important;
+  height:22px!important;
+  color:#f3a73f;
+  justify-self:center;
+}
+.library-page.library-concept-two .library-achievements-toggle span{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  font-size:11px!important;
+  font-weight:700!important;
+  line-height:1.2!important;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.library-page.library-concept-two .library-achievements-toggle strong{
+  grid-column:2;
+  grid-row:2;
+  font-size:17px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  color:#3c215c!important;
+}
+.library-page.library-concept-two .library-achievements-toggle svg:last-child{
+  display:none!important;
+}
+.library-page.library-concept-two .library-achievements-toggle:focus-visible{
+  outline:2px solid #934bc9;
+  outline-offset:-3px;
+  border-radius:12px!important;
+}
+.library-page.library-concept-two>.library-achievements-panel{
+  display:block;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:0;
+  padding:12px;
+  border:1px solid #e6d0f3;
+  border-radius:15px;
+  background:#fffaff;
+  box-shadow:0 4px 12px rgba(93,50,139,.05);
+}
+.library-page.library-concept-two>.library-achievements-panel>.reading-achievements{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.library-page.library-concept-two>.library-achievements-panel .reading-achievements-note{
+  display:block;
+  margin-top:10px;
+  font-size:11px;
+  line-height:1.45;
+  color:#83708f;
+}
+@media(max-width:620px){
+  .library-page.library-concept-two .library-concept-metrics>.library-achievements-toggle{
+    min-height:61px!important;
+    padding:7px 4px!important;
+    grid-template-columns:19px minmax(0,1fr)!important;
+    column-gap:5px!important;
+  }
+  .library-page.library-concept-two .library-achievements-toggle svg:first-child{
+    width:18px!important;
+    height:18px!important;
+  }
+  .library-page.library-concept-two .library-achievements-toggle span{
+    font-size:10px!important;
+  }
+  .library-page.library-concept-two .library-achievements-toggle strong{
+    font-size:16px!important;
+  }
+  .library-page.library-concept-two>.library-achievements-panel{
+    padding:10px;
+  }
+}
