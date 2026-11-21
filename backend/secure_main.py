@@ -85,6 +85,8 @@ def init_schema():
         sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS ai_idempotency (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, created_at TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending', PRIMARY KEY(owner_id,request_key))")
+        sql(c, "CREATE TABLE IF NOT EXISTS ai_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, UNIQUE(owner_id,request_key))")
+        sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
         # Existing preview databases may already have the ledger without state.
         # Preserve completed tombstones so deleting a book does not make an
         # old, paid request look like a new in-flight operation.
@@ -765,6 +767,114 @@ def generation_request_status(request_key:str,owner:str=Depends(current_parent))
     if age>180:
         return {"status":"needs_review","book_id":None}
     return {"status":"processing","book_id":None}
+
+
+def _ai_job_status(row):
+    job_id,status_value,created_at,started_at,book_id=row
+    if status_value=="completed" and book_id is None:
+        status_value="unavailable"
+    elif status_value=="processing" and started_at:
+        try:
+            started=datetime.fromisoformat(started_at)
+            age=(datetime.now(timezone.utc)-started).total_seconds()
+        except (TypeError,ValueError):
+            age=181
+        if age>180:
+            status_value="needs_review"
+    return {"id":job_id,"status":status_value,"book_id":book_id if status_value=="completed" else None}
+
+
+@app.post("/api/books/jobs",status_code=202)
+def enqueue_ai_story(body:GenerateStoryInput,owner:str=Depends(current_parent),
+                     idempotency_key:str|None=Header(default=None,alias="Idempotency-Key")):
+    """Durable, opt-in queue. An independent worker must be deployed separately."""
+    if os.getenv("ENABLE_AI_JOBS","false").lower()!="true":
+        raise HTTPException(503,"AI job queue is disabled")
+    if os.getenv("ENABLE_TEXT_AI","false").lower()!="true" or not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(503,"AI provider is unavailable")
+    if not idempotency_key or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}",idempotency_key):
+        raise HTTPException(422,"Valid Idempotency-Key is required")
+    allowed={x.strip().lower() for x in os.getenv("AI_ALLOWED_EMAILS","").split(",") if x.strip()}
+    payload=body.model_dump_json()
+    digest=hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    with connection() as c:
+        if IS_PG:
+            parent=sql(c,"SELECT email FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+        else:
+            c.execute("BEGIN IMMEDIATE")
+            parent=sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
+        if not parent or parent[0].lower() not in allowed:
+            raise HTTPException(403,"AI access is not enabled for this account")
+        existing=sql(c,"SELECT id,status,created_at,started_at,book_id,payload_digest FROM ai_jobs WHERE owner_id=? AND request_key=?",(owner,idempotency_key)).fetchone()
+        if existing:
+            if existing[5]!=digest:
+                raise HTTPException(409,"Idempotency key was used for another request")
+            return _ai_job_status(existing[:5])
+        active=sql(c,"SELECT COUNT(*) FROM ai_jobs WHERE owner_id=? AND status IN ('queued','processing')",(owner,)).fetchone()[0]
+        if active>=2:
+            raise HTTPException(429,"Too many unfinished AI jobs")
+        count=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
+        if count>=MAX_BOOKS_PER_PARENT:
+            raise HTTPException(409,"Library limit reached")
+        job_id=str(uuid.uuid4())
+        created=datetime.now(timezone.utc).isoformat()
+        sql(c,"INSERT INTO ai_jobs(id,owner_id,request_key,payload_digest,payload,status,created_at) VALUES(?,?,?,?,?,'queued',?)",(job_id,owner,idempotency_key,digest,payload,created))
+        c.commit()
+    return {"id":job_id,"status":"queued","book_id":None}
+
+
+@app.get("/api/books/jobs/{job_id}")
+def ai_job_for_parent(job_id:str,owner:str=Depends(current_parent)):
+    if not re.fullmatch(r"[0-9a-f-]{36}",job_id):
+        raise HTTPException(404,"AI job not found")
+    with connection() as c:
+        row=sql(c,"SELECT id,status,created_at,started_at,book_id FROM ai_jobs WHERE id=? AND owner_id=?",(job_id,owner)).fetchone()
+    if not row:
+        raise HTTPException(404,"AI job not found")
+    return _ai_job_status(row)
+
+
+def process_one_queued_ai_job():
+    """Called only from an operator-managed worker, not from an HTTP handler.
+
+    A crashed processing job is deliberately never automatically reclaimed;
+    billing may have occurred outside the database transaction.
+    """
+    if os.getenv("ENABLE_AI_JOBS","false").lower()!="true":
+        raise RuntimeError("AI job queue is disabled")
+    with connection() as c:
+        if not IS_PG:
+            c.execute("BEGIN IMMEDIATE")
+        query="SELECT id,owner_id,request_key,payload FROM ai_jobs WHERE status='queued' ORDER BY created_at,id LIMIT 1"
+        if IS_PG:
+            query+=" FOR UPDATE SKIP LOCKED"
+        row=sql(c,query).fetchone()
+        if not row:
+            return None
+        job_id,owner,key,payload=row
+        now=datetime.now(timezone.utc).isoformat()
+        sql(c,"UPDATE ai_jobs SET status='processing',started_at=? WHERE id=? AND status='queued'",(now,job_id))
+        c.commit()
+    try:
+        story=GenerateStoryInput.model_validate_json(payload)
+        result=generate_personalized_book(story,owner,key)
+        with connection() as c:
+            sql(c,"UPDATE ai_jobs SET status='completed',completed_at=?,book_id=?,payload='' WHERE id=? AND status='processing'",(datetime.now(timezone.utc).isoformat(),result["id"],job_id))
+            c.commit()
+        return job_id
+    except HTTPException as exc:
+        # A 409 may mean an uncertain already-running upstream call.
+        final="needs_review" if exc.status_code==409 else "failed"
+        with connection() as c:
+            sql(c,"UPDATE ai_jobs SET status=?,completed_at=?,payload='' WHERE id=? AND status='processing'",(final,datetime.now(timezone.utc).isoformat(),job_id))
+            c.commit()
+        return job_id
+    except Exception:
+        # Unknown failure, including a persistence/network partition. Fail closed.
+        with connection() as c:
+            sql(c,"UPDATE ai_jobs SET status='needs_review',completed_at=?,payload='' WHERE id=? AND status='processing'",(datetime.now(timezone.utc).isoformat(),job_id))
+            c.commit()
+        return job_id
 
 
 @app.delete("/api/me",status_code=204)
