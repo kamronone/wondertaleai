@@ -13,12 +13,12 @@ test("each narration has a generation token so old end events cannot turn pages"
  assert.match(src,/if\(mayAdvance\)setPage/);
 });
 test("Safari backgrounding and pagehide safely reset speech without autoskip",()=>{
- assert.match(src,/document\.addEventListener\("visibilitychange",stopOnBackground\)/);
+ assert.match(src,/document\.addEventListener\("visibilitychange",onVisibilityChange\)/);
  assert.match(src,/window\.addEventListener\("pagehide",onPageHide\)/);
- assert.match(src,/onPageHide=\(\)=>stopOnBackground\(true\)/);
- assert.match(src,/if\(!force&&document\.visibilityState!=="hidden"\)return/);
+ assert.match(src,/onPageHide=\(\)=>stopOnBackground\(\)/);
+ assert.match(src,/if\(document\.visibilityState==="hidden"\)stopOnBackground\(\)/);
  assert.match(src,/speechRun\.current\+\+;[\s\S]{0,120}speechAdvanceArmed\.current=false/);
- assert.match(src,/document\.removeEventListener\("visibilitychange",stopOnBackground\)/);
+ assert.match(src,/document\.removeEventListener\("visibilitychange",onVisibilityChange\)/);
  assert.match(src,/window\.removeEventListener\("pagehide",onPageHide\)/);
 });
 test("narration start exceptions restore buttons and show existing voice failure",()=>{
