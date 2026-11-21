@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/reader-living-art.css",import.meta.url),"utf8");
+const mobile=readFileSync(new URL("../src/reader-mobile-v1.css",import.meta.url),"utf8");
 
 test("reader imports living art styles after full-width sizing",()=>{
  const full=app.indexOf('import "./reader-image-fullwidth.css";');
@@ -46,6 +47,7 @@ test("first-time visitors see real character motion without opening settings",()
  assert.match(app,/wt-character-motion-control/);
  assert.match(app,/aria-pressed=\{readerArtMotion==="magic"\}/);
  assert.match(app,/setReaderArtMotion\(current=>current==="magic"\?"off":"magic"\)/);
- assert.match(css,/\.wt-character-motion-control\{/);
- assert.match(css,/min-height:44px/);
+ assert.match(mobile,/\.wt-motion-inline-row \.wt-character-motion-control\{/);
+ assert.match(mobile,/min-height:44px/);
+ assert.doesNotMatch(css,/\.story-page-image \.wt-character-motion-control\{/);
 });
