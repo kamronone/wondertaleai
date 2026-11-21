@@ -22,7 +22,7 @@ test("library search remains visible while shelf filters appear only when books 
    assert.ok(app.includes('libraryShelf==="'+shelf+'"'),shelf);
  assert.match(app,/onClick=\{\(\)=>changeLibraryShelf\("favorites"\)\}/);
  assert.match(app,/onClick=\{\(\)=>changeLibraryShelf\("saved"\)\}/);
- assert.match(app,/\{books\.length>0&&<div className="library-filters library-concept-chips"/);
+ assert.match(app,/<div className="library-filters library-concept-chips"/);
  assert.match(app,/isDemoBook\(book\)&&Boolean\(book\.savedOnDevice\)/);
  assert.match(app,/if\(next==="recent"\)setLibrarySort\("newest"\)/);
 });
@@ -37,13 +37,14 @@ test("empty state uses book artwork and only one primary create action",()=>{
  assert.match(app,/className="empty library-concept-empty"/);
  assert.match(app,/src="\/images\/library-story-castle-premium\.png"/);
  assert.doesNotMatch(app,/className="library-concept-fox-art"/);
- assert.match(app,/className="primary-button library-empty-quick-create"/);
- assert.match(app,/\{books\.length===0&&<div className="library-empty-quickbar"/);
- assert.match(app,/\{books\.length>0&&<div className="library-concept-metrics"/);
+ assert.match(app,/className="primary-button library-concept-create"/);
+ assert.doesNotMatch(app,/\{books\.length===0&&<div className="library-empty-quickbar"/);
+ assert.match(app,/<div className="library-concept-metrics"/);
  assert.match(app,/\{books\.length>0&&<button className="primary-button add-book"/);
  assert.deepEqual([...illustration.subarray(0,8)],[137,80,78,71,13,10,26,10]);
  assert.ok(illustration.length>12000);
  assert.match(app,/import "\.\/library-final-polish\.css"/);
+ assert.match(app,/import "\.\/library-exact-reference\.css"/);
  assert.match(polished,/\.library-empty-quickbar/);
  assert.match(polished,/\.library-empty-copy/);
 });
@@ -62,4 +63,22 @@ test("responsive library does not reintroduce forced empty heights or bottom pad
  assert.match(css,/\.library-concept-empty\{[^}]*height:auto!important/s);
  assert.match(css,/\.library-concept-chips\{[^}]*overflow-x:auto/s);
  assert.match(css,/\.library-concept-search input\{[^}]*font-size:16px/s);
+});
+
+test("approved reference: filters and three metrics stay visible even with zero books",()=>{
+ const start=app.indexOf('<div className="library-concept-toolbar">');
+ const end=app.indexOf('{books.some(book=>typeof book.lastPage',start);
+ const section=app.slice(start,end);
+ assert.ok(start>=0&&end>start);
+ assert.match(section,/<div className="library-filters library-concept-chips"/);
+ assert.match(section,/<div className="library-concept-metrics"/);
+ assert.doesNotMatch(section,/\{books\.length>0&&<div className="library-concept-metrics"/);
+ assert.match(app,/className="primary-button library-concept-create"/);
+ assert.doesNotMatch(app,/library-concept-fox-art/);
+});
+
+test("reference CSS places four filter pills in a row on iPhone",()=>{
+ const exact=readFileSync(new URL("../src/library-exact-reference.css",import.meta.url),"utf8");
+ assert.match(exact,/\.library-concept-chips[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
+ assert.match(exact,/\.library-concept-art[\s\S]*?aspect-ratio:480\/285!important/);
 });
