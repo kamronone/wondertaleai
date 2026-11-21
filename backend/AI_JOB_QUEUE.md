@@ -58,6 +58,22 @@ minutes. It is **not automatically retried**: the provider may have already
 charged. Failed jobs are terminal; repeated UI queries cannot trigger another
 provider call. Job text is cleared after a completed or failed attempt.
 
+## Frontend pilot integration
+
+The React client includes an opt-in experimental queue path controlled by
+`VITE_ENABLE_AI_JOB_QUEUE=true` at **build time**. The default is disabled,
+so existing synchronous AI generation stays unchanged. Do not set the frontend
+flag until the Backend Preview has `ENABLE_AI_JOBS=true`, an independent
+trusted worker is deployed, and privacy/cost release gates are complete.
+
+When enabled, the existing creation form sends a random per-request
+`Idempotency-Key` to `POST /api/books/jobs` and navigates to the parent
+profile. The account shows `AiJobsPanel`: reloads the last 20 jobs after login
+or page reload, allows cancellation only while queued, and links completed jobs
+to the private library. The panel uses authenticated, no-store requests and is
+unmounted after logout. Neither access tokens nor child prompts are stored in
+browser persistence by the queue client.
+
 ## Remaining production work
 
 - A persistent worker host, schedule, operational supervision, heartbeats,
