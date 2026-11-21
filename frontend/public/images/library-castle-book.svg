@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="330" viewBox="0 0 560 330" role="img" aria-labelledby="title">
+<title id="title">Magical castle over an open fairy-tale book</title>
+<defs>
+ <radialGradient id="haze"><stop stop-color="#f2d4ff"/><stop offset="1" stop-color="#fbf5ff" stop-opacity="0"/></radialGradient>
+ <linearGradient id="book" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff9e9"/><stop offset=".6" stop-color="#ffe5cc"/><stop offset="1" stop-color="#e2bdf7"/></linearGradient>
+ <linearGradient id="castle" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c699fb"/><stop offset=".55" stop-color="#9158d5"/><stop offset="1" stop-color="#6b37a3"/></linearGradient>
+ <linearGradient id="spine" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#9847b5"/><stop offset="1" stop-color="#63319d"/></linearGradient>
+ <filter id="shadow"><feGaussianBlur stdDeviation="11"/></filter>
+</defs>
+<ellipse cx="275" cy="174" rx="220" ry="135" fill="url(#haze)"/>
+<ellipse cx="280" cy="302" rx="206" ry="16" fill="#bc8add" opacity=".27" filter="url(#shadow)"/>
+<path d="M90 286q-55-45-39-87 28 1 47 41-11-75 15-84 36 58 11 102 12-55 47-58 5 55-34 87Z" fill="#9bc5ad" opacity=".86"/>
+<path d="M470 290q44-60 15-100-31 22-34 63 2-75-29-86-31 48-4 101-22-38-51-29 10 52 42 53Z" fill="#a1bfd2" opacity=".9"/>
+<path d="M80 278q58-25 112 5M374 285q45-23 111-10" stroke="#8d6fbc" stroke-width="8" stroke-linecap="round" opacity=".35"/>
+<!-- castle towers -->
+<g stroke="#7640ad" stroke-width="3" stroke-linejoin="round">
+ <path d="M191 225V128l36-19 36 19v97Z" fill="#c9a1f2"/>
+ <path d="M219 119V69h45v156h-45Z" fill="url(#castle)"/>
+ <path d="M231 80 251 31l21 49Z" fill="#7d43bf"/>
+ <path d="M298 224V95h65v129Z" fill="#ac77e5"/>
+ <path d="M288 110 330 43l43 67Z" fill="#8752c7"/>
+ <path d="M370 225V134h36v91Z" fill="#c397ec"/>
+ <path d="M364 141 388 100l24 41Z" fill="#7950b6"/>
+ <path d="M240 225v-27h98v27" fill="#c2a0e5"/>
+ <path d="M265 171h40v54h-40Z" fill="#9b6cce"/>
+</g>
+<path d="M323 155v-25a10 10 0 0 1 20 0v25h-20Zm-76-43V92a8 8 0 0 1 16 0v20h-16Zm135 67v-17a8 8 0 0 1 16 0v17h-16ZM276 225v-27a16 16 0 0 1 32 0v27Z" fill="#ffe19b"/>
+<path d="M251 31v-17l21 7-21 8" stroke="#7c45b7" stroke-width="3" fill="#ffcb83"/>
+<path d="M330 43V24l22 9-22 8" stroke="#7745bb" stroke-width="3" fill="#ffc976"/>
+<path d="M388 100V87l16 6-16 5" stroke="#7e48ac" stroke-width="3" fill="#ffd27d"/>
+<!-- moon and magical stars -->
+<path d="M141 79a31 31 0 1 0 37-43 30 30 0 0 1-37 43Z" fill="#ffcb70"/>
+<g fill="#ffd479">
+ <path d="m113 42 5 13 13 5-13 5-5 13-5-13-13-5 13-5Z"/>
+ <path d="m423 58 4 10 10 4-10 4-4 10-4-10-10-4 10-4Z"/>
+ <path d="m438 166 4 11 11 4-11 4-4 11-4-11-11-4 11-4Z"/>
+ <path d="m190 39 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z"/>
+</g>
+<g fill="#b47ad9"><circle cx="110" cy="151" r="4"/><circle cx="407" cy="31" r="3"/><circle cx="475" cy="115" r="4"/><circle cx="161" cy="185" r="3"/></g>
+<!-- floating magical open book -->
+<ellipse cx="285" cy="293" rx="188" ry="13" fill="#aa7ddd" opacity=".33"/>
+<path d="M95 245q100-34 190 9 91-44 186-9l11 45q-107-3-197 15-104-23-204-15Z" fill="#864bbf" stroke="#6134a1" stroke-width="5"/>
+<path d="M107 233q98-31 178 19 81-49 178-19l9 51q-103-12-187 16-95-28-188-16Z" fill="#f6d9c8" stroke="#b47ac1" stroke-width="4"/>
+<path d="M114 219q91-25 170 30 87-53 173-30l8 54q-99-14-181 23-92-34-177-23Z" fill="url(#book)" stroke="#c897bd" stroke-width="3"/>
+<path d="M284 249v45" stroke="#bf8cbb" stroke-width="5" stroke-linecap="round"/>
+<path d="M123 232q84-10 149 29M121 245q79-6 149 29M448 233q-76-10-153 29M448 246q-74-5-153 31" fill="none" stroke="#d7aec6" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+<path d="M101 285q90-6 183 15 95-21 190-15" fill="none" stroke="#7c3eac" stroke-width="5" stroke-linecap="round"/>
+</svg>
