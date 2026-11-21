@@ -51,12 +51,12 @@ function normalizeServerBook(book:ServerRow):RemoteBook|null{
    pages,mode:"private-account"};
  }catch{return null;}
 }
-export async function loadPrivateBooks(api:string,token:string):Promise<RemoteBook[]>{
+export async function loadPrivateBooks(api:string,token:string,signal?:AbortSignal):Promise<RemoteBook[]>{
  // Snapshot all parent-owned records after authentication: books, favorites and reading progress.
  const [bookRes,favoriteRes,progressRes]=await Promise.all([
-  fetchWithToken(api,"/api/books",token),
-  fetchWithToken(api,"/api/books/favorites",token),
-  fetchWithToken(api,"/api/books/progress",token)
+  fetchWithToken(api,"/api/books",token,{signal}),
+  fetchWithToken(api,"/api/books/favorites",token,{signal}),
+  fetchWithToken(api,"/api/books/progress",token,{signal})
  ]);
  if([bookRes,favoriteRes,progressRes].some(response=>response.status===401||response.status===403))throw Error("Private account authorization expired");
  if(!bookRes.ok||!favoriteRes.ok||!progressRes.ok)throw Error("Unable to fetch private library");
@@ -75,9 +75,9 @@ export async function loadPrivateBooks(api:string,token:string):Promise<RemoteBo
   ...book,favorite:favoriteIds.has(book.id),lastPage:Math.min(book.pages.length-1,pageById.get(book.id)||0)
  }));
 }
-export async function updatePrivateReadingProgress(api:string,token:string,bookId:string,page:number):Promise<void>{
+export async function updatePrivateReadingProgress(api:string,token:string,bookId:string,page:number,signal?:AbortSignal):Promise<void>{
  const response=await fetchWithToken(api,"/api/books/"+encodeURIComponent(bookId)+"/progress",token,{
-  method:"POST",body:JSON.stringify({page})
+  method:"POST",body:JSON.stringify({page}),signal
  });
  if(response.status===401||response.status===403)throw Error("Private account authorization expired");
  if(response.status===404)throw new PrivateBookNotFoundError();
@@ -91,9 +91,9 @@ export async function updatePrivateFavorite(api:string,token:string,bookId:strin
  if(typeof data.favorite!=="boolean")throw Error("Invalid favorite response");
  return data.favorite;
 }
-export async function setPrivateFavorite(api:string,token:string,bookId:string,favorite:boolean):Promise<void>{
+export async function setPrivateFavorite(api:string,token:string,bookId:string,favorite:boolean,signal?:AbortSignal):Promise<void>{
  const response=await fetchWithToken(api,"/api/books/"+encodeURIComponent(bookId)+"/favorite",token,{
-  method:"PUT",body:JSON.stringify({favorite})
+  method:"PUT",body:JSON.stringify({favorite}),signal
  });
  if(response.status===401||response.status===403)throw Error("Private account authorization expired");
  if(response.status===404)throw new PrivateBookNotFoundError();
@@ -207,7 +207,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  // Resolve server IDs through source_id; local IDs are never valid remote book IDs.
  // Only add a favorite when absent because the API endpoint toggles its state.
  checkActive();
- const serverBooks=await loadPrivateBooks(api,token);
+ const serverBooks=await loadPrivateBooks(api,token,signal);
  checkActive();
  const latest=await request("/api/books");
  if(latest.status===401||latest.status===403)throw Error("Private account authorization expired");
@@ -231,9 +231,10 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
   if(local.favorite&&!remote.favorite){
    try{
     checkActive();
-    await setPrivateFavorite(api,token,id!,true);
+    await setPrivateFavorite(api,token,id!,true,signal);
     remote.favorite=true;
    }catch(error){
+    checkActive();
     if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
     metadataFailed++;
    }
@@ -242,13 +243,15 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
    try{
     const position=Math.min(local.lastPage,remote.pages.length-1);
     checkActive();
-    await updatePrivateReadingProgress(api,token,id!,position);
+    await updatePrivateReadingProgress(api,token,id!,position,signal);
     remote.lastPage=position;
    }catch(error){
+    checkActive();
     if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
     metadataFailed++;
    }
   }
  }
+ checkActive();
  return {uploaded,existing,failed,metadataFailed,serverBooks};
 }
