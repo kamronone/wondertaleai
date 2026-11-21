@@ -25,7 +25,7 @@ import {enqueueAiJob} from "./ai_jobs";
 import {AiJobsPanel} from "./AiJobsPanel";
 import {IllustrationConsentPanel} from "./IllustrationConsentPanel";
 import {PrivateReaderIllustration} from "./PrivateReaderIllustration";
-import {redHoodReaderImage} from "./red_hood_page_art";
+import {classicReaderImage} from "./classic_page_art";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
@@ -1225,8 +1225,8 @@ function App(){
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div key={active.id+":"+page+":image"} className="story-page-image reader-turn-image">{active.mode==="private-account"&&privateToken&&API
           ?<PrivateReaderIllustration api={API} session={privateToken} bookId={active.id} pageNumber={page+1}
              alt={t.illustration+" "+(page+1)}
-             fallback={<StoryIllustration url={redHoodReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}/>
-          :<StoryIllustration url={redHoodReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}
+             fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}/>
+          :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)}/>}
 </div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
@@ -1266,8 +1266,8 @@ function App(){
         {isDemoBook(active)&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
         </section>}
         {<article className="print-book" aria-hidden="true">
-          <div className="print-book-cover"><StoryIllustration url={redHoodReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[0].image_url,0)} alt={t.cover}/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
-          {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><StoryIllustration url={redHoodReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,item.image_url,index)} alt={t.illustration+" "+(index+1)}/><p>{item.text}</p></section>)}
+          <div className="print-book-cover"><StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[0].image_url,0)} alt={t.cover}/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
+          {active.pages.map((item,index)=><section className="print-book-page" key={item.number}><div className="print-book-page-head"><span>WonderTale AI</span><span>{t.page} {index+1} {t.of} {active.pages.length}</span></div><StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,item.image_url,index)} alt={t.illustration+" "+(index+1)}/><p>{item.text}</p></section>)}
         </article>}
         <div className="pager"><button disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}><ArrowLeft size={18}/> {t.back}</button><span className="pager-indicators" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length}><span className="pager-mobile-current" aria-live="polite">{page+1} / {active.pages.length}</span>{active.pages.length<=7?active.pages.map((_,i)=><button type="button" key={i} className={"dot "+(i===page?"active":"")} onClick={()=>setPage(i)} aria-label={t.page+" "+(i+1)} aria-current={i===page?"page":undefined}/>):<><button type="button" className="pager-jump" disabled={page===0} onClick={()=>setPage(0)} aria-label={t.page+" 1"}>1</button><span className="pager-current" aria-live="polite">{page+1} / {active.pages.length}</span><button type="button" className="pager-jump" disabled={page===active.pages.length-1} onClick={()=>setPage(active.pages.length-1)} aria-label={t.page+" "+active.pages.length}>{active.pages.length}</button></>}</span><button disabled={page===active.pages.length-1} onClick={()=>setPage(p=>Math.min(active.pages.length-1,p+1))}>{t.next} <ArrowRight size={18}/></button></div>
       </section>}
