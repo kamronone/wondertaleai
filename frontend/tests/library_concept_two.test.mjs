@@ -93,3 +93,16 @@ test("iPhone screenshot fixes keep filters readable and the create action above 
  assert.match(fixes,/\.library-concept-create\{[\s\S]*?min-height:43px!important/);
  assert.match(fixes,/mask-image:linear-gradient/);
 });
+
+test("expanded achievements render below the statistics row instead of breaking its grid",()=>{
+ const layout=readFileSync(new URL("../src/shared-rounded-pages.css",import.meta.url),"utf8");
+ const segment=app.slice(app.indexOf('className="library-concept-metrics"'),app.indexOf('className="library-resume"'));
+ assert.match(segment,/className="library-achievements-toggle"/);
+ assert.match(segment,/aria-expanded=\{showLibraryAchievements\}/);
+ assert.match(segment,/onClick=\{\(\)=>setShowLibraryAchievements\(value=>!value\)\}/);
+ assert.match(segment,/\{showLibraryAchievements&&<div className="library-achievements-panel"/);
+ assert.ok(segment.indexOf('className="library-achievements-panel"')>segment.indexOf('className="library-concept-metric"'));
+ assert.doesNotMatch(segment,/<details className="library-achievements-disclosure">/);
+ assert.match(layout,/\.library-page\.library-concept-two>\.library-achievements-panel\{/);
+ assert.match(layout,/\.library-concept-metrics>\.library-achievements-toggle\{/);
+});
