@@ -505,3 +505,70 @@ def test_manual_charge_review_validation_and_production_gate(api,monkeypatch):
     saved=record_verified_charge(job_id=job,charge_status="not_charged",
                                  amount_micro_usd=0,evidence_sha256=digest)
     assert saved["amount_micro_usd"]==0
+
+
+def test_parent_consent_revocation_blocks_new_jobs_and_clears_queued(api,monkeypatch):
+    client,module,register,create_book=api
+    email,auth=register()
+    _,other=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    book=create_book(auth)
+    data={"book_id":book,"page_number":1,"style":"storybook"}
+    assert client.get("/api/illustrations/consent").status_code==401
+    assert client.get("/api/illustrations/consent",headers=auth).json()=={
+        "agreed":True,"policy_version":"illustration-pilot-v1"}
+    assert client.post("/api/illustrations/consent",headers=auth,json={
+        "agreed":True,"policy_version":"illustration-pilot-v0"
+    }).status_code==422
+    first=client.post("/api/illustrations/jobs",headers=auth,json=data)
+    assert first.status_code==202,first.text
+    assert client.get("/api/illustrations/jobs",headers=other).json()==[]
+    revoked=client.post("/api/illustrations/consent",headers=auth,json={
+        "agreed":False,"policy_version":"illustration-pilot-v1"
+    })
+    assert revoked.status_code==200,revoked.text
+    assert revoked.json()["agreed"] is False
+    assert client.get("/api/illustrations/consent",headers=auth).json()["agreed"] is False
+    assert client.get("/api/illustrations/jobs",headers=auth).json()==[]
+    assert client.post("/api/illustrations/jobs",headers=auth,json=data).status_code==403
+    restored=client.post("/api/illustrations/consent",headers=auth,json={
+        "agreed":True,"policy_version":"illustration-pilot-v1"
+    })
+    assert restored.status_code==200
+    second=client.post("/api/illustrations/jobs",headers=auth,json=data)
+    assert second.status_code==202
+    assert second.json()["id"]!=first.json()["id"]
+    assert client.delete("/api/me",headers=auth).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_parent_consent WHERE owner_id NOT IN (SELECT id FROM parents)").fetchone()[0]==0
+
+
+def test_revoking_consent_during_moderation_never_calls_renderer(api,monkeypatch):
+    from illustration_worker import process_one_illustration_job
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS_WORKER","true")
+    monkeypatch.setenv("MAX_ILLUSTRATIONS_PER_DAY","2")
+    monkeypatch.setenv("MAX_PARENT_ILLUSTRATIONS_PER_DAY","2")
+    book=create_book(auth)
+    job=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"pencil"
+    }).json()["id"]
+    def revoke(_prompt):
+        response=client.post("/api/illustrations/consent",headers=auth,json={
+            "agreed":False,"policy_version":"illustration-pilot-v1"})
+        assert response.status_code==200
+        return True
+    called=[]
+    assert process_one_illustration_job(renderer=lambda _:called.append(1),
+        moderator=revoke,image_moderator=lambda _:True)==job
+    assert called==[]
+    current=client.get("/api/illustrations/jobs",headers=auth).json()
+    assert current[0]["status"]=="needs_review"
+    assert client.get("/api/illustrations/media/"+job,headers=auth).status_code==404
+    assert client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"watercolor"
+    }).status_code==403
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_assets WHERE job_id=?",(job,)).fetchone()[0]==0
