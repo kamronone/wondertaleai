@@ -1,6 +1,7 @@
 import { classics } from "./classics";
 import { redHoodPageArtwork } from "./red_hood_page_art";
 import { threePigsPageArtwork } from "./three_pigs_page_art";
+import { cinderellaPageArtwork } from "./cinderella_page_art";
 
 /**
  * Offline, page-specific illustrations for the 30 built-in classics.
@@ -46,6 +47,7 @@ function subject(id:string,page:number):string {
 export function classicPageArtwork(classicId:string,pageIndex:number):string {
  if(classicId==="red-hood")return redHoodPageArtwork(pageIndex);
  if(classicId==="three-pigs")return threePigsPageArtwork(pageIndex);
+ if(classicId==="cinderella")return cinderellaPageArtwork(pageIndex);
  const item=classics.find(x=>x.id===classicId);
  if(!item)return "";
  const page=Math.max(0,Math.min(29,Math.trunc(Number.isFinite(pageIndex)?pageIndex:0)));
