@@ -84,6 +84,7 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS sessions_owner_idx ON sessions(owner_id)")
         sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
+        sql(c, "CREATE TABLE IF NOT EXISTS ai_idempotency (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, created_at TEXT NOT NULL, PRIMARY KEY(owner_id,request_key))")
         sql(c, "CREATE TABLE IF NOT EXISTS parent_email_status (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, verified_at TEXT)")
         sql(c, "CREATE TABLE IF NOT EXISTS email_action_tokens (token_digest TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, purpose TEXT NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER, issued_at INTEGER NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS email_action_owner_idx ON email_action_tokens(owner_id,purpose,issued_at)")
@@ -582,7 +583,7 @@ with connection() as c:
     c.commit()
 
 @app.post("/api/books/generate",status_code=201)
-def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current_parent)):
+def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current_parent),idempotency_key:str|None=Header(default=None,alias="Idempotency-Key")):
     if os.getenv("ENABLE_TEXT_AI","false").lower()!="true":
         raise HTTPException(503,"AI generation is not enabled")
     if not os.getenv("OPENAI_API_KEY"):
@@ -600,17 +601,51 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         existing_books=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
     if existing_books>=MAX_BOOKS_PER_PARENT:
         raise HTTPException(409,"Library limit reached")
+    # Optional client request identifier prevents duplicate paid calls after a
+    # lost HTTP response. The key never contains child data and is scoped to owner.
+    # A crash leaves a pending marker instead of silently charging twice.
+    request_key=None
+    if idempotency_key is not None:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{16,128}",idempotency_key):
+            raise HTTPException(422,"Invalid Idempotency-Key")
+        request_key=idempotency_key
+    payload_digest=hashlib.sha256(body.model_dump_json().encode("utf-8")).hexdigest()
+    if request_key:
+        with connection() as c:
+            inserted=sql(c,"INSERT INTO ai_idempotency(owner_id,request_key,payload_digest,book_id,created_at) VALUES(?,?,?,NULL,?) ON CONFLICT(owner_id,request_key) DO NOTHING RETURNING request_key",(owner,request_key,payload_digest,datetime.now(timezone.utc).isoformat())).fetchone()
+            if inserted:
+                c.commit()
+            else:
+                existing=sql(c,"SELECT payload_digest,book_id FROM ai_idempotency WHERE owner_id=? AND request_key=?",(owner,request_key)).fetchone()
+                if not existing or existing[0]!=payload_digest:
+                    raise HTTPException(409,"Idempotency key was used for another request")
+                if not existing[1]:
+                    raise HTTPException(409,"Story generation is already processing")
+                old=sql(c,"SELECT id,title,story,created_at FROM books WHERE id=? AND owner_id=?",(existing[1],owner)).fetchone()
+                if not old:
+                    raise HTTPException(409,"Generated book is unavailable")
+                stored=json.loads(old[2])
+                return {"id":old[0],"title":old[1],"language":stored["language"],"pages":stored["pages"],"created_at":old[3]}
+
+    def release_claim():
+        if request_key:
+            with connection() as c:
+                sql(c,"DELETE FROM ai_idempotency WHERE owner_id=? AND request_key=? AND book_id IS NULL",(owner,request_key))
+                c.commit()
+
     today=datetime.now(timezone.utc).date().isoformat()
     # Global spending ceiling is separate from the per-parent quota.
     # The value is deliberately conservative until usage and billing are monitored.
     daily_cap=max(0,min(200,int(os.getenv("MAX_AI_STORIES_PER_DAY","10"))))
     if daily_cap==0:
+        release_claim()
         raise HTTPException(503,"AI generation is temporarily unavailable")
     with connection() as c:
         if not IS_PG:
             c.execute("BEGIN IMMEDIATE")
         row=sql(c,"INSERT INTO generation_global_quota(day,used) VALUES(?,1) ON CONFLICT(day) DO UPDATE SET used=generation_global_quota.used+1 WHERE generation_global_quota.used<? RETURNING used",(today,daily_cap)).fetchone()
         if row is None:
+            release_claim()
             raise HTTPException(429,"Daily AI service limit reached")
         row=sql(c,"INSERT INTO generation_quota(owner_id,day,used) VALUES(?,?,1) ON CONFLICT(owner_id,day) DO UPDATE SET used=generation_quota.used+1 WHERE generation_quota.used<2 RETURNING used",(owner,today)).fetchone()
         if row is None:
@@ -618,6 +653,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             # roll it back before raising: the connection context otherwise commits
             # a successful global increment even though this parent is at quota.
             c.rollback()
+            release_claim()
             raise HTTPException(429,"Daily AI story limit reached")
         c.commit()
     try:
@@ -631,6 +667,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             sql(c,"UPDATE generation_quota SET used=used-1 WHERE owner_id=? AND day=? AND used>0",(owner,today))
             sql(c,"UPDATE generation_global_quota SET used=used-1 WHERE day=? AND used>0",(today,))
             c.commit()
+        release_claim()
         # Never return internal API errors or provider details to a parent.
         raise HTTPException(502,"Unable to generate this story. Please try later.")
     bid=str(uuid.uuid4())
@@ -659,6 +696,8 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             if current_count>=MAX_BOOKS_PER_PARENT:
                 raise HTTPException(409,"Library limit reached")
             sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps(story_document,ensure_ascii=False),now))
+            if request_key:
+                sql(c,"UPDATE ai_idempotency SET book_id=? WHERE owner_id=? AND request_key=? AND payload_digest=?",(bid,owner,request_key,payload_digest))
             c.commit()
     except Exception as exc:
         # A successfully generated story can still fail to save, for example
@@ -670,6 +709,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             sql(c,"UPDATE generation_quota SET used=used-1 WHERE owner_id=? AND day=? AND used>0",(owner,today))
             sql(c,"UPDATE generation_global_quota SET used=used-1 WHERE day=? AND used>0",(today,))
             c.commit()
+        release_claim()
         # Do not expose database errors or internal tracebacks to the parent.
         # The 409 conflict is safe and actionable; other persistence failures
         # are reported as a generic service error after quota refund.
