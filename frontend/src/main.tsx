@@ -876,7 +876,7 @@ function App(){
     </div>
   </section>;
   return <div className="shell">
-    {tab==="account"?<ProfileHeader lang={lang} onLanguage={switchLang} onBack={()=>setTab("home")} onPrivacy={()=>openLegal("privacy")}/>:
+    {tab==="account"?<ProfileHeader lang={lang} onLanguage={switchLang} onPrivacy={()=>openLegal("privacy")}/>:
     <header className="topbar">
       <button type="button" className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
       <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></div>
