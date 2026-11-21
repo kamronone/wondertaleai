@@ -86,3 +86,12 @@ Those changes are not proof that `ertakcha.netlify.app` is running the branch.
 - No boundary event means no highlight. This is expected on some iPhone voices; narration continues normally.
 - Highlight clears on stop, error, page navigation, and natural speech completion. Screen-reader live announcements are suppressed while TTS runs.
 - Does not create character-specific speech recordings or promise guaranteed iOS per-word sync.
+
+## iOS voice selection (latest)
+
+- Existing browser TTS now offers a native voice selector inside the reader settings, filtered to the story language RU / UZ / EN.
+- Selection persists by language on this device. Voice list updates on Safari's `voiceschanged` event and when the app becomes visible.
+- If an Uzbek/Russian/English voice for the selected language is unavailable, the reader shows its existing voice-unavailable message rather than selecting an unrelated-language voice.
+- Changing voices stops current playback; no speech is started without the user's tap. Does not require network services or paid voice APIs.
+- Device-voice quality and availability vary. This does **not** provide character-specific recorded voices.
+- Full frontend test run, Netlify build and real iPhone Safari verification are still required.
