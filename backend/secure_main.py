@@ -52,7 +52,7 @@ app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,
 async def protect_private_responses(request, call_next):
     """Prevent private books, sessions and account responses from being cached."""
     response=await call_next(request)
-    if request.url.path.startswith(("/api/books", "/api/auth", "/api/me", "/api/children")):
+    if request.url.path.startswith(("/api/books", "/api/auth", "/api/me", "/api/children", "/api/billing")):
         response.headers["Cache-Control"]="private, no-store"
         response.headers["Pragma"]="no-cache"
         response.headers["X-Content-Type-Options"]="nosniff"
