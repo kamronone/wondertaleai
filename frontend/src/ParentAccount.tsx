@@ -107,17 +107,7 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
       <p>WonderTale AI</p>
       <span className="parent-account-author"><UserRound size={15} aria-hidden="true"/>{({ru:"Автор",uz:"Muallif",en:"Created by"} as const)[lang]}: Komron Giyosov</span>
     </div>
-    <div className="parent-account-castle" aria-hidden="true">
-      <svg viewBox="0 0 144 145" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="37" cy="26" r="22" fill="#F7E6FF"/><circle cx="46" cy="18" r="21" fill="#CDB5F3"/>
-        <path d="M70 100V52l12-13 12 13v48M97 100V35l13-14 13 14v65M119 100V60l10-12 10 12v40" fill="#9772CE"/>
-        <path d="M81 38L70 52H94L81 38ZM110 20L97 36H123L110 20ZM129 48L119 60H139L129 48Z" fill="#7650B0"/>
-        <path d="M84 61v10M110 44v11M128 69v9" stroke="#FEE4A4" strokeWidth="5" strokeLinecap="round"/>
-        <path d="M105 100V83a7 7 0 0 1 14 0v17" fill="#FFE4A1"/>
-        <path d="M0 112c18-15 39-12 53-3 20-23 43-9 50-6 18-17 32-4 41 4v38H0v-33Z" fill="#EEE4FC"/>
-        <path d="m21 10 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Zm112 3 1.5 4.5 4.5 1.5-4.5 1.5L134 25l-1.5-4.5L128 19l4.5-1.5L134 13Z" fill="#F8CC74"/>
-      </svg>
-    </div>
+    <div className="parent-account-castle" aria-hidden="true"><img src="/images/profile-castle.png" width={118} height={138} alt="" decoding="async"/></div>
   </div>
   {(!api||apiReady===false)&&!session?<details className="parent-account-unavailable">
     <summary className="parent-account-summary">
