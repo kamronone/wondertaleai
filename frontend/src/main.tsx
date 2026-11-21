@@ -1345,7 +1345,16 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
    if(!zoomOpen)return;
    const previousOverflow=document.body.style.overflow;
    document.body.style.overflow="hidden";
-   const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape"){event.preventDefault();setZoomOpen(false);}};
+   const onKey=(event:KeyboardEvent)=>{
+     if(event.key==="Escape"){event.preventDefault();setZoomOpen(false);return;}
+     if(event.key==="Tab"){
+       const controls=[...document.querySelectorAll<HTMLButtonElement>(".wt-reader-image-lightbox button:not(:disabled)")];
+       if(!controls.length)return;
+       const first=controls[0],last=controls[controls.length-1];
+       if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+     }
+   };
    document.addEventListener("keydown",onKey);
    closeButtonRef.current?.focus();
    return ()=>{
@@ -1378,7 +1387,7 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
      <span className="wt-reader-image-magnifier" aria-hidden="true"><ZoomIn size={17}/></span>
    </button>
    {zoomOpen&&createPortal(
-     <div className="wt-reader-image-lightbox" role="dialog" aria-modal="true" aria-label={alt} onClick={()=>setZoomOpen(false)}>
+     <div className="wt-reader-image-lightbox" role="dialog" aria-modal="true" aria-label={alt} onClick={event=>{event.stopPropagation();setZoomOpen(false);}} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
        <div className="wt-reader-image-lightbox-toolbar">
          <button type="button" ref={closeButtonRef} className="wt-reader-lightbox-close" onClick={()=>setZoomOpen(false)} aria-label="Закрыть увеличенное изображение"><X size={24}/></button>
        </div>
