@@ -236,3 +236,48 @@ def test_postgres_ai_queue_claims_distinct_jobs_with_two_workers(monkeypatch):
         with secure_main.connection() as c:
             secure_main.sql(c,"DELETE FROM parents WHERE email=?",(email,))
             c.commit()
+
+
+def test_postgres_manual_illustration_charge_review_is_immutable(monkeypatch):
+    """Review is isolated and transactional on real throwaway PostgreSQL."""
+    import hashlib
+    from illustration_billing_reconciliation import record_verified_charge,billing_review_snapshot
+    email=f"pg-review-{uuid.uuid4().hex}@example.com"
+    registration=client.post("/api/auth/register",json={"email":email,"password":PASSWORD})
+    assert registration.status_code==201,registration.text
+    auth=bearer(registration.json()["access_token"])
+    monkeypatch.setenv("ENABLE_ILLUSTRATION_BILLING_RECONCILIATION","true")
+    book_id=None
+    try:
+        book=client.post("/api/books",headers=auth,json={
+            "title":"Synthetic illustration report","child_name":"Sample","age":7,
+            "story":'{"pages":[{"number":1,"text":"Safe illustration page."}]}'
+        })
+        assert book.status_code==201,book.text
+        book_id=book.json()["id"]
+        job_id=str(uuid.uuid4())
+        with secure_main.connection() as c:
+            owner=secure_main.sql(c,"SELECT id FROM parents WHERE email=?",(email,)).fetchone()[0]
+            secure_main.sql(c,"INSERT INTO illustration_jobs(id,owner_id,book_id,page_number,style,status,created_at) VALUES(?,?,?,?,?,'needs_review',?)",(
+                job_id,owner,book_id,1,"watercolor","2026-11-21T00:00:00+00:00"))
+            c.commit()
+        evidence=hashlib.sha256(b"synthetic-provider-receipt").hexdigest()
+        saved=record_verified_charge(job_id=job_id,charge_status="unknown",
+            amount_micro_usd=None,evidence_sha256=evidence)
+        assert saved=={"job_id":job_id,"charge_status":"unknown","amount_micro_usd":None}
+        with pytest.raises(ValueError,match="already been reconciled"):
+            record_verified_charge(job_id=job_id,charge_status="charged",
+                amount_micro_usd=12000,evidence_sha256=evidence)
+        with secure_main.connection() as c:
+            status=secure_main.sql(c,"SELECT status FROM illustration_jobs WHERE id=?",(job_id,)).fetchone()
+            assert status[0]=="needs_review"
+            review=secure_main.sql(c,"SELECT charge_status,amount_micro_usd FROM illustration_billing_reviews WHERE job_id=?",(job_id,)).fetchone()
+            assert review==("unknown",None)
+        assert billing_review_snapshot()["reviewed_counts"].get("unknown",0)>=1
+    finally:
+        with secure_main.connection() as c:
+            secure_main.sql(c,"DELETE FROM parents WHERE email=?",(email,))
+            c.commit()
+    if book_id:
+        with secure_main.connection() as c:
+            assert secure_main.sql(c,"SELECT COUNT(*) FROM illustration_billing_reviews WHERE job_id=?",(job_id,)).fetchone()[0]==0
