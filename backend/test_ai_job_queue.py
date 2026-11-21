@@ -27,3 +27,54 @@ def api(monkeypatch,tmp_path):
 
 def payload():
     return {"name":"Alex","age":7,"language":"en","idea":"A gentle story about a glowing magical garden"}
+
+def test_queue_ownership_replay_and_worker(api,monkeypatch):
+    from ai_generation import GeneratedStory
+    client,module,register=api
+    email,auth=register()
+    _,foreign=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    calls=[]
+    def fake(data):
+        calls.append(data)
+        return GeneratedStory(title="A Friendly Star",language="en",
+                              pages=["A friendly star helps all the forest animals learn kindness."]*8)
+    monkeypatch.setattr(module,"generate_story",fake)
+    key="queue-"+uuid.uuid4().hex
+    headers={**auth,"Idempotency-Key":key}
+    created=client.post("/api/books/jobs",headers=headers,json=payload())
+    assert created.status_code==202,created.text
+    job=created.json()
+    assert job["status"]=="queued"
+    assert client.post("/api/books/jobs",headers=headers,json=payload()).json()==job
+    assert client.get("/api/books/jobs/"+job["id"],headers=foreign).status_code==404
+    assert client.post("/api/books/jobs",headers=headers,json={**payload(),"idea":"Another original forest story"}).status_code==409
+    assert module.process_one_queued_ai_job()==job["id"]
+    assert module.process_one_queued_ai_job() is None
+    complete=client.get("/api/books/jobs/"+job["id"],headers=auth)
+    assert complete.status_code==200
+    assert complete.json()["status"]=="completed"
+    assert complete.headers["Cache-Control"]=="private, no-store"
+    book_id=complete.json()["book_id"]
+    assert client.get("/api/books/"+book_id,headers=auth).status_code==200
+    assert client.get("/api/books/"+book_id,headers=foreign).status_code==404
+    assert len(calls)==1
+    assert client.get("/api/billing/status",headers=auth).json()["ai_used_today"]==1
+    assert client.delete("/api/books/"+book_id,headers=auth).status_code==204
+    assert client.get("/api/books/jobs/"+job["id"],headers=auth).json()["status"]=="unavailable"
+
+
+def test_queue_is_bounded_and_denies_anonymous_users(api,monkeypatch):
+    client,module,register=api
+    email,auth=register()
+    _,other=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    body=payload()
+    assert client.post("/api/books/jobs",json=body).status_code==401
+    assert client.post("/api/books/jobs",headers={**other,"Idempotency-Key":"x"*32},json=body).status_code==403
+    assert client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":"bad"},json=body).status_code==422
+    for _ in range(2):
+        r=client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=body)
+        assert r.status_code==202,r.text
+    assert client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=body).status_code==429
+    assert client.get("/api/billing/status",headers=auth).json()["ai_used_today"]==0
