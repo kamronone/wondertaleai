@@ -48,6 +48,9 @@ def test_queue_ownership_replay_and_worker(api,monkeypatch):
     assert job["status"]=="queued"
     assert client.post("/api/books/jobs",headers=headers,json=payload()).json()==job
     assert client.get("/api/books/jobs/"+job["id"],headers=foreign).status_code==404
+    assert [row["id"] for row in client.get("/api/books/jobs",headers=auth).json()]==[job["id"]]
+    assert client.get("/api/books/jobs",headers=foreign).json()==[]
+    assert client.get("/api/books/jobs").status_code==401
     assert client.post("/api/books/jobs",headers=headers,json={**payload(),"idea":"Another original forest story"}).status_code==409
     assert module.process_one_queued_ai_job()==job["id"]
     assert module.process_one_queued_ai_job() is None
