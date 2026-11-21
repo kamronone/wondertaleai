@@ -103,3 +103,11 @@ Those changes are not proof that `ertakcha.netlify.app` is running the branch.
 - Exceptions from `speechSynthesis.speak()` restore controls and show the existing localized voice-unavailable error.
 - Regression coverage: `frontend/tests/reader_safari_speech_lifecycle.test.mjs`.
 - Full frontend build and on-device Safari checks remain unverified until a successful Netlify Preview is available.
+
+## Mobile reader final spacing pass
+
+- Removed a duplicate 102px bottom padding rule from the latest mobile reader stylesheet; the fixed tabbar safe-area reservation belongs to the shell only.
+- Normalized mobile previous/next buttons as equal flexible columns around a compact page counter with >=44px tap targets and line wrapping on narrow screens.
+- Updated the character GIF control placement regression test for the current markup: animated playback controls remain below the artwork, not on top of it.
+- Added `frontend/tests/reader_mobile_final_spacing.test.mjs` for footer spacing and small-phone pagination.
+- Static source checks passed. Full project build and actual iPhone Safari screenshot comparisons are still pending and should be treated as release gates.
