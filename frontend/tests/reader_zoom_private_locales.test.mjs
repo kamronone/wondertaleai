@@ -49,7 +49,19 @@ test("touch zoom is wired for both public reader and private illustrations",()=>
   assert.match(source,/onTouchStart=\{startZoomTouch\}/);
   assert.match(source,/onTouchMove=\{moveZoomTouch\}/);
   assert.match(source,/onTouchEnd=\{endZoomTouch\}/);
-  assert.match(source,/onDoubleClick=\{toggleDoubleTapZoom\}/);
+  assert.match(source,/onDoubleClick=\{\(\)=>\{/);
   assert.match(source,/zoomPan\.x/);
+ }
+});
+
+test("iPhone touch double tap uses movement threshold and ignores pinch",()=>{
+ const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
+ const privateView=readFileSync(new URL("../src/PrivateReaderIllustration.tsx",import.meta.url),"utf8");
+ for(const src of [main,privateView]){
+  assert.match(src,/lastSingleTap/);
+  assert.match(src,/usedPinch/);
+  assert.match(src,/movement<12/);
+  assert.match(src,/now-lastSingleTap\.current<325/);
+  assert.match(src,/pointer:coarse/);
  }
 });
