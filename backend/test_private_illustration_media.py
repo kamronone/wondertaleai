@@ -24,7 +24,11 @@ def api(tmp_path,monkeypatch):
         email="media-"+uuid.uuid4().hex+"@example.com"
         result=client.post("/api/auth/register",json={"email":email,"password":"private-media-test-password-2026"})
         assert result.status_code==201,result.text
-        return email,{"Authorization":"Bearer "+result.json()["access_token"]}
+        auth={"Authorization":"Bearer "+result.json()["access_token"]}
+        consent=client.post("/api/illustrations/consent",headers=auth,
+            json={"agreed":True,"policy_version":"illustration-pilot-v1"})
+        assert consent.status_code==200,consent.text
+        return email,auth
     def create_book(auth):
         result=client.post("/api/books",headers=auth,json={
             "title":"Friendly moon","child_name":"Alex","age":7,
