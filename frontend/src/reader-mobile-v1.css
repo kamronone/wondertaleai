@@ -413,3 +413,52 @@
   overflow-wrap:anywhere;
 }
 .wt-build-debug strong{font-size:12px}
+
+/* Narration speed lives inside the existing reader settings, not the main toolbar. */
+.reader-page .reader-speech-speed{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  min-width:0;
+  margin:10px 0;
+  padding:10px;
+  border:1px solid #e3d6ec;
+  border-radius:12px;
+}
+.reader-page .reader-speech-speed legend{
+  padding:0 5px;
+  color:#654585;
+  font-size:12px;
+  font-weight:750;
+}
+.reader-page .reader-speech-speed>div{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+}
+.reader-page .reader-speech-speed button{
+  min-width:0;
+  min-height:44px;
+  padding:8px 5px;
+  border:1px solid #d9c5e8;
+  border-radius:11px;
+  background:#fffaf4;
+  color:#68458b;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.25;
+}
+.reader-page .reader-speech-speed button.active{
+  background:#7850aa;
+  border-color:#7850aa;
+  color:#fff;
+}
+.reader-page .reader-speech-speed button:focus-visible{
+  outline:3px solid #ad87d7;
+  outline-offset:2px;
+}
+.reader-page .reader-speech-speed small{
+  font-size:11px;
+  line-height:1.4;
+  color:#746783;
+}
