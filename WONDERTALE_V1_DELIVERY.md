@@ -21,7 +21,7 @@ Working branch: `fix/private-book-access`. Do not merge to main or deploy Produc
 - [ ] Real iPhone Safari/PWA smoke test, including page gestures, media failures and offline relaunch.
 - [ ] Full TypeScript build and automated tests passing (Vercel build-rate-limit currently blocks validation).
 - [ ] Additional per-page character animations for every story; only four real GIFs are installed.
-- [ ] Professionally recorded narration with character-specific voices and per-word highlighting.
+- [x] Existing speech synthesis reader has user-selectable slow/normal/fast rates and optional page advance after narration.\n- [ ] Professionally recorded narration with character-specific voices, word highlighting, and verified continuous iPhone playback.
 - [x] Four optional story-aware interaction choices below illustrated pages, separate from image zoom.
 - [x] Accessible character-reaction hotspots on four public classic scenes, positioned using the rendered PNG/GIF's actual fitted bounds. Tapping elsewhere no longer opens an image viewer.\n- [ ] Full character-specific animated reactions (new dedicated animation frames per action), plus real-device hotspot placement and accessibility verification.
 - [x] Two local family reader preferences: extra activities and ambient sound, with storage-failure feedback.\n- [ ] Protected parental controls, parent authentication, cross-device settings and age-based content audits.
@@ -72,3 +72,10 @@ Those changes are not proof that `ertakcha.netlify.app` is running the branch.
 - As requested, tapping a picture must **not** enlarge it. Fullscreen lightbox, click-to-zoom and image zoom gestures are removed from public and private reader components.
 - In-page illustration sizing and original character GIFs are retained, and existing direct-image character hotspots continue to work.
 - Old fullscreen viewer regression tests were replaced with inline-image and protected-media checks. Site deployment and full test/build remain unverified.
+
+## November 21: narration convenience update
+
+- Three persisted browser speech synthesis rates: slow 0.75, normal 0.9, fast 1.1. Changing speed stops the current utterance so the next Listen action uses the new rate.
+- Optional, default-off setting advances one page after a **naturally completed** narration. It does not auto-speak the next page, does not turn past the last page, and is canceled when manually stopping or changing pages.
+- Browser voices depend on iOS device language packs; character-specific recorded voices and synchronized word highlighting are not implemented.
+- Source-level inspection completed; actual iPhone speech behavior and full frontend builds remain pending.
