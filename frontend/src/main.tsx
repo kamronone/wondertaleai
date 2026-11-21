@@ -342,8 +342,9 @@ function App(){
   useEffect(()=>{
     if(bedtimeUntil===null)return;
     const remaining=bedtimeUntil-Date.now();
-    if(remaining<=0){if("speechSynthesis" in window)window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);return;}
+    if(remaining<=0){speechAdvanceArmed.current=false;if("speechSynthesis" in window)window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);return;}
     const timeout=window.setTimeout(()=>{
+      speechAdvanceArmed.current=false;
       if("speechSynthesis" in window)window.speechSynthesis.cancel();
       setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);
     },remaining);
@@ -411,6 +412,15 @@ function App(){
   const [pageDraft,setPageDraft]=useState("");
   const [speaking,setSpeaking]=useState(false);
   const [speechPaused,setSpeechPaused]=useState(false);
+  const [readerAutoNext,setReaderAutoNext]=useState(()=>{
+    try{return localStorage.getItem("wondertale_reader_auto_next")==="true";}
+    catch{return false;}
+  });
+  const speechAdvanceArmed=useRef(false);
+  useEffect(()=>{
+    try{localStorage.setItem("wondertale_reader_auto_next",String(readerAutoNext));}
+    catch{/* Read mode remains usable when local storage is unavailable. */}
+  },[readerAutoNext]);
   const [readerSpeechSpeed,setReaderSpeechSpeed]=useState<"slow"|"normal"|"fast">(()=>{
     try{
       const saved=localStorage.getItem("wondertale_reader_speech_speed");
@@ -559,6 +569,7 @@ function App(){
     setEditingPage(false);setActive(book);setPage(resumeReaderPage(book.lastPage,book.pages.length));setTab("reader");setError("");
   };
   useEffect(()=>{
+    speechAdvanceArmed.current=false;
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpeaking(false);setSpeechPaused(false);setEditingPage(false);
   },[tab,page,active?.id]);
@@ -791,8 +802,15 @@ function App(){
       ||engine.getVoices().find(v=>v.lang.toLowerCase().split("-")[0]===utterance.lang.toLowerCase().split("-")[0]);
     if(voice)utterance.voice=voice;
     utterance.rate=({slow:.75,normal:.9,fast:1.1} as const)[readerSpeechSpeed];
-    utterance.onend=()=>{setSpeaking(false);setSpeechPaused(false);};
+    speechAdvanceArmed.current=true;
+    utterance.onend=()=>{
+      const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1;
+      speechAdvanceArmed.current=false;
+      setSpeaking(false);setSpeechPaused(false);
+      if(mayAdvance)setPage(previous=>Math.min(active.pages.length-1,previous+1));
+    };
     utterance.onerror=event=>{
+      speechAdvanceArmed.current=false;
       setSpeaking(false);setSpeechPaused(false);
       if(event.error!=="canceled"&&event.error!=="interrupted")setError(t.noVoice);
     };
@@ -800,6 +818,7 @@ function App(){
     engine.speak(utterance);
   };
   const stopSpeech=()=>{
+    speechAdvanceArmed.current=false;
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpeaking(false);setSpeechPaused(false);
   };
@@ -1322,12 +1341,16 @@ function App(){
           <fieldset className="reader-speech-speed">
             <legend>{({ru:"Скорость озвучки",uz:"Ovoz tezligi",en:"Narration speed"} as const)[lang]}</legend>
             <div role="group" aria-label={({ru:"Скорость голоса",uz:"Ovoz tezligi",en:"Voice speed"} as const)[lang]}>
-              {(["slow","normal","fast"] as const).map((speed,index)=><button type="button" key={speed} aria-pressed={readerSpeechSpeed===speed} className={readerSpeechSpeed===speed?"active":""} onClick={()=>{if(speaking&&"speechSynthesis" in window){window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);}setReaderSpeechSpeed(speed);}}>
+              {(["slow","normal","fast"] as const).map((speed,index)=><button type="button" key={speed} aria-pressed={readerSpeechSpeed===speed} className={readerSpeechSpeed===speed?"active":""} onClick={()=>{if(speaking&&"speechSynthesis" in window){speechAdvanceArmed.current=false;window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);}setReaderSpeechSpeed(speed);}}>
                 {({ru:["Медленно","Обычно","Быстро"],uz:["Sekin","Oddiy","Tez"],en:["Slow","Normal","Fast"]} as const)[lang][index]}
               </button>)}
             </div>
             <small>{({ru:"Изменение скорости остановит текущую озвучку. Нажмите «Слушать», чтобы начать заново.",uz:"Tezlikni o'zgartirish hozirgi ovozni to'xtatadi. Qayta boshlash uchun «Tinglash»ni bosing.",en:"Changing speed stops current narration. Tap Listen to restart."} as const)[lang]}</small>
           </fieldset>
+          <label className="reader-auto-next">
+            <input type="checkbox" checked={readerAutoNext} onChange={event=>setReaderAutoNext(event.target.checked)}/>
+            <span>{({ru:"Переходить на следующую страницу после озвучки",uz:"Ovoz tugagach keyingi sahifaga o'tish",en:"Turn the page when narration ends"} as const)[lang]}</span>
+          </label>
           <span>{({ru:"Размер текста",uz:"Matn ölçami",en:"Text size"} as const)[lang]}</span>
           <div className="reader-font-controls">
             {(["small","normal","large"] as const).map((size,index)=><button key={size} type="button" className={readerFontScale===size?"active":""} aria-pressed={readerFontScale===size} aria-label={({ru:["Мелкий текст","Обычный текст","Крупный текст"],uz:["Kiçik matn","Oddiy matn","Katta matn"],en:["Small text","Normal text","Large text"]} as const)[lang][index]} onClick={()=>setReaderFontScale(size)}>A<span aria-hidden="true">{index===0?"−":index===2?"+":""}</span></button>)}
