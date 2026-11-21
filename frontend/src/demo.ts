@@ -2,6 +2,7 @@
 import type { Lang } from "./i18n";
 import { classics, type ClassicId } from "./classics";
 import { fitSequelTitle } from "./sequel_title";
+import {redHoodPageArtwork} from "./red_hood_page_art";
 export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
@@ -225,7 +226,7 @@ export const createDemoBook=(name:string,age:number,theme:string,style:string,pr
  const classic=classics.find(x=>x.id===classicId);
  const story=classic?makeClassicStory(classic.id,name,language):demoStories[language](name,theme,prompt);
  const art=classic?"/images/classics/"+classic.id+(["red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(classic.id)?".svg":".webp"):null;
- const book:DemoBook={id:"local-"+crypto.randomUUID(),created_at:new Date().toISOString(),name,age,theme,style,prompt,title:story.title,language,classicId,savedOnDevice:saveOnDevice,mode:"browser-demo",pages:story.pages.map((text,index)=>({number:index+1,text,image_url:art||illustration(index)}))};
+ const book:DemoBook={id:"local-"+crypto.randomUUID(),created_at:new Date().toISOString(),name,age,theme,style,prompt,title:story.title,language,classicId,savedOnDevice:saveOnDevice,mode:"browser-demo",pages:story.pages.map((text,index)=>({number:index+1,text,image_url:classicId==="red-hood"?redHoodPageArtwork(index):art||illustration(index)}))};
  saveDemoBooks([book,...getDemoBooks()]);
  return book;
 };
