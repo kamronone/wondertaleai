@@ -228,7 +228,7 @@ def test_postgres_ai_queue_claims_distinct_jobs_with_two_workers(monkeypatch):
             processed=list(pool.map(lambda _:secure_main.process_one_queued_ai_job(),range(2)))
         assert sorted(processed)==sorted(ids)
         assert len(generated)==2
-        assert client.get("/api/books/jobs",headers=auth).status_code==200
+        assert client.get("/api/ai/jobs",headers=auth).status_code==200
         assert len(client.get("/api/books",headers=auth).json())==2
         assert all(client.get("/api/books/jobs/"+job_id,headers=auth).json()["status"]=="completed" for job_id in ids)
         assert secure_main.process_one_queued_ai_job() is None
