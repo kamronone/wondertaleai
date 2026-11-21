@@ -16,6 +16,8 @@ import { pussBootsPageArtwork } from "./puss_boots_page_art";
  * Custom photos and server-owned illustrations always take priority.
  */
 const ids = new Set(classics.map(item => item.id));
+// PNG collections are only shipped for these classics. Never request missing PNGs.
+const bundledPngIds = new Set(["red-hood","cinderella","three-pigs"]);
 const groups: Record<string, string[]> = {
   forest: ["hansel-gretel","snow-white","goldilocks","kolobok","masha-bears","twelve-months","teremok","ryaba","turnip"],
   castle: ["cinderella","rapunzel","sleeping-beauty","princess-pea","snow-queen","aladdin","emperor-clothes"],
@@ -77,11 +79,14 @@ export function classicReaderImage(classicId:string|undefined,imageUrl:string,pa
  if(!classicId||!ids.has(classicId))return imageUrl;
  const oldAsset=imageUrl==="/images/classics/"+classicId+".webp"||imageUrl==="/images/classics/"+classicId+".svg";
  const oldRedHood=/^\/images\/classics\/red-hood\/(?:pages|watercolor)\/page-[1-8]\.png$/.test(imageUrl);
+ const generatedPage=`/images/classics/${classicId}/pages/page-${Math.max(1,Math.min(8,Math.trunc(pageIndex)+1))}.png`;
+ const oldGeneratedPage=imageUrl===generatedPage;
  // Only the exact bundled demo illustration signature qualifies for replacement.
  // User-authored SVG data URLs, uploads and private media must remain unchanged.
  const oldDemoVector=imageUrl.startsWith("data:image/svg+xml;charset=utf-8,")&&imageUrl.includes("Fairy-tale%20illustration");
- if(!oldAsset&&!oldRedHood&&!oldDemoVector&&imageUrl.trim()!=="")return imageUrl;
- return `/images/classics/${classicId}/pages/page-${Math.max(1,Math.min(8,Math.trunc(pageIndex)+1))}.png`;
+ if(!oldAsset&&!oldRedHood&&!oldDemoVector&&!oldGeneratedPage&&imageUrl.trim()!=="")return imageUrl;
+ if(!bundledPngIds.has(classicId))return classicPageArtwork(classicId,pageIndex);
+ return generatedPage;
 }
 
 /** When a bundled PNG has not yet been installed, use the deterministic local art. */
