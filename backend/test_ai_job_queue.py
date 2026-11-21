@@ -115,3 +115,24 @@ def test_stalled_worker_needs_review_without_another_request(api,monkeypatch):
         c.commit()
     assert client.get("/api/books/jobs/"+job_id,headers=auth).json()["status"]=="needs_review"
     assert module.process_one_queued_ai_job() is None
+
+
+def test_only_unclaimed_jobs_can_be_canceled(api,monkeypatch):
+    client,module,register=api
+    email,auth=register()
+    _,other=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    first=client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=payload())
+    assert first.status_code==202
+    job_id=first.json()["id"]
+    assert client.delete("/api/books/jobs/"+job_id,headers=other).status_code==404
+    assert client.delete("/api/books/jobs/"+job_id,headers=auth).status_code==204
+    assert client.get("/api/books/jobs/"+job_id,headers=auth).status_code==404
+    assert client.get("/api/books/jobs",headers=auth).json()==[]
+    second=client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=payload())
+    assert second.status_code==202
+    with module.connection() as c:
+        module.sql(c,"UPDATE ai_jobs SET status='processing' WHERE id=?",(second.json()["id"],))
+        c.commit()
+    assert client.delete("/api/books/jobs/"+second.json()["id"],headers=auth).status_code==409
+    assert client.get("/api/books/jobs/"+second.json()["id"],headers=auth).json()["status"]=="processing"
