@@ -21,6 +21,7 @@ vm.runInNewContext(javascript,{
  require(name){
    if(name==="./classics")return {classics:fakeClassics};
    if(name==="./red_hood_page_art")return {redHoodPageArtwork:()=>"data:image/svg+xml;charset=utf-8,test"};
+   if(name==="./three_pigs_page_art")return {threePigsPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,pig-scene-"+page};
    throw Error("Unexpected dependency: "+name);
  },
  encodeURIComponent, Number, Object, Math, String, Set, RegExp
@@ -36,6 +37,7 @@ test("missing page PNG falls back to embedded offline illustration",()=>{
  assert.equal(typeof art,"string");
  assert.ok(art.startsWith("data:image/svg+xml;charset=utf-8,"));
  assert.equal(exports.classicPngFallback("/images/classics/cinderella/pages/page-9.png"),null);
+ assert.equal(exports.classicPngFallback("/images/classics/three-pigs/pages/page-5.png"),"data:image/svg+xml;charset=utf-8,pig-scene-4");
  assert.equal(exports.classicPngFallback("https://evil.example/page-3.png"),null);
 });
 test("never replace custom or private images",()=>{
