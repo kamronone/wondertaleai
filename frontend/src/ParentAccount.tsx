@@ -103,14 +103,24 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
   <div className="parent-account-hero">
     <div className="parent-account-hero-art"><img src="/images/profile-story-hero.png" alt={({ru:"Ребёнок и лисёнок читают волшебную книгу",uz:"Bola va tulkicha sehrli kitob oqimoqda",en:"A child and a fox reading a magical book"} as const)[lang]} width={128} height={128} loading="eager" decoding="async"/></div>
     <div className="parent-account-hero-copy">
-      <span className="parent-account-eyebrow">WonderTale AI</span>
       <h2>{t.title}</h2>
-      <p>{t.subtitle}</p>
-      <span className="parent-account-author">{({ru:"Автор",uz:"Muallif",en:"Created by"} as const)[lang]}: Komron Giyosov</span>
+      <p>WonderTale AI</p>
+      <span className="parent-account-author"><UserRound size={15} aria-hidden="true"/>{({ru:"Автор",uz:"Muallif",en:"Created by"} as const)[lang]}: Komron Giyosov</span>
+    </div>
+    <div className="parent-account-castle" aria-hidden="true">
+      <svg viewBox="0 0 144 145" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="37" cy="26" r="22" fill="#F7E6FF"/><circle cx="46" cy="18" r="21" fill="#CDB5F3"/>
+        <path d="M70 100V52l12-13 12 13v48M97 100V35l13-14 13 14v65M119 100V60l10-12 10 12v40" fill="#9772CE"/>
+        <path d="M81 38L70 52H94L81 38ZM110 20L97 36H123L110 20ZM129 48L119 60H139L129 48Z" fill="#7650B0"/>
+        <path d="M84 61v10M110 44v11M128 69v9" stroke="#FEE4A4" strokeWidth="5" strokeLinecap="round"/>
+        <path d="M105 100V83a7 7 0 0 1 14 0v17" fill="#FFE4A1"/>
+        <path d="M0 112c18-15 39-12 53-3 20-23 43-9 50-6 18-17 32-4 41 4v38H0v-33Z" fill="#EEE4FC"/>
+        <path d="m21 10 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Zm112 3 1.5 4.5 4.5 1.5-4.5 1.5L134 25l-1.5-4.5L128 19l4.5-1.5L134 13Z" fill="#F8CC74"/>
+      </svg>
     </div>
   </div>
   {(!api||apiReady===false)&&!session?<div className="parent-account-unavailable" role="status">
-    <div className="parent-account-status"><ShieldCheck size={19}/><div><strong>{t.demo}</strong><span>{({ru:"Сказки на этом устройстве доступны без аккаунта.",uz:"Qurilmadagi ertaklarni akkauntsiz oqish mumkin.",en:"Stories on this device are available without an account."} as const)[lang]}</span></div></div>
+    <div className="parent-account-status"><span className="parent-profile-sparkle" aria-hidden="true">✦</span><div><strong>{t.demo}</strong><span>{({ru:"Читайте сказки, сохранённые на устройстве.",uz:"Qurilmada saqlangan ertaklarni oqing.",en:"Read stories saved on this device."} as const)[lang]}</span></div><span className="parent-profile-demo-pill" aria-label={t.demo}><span/></span></div>
     <details className="parent-account-help"><summary><span>{({ru:"Почему аккаунт недоступен?",uz:"Nega akkaunt ishlamayapti?",en:"Why is my account unavailable?"} as const)[lang]}</span><span className="parent-account-expand" aria-hidden="true">⌄</span></summary><p>{t.notReady}</p></details>
     {api&&<button type="button" className="parent-account-secondary" onClick={()=>setReadinessAttempt(n=>n+1)}>{({ru:"Повторить подключение",uz:"Qayta ulanish",en:"Retry connection"} as const)[lang]}</button>}
    </div>:
