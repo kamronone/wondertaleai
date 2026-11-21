@@ -63,6 +63,7 @@ type Book={id:string;created_at:string;name:string;age:number;theme:string;promp
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
 // Disabled by default until a separate trusted AI worker is provisioned.
 const AI_JOBS_ENABLED=import.meta.env.VITE_ENABLE_AI_JOB_QUEUE==="true";
+const SHOW_BUILD_VERSION=new URLSearchParams(window.location.search).get("wt_version")==="1";
 const bookImage=(url:string)=>resolveBookImage(url,API);
 
 function App(){
@@ -1082,6 +1083,11 @@ function App(){
     {!isOnline&&<div className="offline-status-banner" role="status">
       {({ru:"Нет интернета. Сохранённые на устройстве сказки доступны, а AI и синхронизация временно не работают.",uz:"Internet yoq. Qurilmada saqlangan ertaklarni öqiş mumkin, AI va sinxronlaş vaqtinça işlamaydi.",en:"You're offline. Stories saved on this device remain available; AI and sync are paused."} as const)[lang]}
     </div>}
+    {SHOW_BUILD_VERSION&&<aside className="wt-build-debug" role="status" aria-label="Build version">
+      <strong>WonderTale build</strong>
+      <span>Commit: {__WONDERTALE_BUILD_SHA__}</span>
+      <span>Branch: {__WONDERTALE_BUILD_BRANCH__}</span>
+    </aside>}
     <main>
       {tab==="home"&&<>
         <div className="hero"><div className="hero-sky" aria-hidden="true"><img src="/images/wondertale-hero.webp" alt="" loading="eager" fetchPriority="high" decoding="async"/></div><div className="hero-content"><div className="hero-decor decor-one">✦</div><div className="hero-decor decor-two">✧</div><div className="hero-badge"><Sparkles size={15}/> {t.badge}</div>
