@@ -2,7 +2,7 @@
 # Backend/API and secrets are intentionally not deployed from this configuration.
 [build]
   base = "frontend"
-  command = "npm ci --no-audit --no-fund && npm run build && npm run check:images:release"
+  command = "npm install --no-audit --no-fund && npm run build && npm run check:images:release"
   publish = "dist"
 
 [build.environment]
