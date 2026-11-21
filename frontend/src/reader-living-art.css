@@ -116,53 +116,6 @@
   .reader-page .wt-art-effects{display:none!important}
 }
 
-/* Story-specific control appears only on a page that has a real character GIF.
-   Keep it above the noninteractive atmosphere effects. */
-.reader-page .story-page-image .wt-character-motion-control{
-  position:absolute;
-  z-index:5;
-  right:15px;
-  bottom:14px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  max-width:calc(100% - 30px);
-  min-height:40px;
-  margin:0;
-  padding:9px 13px;
-  border:1px solid #ffffffd9;
-  border-radius:999px;
-  background:#fffdf3f2;
-  color:#573775;
-  box-shadow:0 2px 12px #49395d26;
-  font-size:12px;
-  font-weight:750;
-  line-height:1.25;
-  text-wrap:balance;
-  -webkit-tap-highlight-color:transparent;
-}
-.reader-page .story-page-image .wt-character-motion-control[aria-pressed="true"]{
-  background:#673e93f2;
-  color:#fff;
-  border-color:#bda2e5;
-}
-.reader-page .story-page-image .wt-character-motion-control:focus-visible{
-  outline:3px solid #aa7bdf;
-  outline-offset:3px;
-}
-@media(max-width:620px){
-  .reader-page .story-page-image .wt-character-motion-control{
-    right:13px;
-    bottom:12px;
-    min-height:44px;
-    padding:9px 12px;
-  }
-}
-@media print{
-  .reader-page .story-page-image .wt-character-motion-control{display:none!important}
-}
-
 /* Individual characters already move inside the GIF itself.
    Never zoom a GIF: it would crop the picture frame. */
 .reader-page .story-page-image.wt-living-art > img.wt-character-gif{
