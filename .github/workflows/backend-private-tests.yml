@@ -41,7 +41,7 @@ jobs:
       # PostgreSQL integration is intentionally separate: it needs a dedicated
       # disposable preview database and explicit operator opt-in.
       - name: Test AI-generated library and import idempotency (mock provider)
-        run: python -m pytest -q test_generated_book_library.py test_device_import_idempotency.py test_ai_generation.py test_ai_job_queue.py test_illustration_planning.py test_private_illustration_media.py test_openai_illustration_provider.py
+        run: python -m pytest -q test_generated_book_library.py test_device_import_idempotency.py test_ai_generation.py test_ai_job_queue.py test_illustration_planning.py test_private_illustration_media.py test_openai_illustration_provider.py test_illustration_moderation.py
         env:
           APP_ENV: development
           REQUIRE_EMAIL_VERIFICATION: 'false'
