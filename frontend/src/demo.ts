@@ -328,7 +328,45 @@ const redHoodStory=(name:string,language:Lang):Story=>{
  const title={ru:name+" и «Красная Шапочка»",uz:name+" va «Qizil qalpoqcha» ertagi",en:name+" and Little Red Riding Hood"}[language];
  return {title,pages:pages[language]};
 };
+function threePigsStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `Три весёлых поросёнка решили построить собственные домики. ${name} встретил их на цветочной полянке и предложил помочь. Первый поросёнок выбрал солому, второй принёс доски, а третий приготовил крепкие кирпичи.`,
+   `Первый поросёнок быстро собрал соломенную крышу и стены. Домик получился лёгким и уютным, но ${name} заметил, что сильный ветер может унести солому. Поросёнок обещал подумать, как сделать его прочнее.`,
+   `Второй поросёнок соорудил деревянный домик из досок. ${name} помог ему закрепить дверь и окно. Домик выглядел красиво, однако доски ещё немного шатались, когда ветер качал деревья.`,
+   `Третий поросёнок терпеливо укладывал кирпич за кирпичом. ${name} подавал раствор и помогал проверять стены. К вечеру у них получился прочный красный дом с тёплым очагом и крепкой дверью.`,
+   `У опушки появился волк. Он очень громко дунул на соломенный домик, и солома разлетелась по поляне. Первый поросёнок не пострадал и поспешил к брату. ${name} побежал рядом, помогая ему не заблудиться.`,
+   `Волк добрался до деревянного домика и снова дунул изо всех сил. Доски не выдержали, но поросята успели выйти и вместе с ${name} побежали к кирпичному дому, где их уже ждал третий брат.`,
+   `Все спрятались в крепком кирпичном доме. Волк дул и дул, но стены даже не дрогнули. ${name} предложил спокойно поговорить с гостем через окно. Волк понял, что пугать соседей было плохой идеей, и извинился.`,
+   `На следующий день друзья вместе починили домики и устроили чаепитие в саду. Поросята поблагодарили ${name} за помощь. Они поняли, что терпение, надёжная работа и дружба делают любой дом по-настоящему уютным.`
+  ],
+  uz:[
+   `Uchta quvnoq cho'chqacha o'zlariga uy qurishga qaror qildi. ${name} ularni gullarga to'la yaylovda uchratib, yordam berishni taklif qildi. Birinchisi somon, ikkinchisi taxta, uchinchisi esa mustahkam g'isht tanladi.`,
+   `Birinchi cho'chqacha tezda somondan kichik uy qurdi. Uychasi chiroyli edi, ammo ${name} kuchli shamol somonni uchirib ketishi mumkinligini payqadi. Cho'chqacha uyini yanada mustahkamlashga va'da berdi.`,
+   `Ikkinchi cho'chqacha taxtalardan uy yasadi. ${name} unga eshik va derazalarni o'rnatishda yordam berdi. Uy bejirim chiqdi, biroq shamol esganda ayrim taxtalar qimirlardi.`,
+   `Uchinchi cho'chqacha g'ishtlarni birma-bir terdi. ${name} unga qorishma uzatdi va devorlarning tekisligini tekshirdi. Kechgacha mustahkam tomli, issiq o'choqli qizil g'isht uy tayyor bo'ldi.`,
+   `O'rmon chetida bo'ri paydo bo'ldi. U somon uychaga qattiq pufladi va somonlar havoga uchdi. Birinchi cho'chqacha sog'-salomat qochib chiqdi. ${name} unga ikkinchi ukasining uyiga yetib olishga yordam berdi.`,
+   `Bo'ri taxta uyga ham kuchli pufladi. Taxtalar qulab tushdi, lekin do'stlar vaqtida tashqariga chiqishdi. ${name} va ikki cho'chqacha uchinchi akaning g'isht uyiga shoshilishdi.`,
+   `Hamma g'isht uyda xavfsiz edi. Bo'ri qancha puflamasin, devorlar qimirlamadi. ${name} unga derazadan xotirjam gapirishni taklif qildi. Bo'ri boshqalarni qo'rqitgani uchun uzr so'radi.`,
+   `Ertasi kuni do'stlar uylarni birga ta'mirlab, bog'da choy ichishdi. Cho'chqachalar ${name}ga rahmat aytishdi. Hamma sabr, puxta mehnat va do'stlikning qadrini bildi.`
+  ],
+  en:[
+   `Three cheerful little pigs decided to build houses of their own. ${name} met them in a flower-filled meadow and offered to help. The first pig chose straw, the second collected wood, and the third brought sturdy bricks.`,
+   `The first pig built a straw house in no time. It looked cozy, but ${name} noticed that a strong breeze could carry away the roof. The pig promised to make it safer later.`,
+   `The second pig made a little wooden cottage. ${name} helped fit the door and windows. It was lovely, though some boards still rattled when the wind shook the trees.`,
+   `The third pig patiently laid one brick after another. ${name} helped carry mortar and check the walls. By evening they had built a strong red house with a warm hearth and a sturdy door.`,
+   `A wolf appeared at the edge of the forest. He blew hard at the straw cottage, scattering the straw across the meadow. The first pig escaped unharmed, and ${name} helped him hurry to his brother's house.`,
+   `The wolf blew again at the wooden cottage. The boards came loose, but the friends got outside safely. With ${name} leading the way, both pigs ran to their brother's brick house.`,
+   `Everyone was safe inside the brick house. The wolf huffed and puffed, but the walls would not budge. ${name} suggested talking calmly through the window. The wolf realized he had frightened his neighbors and apologized.`,
+   `The next morning everyone repaired the cottages and shared tea in the garden. The pigs thanked ${name} for helping. They learned that patience, careful work, and friendship make a house a home.`
+  ]
+ };
+ const title=({ru:`Три поросёнка и ${name}`,uz:`${name} va Uch cho'chqacha`,en:`${name} and the Three Little Pigs`} as const)[language];
+ return {title,pages:pages[language]};
+}
+
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="three-pigs")return threePigsStory(name,language);
  if(id==="red-hood")return redHoodStory(name,language);
  const classic=classics.find(c=>c.id===id);
  if(!classic)throw Error("Unknown classic");
