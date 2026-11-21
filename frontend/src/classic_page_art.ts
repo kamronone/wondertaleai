@@ -89,3 +89,21 @@ export function classicPngFallback(url:string):string|null {
  const match = /^\/images\/classics\/([a-z0-9-]+)\/pages\/page-([1-8])\.png$/.exec(url);
  return match&&ids.has(match[1])?classicPageArtwork(match[1],Number(match[2])-1):null;
 }
+
+/** Use character animation only for our own bundled classic page assets.
+ * Never replace uploaded photos or private AI illustrations.
+ * Missing GIFs fall back to static PNG automatically in StoryIllustration.
+ */
+export function classicAnimatedPage(classicId:string|undefined,imageUrl:string,pageIndex:number):string|null{
+ if(!classicId||!ids.has(classicId))return null;
+ const page=Math.trunc(pageIndex)+1;
+ const expected=`/images/classics/${classicId}/pages/page-${page}.png`;
+ if(imageUrl!==expected)return null;
+ const scene:Record<string,Record<number,string>>={
+   "red-hood":{1:"red-hood-walk-wave"},
+   "cinderella":{5:"cinderella-walking"},
+   "three-pigs":{4:"three-pigs-building",5:"three-pigs-wolf"}
+ };
+ const file=scene[classicId]?.[page];
+ return file?`/images/classics/${classicId}/animations/${file}.gif`:null;
+}
