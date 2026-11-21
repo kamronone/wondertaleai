@@ -1436,7 +1436,7 @@ function StoryIllustration({url,alt,lazy=false,readerFullWidth=false,animatedUrl
  return <>
    <button type="button" ref={openButtonRef} className="wt-reader-image-open" onClick={()=>{setZoomScale(1);setZoomPan({x:0,y:0});setZoomOpen(true);}} aria-label={zoomCopy.open+": "+alt} title={zoomCopy.open}>
      {image}
-     <span className="wt-reader-image-magnifier" aria-hidden="true"><ZoomIn size={17}/></span>
+     
    </button>
    {zoomOpen&&createPortal(
      <div className="wt-reader-image-lightbox" role="dialog" aria-modal="true" aria-label={alt} onClick={event=>{event.stopPropagation();setZoomOpen(false);}} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
