@@ -1,0 +1,141 @@
+/* Circular story wizard navigation, matching the approved creation mockup.
+   Only earlier steps are clickable; forward steps require form validation. */
+.create-page.create-reference-page .wizard-progress.wizard-progress-round{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr) 28px minmax(0,1fr);
+  gap:5px;
+  align-items:start;
+  justify-content:stretch;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  margin:12px 0 16px;
+  padding:0 7px;
+}
+.create-page.create-reference-page .wizard-progress-round .progress-step{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  justify-content:flex-start;
+  min-width:0;
+  margin:0;
+  text-align:center;
+  color:#8c79a5;
+}
+.create-page.create-reference-page .wizard-progress-round .wizard-progress-circle{
+  display:inline-flex;
+  flex:0 0 42px;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:42px;
+  height:42px;
+  min-width:42px;
+  min-height:42px;
+  max-width:42px;
+  max-height:42px;
+  padding:0;
+  margin:0;
+  border:2px solid #d9c3e9;
+  border-radius:50%;
+  background:#fff;
+  color:#8e75a7;
+  box-shadow:none;
+  font-family:inherit;
+  font-size:17px;
+  font-weight:800;
+  line-height:1;
+  cursor:default;
+  opacity:1;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.create-page.create-reference-page .wizard-progress-round .progress-step.active .wizard-progress-circle{
+  color:#fff;
+  border-color:#a763d7;
+  background:linear-gradient(135deg,#b761e2,#8736ce);
+  box-shadow:0 5px 15px rgba(133,61,190,.18);
+}
+.create-page.create-reference-page .wizard-progress-round .progress-step.completed .wizard-progress-circle{
+  background:#efe1ff;
+  border-color:#b58ddc;
+  color:#6e379d;
+  cursor:pointer;
+}
+.create-page.create-reference-page .wizard-progress-round .progress-step.completed .wizard-progress-circle:hover{
+  background:#e3cefa;
+}
+.create-page.create-reference-page .wizard-progress-round .wizard-progress-circle:focus-visible{
+  outline:3px solid #9a51c4;
+  outline-offset:3px;
+}
+.create-page.create-reference-page .wizard-progress-round .wizard-progress-label{
+  display:block;
+  width:100%;
+  min-width:0;
+  padding:0;
+  margin:0;
+  font-family:inherit;
+  font-size:12px;
+  line-height:1.28;
+  font-weight:700;
+  overflow-wrap:anywhere;
+  text-wrap:balance;
+  color:#9380a9;
+}
+.create-page.create-reference-page .wizard-progress-round .progress-step.active .wizard-progress-label{
+  color:#6c329f;
+  font-weight:800;
+}
+.create-page.create-reference-page .wizard-progress-round .progress-step.completed .wizard-progress-label{
+  color:#654387;
+}
+.create-page.create-reference-page .wizard-progress-round .progress-line{
+  align-self:start;
+  justify-self:stretch;
+  width:100%;
+  height:2px;
+  min-width:0;
+  margin:21px 0 0;
+  padding:0;
+  border-radius:99px;
+  background:#decbea;
+}
+.create-page.create-reference-page .wizard-progress-round .progress-line.progress-line-complete{
+  background:linear-gradient(90deg,#bd93df,#8944bf);
+}
+@media(max-width:620px){
+  .create-page.create-reference-page .wizard-progress.wizard-progress-round{
+    grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr) 14px minmax(0,1fr);
+    gap:3px;
+    margin:10px 0 14px;
+    padding:0 1px;
+  }
+  .create-page.create-reference-page .wizard-progress-round .progress-step{gap:7px}
+  .create-page.create-reference-page .wizard-progress-round .wizard-progress-circle{
+    flex-basis:38px;
+    width:38px;
+    min-width:38px;
+    max-width:38px;
+    height:38px;
+    min-height:38px;
+    max-height:38px;
+    font-size:15px;
+  }
+  .create-page.create-reference-page .wizard-progress-round .progress-line{margin-top:19px}
+  .create-page.create-reference-page .wizard-progress-round .wizard-progress-label{
+    font-size:clamp(9px,2.55vw,11px);
+    line-height:1.25;
+  }
+}
+@media(max-width:350px){
+  .create-page.create-reference-page .wizard-progress.wizard-progress-round{
+    grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr) 10px minmax(0,1fr);
+    gap:2px;
+  }
+  .create-page.create-reference-page .wizard-progress-round .wizard-progress-label{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .create-page.create-reference-page .wizard-progress-round *{transition:none!important}
+}
