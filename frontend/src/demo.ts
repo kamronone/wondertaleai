@@ -581,7 +581,44 @@ function rapunzelStory(name:string,language:Lang):Story {
  const title=({ru:`${name} и Рапунцель`,uz:`${name} va Rapunsel`,en:`${name} and Rapunzel`} as const)[language];
  return {title,pages:pages[language]};
 }
+function sleepingBeautyStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `В далёком королевстве родилась принцесса Аврора. В замке устроили большой праздник. ${name} принёс букет цветов, а добрые феи пожелали малышке счастья, здоровья и смелости.`,
+   `Аврора росла любознательной и доброй. Она любила гулять в королевском саду и слушать пение птиц. ${name} помогал ей ухаживать за цветами, а феи рассказывали удивительные истории.`,
+   `Однажды Аврора нашла в старой башне незнакомую прялку. Она осторожно приблизилась к ней, но случайно коснулась веретена. Волшебное заклятие погрузило принцессу в глубокий сон.`,
+   `Добрые феи узнали о случившемся и решили защитить королевство. Они укрыли Аврору тёплым одеялом, а весь замок погрузили в мирный сон, пока не наступит время пробуждения.`,
+   `Прошли годы. Вокруг дворца выросли густые розовые кусты. ${name} услышал легенду о спящей принцессе и отправился искать дорогу к замку вместе со смелым принцем.`,
+   `Принц и ${name} нашли тропинку через заросли роз. Они помогли друг другу пройти мимо ветвей и добрались до дворцовых ворот. Когда подошло время, двери открылись перед ними.`,
+   `В тихой комнате принц и ${name} увидели Аврору. Добрые феи сняли волшебное заклятие, и принцесса открыла глаза. Вместе с ней проснулись жители замка, а комнаты вновь наполнились светом.`,
+   `Во дворце устроили радостный праздник. Аврора, принц и ${name} танцевали среди цветов и смеха. Все поняли, что терпение, смелость и забота о друзьях помогают преодолеть долгие испытания.`
+  ],
+  uz:[
+   `Uzoq qirollikda Avrora ismli malika tug'ildi. Saroyda katta bayram bo'ldi. ${name} bir dasta gul olib keldi, mehribon parilar esa chaqaloqqa baxt, sog'lik va jasorat tilashdi.`,
+   `Avrora mehribon va qiziquvchan bo'lib ulg'aydi. U qirollik bog'ida sayr qilishni va qushlarning sayrashini tinglashni yaxshi ko'rardi. ${name} unga gullarni parvarish qilishda yordam berdi.`,
+   `Bir kuni Avrora eski minoradan notanish charxni topdi. U yaqinlashib, tasodifan charxning o'tkir qismiga tegdi. Sehrli afsun malikani chuqur uyquga ketkazdi.`,
+   `Mehribon parilar nima bo'lganini bilib, qirollikni himoya qilishdi. Ular Avrorani issiq ko'rpa bilan yopib, uyg'onish vaqti kelguncha butun saroyni sokin uyquga cho'mdirishdi.`,
+   `Yillar o'tdi. Saroy atrofida qalin atirgul butalari o'sdi. ${name} uxlayotgan malika haqidagi afsonani eshitib, jasur shahzoda bilan birga saroyga yo'l izlashga tushdi.`,
+   `Shahzoda va ${name} atirgullar orasidagi so'qmoqni topishdi. Ular bir-biriga yordam berib, saroy darvozalariga yetishdi. Kerakli vaqt kelganda, darvozalar ochildi.`,
+   `Sokin xonada shahzoda va ${name} Avrorani ko'rishdi. Mehribon parilar afsunni bekor qilishdi va malika ko'zlarini ochdi. U bilan birga saroy ahli ham uyg'ondi.`,
+   `Saroyda quvonchli bayram uyushtirildi. Avrora, shahzoda va ${name} gullar orasida raqsga tushishdi. Hamma sabr, jasorat va do'stlarga g'amxo'rlik qiyinchiliklarni yengishga yordam berishini tushundi.`
+  ],
+  en:[
+   `In a faraway kingdom a princess named Aurora was born. The palace held a wonderful celebration. ${name} brought a bouquet of flowers, and the kind fairies wished the baby happiness, health, and courage.`,
+   `Aurora grew into a curious and kind young princess. She loved walks in the royal garden and the songs of birds. ${name} helped tend her flowers, while the fairies shared marvelous stories.`,
+   `One day Aurora found an unfamiliar spinning wheel in an old tower. She approached it carefully but accidentally touched its spindle. A magic spell sent the princess into a deep sleep.`,
+   `The kind fairies learned what had happened and protected the kingdom. They tucked Aurora under a warm blanket and placed the whole castle in a peaceful sleep until the time came to wake again.`,
+   `Years passed, and thick rose bushes grew around the palace. ${name} heard the legend of the sleeping princess and set out with a brave prince to find the castle.`,
+   `The prince and ${name} found a path through the roses. They helped each other past the branches and reached the palace gates. When the time was right, the doors opened to welcome them.`,
+   `In a quiet room the prince and ${name} discovered Aurora. The kind fairies lifted the spell, and the princess opened her eyes. The people of the castle awoke as sunlight returned to every room.`,
+   `A joyful celebration filled the palace. Aurora, the prince, and ${name} danced among flowers and laughter. Everyone learned that patience, courage, and caring for friends can overcome a long and difficult trial.`
+  ]
+ };
+ const title=({ru:`${name} и Спящая красавица`,uz:`${name} va Uyqudagi go'zal`,en:`${name} and Sleeping Beauty`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="sleeping-beauty")return sleepingBeautyStory(name,language);
  if(id==="rapunzel")return rapunzelStory(name,language);
  if(id==="hansel-gretel")return hanselGretelStory(name,language);
  if(id==="bremen")return bremenStory(name,language);
@@ -635,7 +672,7 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
 
 /** Legacy copies must only be updated after explicit user confirmation. */
 export function canRefreshClassicDemoStory(book:DemoBook):boolean {
- if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel","rapunzel"].includes(book.classicId||""))return false;
+ if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel","rapunzel","sleeping-beauty"].includes(book.classicId||""))return false;
  if(book.pages.length!==8)return false;
  const start=book.pages[0]?.text||"";
  return start.startsWith("Однажды "+book.name+" открыл волшебную книгу.")||
