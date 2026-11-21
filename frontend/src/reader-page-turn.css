@@ -1,0 +1,82 @@
+/* Page-turn motion: only the picture and text remount when the page changes.
+   The outer .story-page and its scroll ref stay stable, preventing Safari jump. */
+.reader-page .story-page{
+  perspective:1100px;
+}
+.reader-page .story-page .reader-turn-image{
+  transform-origin:left center;
+  animation:wt-reader-image-in 320ms cubic-bezier(.22,.7,.24,1) both;
+  backface-visibility:hidden;
+}
+.reader-page .story-page .reader-turn-text{
+  transform-origin:right center;
+  animation:wt-reader-text-in 360ms cubic-bezier(.22,.7,.24,1) both;
+  backface-visibility:hidden;
+}
+@keyframes wt-reader-image-in{
+  from{opacity:.35;transform:translateX(12px) rotateY(-5deg)}
+  to{opacity:1;transform:translateX(0) rotateY(0)}
+}
+@keyframes wt-reader-text-in{
+  from{opacity:.45;transform:translateX(10px)}
+  to{opacity:1;transform:translateX(0)}
+}
+@media(max-width:620px){
+  .reader-page .story-page .reader-turn-image{
+    animation-duration:250ms;
+  }
+  .reader-page .story-page .reader-turn-text{
+    animation-duration:280ms;
+  }
+  .reader-page .pager{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    align-items:center;
+    gap:7px!important;
+    width:100%;
+    min-width:0;
+  }
+  .reader-page .pager>button{
+    box-sizing:border-box;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    min-height:44px!important;
+    height:auto!important;
+    padding:8px 9px!important;
+    font-size:12px!important;
+    font-weight:750;
+    line-height:1.2;
+    white-space:normal;
+    border-radius:12px!important;
+  }
+  .reader-page .pager>.pager-indicators{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:47px;
+  }
+  .reader-page .pager>.pager-indicators .pager-mobile-current{
+    font-variant-numeric:tabular-nums;
+    font-size:11px;
+    white-space:nowrap;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .story-page .reader-turn-image,
+  .reader-page .story-page .reader-turn-text{
+    animation:none!important;
+    transform:none!important;
+    opacity:1!important;
+  }
+}
+@media print{
+  .reader-page .story-page .reader-turn-image,
+  .reader-page .story-page .reader-turn-text{
+    animation:none!important;
+  }
+}
