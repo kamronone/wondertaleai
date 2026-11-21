@@ -101,7 +101,7 @@ def process_one_illustration_job(
         parent=db.sql(c,"SELECT email FROM parents WHERE id=?",(owner,)).fetchone()
         allowed={e.strip().lower() for e in os.getenv("AI_ALLOWED_EMAILS","").split(",") if e.strip()}
         book=db.sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
-        if not parent or parent[0].lower() not in allowed or not book:
+        if not parent or parent[0].lower() not in allowed or not book or not db.illustration_consent_active(owner,c):
             now=_now()
             db.sql(c,"UPDATE illustration_jobs SET status='failed',completed_at=? WHERE id=?",
                    (now,job_id))
@@ -155,7 +155,7 @@ def process_one_illustration_job(
             _finish(job_id,"failed")
             return job_id
         # Persistent stop can change while text moderation is in flight.
-        if illustration_emergency_paused():
+        if illustration_emergency_paused() or not db.illustration_consent_active(owner):
             _finish(job_id,"needs_review")
             return job_id
         image=renderer(prompt)
@@ -164,7 +164,7 @@ def process_one_illustration_job(
         if image_moderator(image) is not True:
             _finish(job_id,"failed")
             return job_id
-        if illustration_emergency_paused():
+        if illustration_emergency_paused() or not db.illustration_consent_active(owner):
             _finish(job_id,"needs_review")
             return job_id
         db.save_private_illustration_asset(job_id,image)
