@@ -149,7 +149,7 @@ def test_mock_worker_completes_one_image_and_enforces_daily_quota(api,monkeypatc
     checks=[]
     def check_png(data):
         checks.append(data)
-        return data.startswith(b"\\x89PNG")
+        return data[:4] == bytes((137,80,78,71))
     first=process_one_illustration_job(
         renderer=renderer,moderator=lambda prompt: "no identifying information" in prompt,
         image_moderator=check_png
