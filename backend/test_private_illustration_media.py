@@ -303,3 +303,68 @@ def test_approved_runner_rejects_mock_flagged_output_without_saving(api,monkeypa
     assert result==job
     assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="failed"
     assert client.get("/api/illustrations/media/"+job,headers=auth).status_code==404
+
+
+
+def test_illustration_kill_switch_blocks_new_claims(api,monkeypatch):
+    from illustration_worker import process_one_illustration_job,illustration_attempt_snapshot
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS_WORKER","true")
+    monkeypatch.setenv("MAX_ILLUSTRATIONS_PER_DAY","1")
+    monkeypatch.setenv("MAX_PARENT_ILLUSTRATIONS_PER_DAY","1")
+    book=create_book(auth)
+    queued=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"watercolor"
+    })
+    assert queued.status_code==202
+    with module.connection() as c:
+        module.sql(c,"UPDATE illustration_runtime_control SET paused=1 WHERE singleton=1")
+        c.commit()
+    called=[]
+    with pytest.raises(RuntimeError,match="emergency stop"):
+        process_one_illustration_job(renderer=lambda _:called.append(1),
+            moderator=lambda _:True,image_moderator=lambda _:True)
+    assert not called
+    snap=illustration_attempt_snapshot()
+    assert snap["paused"] is True
+    assert snap["reserved_attempts_today"]==0
+    assert snap["job_counts"]["queued"]==1
+    assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="queued"
+    with module.connection() as c:
+        module.sql(c,"UPDATE illustration_runtime_control SET paused=0 WHERE singleton=1")
+        c.commit()
+    monkeypatch.setenv("ILLUSTRATION_EMERGENCY_STOP","true")
+    with pytest.raises(RuntimeError,match="emergency stop"):
+        process_one_illustration_job(renderer=lambda _:called.append(1),
+            moderator=lambda _:True,image_moderator=lambda _:True)
+    assert not called
+
+
+def test_illustration_kill_switch_interrupts_after_prompt_review(api,monkeypatch):
+    from illustration_worker import process_one_illustration_job
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS_WORKER","true")
+    monkeypatch.setenv("MAX_ILLUSTRATIONS_PER_DAY","1")
+    monkeypatch.setenv("MAX_PARENT_ILLUSTRATIONS_PER_DAY","1")
+    book=create_book(auth)
+    queued=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"storybook"
+    })
+    assert queued.status_code==202
+    job=queued.json()["id"]
+    def pause_during_moderation(_prompt):
+        with module.connection() as c:
+            module.sql(c,"UPDATE illustration_runtime_control SET paused=1 WHERE singleton=1")
+            c.commit()
+        return True
+    calls=[]
+    processed=process_one_illustration_job(renderer=lambda _:calls.append(1),
+        moderator=pause_during_moderation,image_moderator=lambda _:True)
+    assert processed==job
+    assert not calls
+    assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="needs_review"
+    assert client.get("/api/illustrations/media/"+job,headers=auth).status_code==404
