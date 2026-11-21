@@ -4,16 +4,17 @@ import { readFileSync } from "node:fs";
 
 const profile=readFileSync(new URL("../src/ParentAccount.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/reader-polish.css",import.meta.url),"utf8");
+const concept=readFileSync(new URL("../src/profile-concept-three.css",import.meta.url),"utf8");
 
 test("offline demo account status is compact, with extra details on demand",()=>{
   assert.match(profile,/className="parent-account-status"/);
-  assert.match(profile,/<details className="parent-account-help">/);
+  assert.match(profile,/<details className="parent-account-unavailable">/);
   assert.match(profile,/onClick=\{\(\)=>setReadinessAttempt\(n=>n\+1\)\}/);
-  assert.match(css,/\.parent-account-page \.parent-account-status\{/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-status\{/);
 });
 
 test("reading suggestions are collapsed by default while remaining accessible",()=>{
-  assert.match(profile,/<details className="parent-account-reading-section">/);
+  assert.match(profile,/\{session&&<details className="parent-account-reading-section">/);
   assert.match(profile,/<summary><BookOpen size=\{18\}/);
   assert.match(profile,/<ParentReadingGuide lang=\{lang\}\/>/);
   assert.doesNotMatch(profile,/<details className="parent-account-reading-section" open/);
@@ -35,11 +36,12 @@ test("small phone styles keep status and disclosures lightweight",()=>{
 });
 
 test("profile keeps technical details and duplicate sync notice out of primary view",()=>{
-  assert.match(profile,/<details className="parent-account-help">/);
-  assert.match(profile,/className="parent-account-expand" aria-hidden="true"/);
+  assert.match(profile,/<details className="parent-account-unavailable">/);
+  assert.match(profile,/className="parent-account-summary"/);
+  assert.match(profile,/className="parent-account-help-content"/);
   const reading=profile.slice(profile.indexOf('<details className="parent-account-reading-section">'));
   assert.match(reading,/<p className="parent-account-footnote">\{t\.privacy\}<\/p>[\s\S]*?<\/details>/);
-  assert.match(css,/\.parent-account-page \.parent-account-help>summary\{/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-unavailable > summary\{/);
 });
 
 test("parent demo status and recommendation controls have compact mobile dimensions",()=>{
@@ -47,4 +49,11 @@ test("parent demo status and recommendation controls have compact mobile dimensi
   assert.match(css,/\.parent-account-page \.parent-account-reading-section>summary\{[^}]*min-height:48px/s);
   assert.match(css,/\.parent-account-page \.parent-account-hero-copy h2\{[^}]*font-size:18px/s);
   assert.match(css,/\.account-plans-disclosure>summary\{[^}]*min-height:48px/s);
+});
+
+test("mockup hero includes decorative castle and existing real PNG",()=>{
+  assert.match(profile,/className="parent-account-castle"/);
+  assert.match(profile,/src="\/images\/profile-story-hero\.png"/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-hero\{/);
+  assert.match(concept,/\.profile-concept-three \.parent-account-hero-art\{/);
 });
