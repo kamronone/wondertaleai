@@ -823,6 +823,14 @@ def enqueue_ai_story(body:GenerateStoryInput,owner:str=Depends(current_parent),
     return {"id":job_id,"status":"queued","book_id":None}
 
 
+@app.get("/api/books/jobs")
+def list_parent_ai_jobs(owner:str=Depends(current_parent)):
+    """Recovery after a browser reload: no prompts, keys, or private story text."""
+    with connection() as c:
+        rows=sql(c,"SELECT id,status,created_at,started_at,book_id FROM ai_jobs WHERE owner_id=? ORDER BY created_at DESC,id DESC LIMIT 20",(owner,)).fetchall()
+    return [_ai_job_status(row) for row in rows]
+
+
 @app.get("/api/books/jobs/{job_id}")
 def ai_job_for_parent(job_id:str,owner:str=Depends(current_parent)):
     if not re.fullmatch(r"[0-9a-f-]{36}",job_id):
