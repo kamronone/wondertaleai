@@ -22,7 +22,7 @@ test("library search and shelf filters work for empty and populated accounts",()
  assert.match(app,/onClick=\{\(\)=>changeLibraryShelf\("favorites"\)\}/);
  assert.match(app,/onClick=\{\(\)=>changeLibraryShelf\("saved"\)\}/);
  assert.match(app,/isDemoBook\(book\)&&Boolean\(book\.savedOnDevice\)/);
- assert.match(app,/libraryShelf==="recent"\?"newest":librarySort/);
+ assert.match(app,/if\(next==="recent"\)setLibrarySort\("newest"\)/);
 });
 
 test("data is scoped to active session books, not a global saved list",()=>{
