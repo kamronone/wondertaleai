@@ -11,6 +11,7 @@ import "./library-mobile-fixes.css";
 import "./library-final-polish.css";
 import "./library-exact-reference.css";
 import "./library-screenshot-fixes.css";
+import "./create-reference.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -244,6 +245,7 @@ function App(){
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_night_mode",String(readerNightMode));}catch{/* Browser storage can be unavailable. */}},[readerNightMode]);
   useEffect(()=>{try{localStorage.setItem("wondertale_reader_warm_mode",String(readerWarmMode));}catch{/* Browser storage can be unavailable. */}},[readerWarmMode]);
   const [name,setName]=useState("");
+  const [heroKind,setHeroKind]=useState<"boy"|"girl"|"animal"|"robot"|"magical">("boy");
   const [secondHero,setSecondHero]=useState("");
   const [age,setAge]=useState("5");
   const [themeIndex,setThemeIndex]=useState(0);
@@ -270,6 +272,8 @@ function App(){
     setPrompt(previous=>translateSelectedStoryPrompt(previous,storyLang,next,activeClassic?.prompt));
     setStoryLang(next);
   };
+  const heroKindLabel=({ru:{boy:"Мальчик",girl:"Девочка",animal:"Животное",robot:"Робот",magical:"Волшебное существо"},uz:{boy:"Bola",girl:"Qiz",animal:"Hayvon",robot:"Robot",magical:"Sehrli jonzot"},en:{boy:"Boy",girl:"Girl",animal:"Animal",robot:"Robot",magical:"Magical creature"}} as const)[storyLang][heroKind];
+  const storyIdeaWithHero=heroKind==="boy"?prompt.trim():prompt.trim()+" "+({ru:"Главный герой: ",uz:"Bosh qahramon: ",en:"Main hero: "} as const)[storyLang]+heroKindLabel+".";
   const combinedHeroName=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
   const heroNameTooLong=combinedHeroName.length>60;
   const heroNameLengthError=({ru:"Имена двух героев вместе должны содержать не более 60 символов.",uz:"Ikki qahramon ismi birga 60 belgidan oshmasligi kerak.",en:"Both hero names together must be 60 characters or fewer."} as const)[lang];
@@ -282,7 +286,7 @@ function App(){
   const openCreate=(preservePreset=false)=>{
     setCreateStep(1);setConsent(false);setAcceptedLegal(false);setUsePersonalAi(false);setError("");
     // Avoid showing a previous child's personal details when starting a new story.
-    setName("");setSecondHero("");setAge("5");setPhoto(null);
+    setName("");setSecondHero("");setAge("5");setPhoto(null);setHeroKind("boy");
     if(!preservePreset){setClassicId(null);setPrompt("");setThemeIndex(0);setStyleIndex(0);}
     setTab("create");
   };
@@ -761,7 +765,7 @@ function App(){
         const data={
           name:name.trim(),age:Number(age),language:storyLang,
           classic_title:activeClassic?.title[storyLang]||"",
-          idea:prompt.trim(),style,other_heroes:secondHero.trim()?[secondHero.trim()]:[],
+          idea:storyIdeaWithHero,style,other_heroes:secondHero.trim()?[secondHero.trim()]:[],
           pages_count:aiPagesCount,
         };
         const response=await fetch(API+"/api/books/generate",{
@@ -837,7 +841,7 @@ function App(){
         return;
       }
       const heroes=combinedHeroName;
-      const book=createDemoBook(heroes,Number(age),theme,style,prompt,storyLang,classicId||undefined,saveOnDevice);
+      const book=createDemoBook(heroes,Number(age),theme,style,storyIdeaWithHero,storyLang,classicId||undefined,saveOnDevice);
       // When signed in, demo books stay in the browser only and are not shown
       // in the parent's remote library until explicitly transferred.
       if(!privateToken)setBooks(previous=>[book,...previous]);
@@ -939,17 +943,20 @@ function App(){
         </section>
         <div className="features"><article><img className="feature-art" src="/images/features/recognizable-hero.png" alt="" loading="lazy" decoding="async"/><div className="feature-copy"><h3>{t.recognizable}</h3><p>{t.recognizableDesc}</p></div></article><article><img className="feature-art" src="/images/features/any-story.png" alt="" loading="lazy" decoding="async"/><div className="feature-copy"><h3>{t.anyStory}</h3><p>{t.anyStoryDesc}</p></div></article><article><img className="feature-art" src="/images/features/real-book.png" alt="" loading="lazy" decoding="async"/><div className="feature-copy"><h3>{t.realBook}</h3><p>{t.realBookDesc}</p></div></article></div>
       </>}
-      {tab==="create"&&<section className="create-page">
+      {tab==="create"&&<section className="create-page create-reference-page">
         <button className="back-button" onClick={()=>setTab("home")}><ArrowLeft size={17}/> {t.backHome}</button>
-        {heading(t.magic,t.magicDesc)}
+        <div className="create-reference-hero"><div className="create-reference-hero-copy">{heading(t.magic,t.magicDesc)}</div><img src="/images/create-hero-story.png" alt="" loading="eager" decoding="async" width={328} height={186}/></div>
         <div className="wizard-progress" role="group" aria-label={({ru:"Этапы создания сказки",uz:"Ertak yaratiş bosqiçlari",en:"Story creation steps"} as const)[lang]}>{([1,2,3] as const).map((step,index)=><React.Fragment key={step}>{index>0&&<span className="progress-line"/>}<span className={"progress-step"+(createStep===step?" active":"")+(createStep>step?" completed":"")} aria-current={createStep===step?"step":undefined}><span>{step}</span>{step===1?t.heroStep:step===2?t.storyStep:t.createBook}</span></React.Fragment>)}</div><form onSubmit={generate} className="form-card" noValidate>
           {createStep===1&&<><div className="step-title"><span>01</span><div><h3>{t.heroStep}</h3><p>{t.heroStepDesc}</p></div></div>
           {privateToken&&API&&<StoryChildPicker key={privateToken} api={API} session={privateToken} lang={lang} onSelect={child=>{if(child){setName(child.nickname);setAge(String(child.age));}}}/>}
           <div className="form-grid"><label>{t.childName}<input required maxLength={60} aria-invalid={heroNameTooLong} aria-describedby={heroNameTooLong?"hero-name-limit":undefined} value={name} onChange={e=>{setName(e.target.value);if(error===heroNameLengthError)setError("");}} placeholder={t.nameExample}/></label><label>{t.age}<select value={age} onChange={e=>setAge(e.target.value)}>{Array.from({length:13},(_,i)=>i+2).map(n=><option key={n} value={n}>{n} {t.years}</option>)}</select></label></div>
+          <div className="create-hero-picker"><strong>{({ru:"Тип главного героя",uz:"Qahramon turi",en:"Main hero type"} as const)[lang]}</strong><p>{({ru:"Выберите, кем будет главный герой сказки.",uz:"Ertakdagi asosiy qahramonni tanlang.",en:"Choose the main character of your story."} as const)[lang]}</p><div className="create-hero-options" role="group" aria-label={({ru:"Тип главного героя",uz:"Qahramon turi",en:"Main hero type"} as const)[lang]}>{(["boy","girl","animal","robot","magical"] as const).map(kind=><button key={kind} type="button" className={"create-hero-option"+(heroKind===kind?" selected":"")} aria-pressed={heroKind===kind} onClick={()=>setHeroKind(kind)}><img src={"/images/create-"+({boy:"boy",girl:"girl",animal:"fox",robot:"robot",magical:"dragon"} as const)[kind]+".png"} alt="" width={138} height={118} loading="lazy"/><span>{({ru:{boy:"Мальчик",girl:"Девочка",animal:"Животное",robot:"Робот",magical:"Волшебный"},uz:{boy:"Bola",girl:"Qiz",animal:"Hayvon",robot:"Robot",magical:"Sehrli jonzot"},en:{boy:"Boy",girl:"Girl",animal:"Animal",robot:"Robot",magical:"Creature"}} as const)[lang][kind]}</span>{heroKind===kind&&<CheckCircle2 className="create-hero-checked" size={19} aria-hidden="true"/>}</button>)}</div></div>
+          <details className="create-reference-extras"><summary><SlidersHorizontal size={17}/>{({ru:"Дополнительные настройки",uz:"Qoshimcha sozlamalar",en:"Additional options"} as const)[lang]}<ChevronDown size={17}/></summary><div className="create-reference-extras-inner">
           <label className="second-hero-field">{t.extraHero}<input maxLength={45} aria-invalid={heroNameTooLong} aria-describedby={heroNameTooLong?"hero-name-limit":undefined} value={secondHero} onChange={e=>{setSecondHero(e.target.value);if(error===heroNameLengthError)setError("");}} placeholder={t.extraHeroHint}/></label>{heroNameTooLong&&<p className="wizard-inline-error" id="hero-name-limit" role="status">{heroNameLengthError}</p>}
           <details className="wizard-optional-character"><summary><UserRound size={16}/>{({ru:"Добавить персонажа",uz:"Qahramon qoshish",en:"Add a character"} as const)[lang]}<ChevronDown size={16}/></summary><CharacterBuilder key={privateToken?"private":"demo"} lang={lang} allowSave={!privateToken} onApply={hero=>{setSecondHero(hero);setError("");}}/></details>
           <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
           {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
+          </div></details>
           <div className="wizard-step-actions"><button type="button" className="primary-button" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}if(heroNameTooLong){setError(heroNameLengthError);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
           {createStep===2&&<><div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
           <div className="classic-choice" role="group" aria-label={t.classicFormTitle}><button type="button" aria-pressed={!classicId} className={!classicId?"active":""} onClick={()=>{setPrompt(previous=>leaveClassicStoryPrompt(previous,storyLang,activeClassic?.prompt));setClassicId(null);}}>{t.classicCustom}</button>{classics.map(item=><button type="button" aria-pressed={classicId===item.id} className={classicId===item.id?"active":""} key={item.id} onClick={()=>{setClassicId(item.id);setThemeIndex(item.themeIndex);setPrompt(item.prompt[storyLang]);}}>{item.title[lang]}</button>)}</div>
@@ -967,6 +974,7 @@ function App(){
              <dl>
                <div><dt>{t.childName}</dt><dd>{name.trim()}</dd></div>
                <div><dt>{t.age}</dt><dd>{age} {t.years}</dd></div>
+               <div><dt>{({ru:"Тип героя",uz:"Qahramon turi",en:"Hero type"} as const)[lang]}</dt><dd>{heroKindLabel}</dd></div>
                {secondHero.trim()&&<div><dt>{t.extraHero}</dt><dd>{secondHero.trim()}</dd></div>}
                <div><dt>{t.world}</dt><dd>{activeClassic?activeClassic.title[lang]:theme}</dd></div>
                <div><dt>{t.storyLanguage}</dt><dd>{languages.find(item=>item.id===storyLang)?.label||storyLang}</dd></div>
@@ -988,6 +996,7 @@ function App(){
           <div className="wizard-step-actions"><button type="button" className="secondary-button" onClick={()=>setCreateStep(2)} disabled={busy}><ArrowLeft size={16}/>{t.back}</button><button className="primary-button full" disabled={busy||!consent||!acceptedLegal} type="submit"><Sparkles size={18}/>{busy?t.creating:t.createBook}<ArrowRight size={18}/></button></div></>}
           {error&&createStep!==3&&<p className="error" role="alert">{error}</p>}
         </form>
+        <button type="button" className="create-reference-reading-link" onClick={()=>setTab("library")}><img src="/images/create-read-story-banner.png" alt="" width={287} height={155} loading="lazy" decoding="async"/><span><strong>{({ru:"Читать сказки",uz:"Ertak o‘qish",en:"Read stories"} as const)[lang]}</strong><small>{({ru:"Читайте готовые сказки и сохраняйте любимые.",uz:"Tayyor ertaklarni oqing va sevimlilaringizni saqlang.",en:"Read ready-made stories and save favorites."} as const)[lang]}</small></span><ArrowRight size={20}/></button>
       </section>}
       {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab(legalReturnTab)}/>}
       {tab==="account"&&<section className="profile-concept-three">
