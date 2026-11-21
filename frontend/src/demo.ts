@@ -401,7 +401,44 @@ function cinderellaStory(name:string,language:Lang):Story {
  const title=({ru:`Золушка и ${name}`,uz:`${name} va Zolushka`,en:`${name} and Cinderella`} as const)[language];
  return {title,pages:pages[language]};
 }
+function snowWhiteStory(name:string,language:Lang):Story {
+ const pages:Record<Lang,string[]>={
+  ru:[
+   `В красивом королевстве жила добрая Белоснежка. ${name} познакомился с ней в дворцовом саду. Они вместе ухаживали за цветами и угощали птиц зёрнышками.`,
+   `Королева часто смотрела в волшебное зеркало и беспокоилась о своей красоте. Белоснежка и ${name} решили не спорить о внешности, а отправиться на прогулку и делать добрые дела.`,
+   `Друзья вошли в зелёный лес. Птицы показали им удобную тропинку, и вскоре среди деревьев показался небольшой уютный домик с семью окнами.`,
+   `В домике жили семь дружелюбных маленьких мастеров. ${name} помог им познакомиться с Белоснежкой. Новые друзья предложили гостям отдохнуть после долгой дороги.`,
+   `Белоснежка и ${name} вместе с семью друзьями прибрали дом и приготовили вкусный ужин. Вечером все слушали истории и делились мечтами.`,
+   `Однажды у лесной тропинки появилась незнакомка с красивым красным яблоком. ${name} вспомнил, что подарки незнакомцев нужно принимать осторожно, и попросил Белоснежку сначала посоветоваться с друзьями.`,
+   `Друзья вернулись домой и обнаружили, что Белоснежка устала и уснула после долгого дня. Все заботливо укрыли её и позвали доброго лекаря. Скоро она проснулась и улыбнулась.`,
+   `На следующий день у лесного домика устроили праздник дружбы. Белоснежка поблагодарила ${name} и семерых друзей за заботу. Теперь они знали: доброта и взаимная помощь важнее любого волшебного зеркала.`
+  ],
+  uz:[
+   `Go'zal qirollikda mehribon Oppog'oy yashardi. ${name} u bilan saroy bog'ida tanishdi. Ular birga gullarni parvarishlab, qushlarga don berishdi.`,
+   `Qirolicha sehrli oynaga tez-tez qarab, o'z go'zalligi haqida tashvishlanardi. Oppog'oy va ${name} esa yaxshilik qilish va sayrga chiqishni afzal ko'rishdi.`,
+   `Do'stlar yashil o'rmonga kirishdi. Qushlar ularga so'qmoqni ko'rsatdi. Ko'p o'tmay daraxtlar orasida yettita derazali kichik, shinam uy ko'rindi.`,
+   `Uyda yetti nafar do'stona hunarmand yashardi. ${name} ularni Oppog'oy bilan tanishtirdi. Yangi do'stlar mehmonlarga dam olishni taklif qilishdi.`,
+   `Oppog'oy, ${name} va yetti do'st uyni yig'ishtirib, mazali kechki ovqat tayyorlashdi. Kechqurun hamma hikoyalar aytib, orzularini bo'lishdi.`,
+   `Bir kuni o'rmon yo'lida qizil olmali notanish ayol paydo bo'ldi. ${name} notanishlardan sovg'a olishda ehtiyot bo'lish kerakligini eslab, Oppog'oyga avval do'stlaridan maslahat so'rashni aytdi.`,
+   `Do'stlar uyga qaytishganida Oppog'oy uzoq kundan keyin uxlab qolgan edi. Ular uni mehr bilan yopib, shifokorni chaqirishdi. Tez orada Oppog'oy uyg'onib, tabassum qildi.`,
+   `Ertasi kuni o'rmon uyida do'stlik bayrami bo'ldi. Oppog'oy ${name}ga va yetti do'stiga g'amxo'rligi uchun rahmat aytdi. Ular mehr va yordam sehrli oynadan ham muhimligini tushunishdi.`
+  ],
+  en:[
+   `Kind Snow White lived in a beautiful kingdom. ${name} met her in the palace garden, where they cared for flowers and offered seeds to friendly birds.`,
+   `The queen often asked her magic mirror about beauty. Snow White and ${name} decided that caring for others mattered much more, and set out for a walk beyond the palace.`,
+   `The friends entered a green forest. Birds guided them along a path until they found a charming cottage with seven little windows among the trees.`,
+   `Seven friendly little craftspeople lived in the cottage. ${name} introduced them to Snow White, and the new friends invited the visitors to rest after their long journey.`,
+   `Snow White, ${name}, and the seven friends tidied the cottage and cooked a delicious dinner. That evening they shared stories and talked about their dreams.`,
+   `One day a stranger appeared on the forest path holding a shiny red apple. ${name} remembered to be careful with gifts from strangers and suggested asking their friends for advice first.`,
+   `Back at the cottage, Snow White fell asleep after a long day. Her friends tucked her in and called a kind doctor to check on her. Soon she woke up smiling.`,
+   `The next day everyone held a friendship celebration outside the cottage. Snow White thanked ${name} and the seven friends for their kindness. They knew that helping others mattered more than any magic mirror.`
+  ]
+ };
+ const title=({ru:`${name} и Белоснежка`,uz:`${name} va Oppog'oy`,en:`${name} and Snow White`} as const)[language];
+ return {title,pages:pages[language]};
+}
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ if(id==="snow-white")return snowWhiteStory(name,language);
  if(id==="cinderella")return cinderellaStory(name,language);
  if(id==="three-pigs")return threePigsStory(name,language);
  if(id==="red-hood")return redHoodStory(name,language);
