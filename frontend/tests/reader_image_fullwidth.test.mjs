@@ -32,18 +32,17 @@ test("all four book modes and private illustrations fit the same mobile frame",(
  assert.ok(css.includes("@media screen and (max-width:700px) and (max-height:650px)"));
 });
 
-test("inline sizing cannot grow images beyond their picture window",()=>{
+test("sizing is responsive CSS only, never a global inline override",()=>{
  assert.match(app,/readerFullWidth=false/);
- assert.match(app,/node\.style\.setProperty\("height","100%","important"\)/);
- assert.match(app,/node\.style\.setProperty\("max-height","100%","important"\)/);
- assert.match(app,/node\.style\.setProperty\("object-fit","contain","important"\)/);
- assert.doesNotMatch(app,/node\.style\.setProperty\("max-height","none","important"\)/);
+ assert.match(app,/wt-reader-picture/);
+ assert.doesNotMatch(app,/node\.style\.setProperty\("height"/);
+ assert.doesNotMatch(app,/node\.style\.setProperty\("max-height"/);
  const instances=app.match(/alt=\{t\.illustration\+" "\+\(page\+1\)\} readerFullWidth/g)||[];
  assert.equal(instances.length,2);
 });
 
 test("animated characters are never cropped by an additional image-zoom effect",()=>{
- assert.match(app,/className=\{animatedUrl&&failed===0\?"wt-character-gif":undefined\}/);
+ assert.match(app,/animatedUrl&&failed===0\?"wt-character-gif":""/);
  assert.match(living,/> img\.wt-character-gif/);
  assert.match(living,/animation:none!important/);
  assert.match(living,/transform:none!important/);
