@@ -425,3 +425,79 @@ def test_read_only_reconciliation_reports_stalled_job_without_retry(api,monkeypa
     monkeypatch.setenv("APP_ENV","production")
     with pytest.raises(RuntimeError,match="refuse production"):
         unresolved_illustration_report()
+
+
+def test_immutable_manual_billing_review_preserves_job_and_quota(api,monkeypatch):
+    import hashlib
+    from illustration_billing_reconciliation import record_verified_charge,billing_review_snapshot
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    book=create_book(auth)
+    created=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"watercolor"
+    })
+    assert created.status_code==202
+    job=created.json()["id"]
+    digest=hashlib.sha256(b"fake external billing evidence").hexdigest()
+    monkeypatch.setenv("ENABLE_ILLUSTRATION_BILLING_RECONCILIATION","false")
+    with pytest.raises(RuntimeError,match="disabled"):
+        record_verified_charge(job_id=job,charge_status="charged",amount_micro_usd=1234,evidence_sha256=digest)
+    monkeypatch.setenv("ENABLE_ILLUSTRATION_BILLING_RECONCILIATION","true")
+    with pytest.raises(ValueError,match="terminal"):
+        record_verified_charge(job_id=job,charge_status="charged",amount_micro_usd=1234,evidence_sha256=digest)
+    with module.connection() as c:
+        module.sql(c,"UPDATE illustration_jobs SET status='needs_review' WHERE id=?",(job,))
+        c.commit()
+    expected={"job_id":job,"charge_status":"charged","amount_micro_usd":1234}
+    result=record_verified_charge(job_id=job,charge_status="charged",amount_micro_usd=1234,evidence_sha256=digest)
+    assert result==expected
+    with pytest.raises(ValueError,match="already been reconciled"):
+        record_verified_charge(job_id=job,charge_status="not_charged",amount_micro_usd=0,evidence_sha256=digest)
+    summary=billing_review_snapshot()
+    assert summary["confirmed_micro_usd"]==1234
+    assert summary["reviewed_counts"]=={"charged":1}
+    assert client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"]=="needs_review"
+    assert "evidence" not in str(summary)
+    assert client.delete("/api/books/"+book,headers=auth).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_billing_reviews WHERE job_id=?",(job,)).fetchone()[0]==0
+
+
+def test_manual_charge_review_validation_and_production_gate(api,monkeypatch):
+    from illustration_billing_reconciliation import record_verified_charge
+    client,module,register,create_book=api
+    email,auth=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("ENABLE_ILLUSTRATION_BILLING_RECONCILIATION","true")
+    book=create_book(auth)
+    created=client.post("/api/illustrations/jobs",headers=auth,json={
+        "book_id":book,"page_number":1,"style":"pencil"
+    })
+    assert created.status_code==202
+    job=created.json()["id"]
+    with module.connection() as c:
+        module.sql(c,"UPDATE illustration_jobs SET status='failed' WHERE id=?",(job,))
+        c.commit()
+    import hashlib
+    digest=hashlib.sha256(b"review evidence").hexdigest()
+    bad=[
+        ("charged",None,digest),
+        ("charged",0,digest),
+        ("unknown",100,digest),
+        ("not_charged",1,digest),
+        ("charged",True,digest),
+        ("charged",100,"not-a-digest"),
+    ]
+    for status,amount,evidence in bad:
+        with pytest.raises(ValueError):
+            record_verified_charge(job_id=job,charge_status=status,
+                                   amount_micro_usd=amount,evidence_sha256=evidence)
+    monkeypatch.setenv("APP_ENV","production")
+    with pytest.raises(RuntimeError,match="refuses production"):
+        record_verified_charge(job_id=job,charge_status="not_charged",
+                               amount_micro_usd=0,evidence_sha256=digest)
+    monkeypatch.setenv("APP_ENV","development")
+    saved=record_verified_charge(job_id=job,charge_status="not_charged",
+                                 amount_micro_usd=0,evidence_sha256=digest)
+    assert saved["amount_micro_usd"]==0
