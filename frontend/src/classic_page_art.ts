@@ -102,7 +102,7 @@ export function classicAnimatedPage(classicId:string|undefined,imageUrl:string,p
  const scene:Record<string,Record<number,string>>={
    "red-hood":{1:"red-hood-walk-wave"},
    "cinderella":{5:"cinderella-walking"},
-   "three-pigs":{4:"three-pigs-building",5:"three-pigs-wolf"}
+   "three-pigs":{4:"three-pigs-building",7:"three-pigs-wolf"}
  };
  const file=scene[classicId]?.[page];
  return file?`/images/classics/${classicId}/animations/${file}.gif`:null;
