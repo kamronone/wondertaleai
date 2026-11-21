@@ -15,6 +15,7 @@ import { PricingPlans } from "./PricingPlans";
 import { ParentAccount } from "./ParentAccount";
 import { LegalCenter, type LegalDocument } from "./LegalCenter";
 import { ProfileLegalMenu } from "./ProfileLegalMenu";
+import { ProfileHeader } from "./ProfileHeader";
 import { StoryChildPicker } from "./StoryChildPicker";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, PrivateBookNotFoundError, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
@@ -875,10 +876,11 @@ function App(){
     </div>
   </section>;
   return <div className="shell">
+    {tab==="account"?<ProfileHeader lang={lang} onLanguage={switchLang} onBack={()=>setTab("home")} onPrivacy={()=>openLegal("privacy")}/>:
     <header className="topbar">
       <button type="button" className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
       <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></div>
-    </header>
+    </header>}
     {!isOnline&&<div className="offline-status-banner" role="status">
       {({ru:"Нет интернета. Сохранённые на устройстве сказки доступны, а AI и синхронизация временно не работают.",uz:"Internet yoq. Qurilmada saqlangan ertaklarni öqiş mumkin, AI va sinxronlaş vaqtinça işlamaydi.",en:"You're offline. Stories saved on this device remain available; AI and sync are paused."} as const)[lang]}
     </div>}
@@ -1125,7 +1127,7 @@ function App(){
         </div>
       </section>}
       {tab==="home"&&<section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>}
-      <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Аккаунт",uz:"Akkaunt",en:"Account"} as const)[lang]}</span></button></nav>
+      <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></nav>
     </main>
     <footer className="site-legal-footer">
       <span>© {new Date().getFullYear()} WonderTale AI · Komron Giyosov</span>
