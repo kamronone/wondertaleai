@@ -1,5 +1,5 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v13";
+const CACHE = "wondertale-public-v14";
 const STORY_OFFLINE_CACHE = "wondertale-offline-stories-v1";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 // Public, bundled artwork only. Each asset is optional so offline installation
@@ -97,8 +97,10 @@ self.addEventListener("fetch", event => {
         const type = response.headers.get("content-type") || "";
         if (response.ok && response.type === "basic" && /image\/png/i.test(type)) {
           await cache.put(request, response.clone()).catch(() => {});
+          return response;
         }
-        return response;
+        // HTML SPA rewrites or failed requests must not replace a saved PNG.
+        return (await cache.match(request)) || (await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || response;
       } catch {
         return (await cache.match(request)) || (await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || Response.error();
       }
