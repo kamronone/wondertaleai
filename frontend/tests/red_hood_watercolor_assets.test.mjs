@@ -25,10 +25,10 @@ test("reader uses a versioned built-in path and preserves user-provided images",
   assert.match(code,/classicId!=="red-hood"/);
   assert.match(code,/oldCover\|\|localVector\|\|builtinPage \? redHoodPagePng\(pageIndex\) : imageUrl/);
   assert.match(code,/\(\?:pages\|watercolor\)/);
-  assert.match(demo,/classicId==="red-hood"\?redHoodPagePng\(index\)/);
-  assert.match(reader,/redHoodReaderImage\(isDemoBook\(active as DemoBook\)/);
+  assert.match(demo,/classicId\?classicReaderImage\(classicId,art\|\|"",index\):illustration\(index\)/);
+  assert.match(reader,/classicReaderImage\(isDemoBook\(active as DemoBook\)/);
 });
 test("print version uses correct page-specific illustration too",()=>{
-  assert.match(reader,/print-book-cover[^\n]*redHoodReaderImage/);
-  assert.match(reader,/redHoodReaderImage\(isDemoBook\(active as DemoBook\)\?\(active as DemoBook\)\.classicId:undefined,item\.image_url,index\)/);
+  assert.match(reader,/print-book-cover[^\n]*classicReaderImage/);
+  assert.match(reader,/classicReaderImage\(isDemoBook\(active as DemoBook\)\?\(active as DemoBook\)\.classicId:undefined,item\.image_url,index\)/);
 });

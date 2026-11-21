@@ -162,7 +162,7 @@ test("page-turn motion remounts only image and text, retaining the reader scroll
   const app=await readFile(new URL("../src/main.tsx",import.meta.url),"utf8");
   const css=await readFile(new URL("../src/reader-page-turn.css",import.meta.url),"utf8");
   assert.match(app,/import "\.\/reader-page-turn\.css"/);
-  assert.match(app,/className="story-page-image reader-turn-image"/);
+  assert.match(app,/className=\{"story-page-image reader-turn-image /);
   assert.match(app,/className="story-text reader-turn-text"/);
   assert.match(app,/ref=\{storyPageRef\}/);
   assert.match(app,/storyPageRef\.current\?\.scrollIntoView\(\{behavior:"auto",block:"start"\}\)/);

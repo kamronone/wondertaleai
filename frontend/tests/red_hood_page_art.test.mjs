@@ -15,11 +15,11 @@ test("red hood has eight distinct local visual scene choices",()=>{
  assert.match(images,/data:image\/svg\+xml;charset=utf-8,/);
 });
 test("every new Red Riding Hood page gets its own artwork, other classics unchanged",()=>{
- assert.match(demo,/classicId==="red-hood"\?redHoodPagePng\(index\):art\|\|illustration\(index\)/);
+ assert.match(demo,/classicId\?classicReaderImage\(classicId,art\|\|"",index\):illustration\(index\)/);
  assert.match(demo,/classicId,savedOnDevice:saveOnDevice/);
 });
 test("existing browser-saved classics display upgraded per-page artwork",()=>{
- assert.match(main,/redHoodReaderImage\(isDemoBook/);
+ assert.match(main,/classicReaderImage\(isDemoBook/);
  assert.match(art,/export function redHoodReaderImage/);
  assert.match(art,/return oldCover\|\|localVector\|\|builtinPage \? redHoodPagePng\(pageIndex\) : imageUrl/);
  assert.match(main,/PrivateReaderIllustration/);
