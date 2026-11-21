@@ -344,8 +344,9 @@ function App(){
   useEffect(()=>{
     if(bedtimeUntil===null)return;
     const remaining=bedtimeUntil-Date.now();
-    if(remaining<=0){speechAdvanceArmed.current=false;if("speechSynthesis" in window)window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);return;}
+    if(remaining<=0){speechRun.current++;speechAdvanceArmed.current=false;if("speechSynthesis" in window)window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);return;}
     const timeout=window.setTimeout(()=>{
+      speechRun.current++;
       speechAdvanceArmed.current=false;
       if("speechSynthesis" in window)window.speechSynthesis.cancel();
       setSpeaking(false);setSpeechPaused(false);setBedtimeUntil(null);
@@ -443,6 +444,28 @@ function App(){
     catch{return false;}
   });
   const speechAdvanceArmed=useRef(false);
+  const speechRun=useRef(0);
+  useEffect(()=>{
+    const stopOnBackground=()=>{
+      // Safari may suspend speech silently while the screen is locked.
+      // Cancel rather than leaving a stuck Play/Pause button or advancing a page.
+      if(document.visibilityState!=="hidden")return;
+      speechRun.current++;
+      speechRun.current++;
+      speechAdvanceArmed.current=false;
+      if("speechSynthesis" in window)window.speechSynthesis.cancel();
+      setSpokenRange(null);
+      setSpeaking(false);
+      setSpeechPaused(false);
+    };
+    document.addEventListener("visibilitychange",stopOnBackground);
+    const onPageHide=()=>stopOnBackground();
+    window.addEventListener("pagehide",onPageHide);
+    return ()=>{
+      document.removeEventListener("visibilitychange",stopOnBackground);
+      window.removeEventListener("pagehide",onPageHide);
+    };
+  },[]);
   useEffect(()=>{
     try{localStorage.setItem("wondertale_reader_auto_next",String(readerAutoNext));}
     catch{/* Read mode remains usable when local storage is unavailable. */}
@@ -595,6 +618,7 @@ function App(){
     setEditingPage(false);setActive(book);setPage(resumeReaderPage(book.lastPage,book.pages.length));setTab("reader");setError("");
   };
   useEffect(()=>{
+    speechRun.current++;
     speechAdvanceArmed.current=false;
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpokenRange(null);
@@ -819,6 +843,8 @@ function App(){
       else{engine.pause();setSpeechPaused(true);}
       return;
     }
+    const run=++speechRun.current;
+    speechAdvanceArmed.current=false;
     engine.cancel();
     setSpokenRange(null);
     setError("");
@@ -839,10 +865,11 @@ function App(){
     // iOS Safari does not consistently emit word boundaries. In that case
     // keep the paragraph unchanged rather than inventing a reading position.
     utterance.onboundary=event=>{
-      if(!speechAdvanceArmed.current||event.name==="sentence")return;
+      if(run!==speechRun.current||!speechAdvanceArmed.current||event.name==="sentence")return;
       setSpokenRange(spokenWordRange(utterance.text,event.charIndex,event.charLength));
     };
     utterance.onend=()=>{
+      if(run!==speechRun.current)return;
       const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1;
       speechAdvanceArmed.current=false;
       setSpokenRange(null);
@@ -850,16 +877,28 @@ function App(){
       if(mayAdvance)setPage(previous=>Math.min(active.pages.length-1,previous+1));
     };
     utterance.onerror=event=>{
+      if(run!==speechRun.current)return;
       speechAdvanceArmed.current=false;
       setSpokenRange(null);
       setSpeaking(false);setSpeechPaused(false);
       if(event.error!=="canceled"&&event.error!=="interrupted")setError(t.noVoice);
     };
-    setSpeaking(true);setSpeechPaused(false);
-    engine.speak(utterance);
+    try{
+      engine.speak(utterance);
+      setSpeaking(true);setSpeechPaused(false);
+    }catch{
+      if(run===speechRun.current){
+        speechAdvanceArmed.current=false;
+        setSpokenRange(null);
+        setSpeaking(false);setSpeechPaused(false);
+        setError(t.noVoice);
+      }
+    }
   };
   const stopSpeech=()=>{
+    speechRun.current++;
     setSpokenRange(null);
+    speechRun.current++;
     speechAdvanceArmed.current=false;
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpeaking(false);setSpeechPaused(false);
@@ -1387,6 +1426,7 @@ function App(){
               const matching=voicesForStoryLanguage(deviceVoices,narrationLanguage);
               return matching.length
                 ?<select id="reader-voice-select" value={matching.some(voice=>voice.voiceURI===voiceChoices[narrationLanguage])?voiceChoices[narrationLanguage]:""} onChange={event=>{
+                  speechRun.current++;
                   speechAdvanceArmed.current=false;
                   if("speechSynthesis" in window)window.speechSynthesis.cancel();
                   setSpokenRange(null);setSpeaking(false);setSpeechPaused(false);
@@ -1402,7 +1442,7 @@ function App(){
           <fieldset className="reader-speech-speed">
             <legend>{({ru:"Скорость озвучки",uz:"Ovoz tezligi",en:"Narration speed"} as const)[lang]}</legend>
             <div role="group" aria-label={({ru:"Скорость голоса",uz:"Ovoz tezligi",en:"Voice speed"} as const)[lang]}>
-              {(["slow","normal","fast"] as const).map((speed,index)=><button type="button" key={speed} aria-pressed={readerSpeechSpeed===speed} className={readerSpeechSpeed===speed?"active":""} onClick={()=>{if(speaking&&"speechSynthesis" in window){speechAdvanceArmed.current=false;window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);}setReaderSpeechSpeed(speed);}}>
+              {(["slow","normal","fast"] as const).map((speed,index)=><button type="button" key={speed} aria-pressed={readerSpeechSpeed===speed} className={readerSpeechSpeed===speed?"active":""} onClick={()=>{if(speaking&&"speechSynthesis" in window){speechRun.current++;speechAdvanceArmed.current=false;window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);}setReaderSpeechSpeed(speed);}}>
                 {({ru:["Медленно","Обычно","Быстро"],uz:["Sekin","Oddiy","Tez"],en:["Slow","Normal","Fast"]} as const)[lang][index]}
               </button>)}
             </div>
