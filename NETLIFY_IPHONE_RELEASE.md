@@ -47,3 +47,13 @@ Rolling back a failed production deploy should use Netlify's deploy history.
 
 The assistant can update the connected GitHub branch but does not have direct Netlify project-management access in this chat.
 No claim of a completed Netlify deployment, successful build, or live iPhone smoke test is made without evidence from Netlify.
+
+## Check exactly which version is live
+
+Open `https://ertakcha.netlify.app/?wt_version=1` in Safari on iPhone.
+
+- A new frontend build shows a small **WonderTale build** label with **Commit** and **Branch**.
+- If no label appears, the deployed app is still running code from before the diagnostic feature, or an older cached app shell. This does **not** prove which Netlify deploy branch is configured.
+- Netlify builds embed `COMMIT_REF` and `BRANCH` from the build environment. Only the public commit prefix and branch name are displayed, never secrets.
+- Match the commit prefix against the newest GitHub commit in `fix/private-book-access`.
+- After a fresh preview is deployed, use the preview URL with `?wt_version=1` to check the branch build, without switching the site's Production branch.
