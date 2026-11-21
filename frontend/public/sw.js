@@ -1,5 +1,5 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v9";
+const CACHE = "wondertale-public-v10";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 // Public, bundled artwork only. Each asset is optional so offline installation
 // still succeeds when an image is missing or a connection is unreliable.
@@ -8,7 +8,7 @@ const OPTIONAL_ART = [
   "/images/wondertale-hero.webp",
   "/images/wondertale-welcome.png"
 ];
-const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/|images\/features\/|images\/wondertale-(?:hero\.webp|welcome\.(?:png|svg))$)/;
+const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/|images\/features\/|images\/create-(?:boy|girl|fox|dragon|robot|hero-story|read-story-banner)\.png$|images\/(?:library-(?:magic-castle|story-castle-premium)|profile-(?:castle|story-hero))\.png$|images\/wondertale-(?:hero\.webp|welcome\.(?:png|svg))$)/;
 const PRIVATE_PATH = /^\/(?:api\/|auth\/|account\/)/;
 
 /** Find only Vite-generated, same-origin JS/CSS from the actual app shell. */
