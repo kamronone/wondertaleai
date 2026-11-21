@@ -34,7 +34,7 @@ test("download validates public PNG or GIF responses before writing cache",()=>{
 test("PWA preserves opted-in offline art and serves it without network",()=>{
  assert.match(sw,/STORY_OFFLINE_CACHE/);
  assert.ok(sw.includes("key !== STORY_OFFLINE_CACHE"));
- assert.match(sw,/caches\.open\(STORY_OFFLINE_CACHE\)\)\.match\(request\)/);
+ assert.match(sw,/await \(await caches\.open\(STORY_OFFLINE_CACHE\)\)\.match\(request\)/);
 });
 test("download action is in reading settings only and has loading/error states",()=>{
  assert.match(app,/canDownloadClassicArt\(\(active as DemoBook\)\.classicId\)/);
