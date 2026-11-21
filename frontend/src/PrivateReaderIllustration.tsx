@@ -21,10 +21,13 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
   const [zoomPan,setZoomPan]=useState({x:0,y:0});
   const pinch=useRef<{distance:number;scale:number}|null>(null);
   const drag=useRef<{x:number;y:number;panX:number;panY:number}|null>(null);
+  const lastSingleTap=useRef(0);
+  const usedPinch=useRef(false);
   const startZoomTouch=(event:import("react").TouchEvent<HTMLDivElement>)=>{
     event.stopPropagation();
     if(event.touches.length===2){
       pinch.current={distance:readerFingerDistance(event.touches[0],event.touches[1]),scale:zoomScale};
+     usedPinch.current=true;
       drag.current=null;
     }else if(event.touches.length===1){
       drag.current={x:event.touches[0].clientX,y:event.touches[0].clientY,panX:zoomPan.x,panY:zoomPan.y};
@@ -43,11 +46,26 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
       });
     }
   };
-  const endZoomTouch=(event:import("react").TouchEvent<HTMLDivElement>)=>{
-    event.stopPropagation();
-    if(event.touches.length<2)pinch.current=null;
-    if(event.touches.length===0){drag.current=null;if(zoomScale<=1)setZoomPan({x:0,y:0});}
-  };
+ const endZoomTouch=(event:import("react").TouchEvent<HTMLDivElement>)=>{
+   event.stopPropagation();
+   if(event.touches.length===0){
+     if(!usedPinch.current && drag.current && event.changedTouches.length===1){
+       const finger=event.changedTouches[0];
+       const movement=Math.hypot(finger.clientX-drag.current.x,finger.clientY-drag.current.y);
+       if(movement<12){
+         const now=Date.now();
+         if(now-lastSingleTap.current<325){
+           toggleDoubleTapZoom();
+           lastSingleTap.current=0;
+         }else lastSingleTap.current=now;
+       }
+     }
+     usedPinch.current=false;
+     pinch.current=null;
+     drag.current=null;
+     if(zoomScale<=1)setZoomPan({x:0,y:0});
+   }else if(event.touches.length<2)pinch.current=null;
+ };
   const toggleDoubleTapZoom=()=>{setZoomScale(current=>current>1?1:2);setZoomPan({x:0,y:0});};
   const openRef=useRef<HTMLButtonElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
