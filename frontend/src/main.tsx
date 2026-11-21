@@ -295,6 +295,7 @@ function App(){
   };
   const [saveOnDevice,setSaveOnDevice]=useState(false);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
+  const [showLibraryAchievements,setShowLibraryAchievements]=useState(false);
   const [libraryShelf,setLibraryShelf]=useState<"all"|"favorites"|"saved"|"recent">("all");
   const [libraryQuery,setLibraryQuery]=useState("");
   const [librarySort,setLibrarySort]=useState<LibrarySort>("newest");
@@ -1044,8 +1045,24 @@ function App(){
           </div>
         </div>
         <div className="library-concept-metrics">
-        <details className="library-achievements-disclosure">
-          <summary><Star size={18}/><span>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]}</span><strong>{readingStats.unlocked}/{readingStats.total}</strong><ChevronDown size={16}/></summary>
+        <button type="button" className="library-achievements-toggle" aria-expanded={showLibraryAchievements} aria-controls="library-achievements-panel" onClick={()=>setShowLibraryAchievements(value=>!value)}>
+          <Star size={18} aria-hidden="true"/>
+          <span>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]}</span>
+          <strong>{readingStats.unlocked}/{readingStats.total}</strong>
+          <ChevronDown size={15} aria-hidden="true"/>
+        </button>
+          <div className="library-concept-metric">
+            <BookOpen size={22} aria-hidden="true"/>
+            <span>{({ru:"Сказки",uz:"Ertaklar",en:"Stories"} as const)[lang]}</span>
+            <strong>{books.length}</strong>
+          </div>
+          <div className="library-concept-metric">
+            <Sparkles size={22} aria-hidden="true"/>
+            <span>{({ru:"Читали",uz:"Oqilganlar",en:"Read"} as const)[lang]}</span>
+            <strong>{books.filter(book=>(book.lastPage??0)>0).length}</strong>
+          </div>
+        </div>
+        {showLibraryAchievements&&<div className="library-achievements-panel" id="library-achievements-panel">
         <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
           <div className="reading-achievements-heading"><Star size={18}/><strong>{({ru:"Мои достижения",uz:"Mening yutuqlarim",en:"My achievements"} as const)[lang]}</strong></div>
           <p className="reading-achievements-summary" role="status">{readingStats.unlocked} / {readingStats.total} {({ru:"достижений открыто",uz:"yutuq oçildi",en:"achievements unlocked"} as const)[lang]}</p>
@@ -1058,18 +1075,7 @@ function App(){
           </div>
           <small className="reading-achievements-note">{({ru:"Прогресс рассчитан по текущей библиотеке. Последняя страница означает, что вы до неё дошли.",uz:"Natijalar joriy kutubxona asosida hisoblanadi. Oxirgi sahifaga yetiş yakunlangan deb hisoblanadi.",en:"Progress is based on this library. Reaching the final page counts as finishing."} as const)[lang]}</small>
         </section>
-        </details>
-          <div className="library-concept-metric">
-            <BookOpen size={22} aria-hidden="true"/>
-            <span>{({ru:"Сказки",uz:"Ertaklar",en:"Stories"} as const)[lang]}</span>
-            <strong>{books.length}</strong>
-          </div>
-          <div className="library-concept-metric">
-            <Sparkles size={22} aria-hidden="true"/>
-            <span>{({ru:"Читали",uz:"Oqilganlar",en:"Read"} as const)[lang]}</span>
-            <strong>{books.filter(book=>(book.lastPage??0)>0).length}</strong>
-          </div>
-        </div>
+        </div>}
         {books.some(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1)&&<div className="library-resume">
           <div className="library-resume-text"><BookOpen size={17}/><span>{({ru:"Продолжить чтение",uz:"Oqishni davom ettirish",en:"Continue reading"} as const)[lang]}</span></div>
           {books.filter(book=>typeof book.lastPage==="number"&&book.lastPage>0&&book.lastPage<book.pages.length-1).slice(0,1).map(book=><button key={book.id} type="button" onClick={()=>openBook(book)}><span>{book.title}</span><ArrowRight size={17}/></button>)}
