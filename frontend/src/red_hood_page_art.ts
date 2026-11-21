@@ -92,7 +92,7 @@ export function redHoodPageArtwork(pageIndex:number):string{
 /** Public, bundled PNG for a given reading page, no network API or account token. */
 export function redHoodPagePng(pageIndex:number):string{
  const page=Math.max(1,Math.min(8,Math.trunc(Number.isFinite(pageIndex)?pageIndex:0)+1));
- return "/images/classics/red-hood/pages/page-"+page+".png";
+ return "/images/classics/red-hood/watercolor/page-"+page+".png";
 }
 
 /** Upgrade only the built-in classic cover/old demo art.
@@ -102,6 +102,6 @@ export function redHoodReaderImage(classicId:string|undefined,imageUrl:string,pa
  if(classicId!=="red-hood")return imageUrl;
  const oldCover=imageUrl==="/images/classics/red-hood.svg";
  const localVector=imageUrl.startsWith("data:image/svg+xml;charset=utf-8,");
- const builtinPage=/^\/images\/classics\/red-hood\/pages\/page-[1-8]\.png$/.test(imageUrl);
+ const builtinPage=/^\/images\/classics\/red-hood\/(?:pages|watercolor)\/page-[1-8]\.png$/.test(imageUrl);
  return oldCover||localVector||builtinPage ? redHoodPagePng(pageIndex) : imageUrl;
 }
