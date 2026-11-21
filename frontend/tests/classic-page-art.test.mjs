@@ -16,7 +16,8 @@ const fakeClassics=[
  {id:"three-pigs",title:{ru:"Три поросёнка"}},
  {id:"snow-white",title:{ru:"Белоснежка"}},
  {id:"ugly-duckling",title:{ru:"Гадкий утёнок"}},
- {id:"bremen",title:{ru:"Бременские музыканты"}}
+ {id:"bremen",title:{ru:"Бременские музыканты"}},
+ {id:"hansel-gretel",title:{ru:"Гензель и Гретель"}}
 ];
 vm.runInNewContext(javascript,{
  exports,
@@ -28,6 +29,7 @@ vm.runInNewContext(javascript,{
    if(name==="./snow_white_page_art")return {snowWhitePageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,snowwhite-scene-"+page};
    if(name==="./ugly_duckling_page_art")return {uglyDucklingPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,uglyduckling-scene-"+page};
    if(name==="./bremen_page_art")return {bremenPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,bremen-scene-"+page};
+   if(name==="./hansel_gretel_page_art")return {hanselGretelPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,hansel-scene-"+page};
    throw Error("Unexpected dependency: "+name);
  },
  encodeURIComponent, Number, Object, Math, String, Set, RegExp
@@ -47,6 +49,7 @@ test("missing page PNG falls back to embedded offline illustration",()=>{
  assert.equal(exports.classicPngFallback("/images/classics/snow-white/pages/page-8.png"),"data:image/svg+xml;charset=utf-8,snowwhite-scene-7");
  assert.equal(exports.classicPngFallback("/images/classics/ugly-duckling/pages/page-4.png"),"data:image/svg+xml;charset=utf-8,uglyduckling-scene-3");
  assert.equal(exports.classicPngFallback("/images/classics/bremen/pages/page-6.png"),"data:image/svg+xml;charset=utf-8,bremen-scene-5");
+ assert.equal(exports.classicPngFallback("/images/classics/hansel-gretel/pages/page-3.png"),"data:image/svg+xml;charset=utf-8,hansel-scene-2");
  assert.equal(exports.classicPngFallback("https://evil.example/page-3.png"),null);
 });
 test("never replace custom or private images",()=>{
