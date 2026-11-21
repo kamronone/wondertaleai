@@ -142,6 +142,7 @@ function App(){
   const pendingFavorites=useRef(new Map<string,boolean>());
   const flushing=useRef<number|null>(null);
   const recentlyCreated=useRef(new Map<string,number>());
+  const transferAbort=useRef<AbortController|null>(null);
   const offlineOwner=useRef<string|null>(null);
   const persistPending=()=>{
     if(!offlineOwner.current)return;
@@ -335,6 +336,9 @@ function App(){
       const owner=await getAuthenticatedOwner(API,token);
       const remote=await loadPrivateBooks(API,token);
       if(loginAttempt.current!==attempt)return false;
+      transferAbort.current?.abort();
+      transferAbort.current=null;
+      setSyncBusy(false);
       ++sessionEpoch.current;
       // Only replace the current owner's queue after the new session and library
       // have both been validated. A failed login must not erase offline edits.
@@ -359,6 +363,9 @@ function App(){
     }catch{return false;}
   };
   const logoutParent=()=>{
+    transferAbort.current?.abort();
+    transferAbort.current=null;
+    setSyncBusy(false);
     ++loginAttempt.current;
     // Preserve unsynced reader progress for this parent before clearing in-memory state.
     persistPending();
@@ -376,9 +383,11 @@ function App(){
   const syncSaved=async()=>{
     if(!privateToken||!API||syncBusy)return;
     const epoch=sessionEpoch.current;
+    const controller=new AbortController();
+    transferAbort.current=controller;
     setSyncBusy(true);setSyncMessage("");
     try{
-      const report=await transferLocalBooks(API,privateToken,getDemoBooks());
+      const report=await transferLocalBooks(API,privateToken,getDemoBooks(),controller.signal);
       if(sessionEpoch.current!==epoch)return;
       setRemoteBooks(report.serverBooks);
       setBooks(report.serverBooks);
@@ -417,7 +426,12 @@ function App(){
       }else{
         setSyncMessage({ru:"Не удалось перенести книги. Попробуйте позднее.",uz:"Kitoblarni köçiriş amalga oşmadi. Keyinroq qayta urinib köring.",en:"Transfer failed. Please retry later."}[lang]);
       }
-    }finally{setSyncBusy(false);}
+    }finally{
+      if(transferAbort.current===controller){
+        transferAbort.current=null;
+        setSyncBusy(false);
+      }
+    }
   };
   useEffect(()=>{document.documentElement.lang=lang;},[lang]);
   // Each SPA screen starts from its heading instead of retaining a deep catalog scroll offset.
