@@ -448,6 +448,25 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
 }
 
 
+/** Legacy copies must only be updated after explicit user confirmation. */
+export function canRefreshClassicDemoStory(book:DemoBook):boolean {
+ if(book.classicId!=="cinderella"&&book.classicId!=="three-pigs")return false;
+ if(book.pages.length!==8)return false;
+ const start=book.pages[0]?.text||"";
+ return start.startsWith("Однажды "+book.name+" открыл волшебную книгу.")||
+   start.startsWith("Bir kuni "+book.name+" sehrli kitobni ochdi.")||
+   start.startsWith("One day, "+book.name+" opened a magical book.");
+}
+export function refreshClassicDemoStory(book:DemoBook):DemoBook {
+ if(!canRefreshClassicDemoStory(book))return book;
+ const story=makeClassicStory(book.classicId!,book.name,book.language||"uz");
+ return {...book,title:story.title,pages:book.pages.map((page,index)=>({
+  ...page,
+  text:story.pages[index],
+  image_url:classicReaderImage(book.classicId,page.image_url,index)
+ }))};
+}
+
 /** Creates a new local template sequel to the current demo story (no network requests). */
 export const createDemoSequel=(previous:DemoBook):DemoBook=>{
  const lang:Lang=previous.language||"ru";
