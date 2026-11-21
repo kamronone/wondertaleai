@@ -43,3 +43,10 @@ test("reactions do not collect data, store child details or change book content"
  assert.match(source,/setVisibleReaction\(false\)/);
  for(const l of ["ru","uz","en"])assert.ok(source.includes(l));
 });
+
+test("a character tap has visible feedback but respects reduced motion",()=>{
+ assert.match(source,/visibleReaction\?" is-reacting":""/);
+ assert.match(css,/\.wt-character-hotspot\.is-reacting/);
+ assert.match(css,/@keyframes wt-character-tapped/);
+ assert.match(css,/\.wt-character-hotspot\.is-reacting\{\s*animation:none!important/);
+});
