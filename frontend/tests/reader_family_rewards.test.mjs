@@ -17,7 +17,7 @@ test("device preferences parse safely and do not mix in profile data",()=>{
  assert.deepEqual(prefs.parseFamilyReadingPreferences("[]"),defaults);
  assert.deepEqual(prefs.parseFamilyReadingPreferences('{"extraActivities":false}'),{extraActivities:false,ambientSoundAllowed:true});
  assert.deepEqual(prefs.parseFamilyReadingPreferences('{"extraActivities":true,"ambientSoundAllowed":false}'),{extraActivities:true,ambientSoundAllowed:false});
- assert.doesNotMatch(source,/val\\.(?:childName|birthdate|token|accountId|email)/i);
+ for(const secret of ["val.childName","val.birthdate","val.token","val.accountId","val.email"])assert.ok(!source.includes(secret));
 });
 
 test("reader family controls disable games hotspots and ambient audio",()=>{
