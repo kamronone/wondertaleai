@@ -591,3 +591,93 @@ def test_full_library_does_not_leave_stuck_ai_idempotency_marker(monkeypatch):
     assert response.status_code==409
     assert client.get("/api/books/generation-requests/"+key,headers=headers(token)).status_code==404
     assert client.get("/api/billing/status",headers=headers(token)).json()["ai_used_today"]==0
+
+
+def test_private_illustrations_queue_owner_isolation_and_cancel(monkeypatch):
+    import json
+    import uuid
+    a=signup("image-a-"+uuid.uuid4().hex+"@example.com")
+    b=signup("image-b-"+uuid.uuid4().hex+"@example.com")
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS","true")
+    with secure_main.connection() as c:
+        email=secure_main.sql(c,"SELECT email FROM parents WHERE id=(SELECT owner_id FROM sessions WHERE id IN (SELECT id FROM sessions LIMIT 1))").fetchone()
+    # Resolve the account's real email through its signed /api/me response.
+    profile=client.get("/api/me",headers=headers(a))
+    assert profile.status_code==200
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",profile.json()["email"])
+    saved=client.post("/api/books",headers=headers(a),json={
+        "title":"Forest friendship","child_name":"Alex","age":6,
+        "story":json.dumps({"pages":[{"number":1,"text":"A very friendly fox visits the magical garden."}]})
+    })
+    assert saved.status_code==201,saved.text
+    bid=saved.json()["id"]
+    data={"book_id":bid,"page_number":1,"style":"watercolor"}
+    assert client.post("/api/illustrations/jobs",json=data).status_code==401
+    assert client.post("/api/illustrations/jobs",headers=headers(b),json=data).status_code==403
+    first=client.post("/api/illustrations/jobs",headers=headers(a),json=data)
+    assert first.status_code==202,first.text
+    assert first.json()["status"]=="queued"
+    assert client.post("/api/illustrations/jobs",headers=headers(a),json=data).json()==first.json()
+    listing=client.get("/api/illustrations/jobs",headers=headers(a))
+    assert listing.status_code==200
+    assert listing.headers["Cache-Control"]=="private, no-store"
+    assert [j["id"] for j in listing.json()]==[first.json()["id"]]
+    assert client.get("/api/illustrations/jobs",headers=headers(b)).json()==[]
+    assert client.delete("/api/illustrations/jobs/"+first.json()["id"],headers=headers(b)).status_code==404
+    assert client.delete("/api/illustrations/jobs/"+first.json()["id"],headers=headers(a)).status_code==204
+    assert client.get("/api/illustrations/jobs",headers=headers(a)).json()==[]
+
+
+def test_illustration_jobs_deny_invalid_page_and_stop_at_two(monkeypatch):
+    import json
+    import uuid
+    email="image-limits-"+uuid.uuid4().hex+"@example.com"
+    token=signup(email)
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS","true")
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    book=client.post("/api/books",headers=headers(token),json={
+        "title":"Kind stars","child_name":"Sam","age":7,
+        "story":json.dumps({"pages":[{"number":1,"text":"A first page."},{"number":2,"text":"A second page."}]})
+    })
+    assert book.status_code==201
+    bid=book.json()["id"]
+    for data in (
+        {"book_id":bid,"page_number":3,"style":"watercolor"},
+        {"book_id":bid,"page_number":1,"style":"photorealistic"},
+        {"book_id":str(uuid.uuid4()),"page_number":1,"style":"watercolor"}
+    ):
+        result=client.post("/api/illustrations/jobs",headers=headers(token),json=data)
+        assert result.status_code in (404,422)
+    for page in (1,2):
+        result=client.post("/api/illustrations/jobs",headers=headers(token),json={
+            "book_id":bid,"page_number":page,"style":"watercolor"
+        })
+        assert result.status_code==202,result.text
+    limited=client.post("/api/illustrations/jobs",headers=headers(token),json={
+        "book_id":bid,"page_number":1,"style":"pencil"
+    })
+    assert limited.status_code==429
+    assert len(client.get("/api/illustrations/jobs",headers=headers(token)).json())==2
+    assert client.delete("/api/me",headers=headers(token)).status_code==204
+    with secure_main.connection() as c:
+        count=secure_main.sql(c,"SELECT COUNT(*) FROM illustration_jobs WHERE book_id=?",(bid,)).fetchone()[0]
+    assert count==0
+
+
+def test_illustrations_feature_disabled_and_cors_key_allowed(monkeypatch):
+    import uuid
+    email="image-disabled-"+uuid.uuid4().hex+"@example.com"
+    token=signup(email)
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS","false")
+    result=client.post("/api/illustrations/jobs",headers=headers(token),json={
+        "book_id":str(uuid.uuid4()),"page_number":1,"style":"storybook"
+    })
+    assert result.status_code==503
+    preflight=client.options("/api/books/jobs",headers={
+        "Origin":"http://localhost:5173",
+        "Access-Control-Request-Method":"POST",
+        "Access-Control-Request-Headers":"authorization,content-type,idempotency-key"
+    })
+    assert preflight.status_code==200,preflight.text
+    allowed=preflight.headers["access-control-allow-headers"].lower()
+    assert "idempotency-key" in allowed
