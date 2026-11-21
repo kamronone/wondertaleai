@@ -969,6 +969,22 @@ def list_private_illustrations(owner:str=Depends(current_parent)):
     return [{"id":r[0],"status":r[1],"book_id":r[2],"page_number":r[3]} for r in rows]
 
 
+@app.get("/api/illustrations/books/{book_id}/pages/{page_number}")
+def private_illustration_for_page(book_id:str,page_number:int,owner:str=Depends(current_parent)):
+    """Return a completed media identifier for an owned private page.
+
+    Never provide an unauthenticated public asset URL. Absence of an image and
+    absence of a private book are intentionally indistinguishable.
+    """
+    if not re.fullmatch(r"[0-9a-f-]{36}",book_id) or page_number<1 or page_number>20:
+        raise HTTPException(404,"Illustration not found")
+    with connection() as c:
+        row=sql(c,"SELECT j.id FROM illustration_jobs j JOIN illustration_assets a ON a.job_id=j.id JOIN books b ON b.id=j.book_id AND b.owner_id=j.owner_id WHERE j.book_id=? AND j.page_number=? AND j.owner_id=? AND j.status='completed' ORDER BY j.completed_at DESC,j.id DESC LIMIT 1",(book_id,page_number,owner)).fetchone()
+    if not row:
+        raise HTTPException(404,"Illustration not found")
+    return {"job_id":row[0]}
+
+
 @app.delete("/api/illustrations/jobs/{job_id}",status_code=204)
 def cancel_private_illustration(job_id:str,owner:str=Depends(current_parent)):
     if not re.fullmatch(r"[0-9a-f-]{36}",job_id):
