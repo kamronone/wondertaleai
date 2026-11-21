@@ -47,3 +47,12 @@ test("tariff row is compact and expands with a right-side chevron",()=>{
  assert.match(tariff,/\.profile-plan-copy strong\s*\{[^}]*font-size:13px/s);
  assert.match(tariff,/\.account-plans-disclosure\[open\] \.profile-plan-chevron\s*\{[^}]*rotate\(90deg\)/s);
 });
+
+test("tariff crown is centered regardless of browser svg baseline styles",()=>{
+ const fix=layout.slice(layout.lastIndexOf("/* Center the crown geometrically"));
+ assert.match(fix,/\.account-plans-disclosure > summary \.profile-plan-icon\s*\{[^}]*display:flex/s);
+ assert.match(fix,/justify-content:center/);
+ assert.match(fix,/align-items:center/);
+ assert.match(fix,/\.profile-plan-icon > svg\s*\{[^}]*display:block/s);
+ assert.match(fix,/margin:auto/);
+});
