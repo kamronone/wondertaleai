@@ -1,0 +1,51 @@
+/* Full-width mobile story art.
+   Portrait PNGs were previously shrunk by 240-300px max-height rules.
+   Keep the complete illustration and let the page scroll vertically. */
+@media screen and (max-width:700px){
+  .reader-page .story-page .story-page-image,
+  .reader-page .story-page.book-style-spread .story-page-image,
+  .reader-page .story-page.book-style-classic .story-page-image,
+  .reader-page .story-page.book-style-storybook .story-page-image,
+  .reader-page .story-page.book-style-simple .story-page-image{
+    display:block!important;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    padding:8px 8px 0!important;
+    margin:0!important;
+  }
+
+  /* Apply identically to portrait and landscape uploads, and offline SVGs.
+     Never crop faces or important objects to fill an arbitrary frame. */
+  .reader-page .story-page .story-page-image img,
+  .reader-page .story-page .story-page-image > svg,
+  .reader-page .story-page .story-page-image .story-image-fallback,
+  .reader-page .story-page .story-page-image picture img,
+  .reader-page .story-page .story-page-image > div > img{
+    display:block!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    height:auto!important;
+    max-height:none!important;
+    min-height:0!important;
+    aspect-ratio:auto!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    margin:0 auto!important;
+    border-radius:12px!important;
+    box-shadow:none!important;
+  }
+
+  /* Styles for PrivateReaderIllustration component wrappers. */
+  .reader-page .story-page .story-page-image > div{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+
+  .reader-page .story-page .story-text{
+    padding-top:16px;
+  }
+}
