@@ -16,7 +16,7 @@ test("circular navigation is rendered on all wizard steps",()=>{
 
 test("navigation only allows returning to previously completed steps",()=>{
  assert.match(main,/disabled=\{step>=createStep\}/);
- assert.match(main,/onClick=\{\(\)=>\{setError\(" "\);setCreateStep\(step\);\}\}/.source ? /onClick=\{\(\)=>\{setError\(" "\);/ : /setCreateStep\(step\)/);
+ assert.ok(main.includes('onClick={()=>{setError("");setCreateStep(step);}}'));
  assert.match(main,/if\(!name\.trim\(\)\)/);
  assert.match(main,/if\(prompt\.trim\(\)\.length<8\)/);
 });
