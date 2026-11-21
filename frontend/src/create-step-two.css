@@ -230,7 +230,7 @@
   border-radius:11px;
   background:white;
   color:#3d285a;
-  font-size:14px;
+  font-size:16px;
 }
 .create-reference-page .wizard-step-two-options-content .story-lang-field{
   display:grid;
@@ -290,8 +290,8 @@
   }
   .create-reference-page .wizard-step-two .classic-choice>button{
     max-width:156px;
-    min-height:39px;
-    padding:7px 11px;
+    min-height:44px;
+    padding:8px 11px;
     border-radius:11px;
     font-size:11px;
   }
@@ -300,15 +300,15 @@
     gap:7px;
   }
   .create-reference-page .wizard-step-two .chips>.chip{
-    min-height:40px;
-    padding:7px 8px;
+    min-height:44px;
+    padding:8px 8px;
     border-radius:10px;
     font-size:11px;
   }
   .create-reference-page .wizard-step-two .story-preset-actions{gap:6px}
   .create-reference-page .wizard-step-two .story-preset-actions>button{
-    min-height:42px;
-    padding:7px 5px;
+    min-height:44px;
+    padding:8px 5px;
     border-radius:10px;
     font-size:10px;
   }
@@ -319,7 +319,7 @@
     font-size:16px;
   }
   .create-reference-page .wizard-step-two-options>summary{
-    min-height:42px;
+    min-height:44px;
     padding:8px 11px;
   }
   .create-reference-page .wizard-step-two>.wizard-step-actions{
