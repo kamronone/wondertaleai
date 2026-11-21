@@ -1,0 +1,59 @@
+name: Generate Red Riding Hood story PNG artwork
+on:
+  push:
+    branches:
+      - fix/private-book-access
+    paths:
+      - 'frontend/src/red_hood_page_art.ts'
+      - 'frontend/scripts/render-red-hood-png.mjs'
+      - '.github/workflows/render-red-hood-png.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/private-book-access
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+      - name: Render eight local scenes
+        working-directory: frontend
+        run: node scripts/render-red-hood-png.mjs
+      - name: Convert vector artwork to compressed PNG
+        run: |
+          python -m pip install --disable-pip-version-check 'cairosvg==2.8.2'
+          python - <<'PY'
+          from pathlib import Path
+          import cairosvg
+          src=Path("frontend/.generated-red-hood-svg")
+          dest=Path("frontend/public/images/classics/red-hood/pages")
+          dest.mkdir(parents=True,exist_ok=True)
+          for i in range(1,9):
+              cairosvg.svg2png(url=str(src/f"page-{i}.svg"),write_to=str(dest/f"page-{i}.png"),
+                               output_width=800,output_height=600)
+          print("Rendered",len(list(dest.glob("page-*.png"))),"PNG illustrations")
+          PY
+      - name: Commit PNG illustrations to working branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/images/classics/red-hood/pages/*.png
+          if git diff --cached --quiet; then
+            echo "PNG scenes already up to date"
+          else
+            git commit -m "assets(classics): render Red Riding Hood per-page PNG scenes"
+            git push origin HEAD:fix/private-book-access
+          fi
