@@ -52,3 +52,17 @@ test("step two Orqaga and Keyingi always fit side by side on an iPhone",()=>{
  assert.match(app,/onClick=\{\(\)=>setCreateStep\(1\)\}/);
  assert.match(app,/setCreateStep\(3\)/);
 });
+
+test("third wizard step Back and Create buttons fit within card and preserve required consent",()=>{
+ const section=app.slice(app.indexOf('{createStep===3&&'),app.indexOf('{error&&createStep!==3'));
+ const styles=css.slice(css.lastIndexOf("/* Final wizard step:"));
+ assert.match(section,/className="wizard-step-actions wizard-step-three-actions"/);
+ assert.match(section,/className="primary-button full" disabled=\{busy\|\|!consent\|\|!acceptedLegal\}/);
+ assert.match(section,/onClick=\{\(\)=>setCreateStep\(2\)\} disabled=\{busy\}/);
+ assert.match(styles,/grid-template-columns:minmax\(0,\.85fr\) minmax\(0,1\.15fr\)!important/);
+ assert.match(styles,/\.wizard-step-three-actions>\.primary-button\.full/);
+ assert.match(styles,/min-width:0!important/);
+ assert.match(styles,/max-width:100%!important/);
+ assert.match(styles,/@media\(max-width:620px\)/);
+ assert.match(styles,/@media\(max-width:360px\)/);
+});
