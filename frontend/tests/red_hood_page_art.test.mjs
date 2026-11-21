@@ -19,7 +19,7 @@ test("every new Red Riding Hood page gets its own artwork, other classics unchan
  assert.match(demo,/classicId,savedOnDevice:saveOnDevice/);
 });
 test("existing browser-saved classics display upgraded per-page artwork",()=>{
- assert.match(main,/\.classicId==="red-hood"\?redHoodPagePng\(page\)/);
+ assert.match(main,/redHoodReaderImage\(isDemoBook/);\n assert.match(art,/export function redHoodReaderImage/);\n assert.match(art,/return oldCover\|\|localVector\|\|builtinPage \? redHoodPagePng\(pageIndex\) : imageUrl/);
  assert.match(main,/PrivateReaderIllustration/);
 });
 test("offline illustrations do not use private child photos or external network",()=>{
