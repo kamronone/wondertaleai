@@ -489,3 +489,28 @@
   outline:2px solid #ac87d5;
   outline-offset:2px;
 }
+
+/* Highlight actual SpeechSynthesis word boundaries only when supplied by browser. */
+.reader-page .story-text .wt-spoken-word{
+  background:#ffe5a5;
+  color:inherit;
+  border-radius:4px;
+  box-decoration-break:clone;
+  -webkit-box-decoration-break:clone;
+  padding:0 1px;
+  text-decoration:underline;
+  text-decoration-color:#c68145;
+  text-decoration-thickness:2px;
+  text-underline-offset:3px;
+}
+.reader-page .story-page.reader-night .story-text .wt-spoken-word{
+  background:#72522b;
+  color:#fff7de;
+  text-decoration-color:#ffd681;
+}
+@media print{
+  .reader-page .story-text .wt-spoken-word{
+    background:transparent!important;
+    text-decoration:none!important;
+  }
+}
