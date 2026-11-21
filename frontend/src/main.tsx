@@ -247,7 +247,7 @@ function App(){
     }catch{return "storybook";}
   });
   const [readerArtMotion,setReaderArtMotion]=useState<"off"|"gentle"|"magic">(()=>{
-    try{const saved=localStorage.getItem("wondertale_reader_art_motion");return saved==="off"||saved==="magic"?saved:"gentle";}catch{return "gentle";}
+    try{const saved=localStorage.getItem("wondertale_reader_art_motion");return saved==="off"||saved==="gentle"||saved==="magic"?saved:"magic";}catch{return "magic";}
   });
   const [reduceArtMotion,setReduceArtMotion]=useState(()=>window.matchMedia?.("(prefers-reduced-motion: reduce)").matches??false);
   useEffect(()=>{
@@ -1264,6 +1264,13 @@ function App(){
              alt={t.illustration+" "+(page+1)}
              fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth animatedUrl={readerArtMotion==="magic"&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&isDemoBook(active as DemoBook)?classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page):null}/>}/>
           :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth animatedUrl={readerArtMotion==="magic"&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&isDemoBook(active as DemoBook)?classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page):null}/>}
+{isDemoBook(active as DemoBook)&&classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page)&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&
+  <button type="button" className="wt-character-motion-control" aria-pressed={readerArtMotion==="magic"} onClick={()=>setReaderArtMotion(current=>current==="magic"?"off":"magic")}>
+    <Sparkles size={16} aria-hidden="true"/>
+    {readerArtMotion==="magic"
+      ?({ru:"Остановить героев",uz:"Qahramonlarni to'xtatish",en:"Pause characters"} as const)[lang]
+      :({ru:"Оживить героев",uz:"Qahramonlarni jonlantirish",en:"Animate characters"} as const)[lang]}
+  </button>}
 <div className="wt-art-effects" aria-hidden="true">{readerArtMotion!=="off"&&!readerNightMode&&bedtimeUntil===null&&Array.from({length:6},(_,i)=><span className="wt-art-particle" key={i} style={{"--wt-x":(14+i*13)+"%","--wt-y":(18+i%3*22)+"%","--wt-dur":(9+i%4*2)+"s","--wt-delay":(-i*1.8)+"s"} as React.CSSProperties}/>)}</div></div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live="polite" aria-atomic="true"><span className="dropcap-star" aria-hidden="true">✦</span>{active.pages[page].text}</div></div>
         {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
         {isDemoBook(active)&&<div className="story-edit-zone">
