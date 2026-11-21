@@ -25,6 +25,7 @@ import "./reader-living-art.css";
 import "./reader-image-lightbox.css";
 import "./reader-mobile-v1.css";
 import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
+import {canDownloadClassicArt,hasClassicOfflineArt,downloadClassicOfflineArt} from "./reader_offline_art";
 import { readerZoomLabels } from "./reader_zoom_labels";
 import { clampReaderZoom, readerFingerDistance } from "./reader_zoom_gestures";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
@@ -264,6 +265,29 @@ function App(){
     mq.addEventListener?.("change",update);
     return ()=>mq.removeEventListener?.("change",update);
   },[]);
+  const [offlineArtReady,setOfflineArtReady]=useState(false);
+  const [offlineArtBusy,setOfflineArtBusy]=useState(false);
+  const [offlineArtError,setOfflineArtError]=useState(false);
+  useEffect(()=>{
+    let alive=true;
+    setOfflineArtReady(false);setOfflineArtError(false);
+    const id=active&&isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined;
+    if(id&&canDownloadClassicArt(id)){
+      void hasClassicOfflineArt(id).then(ready=>{if(alive)setOfflineArtReady(ready);});
+    }
+    return ()=>{alive=false;};
+  },[active?.id]);
+  const saveReaderClassicOffline=async()=>{
+    const id=active&&isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined;
+    if(!id||!canDownloadClassicArt(id)||offlineArtBusy)return;
+    setOfflineArtBusy(true);setOfflineArtError(false);
+    try{
+      await downloadClassicOfflineArt(id);
+      setOfflineArtReady(await hasClassicOfflineArt(id));
+    }catch{
+      setOfflineArtError(true);
+    }finally{setOfflineArtBusy(false);}
+  };
   const ambiencePlayback=useRef<AmbiencePlayback|null>(null);
   const [ambienceOn,setAmbienceOn]=useState(false);
   const stopAmbience=()=>{
@@ -1281,6 +1305,17 @@ function App(){
             </button>)}
           </div>
           <small className="wt-art-motion-hint">{({ru:"Плавное движение картинки и света, без загрузки видео. При уменьшении движения в настройках телефона эффект отключается.",uz:"Rasm va yorug'lik mayin harakatlanadi. Video yuklanmaydi. Telefon animatsiyani cheklasa, effekt o'chadi.",en:"Gentle image and light movement, no video downloads. Reduced Motion on your phone turns effects off."} as const)[lang]}</small>
+          {isDemoBook(active as DemoBook)&&canDownloadClassicArt((active as DemoBook).classicId)&&<div className="reader-offline-art-option">
+            <button type="button" disabled={offlineArtBusy||offlineArtReady} onClick={()=>void saveReaderClassicOffline()}>
+              <Download size={16} aria-hidden="true"/>
+              {offlineArtBusy
+                ?({ru:"Сохраняем картинки…",uz:"Rasmlar saqlanmoqda…",en:"Saving pictures…"} as const)[lang]
+                :offlineArtReady
+                  ?({ru:"Иллюстрации сохранены офлайн",uz:"Rasmlar oflayn saqlandi",en:"Pictures saved offline"} as const)[lang]
+                  :({ru:"Скачать картинки для офлайн",uz:"Rasmlarni oflayn yuklash",en:"Save pictures for offline"} as const)[lang]}
+            </button>
+            {offlineArtError&&<small role="alert">{({ru:"Не получилось скачать все картинки. Проверьте интернет и попробуйте снова.",uz:"Barcha rasmlar yuklanmadi. Internetni tekshirib qayta urinib ko'ring.",en:"Some pictures could not download. Check your connection and retry."} as const)[lang]}</small>}
+          </div>}
           <button type="button" className={"reader-warm-toggle"+(readerWarmMode&&!readerNightMode?" active":"")} aria-pressed={readerWarmMode&&!readerNightMode} onClick={()=>{setReaderWarmMode(value=>!value);setReaderNightMode(false);}}><BookOpen size={15}/>{({ru:"Тёплый фон",uz:"Iliq fon",en:"Warm background"} as const)[lang]}</button>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>{setReaderNightMode(v=>!v);setReaderWarmMode(false);}}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>}
