@@ -17,7 +17,7 @@ type StoredStory={
 const fetchWithToken=(api:string,path:string,token:string,init?:RequestInit)=>fetch(api+path,{
  ...init,
  headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json",...init?.headers},
- signal:AbortSignal.timeout(15000),
+ signal:init?.signal?AbortSignal.any([init.signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000),
 });
 const cleanImage=(source:string,classicId?:string)=>{
  // Never transfer browser-generated image data, uploads or remote image URLs.
@@ -102,9 +102,15 @@ export async function setPrivateFavorite(api:string,token:string,bookId:string,f
 export async function validateSession(api:string,token:string):Promise<boolean>{
  try{const response=await fetchWithToken(api,"/api/me",token);return response.ok;}catch{return false;}
 }
-export async function transferLocalBooks(api:string,token:string,localBooks:DemoBook[]):Promise<TransferReport>{
+export async function transferLocalBooks(api:string,token:string,localBooks:DemoBook[],signal?:AbortSignal):Promise<TransferReport>{
  // This function must only be called from the explicit parent's transfer button.
- const existingRows=await fetchWithToken(api,"/api/books",token);
+ // A parent logout or account switch must halt the remaining uploads.
+ const checkActive=()=>{if(signal?.aborted)throw new DOMException("Transfer cancelled","AbortError");};
+ const request=(path:string,init?:RequestInit)=>{
+  checkActive();
+  return fetchWithToken(api,path,token,{...init,signal});
+ };
+ const existingRows=await request("/api/books");
  if(existingRows.status===401||existingRows.status===403)throw Error("Private account authorization expired");
  if(!existingRows.ok)throw Error("Private library unavailable");
  const responseData:unknown=await existingRows.json();
@@ -124,6 +130,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  // Process every locally saved book. A hidden 20-book slice previously
  // reported success while silently leaving the remaining books behind.
  for(const book of localBooks.filter(x=>x&&x.savedOnDevice)){
+  checkActive();
   if(transferred.has(book.id)){existing++;continue;}
   // Invalid local records should fail individually, not abort every book.
   // This matters when an old PWA version left partially written data.
@@ -150,7 +157,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
    if(encoded.length>12000){failed++;continue;}
   }catch{failed++;continue;}
   try{
-   const response=await fetchWithToken(api,"/api/books",token,{
+   const response=await request("/api/books",{
     method:"POST",body:JSON.stringify({title:book.title,child_name:book.name,age:book.age,story:encoded})
    });
    if(!response.ok){
@@ -165,6 +172,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
    }
    transferred.add(book.id);uploaded++;
   }catch(error){
+   checkActive();
    if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
    // Network failure is ambiguous: the server may have committed the book.
    uncertainIds.add(book.id);
@@ -172,7 +180,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  }
  if(uncertainIds.size){
   try{
-   const check=await fetchWithToken(api,"/api/books",token);
+   const check=await request("/api/books");
    if(check.status===401||check.status===403)throw Error("Private account authorization expired");
    if(!check.ok)throw Error("Unable to reconcile transfer");
    const finalRows:unknown=await check.json();
@@ -189,6 +197,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
     else failed++;
    }
   }catch(error){
+   checkActive();
    if(error instanceof Error&&error.message==="Private account authorization expired")throw error;
    // Never claim success when the follow-up server check is unavailable.
    failed+=uncertainIds.size;
@@ -197,8 +206,10 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  // Restore explicitly saved local favorites and reading positions after import.
  // Resolve server IDs through source_id; local IDs are never valid remote book IDs.
  // Only add a favorite when absent because the API endpoint toggles its state.
+ checkActive();
  const serverBooks=await loadPrivateBooks(api,token);
- const latest=await fetchWithToken(api,"/api/books",token);
+ checkActive();
+ const latest=await request("/api/books");
  if(latest.status===401||latest.status===403)throw Error("Private account authorization expired");
  if(!latest.ok)throw Error("Unable to map imported books");
  const raw:unknown=await latest.json();
@@ -213,11 +224,13 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
  const byId=new Map(serverBooks.map(book=>[book.id,book]));
  let metadataFailed=0;
  for(const local of localBooks.filter(book=>book?.savedOnDevice)){
+  checkActive();
   const id=bySource.get(local.id);
   const remote=id?byId.get(id):undefined;
   if(!remote)continue;
   if(local.favorite&&!remote.favorite){
    try{
+    checkActive();
     await setPrivateFavorite(api,token,id!,true);
     remote.favorite=true;
    }catch(error){
@@ -228,6 +241,7 @@ export async function transferLocalBooks(api:string,token:string,localBooks:Demo
   if(typeof local.lastPage==="number"&&Number.isInteger(local.lastPage)&&local.lastPage>(remote.lastPage??0)&&remote.pages.length){
    try{
     const position=Math.min(local.lastPage,remote.pages.length-1);
+    checkActive();
     await updatePrivateReadingProgress(api,token,id!,position);
     remote.lastPage=position;
    }catch(error){
