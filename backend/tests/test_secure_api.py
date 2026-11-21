@@ -601,6 +601,8 @@ def test_private_illustrations_queue_owner_isolation_and_cancel(monkeypatch):
     b=signup("image-b-"+uuid.uuid4().hex+"@example.com")
     monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS","true")
     monkeypatch.setenv("AI_ALLOWED_EMAILS",email_a)
+    consent=client.post("/api/illustrations/consent",headers=headers(a),json={"agreed":True,"policy_version":"illustration-pilot-v1"})
+    assert consent.status_code==200
     saved=client.post("/api/books",headers=headers(a),json={
         "title":"Forest friendship","child_name":"Alex","age":6,
         "story":json.dumps({"pages":[{"number":1,"text":"A very friendly fox visits the magical garden."}]})
@@ -631,6 +633,8 @@ def test_illustration_jobs_deny_invalid_page_and_stop_at_two(monkeypatch):
     token=signup(email)
     monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS","true")
     monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    consent=client.post("/api/illustrations/consent",headers=headers(token),json={"agreed":True,"policy_version":"illustration-pilot-v1"})
+    assert consent.status_code==200
     book=client.post("/api/books",headers=headers(token),json={
         "title":"Kind stars","child_name":"Sam","age":7,
         "story":json.dumps({"pages":[{"number":1,"text":"A first page."},{"number":2,"text":"A second page."}]})
