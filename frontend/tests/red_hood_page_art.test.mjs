@@ -9,7 +9,7 @@ const images=read("../src/book_images.ts");
 test("red hood has eight distinct local visual scene choices",()=>{
  assert.match(art,/export function redHoodPageArtwork/);
  assert.match(art,/export function redHoodPagePng/);
- assert.ok(art.includes("/images/classics/red-hood/pages/page-"));
+ assert.ok(art.includes("/images/classics/red-hood/watercolor/page-"));
  for(let i=0;i<8;i++)assert.match(art,new RegExp("case "+i+":|default:return"));
  assert.match(art,/encodeURIComponent\(svg\)/);
  assert.match(images,/data:image\/svg\+xml;charset=utf-8,/);
