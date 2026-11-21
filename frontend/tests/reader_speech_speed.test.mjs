@@ -15,7 +15,7 @@ test("reader shows three accessible speeds in the existing settings and stops sp
  assert.match(app,/className="reader-speech-speed"/);
  assert.match(app,/\["slow","normal","fast"\] as const/);
  assert.match(app,/aria-pressed=\{readerSpeechSpeed===speed\}/);
- assert.match(app,/speechAdvanceArmed\.current=false;window\.speechSynthesis\.cancel\(\);setSpeaking\(false\);setSpeechPaused\(false\);\}setReaderSpeechSpeed\(speed\)/);
+ assert.match(app,/speechRun\.current\+\+;speechAdvanceArmed\.current=false;window\.speechSynthesis\.cancel\(\);setSpeaking\(false\);setSpeechPaused\(false\);\}setReaderSpeechSpeed\(speed\)/);
  assert.match(app,/Текущую озвучку|Изменение скорости остановит текущую озвучку/);
 });
 test("mobile speed options remain compact, non-overflowing and iPhone tap-sized",()=>{
