@@ -14,6 +14,7 @@ import "./library-screenshot-fixes.css";
 import "./create-reference.css";
 import "./create-step-two.css";
 import "./create-step-one-button.css";
+import "./shared-rounded-pages.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
