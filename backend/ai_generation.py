@@ -67,6 +67,31 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
     except (ValueError,ValidationError,IndexError,KeyError) as exc:
         raise ValueError("Model did not return a valid story") from exc
 
+def story_output_format(language:Language)->dict:
+    """Strict response shape. App validation enforces the exact page count and text lengths.
+
+    The API's supported strict JSON Schema subset intentionally excludes
+    minItems/maxItems and string length limits. Those remain server-side checks.
+    """
+    return {
+        "format": {
+            "type": "json_schema",
+            "name": "wondertale_story",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "language": {"type": "string", "enum": [language]},
+                    "pages": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["title", "language", "pages"],
+                "additionalProperties": False,
+            },
+        }
+    }
+
+
 def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
     if not data.name.strip() or not data.idea.strip() or not data.style.strip():
         raise ValueError("Story name, idea and style must not be blank")
@@ -105,6 +130,7 @@ def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
         instructions=instructions,
         input=prompt,
         max_output_tokens=min(12000,1400+data.pages_count*500),
+        text=story_output_format(data.language),
         store=False,
     )
     output=getattr(response,"output_text","")
