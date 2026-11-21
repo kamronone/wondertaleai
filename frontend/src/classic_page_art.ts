@@ -59,8 +59,10 @@ export function classicReaderImage(classicId:string|undefined,imageUrl:string,pa
  if(!classicId||!ids.has(classicId))return imageUrl;
  const oldAsset=imageUrl==="/images/classics/"+classicId+".webp"||imageUrl==="/images/classics/"+classicId+".svg";
  const oldRedHood=/^\/images\/classics\/red-hood\/(?:pages|watercolor)\/page-[1-8]\.png$/.test(imageUrl);
- // Data URLs may contain personalized artwork; never override them.
- if(!oldAsset&&!oldRedHood&&imageUrl.trim()!=="")return imageUrl;
+ // Only the exact bundled demo illustration signature qualifies for replacement.
+ // User-authored SVG data URLs, uploads and private media must remain unchanged.
+ const oldDemoVector=imageUrl.startsWith("data:image/svg+xml;charset=utf-8,")&&imageUrl.includes("Fairy-tale%20illustration");
+ if(!oldAsset&&!oldRedHood&&!oldDemoVector&&imageUrl.trim()!=="")return imageUrl;
  return `/images/classics/${classicId}/pages/page-${Math.max(1,Math.min(8,Math.trunc(pageIndex)+1))}.png`;
 }
 
