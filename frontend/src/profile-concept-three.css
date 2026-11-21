@@ -880,3 +880,24 @@
 @media(prefers-reduced-motion:reduce){
   .profile-concept-three .profile-plan-chevron{transition:none}
 }
+
+/* Center the crown geometrically and optically in its icon tile. */
+.profile-concept-three .account-plans-disclosure > summary .profile-plan-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  padding:0;
+  line-height:0;
+  box-sizing:border-box;
+  text-align:center;
+}
+.profile-concept-three .account-plans-disclosure > summary .profile-plan-icon > svg{
+  display:block;
+  position:static;
+  flex:none;
+  margin:auto;
+  padding:0;
+  transform:translateY(-1px);
+  vertical-align:middle;
+}
