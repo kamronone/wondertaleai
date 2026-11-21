@@ -27,7 +27,7 @@ def _finish(job_id:str,state:str)->None:
         c.commit()
 
 def process_one_illustration_job(
-    *,renderer:Callable[[str],bytes],moderator:Callable[[str],bool],
+    *,renderer:Callable[[str],bytes],moderator:Callable[[str],bool],\n    image_moderator:Callable[[bytes],bool],
 )->str|None:
     """Claim at most one job and produce a moderated, private PNG.
 
@@ -39,8 +39,8 @@ def process_one_illustration_job(
         raise RuntimeError("Illustrations disabled")
     if os.getenv("ENABLE_AI_ILLUSTRATIONS_WORKER","false").lower()!="true":
         raise RuntimeError("Illustration worker disabled")
-    if not callable(renderer) or not callable(moderator):
-        raise ValueError("Independent moderator and renderer required")
+    if not callable(renderer) or not callable(moderator) or not callable(image_moderator):
+        raise ValueError("Independent prompt and image moderators and renderer required")
     global_cap=_cap("MAX_ILLUSTRATIONS_PER_DAY")
     owner_cap=_cap("MAX_PARENT_ILLUSTRATIONS_PER_DAY")
     if global_cap==0 or owner_cap==0:
