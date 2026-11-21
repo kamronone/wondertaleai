@@ -73,3 +73,14 @@ test("never replace custom or private images",()=>{
  assert.equal(exports.classicReaderImage(undefined,custom,0),custom);
  assert.equal(exports.classicReaderImage("unknown",custom,0),custom);
 });
+
+test("animated GIFs are selected for exactly four supported built-in pages",()=>{
+ assert.equal(exports.classicAnimatedPage("red-hood","/images/classics/red-hood/pages/page-1.png",0),"/images/classics/red-hood/animations/red-hood-walk-wave.gif");
+ assert.equal(exports.classicAnimatedPage("three-pigs","/images/classics/three-pigs/pages/page-4.png",3),"/images/classics/three-pigs/animations/three-pigs-building.gif");
+ assert.equal(exports.classicAnimatedPage("three-pigs","/images/classics/three-pigs/pages/page-5.png",4),"/images/classics/three-pigs/animations/three-pigs-wolf.gif");
+ assert.equal(exports.classicAnimatedPage("cinderella","/images/classics/cinderella/pages/page-5.png",4),"/images/classics/cinderella/animations/cinderella-walking.gif");
+ assert.equal(exports.classicAnimatedPage("three-pigs","/images/classics/three-pigs/pages/page-2.png",1),null);
+ assert.equal(exports.classicAnimatedPage("three-pigs","/media/personal-photo.png",3),null);
+ assert.equal(exports.classicAnimatedPage("three-pigs","data:image/png;base64,custom",3),null);
+ assert.equal(exports.classicAnimatedPage("unknown","/images/classics/unknown/pages/page-1.png",0),null);
+});
