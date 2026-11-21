@@ -7,6 +7,7 @@ import "./reader-polish.css";
 import "./bedtime-games.css";
 import "./profile-concept-three.css";
 import "./library-concept-two.css";
+import "./library-mobile-fixes.css";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, type DemoBook } from "./demo";
 import { labels, languages, getSavedLanguage, saveLanguage, type Lang } from "./i18n";
 import { classics, type ClassicId, type Classic } from "./classics";
@@ -1028,7 +1029,7 @@ function App(){
         </div>
         <div className="library-concept-metrics">
         <details className="library-achievements-disclosure">
-          <summary><Star size={16}/><span>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]} · {readingStats.unlocked}/{readingStats.total}</span><ChevronDown size={16}/></summary>
+          <summary><Star size={18}/><span>{({ru:"Достижения",uz:"Yutuqlar",en:"Achievements"} as const)[lang]}</span><strong>{readingStats.unlocked}/{readingStats.total}</strong><ChevronDown size={16}/></summary>
         <section className="reading-achievements" aria-label={({ru:"Достижения чтения",uz:"Oqiş yutuqlari",en:"Reading achievements"} as const)[lang]}>
           <div className="reading-achievements-heading"><Star size={18}/><strong>{({ru:"Мои достижения",uz:"Mening yutuqlarim",en:"My achievements"} as const)[lang]}</strong></div>
           <p className="reading-achievements-summary" role="status">{readingStats.unlocked} / {readingStats.total} {({ru:"достижений открыто",uz:"yutuq oçildi",en:"achievements unlocked"} as const)[lang]}</p>
@@ -1079,8 +1080,7 @@ function App(){
         </>}
         {shownBooks.length?<div className="book-grid">{shownBooks.map(book=><BookTile key={book.id} book={book} open={()=>openBook(book)} lang={lang}/>)}</div>:books.length?<div className="library-empty-results"><Search size={24}/><p>{({ru:"Ничего не найдено. Попробуйте другой запрос или фильтр.",uz:"Hech narsa topilmadi. Boshqa soz yoki filtrni sinab koring.",en:"No matching stories. Try a different search or filter."} as const)[lang]}</p><button type="button" onClick={()=>{setLibraryQuery("");changeLibraryShelf("all");setLibrarySort("newest");setLibraryAge("all");}}>{({ru:"Сбросить фильтры",uz:"Filtrlarni tozalash",en:"Clear filters"} as const)[lang]}</button></div>:<div className="empty library-concept-empty">
           <div className="library-concept-art" aria-hidden="true">
-            <img className="library-concept-castle-art" src="/images/library-castle-book.svg" alt="" width={430} height={250} loading="lazy"/>
-            <img className="library-concept-fox-art" src="/images/profile-story-hero.png" alt="" width={74} height={74} loading="lazy"/>
+            <img className="library-concept-castle-art" src="/images/library-magic-castle.png" alt="" width={360} height={270} loading="lazy" decoding="async"/>
           </div>
           <h3>{t.empty}</h3><p>{t.emptyDesc}</p>
           <button className="primary-button library-concept-create" type="button" onClick={()=>openCreate()}><Plus size={18}/>{t.newStory}</button>
