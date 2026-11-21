@@ -558,3 +558,245 @@
 @media (prefers-reduced-motion: reduce) {
   .profile-concept-three .profile-plan-chevron { transition: none; }
 }
+
+/* Profile-specific mockup toolbar: keeps original site header on other tabs. */
+.shell:has(.profile-concept-three) {
+  background: linear-gradient(180deg,#2a154e 0,#5e2d90 114px,#f7edff 115px,#fbf6ff 100%);
+}
+.shell:has(.profile-concept-three) > main {
+  padding-top:0;
+}
+.profile-mockup-topbar{
+  position:relative;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  max-width:1120px;
+  min-height:92px;
+  box-sizing:border-box;
+  padding:15px 28px;
+  margin:0 auto;
+  background:linear-gradient(100deg,#28144f 0%,#40236e 58%,#321857 100%);
+  color:#fff;
+}
+.profile-mockup-back,
+.profile-mockup-icon-button{
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 45px;
+  width:45px;
+  height:45px;
+  border:1px solid rgba(230,201,255,.45);
+  border-radius:16px;
+  color:#fff;
+  background:#ffffff11;
+}
+.profile-mockup-back{
+  border-color:transparent;
+  background:transparent;
+}
+.profile-mockup-icon-button[aria-expanded="true"]{
+  background:#ffffff33;
+  border-color:#dec5ff;
+}
+.profile-mockup-brand{
+  display:flex;
+  align-items:center;
+  flex:1;
+  gap:11px;
+  min-width:0;
+}
+.profile-mockup-brand img{
+  flex:0 0 48px;
+  width:48px;
+  height:48px;
+  border-radius:15px;
+  object-fit:cover;
+}
+.profile-mockup-brand span{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.profile-mockup-brand strong{
+  color:white;
+  font-size:clamp(16px,2.6vw,23px);
+  line-height:1.14;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.profile-mockup-brand em{font-style:normal;color:#d2a1ff}
+.profile-mockup-brand small{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.16em;
+  color:#e4d7ef;
+}
+.profile-mockup-tools{
+  display:flex;
+  align-items:center;
+  flex:0 0 auto;
+  gap:10px;
+}
+.profile-mockup-popover{
+  position:absolute;
+  top:calc(100% - 5px);
+  right:26px;
+  z-index:30;
+  width:min(354px,calc(100vw - 24px));
+  max-width:100%;
+  box-sizing:border-box;
+  padding:15px;
+  border-radius:18px;
+  border:1px solid #dfc9f3;
+  background:#fffaff;
+  color:#301c50;
+  box-shadow:0 14px 36px #26143c38;
+}
+.profile-mockup-popover-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 12px;
+}
+.profile-mockup-popover-title strong{font-size:15px}
+.profile-mockup-popover-title button{
+  width:32px;height:32px;
+  display:grid;place-items:center;
+  border:0;border-radius:9px;
+  background:#f2e7fc;color:#69439a;
+}
+.profile-mockup-empty{
+  display:grid;
+  justify-items:center;
+  gap:5px;
+  padding:16px 9px;
+  border:1px solid #e9dbf4;
+  border-radius:13px;
+  background:#fcf8ff;
+  text-align:center;
+}
+.profile-mockup-empty svg{color:#8158ad}
+.profile-mockup-empty strong{font-size:13px}
+.profile-mockup-empty p{
+  margin:0;
+  font-size:11px;
+  line-height:1.5;
+  color:#7c6b8b;
+}
+.profile-mockup-permission{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:9px;padding:13px 2px 6px;
+  font-size:11px;
+}
+.profile-mockup-permission strong{color:#77509e;text-align:right}
+.profile-mockup-enable{
+  width:100%;
+  min-height:44px;
+  padding:10px 12px;
+  border:0;
+  border-radius:11px;
+  background:#7850b0;
+  color:#fff;
+  font-size:12px;
+  font-weight:750;
+}
+.profile-mockup-popover>small{
+  display:block;
+  margin:8px 0 0;
+  font-size:10px;
+  line-height:1.5;
+  color:#86748f;
+}
+.profile-mockup-language{
+  display:grid;
+  align-items:center;
+  grid-template-columns:auto 1fr;
+  gap:8px;
+  color:#5e4086;
+  font-size:12px;
+  font-weight:700;
+}
+.profile-mockup-language select{
+  grid-column:1/-1;
+  min-height:44px;
+  max-width:100%;
+  width:100%;
+  padding:8px 12px;
+  border:1px solid #dfccec;
+  border-radius:10px;
+  background:#fff;
+  color:#422968;
+  font-size:13px;
+}
+.profile-mockup-settings-row{
+  display:flex;
+  align-items:center;
+  width:100%;
+  gap:9px;
+  min-height:46px;
+  margin:10px 0 0;
+  padding:9px 10px;
+  border:1px solid #eee3f7;
+  border-radius:10px;
+  background:#fff;
+  color:#5a3b80;
+  font-size:12px;
+  font-weight:700;
+}
+.profile-mockup-settings-row span{flex:1;text-align:left}
+.profile-mockup-topbar button:focus-visible,
+.profile-mockup-topbar select:focus-visible{
+  outline:3px solid #d9a8ff;
+  outline-offset:2px;
+}
+/* Deliberately emulate the thin bright photo frame in reference three. */
+.profile-concept-three .parent-account-hero-art{
+  outline:1px solid #eee0ff;
+  outline-offset:3px;
+  border-color:#fff;
+  box-shadow:0 8px 22px #62358c37;
+}
+.profile-concept-three .parent-account-author{
+  position:relative;
+  border:1px solid #d8b8fc;
+  background:linear-gradient(100deg,#fff,#f4e4ff);
+}
+/* Fix placement of shared footer after the profile content. */
+.shell:has(.profile-concept-three) > .site-legal-footer{
+  background:#f9f2ff;
+}
+@media(max-width:620px){
+  .profile-mockup-topbar{
+    padding:9px 10px;
+    min-height:69px;
+    gap:6px;
+  }
+  .profile-mockup-back{flex-basis:34px;width:34px;height:40px}
+  .profile-mockup-brand{gap:6px}
+  .profile-mockup-brand img{
+    width:36px;height:36px;flex-basis:36px;border-radius:12px;
+  }
+  .profile-mockup-brand strong{font-size:clamp(13px,4vw,18px)}
+  .profile-mockup-brand small{font-size:7px;letter-spacing:.11em}
+  .profile-mockup-tools{gap:5px}
+  .profile-mockup-icon-button{
+    width:39px;height:39px;flex-basis:39px;border-radius:13px;
+  }
+  .profile-mockup-icon-button svg{width:20px;height:20px}
+  .profile-mockup-popover{right:9px;top:calc(100% - 2px);padding:12px}
+  .profile-concept-three .parent-account-hero-art{
+    outline-offset:2px;
+  }
+}
+@media(max-width:340px){
+  .profile-mockup-brand strong{font-size:12px}
+  .profile-mockup-brand small{font-size:6px}
+  .profile-mockup-icon-button{
+    flex-basis:35px;width:35px;height:37px;
+  }
+}
