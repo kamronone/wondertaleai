@@ -91,7 +91,10 @@
   min-height:0;
   overflow:auto;
   overscroll-behavior:contain;
-  touch-action:pan-x pan-y pinch-zoom;
+  /* The viewer handles two-finger scaling and one-finger panning itself. */
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
 }
 .wt-reader-image-lightbox-img{
   display:block;
@@ -127,4 +130,8 @@
 @media print{
   .wt-reader-image-lightbox{display:none!important}
   .reader-page .story-page-image .wt-reader-image-magnifier{display:none!important}
+}
+
+@media(hover:hover){
+  .wt-reader-image-lightbox-scroll{cursor:zoom-in}
 }
