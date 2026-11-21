@@ -19,7 +19,8 @@ const fakeClassics=[
  {id:"bremen",title:{ru:"Бременские музыканты"}},
  {id:"hansel-gretel",title:{ru:"Гензель и Гретель"}},
  {id:"rapunzel",title:{ru:"Рапунцель"}},
- {id:"sleeping-beauty",title:{ru:"Спящая красавица"}}
+ {id:"sleeping-beauty",title:{ru:"Спящая красавица"}},
+ {id:"puss-boots",title:{ru:"Кот в сапогах"}}
 ];
 vm.runInNewContext(javascript,{
  exports,
@@ -34,6 +35,7 @@ vm.runInNewContext(javascript,{
    if(name==="./hansel_gretel_page_art")return {hanselGretelPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,hansel-scene-"+page};
    if(name==="./rapunzel_page_art")return {rapunzelPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,rapunzel-scene-"+page};
    if(name==="./sleeping_beauty_page_art")return {sleepingBeautyPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,sleeping-scene-"+page};
+   if(name==="./puss_boots_page_art")return {pussBootsPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,puss-scene-"+page};
    throw Error("Unexpected dependency: "+name);
  },
  encodeURIComponent, Number, Object, Math, String, Set, RegExp
@@ -57,6 +59,8 @@ test("missing page PNG falls back to embedded offline illustration",()=>{
  assert.equal(exports.classicPngFallback("/images/classics/rapunzel/pages/page-8.png"),"data:image/svg+xml;charset=utf-8,rapunzel-scene-7");
  assert.equal(exports.classicPngFallback("/images/classics/sleeping-beauty/pages/page-1.png"),"data:image/svg+xml;charset=utf-8,sleeping-scene-0");
  assert.equal(exports.classicPngFallback("/images/classics/sleeping-beauty/pages/page-8.png"),"data:image/svg+xml;charset=utf-8,sleeping-scene-7");
+ assert.equal(exports.classicPngFallback("/images/classics/puss-boots/pages/page-1.png"),"data:image/svg+xml;charset=utf-8,puss-scene-0");
+ assert.equal(exports.classicPngFallback("/images/classics/puss-boots/pages/page-8.png"),"data:image/svg+xml;charset=utf-8,puss-scene-7");
  assert.equal(exports.classicPngFallback("https://evil.example/page-3.png"),null);
 });
 test("never replace custom or private images",()=>{
