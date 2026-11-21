@@ -21,3 +21,24 @@ Their existence in GitHub **does not prove** they are currently served by Netlif
 3. Test page navigation on iPhone, Safari image rendering, and the missing-file fallback.
 4. Verify custom-image precedence, private account media isolation, and old saved books.
 5. Deploy Preview and inspect it before publishing to Production.
+
+## Bundled moving character artwork
+
+Four actual animated GIFs are now committed directly to this working branch:
+
+- `red-hood/animations/red-hood-walk-wave.gif` — page 1, walking and waving
+- `three-pigs/animations/three-pigs-building.gif` — page 4, placing a brick
+- `three-pigs/animations/three-pigs-wolf.gif` — page 5, blowing at the house
+- `cinderella/animations/cinderella-walking.gif` — page 5, walking and turning
+
+In the reader's **Magic** art setting these files load instead of the original page PNG.
+The default **Gentle** and **Off** modes retain the static illustration.
+Broken GIF links fall back first to the original PNG, then to the offline SVG.
+Motion is disabled when the device requests reduced motion, when night mode
+is on or while the bedtime timer runs.
+
+These four files do **not** animate every page of a story. No automatic
+per-page video generation or paid provider is enabled.
+
+Deployment status: GitHub branch files are confirmed, but a Netlify
+Production release and live-device verification are separate steps.
