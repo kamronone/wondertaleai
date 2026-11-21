@@ -27,3 +27,13 @@ test("creation screen has rounded upper corners beneath the dark header on iPhon
  assert.match(layout,/border-radius:29px 29px 0 0!important/);
  assert.doesNotMatch(main,/className="back-button" onClick=\{\(\)=>setTab\("home"\)\}/);
 });
+
+test("wizard does not stretch blank space below the Ertak oqish card",()=>{
+ const layout=readFileSync(new URL("../src/create-reference.css",import.meta.url),"utf8");
+ const compact=layout.slice(layout.lastIndexOf("/* Compact creation page:"));
+ assert.match(compact,/main\{[\s\S]*?flex:0 0 auto!important/);
+ assert.match(compact,/main\{[\s\S]*?min-height:0!important/);
+ assert.match(compact,/padding-bottom:0!important/);
+ assert.match(compact,/\.site-legal-footer\{/);
+ assert.match(main,/className="create-reference-reading-link"/);
+});
