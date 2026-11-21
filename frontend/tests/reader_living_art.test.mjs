@@ -35,7 +35,17 @@ test("night reading, bedtime and reduced-motion setting disable motion",()=>{
 
 test("the original PNG remains intact without remote AI or video",()=>{
  assert.match(app,/wt-living-art wt-motion-/);
- assert.match(app,/readerFullWidth\/>/);
+ assert.match(app,/readerFullWidth animatedUrl=/);
  assert.doesNotMatch(css,/url\(https?:\/\//);
  assert.doesNotMatch(app,/autoplay\s*=/);
+});
+
+test("first-time visitors see real character motion without opening settings",()=>{
+ assert.match(app,/saved==="off"\|\|saved==="gentle"\|\|saved==="magic"\?saved:"magic"/);
+ assert.match(app,/catch\{return "magic";\}/);
+ assert.match(app,/wt-character-motion-control/);
+ assert.match(app,/aria-pressed=\{readerArtMotion==="magic"\}/);
+ assert.match(app,/setReaderArtMotion\(current=>current==="magic"\?"off":"magic"\)/);
+ assert.match(css,/\.wt-character-motion-control\{/);
+ assert.match(css,/min-height:44px/);
 });
