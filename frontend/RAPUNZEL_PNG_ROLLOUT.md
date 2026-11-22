@@ -29,7 +29,8 @@ npm run install:rapunzel:art -- ./ertakcha_rapunzel_8_png.zip
 ```
 
 The ZIP must first be available in that directory. The installer validates the
-eight individual PNGs, file signatures, resolution, and duplicate content, then
+eight individual PNGs, file signatures, resolution, exact SHA-256 checksum
+for each page against `artwork/rapunzel-png-integrity.json`, and duplicate content, then
 writes only the exact expected image paths. It never executes ZIP contents.
 This step modifies the local checkout; commit all eight images to
 `fix/private-book-access` before changing the preview environment.
@@ -43,7 +44,7 @@ Netlify environment variable is needed. The optional variable
 
 The `check:images:release` command becomes a 32-file validation whenever
 any Rapunzel PNG is present. It fails when the set is incomplete, invalid,
-or duplicated. Without any PNGs, the original 24-file check and deterministic
+misordered, does not match the reviewed artwork, or duplicated. Without any PNGs, the original 24-file check and deterministic
 vector fallback continue to work. Reader upgrades the original bundled Rapunzel
 SVG but never overwrites private/custom illustration URLs.
 
