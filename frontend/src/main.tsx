@@ -35,6 +35,8 @@ import { worldArt } from "./world_art";
 import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
 import {StorySceneInteraction} from "./StorySceneInteraction";
 import {readFamilyReadingPreferences,saveFamilyReadingPreferences} from "./reader_family_preferences";
+import {readSiteTheme,saveSiteTheme,nextSiteTheme,siteThemeLabels,type SiteTheme} from "./site_theme";
+import "./site-appearance.css";
 import {CharacterHotspot,characterHotspotForPage} from "./CharacterHotspot";
 import {BrickPassInteraction} from "./BrickPassInteraction";
 import {StoryGiftInteraction} from "./StoryGiftInteraction";
@@ -84,6 +86,8 @@ const SHOW_BUILD_VERSION=new URLSearchParams(window.location.search).get("wt_ver
 const bookImage=(url:string)=>resolveBookImage(url,API);
 
 function App(){
+  const [siteTheme,setSiteTheme]=useState<SiteTheme>(readSiteTheme);
+  const changeSiteTheme=(theme:SiteTheme)=>{setSiteTheme(theme);saveSiteTheme(theme);};
   const [accountAction,setAccountAction]=useState<{kind:"verify"|"recover";token:string}|null>(()=>{
     const fragment=window.location.hash.slice(1);
     const [kind,token]=fragment.split("=",2);
@@ -1262,11 +1266,11 @@ function App(){
       <button type="button" className="welcome-secondary" onClick={()=>finishOnboarding("account")}>{({ru:"У меня уже есть аккаунт",uz:"Menda akkaunt bor",en:"I already have an account"} as const)[lang]}</button>
     </div>
   </section>;
-  return <div className="shell">
-    {tab==="account"?<ProfileHeader lang={lang} onLanguage={switchLang} onPrivacy={()=>openLegal("privacy")}/>:
+  return <div className="shell" data-site-theme={siteTheme}>
+    {tab==="account"?<ProfileHeader lang={lang} onLanguage={switchLang} onPrivacy={()=>openLegal("privacy")} siteTheme={siteTheme} onSiteTheme={changeSiteTheme}/>:
     <header className="topbar">
       <button type="button" className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
-      <div className="header-actions"><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></div>
+      <div className="header-actions"><button type="button" className="wt-site-theme-cycle" aria-label={siteThemeLabels[lang].change+": "+siteThemeLabels[lang][siteTheme]} title={siteThemeLabels[lang].change} onClick={()=>changeSiteTheme(nextSiteTheme(siteTheme))}>{siteTheme==="night"?"☾":siteTheme==="forest"?"♣":"✦"}</button><label className="language-control"><span className="sr-only">{t.interfaceLanguage}</span><select aria-label={t.interfaceLanguage} value={lang} onChange={e=>switchLang(e.target.value as Lang)}>{languages.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></label><button className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></div>
     </header>}
     {!isOnline&&<div className="offline-status-banner" role="status">
       {({ru:"Нет интернета. Сохранённые на устройстве сказки доступны, а AI и синхронизация временно не работают.",uz:"Internet yoq. Qurilmada saqlangan ertaklarni öqiş mumkin, AI va sinxronlaş vaqtinça işlamaydi.",en:"You're offline. Stories saved on this device remain available; AI and sync are paused."} as const)[lang]}
