@@ -33,18 +33,25 @@ export async function downloadClassicOfflineArt(id:string):Promise<{saved:number
   const cache=await caches.open(OFFLINE_STORY_CACHE);
   const urls=classicOfflineArtUrls(id);
   let saved=0;
+  const added:string[]=[];
   for(const url of urls){
     try{
+      // A failed refresh must not remove illustrations saved in an earlier session.
+      const alreadyCached=Boolean(await cache.match(url));
       const response=await fetch(url,{credentials:"omit",cache:"no-cache"});
       const expected=url.endsWith(".gif")?"image/gif":"image/png";
       const type=response.headers.get("content-type")||"";
       if(!response.ok||!type.toLowerCase().includes(expected))throw new Error("INVALID_ART");
       await cache.put(url,response);
+      if(!alreadyCached)added.push(url);
       saved++;
-    }catch(error){
-      // Missing animation is optional. Missing illustrated pages are not.
-      if(url.endsWith(".png"))throw new Error("OFFLINE_IMAGE_FAILED");
-      // The already cached original PNG is still usable.
+    }catch{
+      // Missing animations are optional, but every static story page is required.
+      if(url.endsWith(".png")){
+        // Roll back only entries added by this attempt, preserving older downloads.
+        await Promise.allSettled(added.map(path=>cache.delete(path)));
+        throw new Error("OFFLINE_IMAGE_FAILED");
+      }
     }
   }
   return {saved,total:urls.length};
