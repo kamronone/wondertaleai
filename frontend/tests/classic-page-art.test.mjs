@@ -26,6 +26,7 @@ vm.runInNewContext(javascript,{
  exports,
  require(name){
    if(name==="./classics")return {classics:fakeClassics};
+   if(name==="./classic_story_motifs")return {classicStoryMotif:()=>null};
    if(name==="./red_hood_page_art")return {redHoodPageArtwork:()=>"data:image/svg+xml;charset=utf-8,test"};
    if(name==="./three_pigs_page_art")return {threePigsPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,pig-scene-"+page};
    if(name==="./cinderella_page_art")return {cinderellaPageArtwork:(page)=>"data:image/svg+xml;charset=utf-8,cinderella-scene-"+page};
