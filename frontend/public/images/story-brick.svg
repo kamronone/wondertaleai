@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="174" viewBox="0 0 240 174" role="img" aria-labelledby="title desc">
+<title id="title">Красный глиняный кирпич</title>
+<desc id="desc">Акварельный красный кирпич с фактурой глины, боковой гранью и мягкой тенью.</desc>
+<defs>
+  <linearGradient id="top" x1=".08" y1=".1" x2=".92" y2=".95">
+    <stop offset="0" stop-color="#efac87"/><stop offset=".27" stop-color="#cd7557"/><stop offset=".72" stop-color="#ad4e3d"/><stop offset="1" stop-color="#894036"/>
+  </linearGradient>
+  <linearGradient id="front" x1=".18" y1="0" x2=".88" y2="1">
+    <stop offset="0" stop-color="#bc6349"/><stop offset=".53" stop-color="#a94b3d"/><stop offset="1" stop-color="#76352f"/>
+  </linearGradient>
+  <linearGradient id="right" x1="0" y1=".2" x2="1" y2=".9">
+    <stop offset="0" stop-color="#a74a39"/><stop offset="1" stop-color="#682c29"/>
+  </linearGradient>
+  <filter id="soft" x="-30%" y="-50%" width="160%" height="200%">
+    <feGaussianBlur stdDeviation="6"/>
+  </filter>
+  <filter id="grit" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".12" numOctaves="3" stitchTiles="stitch" seed="8" result="noise"/>
+    <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+    <feComponentTransfer in="mono" result="grain"><feFuncA type="linear" slope=".19"/></feComponentTransfer>
+    <feBlend in="SourceGraphic" in2="grain" mode="multiply"/>
+  </filter>
+</defs>
+<ellipse cx="119" cy="153" rx="104" ry="13" fill="#4b2324" opacity=".25" filter="url(#soft)"/>
+<g stroke="#743b30" stroke-width="2.6" stroke-linejoin="round" filter="url(#grit)">
+  <path d="M17 68 157 19q10-4 19 1l47 28-143 54q-9 2-16-2Z" fill="url(#top)"/>
+  <path d="M17 68 80 102v53q0 7-9 4l-49-29q-5-3-5-9Z" fill="url(#front)"/>
+  <path d="M80 102 223 48v66q0 5-5 8l-128 41q-10 4-10-8Z" fill="url(#right)"/>
+</g>
+<path d="m28 71 131-45q10-3 15-1l34 21-129 49Z" fill="#f7bb92" opacity=".22"/>
+<path d="m90 110 125-47v14l-125 46Z" fill="#d57252" opacity=".36"/>
+<path d="M24 85v35l43 24" fill="none" stroke="#e89b76" stroke-width="3" opacity=".35"/>
+<g stroke="#6f322d" stroke-linecap="round" opacity=".34" fill="none">
+ <path d="m55 59 18-5m37-18 10-4m47 10 12 6m-41 18 26-9m-65 29 11-5"/>
+ <path d="m101 119 13-4m15 12 18-6m37-36 12-4m-39 54 8-3m31-15 9-4" stroke-width="2.4"/>
+ <path d="m41 105 9 6m9 21 7 3m48-64 7-2" stroke-width="2"/>
+</g>
+<g fill="#f1bb91" opacity=".60">
+  <circle cx="101" cy="55" r="2.6"/><circle cx="143" cy="43" r="1.7"/><circle cx="185" cy="54" r="2.1"/>
+  <circle cx="147" cy="103" r="2"/><circle cx="200" cy="95" r="1.5"/><circle cx="115" cy="139" r="2"/>
+</g>
+<path d="m85 105 3 44q1 5 5 5" stroke="#e2a079" stroke-width="2" opacity=".45" fill="none"/>
+</svg>
