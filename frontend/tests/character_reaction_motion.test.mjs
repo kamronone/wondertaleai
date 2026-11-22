@@ -31,5 +31,6 @@ test("motion is decorative, respects reduced motion, and does not distort PNG or
  assert.match(animation,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(animation,/animation:none!important;opacity:0!important/);
  assert.match(animation,/@media print\{\.reader-page \.wt-character-reaction-fx\{display:none!important\}\}/);
- assert.doesNotMatch(animation,/\.wt-reader-picture\s*\{|object-fit|background-image:url|filter:invert/);
+ assert.doesNotMatch(animation,/\.wt-reader-picture\s*\{|background-image:url|filter:invert/);
+ assert.match(animation,/\.wt-character-reaction-gif\{[\s\S]*?object-fit:contain/);
 });
