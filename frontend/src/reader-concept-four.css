@@ -242,3 +242,84 @@
 @media print {
   .reader-page .story-page {break-inside:avoid}
 }
+
+/* The story already has an in-reader back action. The global marketing
+   header wastes a full row on iPhone, so remove it only while reading. */
+@media screen and (max-width:700px) {
+  .shell:has(>main>.reader-page) > .topbar {
+    display:none!important;
+  }
+  .shell:has(>main>.reader-page) > main {
+    scroll-padding-bottom:calc(172px + env(safe-area-inset-bottom, 0px));
+  }
+  .shell > main > .reader-page {
+    padding-bottom:calc(165px + env(safe-area-inset-bottom, 0px))!important;
+  }
+  .reader-page .story-page {
+    scroll-margin-top:12px;
+  }
+  /* Plain, small page chrome: one title, the image, and the words. */
+  .reader-page .reader-title {
+    margin:0 0 5px!important;
+  }
+  .reader-page .reader-title h2 {
+    font-size:clamp(20px,5.25vw,25px)!important;
+  }
+  .reader-page .reader-title>p {
+    font-size:11px!important;
+    margin-bottom:4px!important;
+  }
+  .reader-page .story-page .story-text {
+    max-width:100%;
+    padding:15px 16px 18px!important;
+  }
+  .reader-page .reader-mode-controls {
+    margin-top:8px!important;
+  }
+  /* Typography settings must win over the decorative book presets. */
+  .reader-page .story-page.reader-font-small.book-style-spread .story-text,
+  .reader-page .story-page.reader-font-small.book-style-classic .story-text,
+  .reader-page .story-page.reader-font-small.book-style-storybook .story-text,
+  .reader-page .story-page.reader-font-small.book-style-simple .story-text {
+    font-size:14px!important;
+  }
+  .reader-page .story-page.reader-font-normal.book-style-spread .story-text,
+  .reader-page .story-page.reader-font-normal.book-style-classic .story-text,
+  .reader-page .story-page.reader-font-normal.book-style-storybook .story-text,
+  .reader-page .story-page.reader-font-normal.book-style-simple .story-text {
+    font-size:clamp(16px,4.1vw,18px)!important;
+  }
+  .reader-page .story-page.reader-font-large.book-style-spread .story-text,
+  .reader-page .story-page.reader-font-large.book-style-classic .story-text,
+  .reader-page .story-page.reader-font-large.book-style-storybook .story-text,
+  .reader-page .story-page.reader-font-large.book-style-simple .story-text {
+    font-size:20px!important;
+    line-height:1.58!important;
+  }
+  .reader-page .story-page.reader-night .story-text {
+    background:#242132!important;
+    color:#f5ebdc!important;
+    border-color:#554d64!important;
+    box-shadow:none!important;
+  }
+  .reader-page .story-page.reader-night .story-page-image {
+    background:#242132!important;
+  }
+  .reader-page .story-page.reader-warm .story-text {
+    background:#faefd9!important;
+    color:#493321!important;
+  }
+  .reader-page .pager {
+    width:calc(100% - 28px)!important;
+    max-width:620px!important;
+    bottom:calc(74px + env(safe-area-inset-bottom, 0px))!important;
+    gap:6px!important;
+  }
+  .reader-page .pager>button {
+    padding:8px 8px!important;
+    min-height:46px!important;
+  }
+  .reader-page .pager-mobile-current {
+    font-variant-numeric:tabular-nums;
+  }
+}
