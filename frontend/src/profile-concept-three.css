@@ -901,3 +901,51 @@
   transform:translateY(-1px);
   vertical-align:middle;
 }
+
+/* Connection status in a signed-in account: an offline session is not a successful sync. */
+.profile-concept-three .parent-account-connection-state{
+  display:grid;
+  gap:7px;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  padding:12px;
+  margin:12px 0;
+  border:1px solid #e8d6b6;
+  border-radius:13px;
+  background:#fff9ed;
+  color:#684a29;
+}
+.profile-concept-three .parent-account-connection-state>strong{
+  display:block;
+  font-size:13px;
+  line-height:1.35;
+}
+.profile-concept-three .parent-account-connection-state>p{
+  margin:0;
+  font-size:12px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.profile-concept-three .parent-account-connection-state>button{
+  justify-self:start;
+  min-height:42px!important;
+  max-width:100%;
+  padding:8px 12px;
+  font-size:12px;
+  white-space:normal;
+}
+.profile-concept-three .parent-account-primary:disabled{
+  cursor:not-allowed;
+  opacity:.56;
+}
+@media(max-width:620px){
+  .profile-concept-three .parent-account-card input[type="email"],
+  .profile-concept-three .parent-account-card input[type="password"],
+  .profile-concept-three .parent-account-card input[type="number"]{
+    font-size:16px!important;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+}
