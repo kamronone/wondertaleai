@@ -107,6 +107,10 @@ export function LegalCenter({lang,document,onSelect,onBack}:{lang:Lang;document:
  return <section className="legal-center" aria-label={t.title}>
   <button className="legal-back" type="button" onClick={onBack}>{({ru:"Назад",uz:"Orqaga",en:"Back"} as const)[lang]}</button>
   <header><h1>{t.title}</h1><p>{t.intro}</p><small>{({ru:"Проект редакции: 20.11.2026",uz:"Loyiha sanasi: 20.11.2026",en:"Draft date: 20 Nov 2026"} as const)[lang]}</small></header>
+  <aside className="legal-release-notice" role="note">
+   <strong>{({ru:"Документы ещё не утверждены",uz:"Hujjatlar hali tasdiqlanmagan",en:"These documents are not finalized"} as const)[lang]}</strong>
+   <p>{({ru:"WonderTale AI находится на этапе подготовки. Юридический оператор, контакт для обращений, порядок родительского согласия, местонахождение и сроки хранения данных должны быть подтверждены до публичного запуска. Платежи не подключены.",uz:"WonderTale AI tayyorgarlik bosqichida. Ommaviy ishga tushirishdan oldin yuridik operator, murojaat manzili, ota-ona roziligi tartibi, ma'lumotlar saqlanadigan joy va muddati tasdiqlanishi kerak. To'lovlar ulanmagan.",en:"WonderTale AI is in preparation. The legal operator, contact channel, guardian consent process, data storage location and retention period require confirmation before public launch. Payments are not enabled."} as const)[lang]}</p>
+  </aside>
   <nav className="legal-tabs" aria-label={({ru:"Юридические документы",uz:"Huquqiy hujjatlar",en:"Legal documents"} as const)[lang]}>
    {(["terms","privacy","copyright","parents"] as const).map(id=><button key={id} type="button" aria-current={document===id?"page":undefined} onClick={()=>onSelect(id)}>{navigation[lang][id]}</button>)}
   </nav>
