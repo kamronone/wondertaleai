@@ -27,6 +27,7 @@ import "./legal-release-notice.css";
 import "./create-concept-four.css";
 import "./create-step-two-concept-four.css";
 import "./create-step-three-concept-one.css";
+import "./reader-controls-compact.css";
 import { worldArt } from "./world_art";
 import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
 import {StorySceneInteraction} from "./StorySceneInteraction";
