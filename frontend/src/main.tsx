@@ -1303,9 +1303,7 @@ function App(){
           {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
           {!usePersonalAi&&<div className="device-save-option">
             <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
-            </details>}
-          </div>
-        </div>}
+          </div>}
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
           <label className="consent legal-consent"><input required type="checkbox" checked={acceptedLegal} onChange={e=>setAcceptedLegal(e.target.checked)}/><span>{({ru:"Я ознакомился(-ась) с условиями и политикой конфиденциальности.",uz:"Foydalanish shartlari va maxfiylik siyosatini oqib chiqdim.",en:"I have read and accept the terms and privacy policy."} as const)[lang]}</span></label>
           <div className="legal-consent-links"><button type="button" onClick={()=>openLegal("terms")}>{({ru:"Условия",uz:"Shartlar",en:"Terms"} as const)[lang]}</button><button type="button" onClick={()=>openLegal("privacy")}>{({ru:"Конфиденциальность",uz:"Maxfiylik",en:"Privacy"} as const)[lang]}</button><button type="button" onClick={()=>openLegal("parents")}>{({ru:"Данные детей",uz:"Bolalar malumoti",en:"Children's data"} as const)[lang]}</button></div>
@@ -1536,6 +1534,8 @@ function App(){
                 {([10,20] as const).map(minutes=><button type="button" key={minutes} aria-pressed={bedtimeUntil!==null&&Math.abs(bedtimeUntil-Date.now()-minutes*60000)<60000} onClick={()=>{setReaderNightMode(true);setReaderWarmMode(false);setBedtimeUntil(Date.now()+minutes*60000);}}>{minutes} {({ru:"мин",uz:"daq",en:"min"} as const)[lang]}</button>)}
                 {bedtimeUntil!==null&&<button type="button" onClick={()=>setBedtimeUntil(null)}>{({ru:"Отменить",uz:"Bekor qilish",en:"Cancel"} as const)[lang]}</button>}
               </div>
+            </details>}
+          </div>
         </div>}
         <div className="reader-title"><div className="reader-book-meta"><span className="reader-crown"><Crown size={16}/></span><span className="reader-child-label">{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}</div><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length} · {Math.round(((page+1)/Math.max(1,active.pages.length))*100)}%</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
