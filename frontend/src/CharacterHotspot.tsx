@@ -9,6 +9,41 @@ const words=(ru:string,uz:string,en:string):Record<Lang,string>=>({ru,uz,en});
 /* Coordinates are fractions of the visible artwork, not the padded card.
    Never use a hotspot on a private photo or generated user illustration. */
 const reactions:Record<string,Reaction>={
+  "rapunzel:7": {
+    position:{x:.40,y:.62},
+    label:words("Поздороваться с Рапунцель","Rapunselga salom berish","Greet Rapunzel"),
+    message:words("Рапунцель радуется встрече и приглашает друзей в гости!","Rapunsel do‘stlarini ko‘rib quvonadi va mehmonga taklif qiladi!","Rapunzel smiles and invites her friends to visit!")
+  },
+  "snow-white:2": {
+    position:{x:.48,y:.52},
+    label:words("Помахать Белоснежке","Oppog‘oyga qo‘l silkitish","Wave to Snow White"),
+    message:words("Белоснежка машет в ответ и улыбается!","Oppog‘oy javoban qo‘l silkitib jilmayadi!","Snow White waves back with a smile!")
+  },
+  "ugly-duckling:3": {
+    position:{x:.49,y:.65},
+    label:words("Подбодрить утёнка","O‘rdakchaga dalda berish","Cheer up the duckling"),
+    message:words("Утёнок расправляет крылья и смелее идёт вперёд!","O‘rdakcha qanotlarini yozib, dadil oldinga yuradi!","The duckling spreads its wings and steps forward bravely!")
+  },
+  "bremen:2": {
+    position:{x:.46,y:.55},
+    label:words("Поддержать музыкантов","Musiqachilarni ruhlantirish","Encourage the musicians"),
+    message:words("Друзья весело кивают и начинают репетировать!","Do‘stlar quvonib bosh irg‘aydi va mashqni boshlaydi!","The friends nod happily and begin rehearsing!")
+  },
+  "hansel-gretel:3": {
+    position:{x:.47,y:.62},
+    label:words("Подбодрить детей","Bolalarga dalda berish","Encourage the children"),
+    message:words("Гензель и Гретель улыбаются и идут вместе дальше!","Genzel va Gretel jilmayib birga yo‘lda davom etadi!","Hansel and Gretel smile and continue together!")
+  },
+  "puss-boots:4": {
+    position:{x:.48,y:.56},
+    label:words("Позвать Кота в сапогах","Etik kiygan mushukni chaqirish","Call Puss in Boots"),
+    message:words("Кот учтиво кланяется и подмигивает тебе!","Mushuk xushmuomalalik bilan ta’zim qiladi va ko‘z qisadi!","Puss bows politely and gives you a wink!")
+  },
+  "sleeping-beauty:5": {
+    position:{x:.55,y:.56},
+    label:words("Пожелать доброго утра","Xayrli tong tilash","Wish a good morning"),
+    message:words("Во дворце становится светлее, а друзья радостно улыбаются!","Qasr yanada yorishadi, do‘stlar esa quvonib jilmayadi!","The castle grows brighter and everyone smiles!")
+  },
   "three-pigs:4": {
     position:{x:.37,y:.54},
     label:words("Помочь поросёнку","Cho'chqachaga yordam berish","Help the little pig"),
