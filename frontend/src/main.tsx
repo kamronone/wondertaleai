@@ -850,8 +850,17 @@ function App(){
     }
     const engine=window.speechSynthesis;
     if(speaking){
-      if(speechPaused){engine.resume();setSpeechPaused(false);}
-      else{engine.pause();setSpeechPaused(true);}
+      try{
+        if(speechPaused){engine.resume();setSpeechPaused(false);}
+        else{engine.pause();setSpeechPaused(true);}
+      }catch{
+        // Safari may invalidate a suspended utterance after an app switch.
+        speechRun.current++;
+        speechAdvanceArmed.current=false;
+        try{engine.cancel();}catch{/* Ignore an invalidated device engine. */}
+        setSpokenRange(null);setSpeaking(false);setSpeechPaused(false);
+        setError(t.noVoice);
+      }
       return;
     }
     const run=++speechRun.current;
