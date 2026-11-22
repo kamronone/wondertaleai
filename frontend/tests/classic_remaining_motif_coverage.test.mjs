@@ -31,5 +31,5 @@ test("all original detailed art and png collections keep priority",()=>{
  for(const dedicated of ["redHoodPageArtwork","threePigsPageArtwork","cinderellaPageArtwork","snowWhitePageArtwork","uglyDucklingPageArtwork","bremenPageArtwork","hanselGretelPageArtwork","rapunzelPageArtwork","sleepingBeautyPageArtwork","pussBootsPageArtwork"]){
   assert.ok(art.includes(dedicated),"dedicated art missing "+dedicated);
  }
- assert.match(art,/const bundledPngIds = new Set\(\["red-hood","cinderella","three-pigs"\]\)/);
+ assert.match(art,/const bundledPngIds = new Set\(\["red-hood","cinderella","three-pigs",\.\.\.\(rapunzelPngReady\?/);
 });
