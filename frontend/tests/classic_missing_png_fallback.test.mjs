@@ -6,7 +6,7 @@ const source = readFileSync(new URL("../src/classic_page_art.ts", import.meta.ur
 
 test("only complete bundled story sets use PNGs", () => {
   assert.match(source, /const bundledPngIds = new Set\(\["red-hood","cinderella","three-pigs"\]\)/);
-  assert.match(source, /if\(!bundledPngIds\.has\(classicId\)\)return classicPageArtwork\(classicId,pageIndex\)/);
+  assert.match(source, /if\(!bundledPngIds\.has\(classicId\)\)return classicPageArtwork\(classicId,pageIndex,pageText\)/);
 });
 
 test("old auto-generated page URLs can migrate to local SVGs", () => {
