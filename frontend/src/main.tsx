@@ -35,7 +35,7 @@ import { worldArt } from "./world_art";
 import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
 import {StorySceneInteraction} from "./StorySceneInteraction";
 import {readFamilyReadingPreferences,saveFamilyReadingPreferences} from "./reader_family_preferences";
-import {CharacterHotspot} from "./CharacterHotspot";
+import {CharacterHotspot,characterHotspotForPage} from "./CharacterHotspot";
 import {BrickPassInteraction} from "./BrickPassInteraction";
 import {StoryGiftInteraction} from "./StoryGiftInteraction";
 import {storyGiftForPage} from "./scene_gift_data";
@@ -1612,7 +1612,7 @@ function App(){
           :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth animatedUrl={readerArtMotion==="magic"&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&isDemoBook(active as DemoBook)?classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page):null}/>}
 {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
   !((active as DemoBook).classicId==="three-pigs"&&page===3)&&!storyGiftForPage((active as DemoBook).classicId,page+1)&&
-  classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page)&&
+  characterHotspotForPage((active as DemoBook).classicId,page+1)&&
   <CharacterHotspot classicId={(active as DemoBook).classicId} page={page+1} lang={lang} />}
 {isDemoBook(active)&&(active as DemoBook).classicId==="three-pigs"&&page===3&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
   <BrickPassInteraction key={active.id+":"+page} lang={lang} />}
