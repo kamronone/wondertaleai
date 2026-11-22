@@ -349,3 +349,49 @@
     padding:9px 7px!important;
   }
 }
+
+/* Optional uncropped portrait view. Keep the default illustration compact. */
+@media screen and (max-width:700px) {
+  .reader-page .story-page .story-page-image {
+    position:relative!important;
+  }
+  .reader-page .story-page-image .reader-art-zoom {
+    position:absolute!important;
+    top:9px;
+    right:9px;
+    z-index:9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width:44px;
+    height:44px;
+    padding:0;
+    border:1px solid rgba(112,77,129,.28);
+    border-radius:13px;
+    background:rgba(255,250,245,.93);
+    color:#654477;
+    box-shadow:0 3px 10px rgba(61,39,68,.16);
+    touch-action:manipulation;
+  }
+  .reader-page .story-page-image .reader-art-zoom:focus-visible {
+    outline:3px solid #9560c0;
+    outline-offset:2px;
+  }
+  .reader-page .story-page .story-page-image.reader-image-expanded {
+    height:min(70svh,580px)!important;
+    max-height:none!important;
+    background:#f1e9dc!important;
+  }
+  .reader-page .story-page .story-page-image.reader-image-expanded img,
+  .reader-page .story-page .story-page-image.reader-image-expanded picture img,
+  .reader-page .story-page .story-page-image.reader-image-expanded > div > img,
+  .reader-page .story-page .story-page-image.reader-image-expanded .story-image-fallback {
+    object-fit:contain!important;
+  }
+}
+@media screen and (min-width:701px) {
+  .reader-page .reader-art-zoom {display:none!important}
+}
+@media print {
+  .reader-page .reader-art-zoom {display:none!important}
+}
