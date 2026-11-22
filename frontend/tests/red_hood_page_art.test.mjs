@@ -22,7 +22,7 @@ test("existing browser-saved classics display updated page art without replacing
  assert.match(main,/classicReaderImage\(isDemoBook\(active as DemoBook\)/);
  const mapping=read("../src/classic_page_art.ts");
  assert.match(mapping,/export function classicReaderImage/);
- assert.match(mapping,/if\(!oldAsset&&!oldRedHood&&!oldDemoVector&&!oldGeneratedPage&&imageUrl\.trim\(\)!==""\)return imageUrl/);
+ assert.match(mapping,/if\(!oldAsset&&!oldRedHood&&!oldDemoVector&&!oldGeneratedPage&&!oldBundledRapunzel&&imageUrl\.trim\(\)!==""\)return imageUrl/);
  assert.match(mapping,/if\(!bundledPngIds\.has\(classicId\)\)return classicPageArtwork\(classicId,pageIndex,pageText\)/);
  assert.match(main,/PrivateReaderIllustration/);
 });
