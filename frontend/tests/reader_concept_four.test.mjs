@@ -13,7 +13,7 @@ test("selected reader style is loaded after existing mobile reader rules",()=>{
   assert.match(css,/\.reader-page \.story-page\.book-style-classic \.story-text/);
 });
 test("illustration is compact and story text has a separate reading card",()=>{
-  assert.match(css,/height:clamp\(174px,28svh,255px\)!important/);
+  assert.match(css,/height:clamp\(190px,32svh,285px\)!important/);
   assert.match(css,/object-fit:cover!important/);
   assert.match(css,/font-size:clamp\(16px,4\.2vw,19px\)!important/);
   assert.match(css,/background:rgba\(255,252,246,\.96\)!important/);
