@@ -17,6 +17,7 @@ test("eight Rapunzel PNGs are selectable for local offline reading",async()=>{
 });
 test("offline downloader rejects non-PNG or missing pages without caching private content",()=>{
  assert.match(source,/response\.ok\|\|!type\.toLowerCase\(\)\.includes\(expected\)/);
+ assert.match(source,/!response\?\.ok\|\|!\(response\.headers\.get\("content-type"\)\|\|""\)\.toLowerCase\(\)\.includes\("image\/png"\)/);
  assert.match(source,/credentials:"omit",cache:"no-cache"/);
  assert.match(source,/if\(url\.endsWith\("\.png"\)\)/);
  assert.match(source,/added\.map\(path=>cache\.delete\(path\)\)/);
