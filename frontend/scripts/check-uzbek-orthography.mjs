@@ -48,7 +48,9 @@ if (!i18n.includes('saved==="en"?saved:"uz"')) {
 }
 const main = readFileSync(resolve(root, "src/main.tsx"), "utf8");
 if (main.includes('id="welcome-language-select"')) problems.push("Onboarding must not show the language selector");
-if (!main.includes('className="language-control"') || !main.includes('onChange={e=>switchLang(e.target.value as Lang)}')) problems.push("Language selection must remain available in the app header");
+const profileHeader = readFileSync(resolve(root, "src/ProfileHeader.tsx"), "utf8");
+if (main.includes('className="language-control"')) problems.push("Header language selection must be hidden; use Profile Settings");
+if (!main.includes('onLanguage={switchLang}') || !profileHeader.includes('className="profile-mockup-language"') || !profileHeader.includes('onLanguage(event.target.value as Lang)')) problems.push("Language selection must remain available under Profile Settings");
 if (!main.includes('uz:"Boşlaş"')) problems.push("Welcome button must use reformed Uzbek");
 if (problems.length) {
   console.error(problems.join("\n"));
