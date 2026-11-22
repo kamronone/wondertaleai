@@ -11,6 +11,7 @@ import { sleepingBeautyPageArtwork } from "./sleeping_beauty_page_art";
 import { pussBootsPageArtwork } from "./puss_boots_page_art";
 import { classicStoryMotif } from "./classic_story_motifs";
 import { remainingClassicMotif } from "./classic_remaining_motifs";
+import { classicPageSceneDetail } from "./classic_page_scene_details";
 
 /**
  * Offline, page-specific illustrations for the 30 built-in classics.
@@ -75,7 +76,7 @@ export function classicPageArtwork(classicId:string,pageIndex:number):string {
  const [sky,hill,accent]=colors[group];
  const shift=(page*71)%400;
  const title=escapeXml(item.title.ru);
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><title>${title}, scene ${page+1}</title><defs><linearGradient id="background" x2="0" y2="1"><stop stop-color="${sky}"/><stop offset="1" stop-color="#fff9ea"/></linearGradient></defs><rect width="800" height="600" fill="url(#background)"/><circle cx="${615-shift/3}" cy="${90+page%3*17}" r="66" fill="#fff1be"/><path d="M0 430Q180 ${300+page%3*20} 385 420T800 395V600H0" fill="${hill}"/><path d="M0 520Q250 432 450 505T800 480V600H0" fill="${accent}" opacity=".38"/>${scenery(group,page,accent)}${subject(classicId,page)}<g fill="#fff5d5"><circle cx="${95+shift}" cy="105" r="8"/><circle cx="${705-shift/2}" cy="206" r="5"/><circle cx="480" cy="76" r="7"/></g><path d="M0 570Q200 548 400 570T800 570V600H0" fill="#fff2d7" opacity=".35"/></svg>`;
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><title>${title}, scene ${page+1}</title><defs><linearGradient id="background" x2="0" y2="1"><stop stop-color="${sky}"/><stop offset="1" stop-color="#fff9ea"/></linearGradient></defs><rect width="800" height="600" fill="url(#background)"/><circle cx="${615-shift/3}" cy="${90+page%3*17}" r="66" fill="#fff1be"/><path d="M0 430Q180 ${300+page%3*20} 385 420T800 395V600H0" fill="${hill}"/><path d="M0 520Q250 432 450 505T800 480V600H0" fill="${accent}" opacity=".38"/>${scenery(group,page,accent)}${subject(classicId,page)}${classicPageSceneDetail(classicId,page)}<g fill="#fff5d5"><circle cx="${95+shift}" cy="105" r="8"/><circle cx="${705-shift/2}" cy="206" r="5"/><circle cx="480" cy="76" r="7"/></g><path d="M0 570Q200 548 400 570T800 570V600H0" fill="#fff2d7" opacity=".35"/></svg>`;
  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
 }
 /** Only replace built-in placeholder artwork, never custom illustrations. */
