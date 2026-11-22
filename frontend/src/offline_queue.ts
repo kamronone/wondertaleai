@@ -43,6 +43,7 @@ export function writePendingMetadata(owner:string,data:PendingMetadata):void{
 }
 export async function getAuthenticatedOwner(api:string,token:string):Promise<string>{
  const response=await fetch(api+"/api/me",{
+  cache:"no-store",
   headers:{Authorization:"Bearer "+token},
   signal:AbortSignal.timeout(15000)
  });
