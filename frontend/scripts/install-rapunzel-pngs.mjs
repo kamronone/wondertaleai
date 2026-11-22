@@ -41,7 +41,7 @@ try{
  mkdirSync(destination,{recursive:true});
  for(const item of prepared)renameSync(item.temporary,join(destination,item.filename));
  console.log("Installed 8 distinct Rapunzel PNGs into "+destination);
- console.log("Next: VITE_RAPUNZEL_PNG_READY=true npm run check:images:release");
+ console.log("Next: npm run check:images:release (Preview automatically enables all 8 PNGs)");
 }catch(error){
  console.error("Rapunzel artwork installation failed:",error instanceof Error?error.message:String(error));
  process.exitCode=1;
