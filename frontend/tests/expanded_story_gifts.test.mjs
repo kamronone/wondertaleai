@@ -73,3 +73,14 @@ test("gift positions follow the visible artwork, excluding object-fit letterboxi
  assert.match(gift,/image\?\.addEventListener\("load",refresh\)/);
  assert.match(gift,/observer\?\.disconnect\(\)/);
 });
+
+test("Rapunzel flower lands beside her window in the illustrated PNG scene",async()=>{
+ const transpiled=await transform(source,{loader:"ts",format:"esm",target:"es2022"});
+ const {storyGiftForPage}=await import("data:text/javascript;base64,"+Buffer.from(transpiled.code).toString("base64"));
+ const scene=storyGiftForPage("rapunzel",3);
+ assert.ok(scene);
+ assert.equal(scene.target.x,.74);
+ assert.equal(scene.target.y,.33);
+ assert.notEqual(scene.start.x,scene.target.x);
+ assert.notEqual(scene.start.y,scene.target.y);
+});
