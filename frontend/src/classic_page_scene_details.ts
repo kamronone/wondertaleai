@@ -67,11 +67,43 @@ const shapes:Record<SceneProp,string>={
  house:`<path d="M-83 75V-14L0-83l83 69v89Z" fill="#efc69e" stroke="#af8e7b" stroke-width="8"/><path d="m-97-8 97-92L97-8" stroke="#b17e69" stroke-width="18" fill="none"/><rect x="-19" y="12" width="39" height="63" fill="#9f807a"/>`,
  apple:`<path d="M0-61Q-73-95-82-20q-5 101 82 109 87-8 82-109Q73-95 0-61Z" fill="#d98b8a" stroke="#a96871" stroke-width="8"/><path d="M0-61q0-48 30-61" stroke="#7c9b6b" stroke-width="9" fill="none"/>`
 };
-export function classicPageSceneDetail(classicId:string,pageIndex:number):string{
+/** Prefer a visible object actually mentioned in the text. If there is no
+ *  supported word, use a neutral book/heart instead of inventing an event.
+ *  This only affects bundled demo SVG artwork; no private/generated media.
+ */
+export function classicPageSceneDetail(classicId:string,pageIndex:number,pageText?:string):string{
  const story=storyChapters[classicId];
  if(!story)return "";
  const page=Math.max(0,Math.min(7,Math.trunc(Number.isFinite(pageIndex)?pageIndex:0)));
- const icon=story[page];
+ let icon:SceneProp=story[page];
+ if(typeof pageText==="string"&&pageText.trim()){
+  const text=pageText.toLocaleLowerCase();
+  const cues:ReadonlyArray<readonly [SceneProp,RegExp]>=[
+   ["book",/книг|сказк|китоб|ertak|book|fairy tale/],
+   ["shoe",/туфл|башмак|обув|tufli|shoe|slipper/],
+   ["clock",/час|soat|clock|timepiece/],
+   ["house",/домик|дома|уйча|uycha|house|cottage/],
+   ["crown",/корон|toj|crown/],
+   ["fish",/рыбк|рыб|baliq|fish/],
+   ["flower",/цвет|гул|gul|flower/],
+   ["snow",/снег|qor|snow/],
+   ["egg",/яйц|tuxum|egg/],
+   ["key",/ключ|kalit|key/],
+   ["lamp",/ламп|chiroq|lamp/],
+   ["map",/карт|xarita|map/],
+   ["pearl",/жемчуж|marvarid|pearl/],
+   ["bowl",/каша|миска|bo'tqa|bo‘tqa|bowl|porridge/],
+   ["tree",/дерев|daraxt|tree/],
+   ["heart",/добр|друж|дӯст|do‘st|dost|friend|kindness/]
+  ];
+  const matches=cues.filter(([,pattern])=>pattern.test(text));
+  const match=matches.find(([name])=>name===icon)??matches[0];
+  icon=match?.[0]??"book";
+  // Generic introduction and farewell explicitly revolve around the book.
+  if(page===0||page===1||page===7){
+   if(cues[0][1].test(text))icon="book";
+  }
+ }
  const element=shapes[icon];
  if(!element)return "";
  const side=page%2===0?615:185;
