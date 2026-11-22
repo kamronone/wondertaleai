@@ -7,11 +7,7 @@ const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png"
 const OPTIONAL_ART = [
   // First-visit artwork only; feature panels and story covers cache on demand.
   "/images/wondertale-hero.webp",
-  "/images/wondertale-welcome.png",
-  "/images/story-brick.svg",
-  "/images/interactions/wooden-latch.svg",
-  "/images/interactions/story-clock.svg",
-  "/images/interactions/forest-map.svg"
+  "/images/wondertale-welcome.png"
 ];
 const PUBLIC_ASSET = /^\/(?:assets\/|icons\/|images\/classics\/|images\/story-brick\.svg$|images\/interactions\/(?:wooden-latch|story-clock|forest-map)\.svg$|images\/features\/|images\/create-(?:boy|girl|fox|dragon|robot|hero-story|read-story-banner)\.png$|images\/(?:library-(?:magic-castle|story-castle-premium)|profile-(?:castle|story-hero))\.png$|images\/wondertale-(?:hero\.webp|welcome\.(?:png|svg))$)/;
 const PRIVATE_PATH = /^\/(?:api\/|auth\/|account\/)/;
