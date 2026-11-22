@@ -603,3 +603,71 @@
   .reader-page .pager>button{padding:8px 4px!important;font-size:11px!important}
   .reader-page .pager-indicators{min-width:42px}
 }
+
+
+/* Mobile book navigation stays available without scrolling past the story.
+   The app tabbar has z-index 80; this pager intentionally sits above it. */
+@media screen and (max-width:700px){
+  .shell > main > .reader-page{
+    padding-bottom:78px!important;
+  }
+  .reader-page .story-page{
+    scroll-margin-top:10px;
+  }
+  .reader-page .pager{
+    position:fixed!important;
+    z-index:75!important;
+    left:50%!important;
+    bottom:calc(70px + env(safe-area-inset-bottom, 0px))!important;
+    transform:translateX(-50%);
+    box-sizing:border-box;
+    width:calc(100% - 24px)!important;
+    max-width:620px!important;
+    margin:0!important;
+    padding:7px 9px!important;
+    border:1px solid #dfcdea;
+    border-radius:16px;
+    background:rgba(255,250,246,.98);
+    box-shadow:0 5px 22px rgba(43,25,64,.18);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+  }
+  .reader-page .pager>button{
+    min-height:44px!important;
+    touch-action:manipulation;
+  }
+  .reader-page .pager-indicators .dot,
+  .reader-page .pager-indicators .pager-jump,
+  .reader-page .pager-indicators .pager-current{
+    display:none!important;
+  }
+  .reader-page .pager-indicators{
+    min-width:48px;
+    max-width:68px;
+  }
+  /* Leave more of the viewport for reading. Preserve object-fit:contain. */
+  .reader-page .story-page .story-page-image,
+  .reader-page .story-page.book-style-spread .story-page-image,
+  .reader-page .story-page.book-style-classic .story-page-image,
+  .reader-page .story-page.book-style-storybook .story-page-image,
+  .reader-page .story-page.book-style-simple .story-page-image{
+    height:clamp(180px,30svh,270px)!important;
+    max-height:270px!important;
+  }
+}
+@media screen and (max-width:700px) and (max-height:650px){
+  .reader-page .story-page .story-page-image,
+  .reader-page .story-page.book-style-spread .story-page-image,
+  .reader-page .story-page.book-style-classic .story-page-image,
+  .reader-page .story-page.book-style-storybook .story-page-image,
+  .reader-page .story-page.book-style-simple .story-page-image{
+    height:clamp(160px,28svh,215px)!important;
+  }
+}
+@media print{
+  .reader-page .pager{
+    position:static!important;
+    transform:none!important;
+    box-shadow:none!important;
+  }
+}
