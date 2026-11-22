@@ -12,7 +12,7 @@ test("older locally saved tales offer a confirmed full-story upgrade, never sile
  assert.match(demo,/if\(!canRefreshClassicDemoStory\(book\)\)return book/);
  assert.match(app,/if\(!window.confirm\(notice\)\)return/);
  assert.match(app,/ru:"Получить полную версию сказки"/);
- assert.match(app,/uz:"Ertakning to‘liq versiyasini olish"/);
+ assert.match(app,/uz:"Ertakning töliq versiyasini oliş"/);
  assert.match(app,/en:"Get the full fairy tale"/);
 });
 test("explicit upgrade keeps the original image URLs, last page and account metadata",()=>{
