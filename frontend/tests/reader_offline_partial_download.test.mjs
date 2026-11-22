@@ -6,7 +6,7 @@ const source = readFileSync(new URL("../src/reader_offline_art.ts", import.meta.
 
 test("offline download keeps its requests public and unauthenticated", () => {
   assert.match(source, /fetch\(url,\{credentials:"omit",cache:"no-cache"\}\)/);
-  assert.match(source, /const supported=new Set\(\["red-hood","cinderella","three-pigs"\]\)/);
+  assert.match(source, /const supported=new Set\(\["red-hood","cinderella","three-pigs","rapunzel"\]\)/);
 });
 
 test("partial downloads are rolled back on a required PNG failure", () => {
