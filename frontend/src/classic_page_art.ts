@@ -20,7 +20,7 @@ import { classicPageSceneDetail } from "./classic_page_scene_details";
  */
 const ids = new Set(classics.map(item => item.id));
 // PNG collections are only shipped for these classics. Never request missing PNGs.
-const bundledPngIds = new Set(["red-hood","cinderella","three-pigs"]);
+const bundledPngIds = new Set(["red-hood","cinderella","three-pigs",...(import.meta.env.VITE_RAPUNZEL_PNG_READY==="true"?["rapunzel"]:[])]);
 const groups: Record<string, string[]> = {
   forest: ["hansel-gretel","snow-white","goldilocks","kolobok","masha-bears","twelve-months","teremok","ryaba","turnip"],
   castle: ["cinderella","rapunzel","sleeping-beauty","princess-pea","snow-queen","aladdin","emperor-clothes"],
@@ -89,7 +89,8 @@ export function classicReaderImage(classicId:string|undefined,imageUrl:string,pa
  // Only the exact bundled demo illustration signature qualifies for replacement.
  // User-authored SVG data URLs, uploads and private media must remain unchanged.
  const oldDemoVector=imageUrl.startsWith("data:image/svg+xml;charset=utf-8,")&&imageUrl.includes("Fairy-tale%20illustration");
- if(!oldAsset&&!oldRedHood&&!oldDemoVector&&!oldGeneratedPage&&imageUrl.trim()!=="")return imageUrl;
+ const oldBundledRapunzel=classicId==="rapunzel"&&imageUrl===rapunzelPageArtwork(pageIndex);
+ if(!oldAsset&&!oldRedHood&&!oldDemoVector&&!oldGeneratedPage&&!oldBundledRapunzel&&imageUrl.trim()!=="")return imageUrl;
  if(!bundledPngIds.has(classicId))return classicPageArtwork(classicId,pageIndex,pageText);
  return generatedPage;
 }
