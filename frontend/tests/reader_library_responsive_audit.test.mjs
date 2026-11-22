@@ -27,7 +27,7 @@ test("library book cards stay in two equal columns and contain long titles",()=>
 
 test("empty filter results retain a real reset action and touch-size button",()=>{
  assert.match(lib,/className="library-empty-results"/);
- assert.match(lib,/setLibraryQuery\(" "\)/.source ? /setLibraryQuery\(""\)/ : /setLibraryQuery\(""\)/);
+ assert.match(lib,/setLibraryQuery\(""\)/);
  assert.match(lib,/changeLibraryShelf\("all"\)/);
  assert.match(css,/\.library-empty-results button\s*\{[\s\S]*?min-height:44px!important/);
 });
