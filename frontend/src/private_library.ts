@@ -16,7 +16,9 @@ type StoredStory={
 };
 const fetchWithToken=(api:string,path:string,token:string,init?:RequestInit)=>fetch(api+path,{
  ...init,
- headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json",...init?.headers},
+ // Prevent private parent content from entering browser HTTP caches.
+ cache:"no-store",
+ headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json","Cache-Control":"no-store",...init?.headers},
  signal:init?.signal?AbortSignal.any([init.signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000),
 });
 const cleanImage=(source:string,classicId?:string)=>{
