@@ -125,8 +125,13 @@ export function ParentAccount({lang,api,session,syncedCount,syncBusy,onLogin,onL
    </details>:
     apiReady===null&&!session?<div className="parent-account-unavailable" role="status"><p>{({ru:"Проверяем подключение аккаунта…",uz:"Akkaunt ulanişi tekşirilmoqda…",en:"Checking account availability…"} as const)[lang]}</p></div>:
     session?<div className="parent-account-card"><div className="parent-account-success"><CheckCircle2 size={23}/><strong>{t.welcome}</strong></div>
+      {apiReady!==true&&<div className="parent-account-connection-state" role="status">
+        <strong>{apiReady===null?({ru:"Проверяем подключение",uz:"Ulaniş tekşirilmoqda",en:"Checking connection"} as const)[lang]:({ru:"Сервер временно недоступен",uz:"Server vaqtinça işlamayapti",en:"Server temporarily unavailable"} as const)[lang]}</strong>
+        <p>{({ru:"Синхронизация приостановлена. Сохранённые книги не удалены.",uz:"Sinxronlaş vaqtinça töxtatildi. Saqlangan kitoblar öçirilmadi.",en:"Sync is paused. Your saved books have not been deleted."} as const)[lang]}</p>
+        {apiReady===false&&<button type="button" className="parent-account-secondary" onClick={()=>setReadinessAttempt(n=>n+1)}>{({ru:"Повторить подключение",uz:"Qayta ulaniş",en:"Retry connection"} as const)[lang]}</button>}
+      </div>}
       <p className="parent-account-muted">{t.syncDescription}</p><p className="parent-account-muted">{t.syncNotice}</p>
-      <button type="button" className="parent-account-primary" onClick={()=>void onSync()} disabled={syncBusy}><CloudUpload size={17}/>{syncBusy?t.loading:t.sync}</button>
+      <button type="button" className="parent-account-primary" onClick={()=>void onSync()} disabled={syncBusy||apiReady!==true}><CloudUpload size={17}/>{syncBusy?t.loading:t.sync}</button>
       <p className="parent-account-muted">{t.syncDone}: {syncedCount}</p>
       <button type="button" className="parent-account-secondary" onClick={onLogout}><LogOut size={16}/>{t.logout}</button>
     </div>:
