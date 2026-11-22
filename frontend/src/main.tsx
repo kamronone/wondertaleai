@@ -270,6 +270,9 @@ function App(){
   const [offlineArtReady,setOfflineArtReady]=useState(false);
   const [offlineArtBusy,setOfflineArtBusy]=useState(false);
   const [offlineArtError,setOfflineArtError]=useState(false);
+  // Ignore late download results after the reader switches to another book.
+  const offlineArtBookRef=useRef(active?.id);
+  offlineArtBookRef.current=active?.id;
   useEffect(()=>{
     let alive=true;
     setOfflineArtReady(false);setOfflineArtError(false);
@@ -282,12 +285,14 @@ function App(){
   const saveReaderClassicOffline=async()=>{
     const id=active&&isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined;
     if(!id||!canDownloadClassicArt(id)||offlineArtBusy)return;
+    const bookId=active?.id;
     setOfflineArtBusy(true);setOfflineArtError(false);
     try{
       await downloadClassicOfflineArt(id);
-      setOfflineArtReady(await hasClassicOfflineArt(id));
+      const ready=await hasClassicOfflineArt(id);
+      if(offlineArtBookRef.current===bookId)setOfflineArtReady(ready);
     }catch{
-      setOfflineArtError(true);
+      if(offlineArtBookRef.current===bookId)setOfflineArtError(true);
     }finally{setOfflineArtBusy(false);}
   };
   const ambiencePlayback=useRef<AmbiencePlayback|null>(null);
