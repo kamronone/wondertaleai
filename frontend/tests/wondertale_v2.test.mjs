@@ -52,10 +52,11 @@ test("Home, creator, reader and library use compact and accessible controls",()=
   assert.match(app,/readingStats\.unlocked/);
 });
 
-test("Welcome screen stays uncluttered while the header retains language selection",()=>{
+test("Welcome and header stay uncluttered; language stays in profile settings",()=>{
   assert.doesNotMatch(app,/id="welcome-language-select"/);
-  assert.match(app,/className="language-control"/);
-  assert.match(app,/onChange=\{e=>switchLang\(e\.target\.value as Lang\)\}/);
+  assert.doesNotMatch(app,/className="language-control"/);
+  assert.match(app,/onLanguage=\{switchLang\}/);
+  assert.match(app,/onLanguage=\{switchLang\}/);
   assert.match(uzCheck,/Onboarding must not show the language selector/);
 });
 
@@ -64,7 +65,8 @@ test("Onboarding has a single-tap skip path, without changing saved language",()
   assert.match(app,/const finishOnboarding=\(destination:"home"\|"account"\)=>\{/);
   assert.match(app,/localStorage\.setItem\("wondertale-onboarding-v1","seen"\)/);
   assert.doesNotMatch(app,/id="welcome-language-select"/);
-  assert.match(app,/className="language-control"/);
+  assert.doesNotMatch(app,/className="language-control"/);
+  assert.match(app,/onLanguage=\{switchLang\}/);
   assert.match(css,/\.welcome-screen \.welcome-skip\{/);
   assert.match(css,/\.welcome-screen \.welcome-skip:focus-visible\{/);
 });
