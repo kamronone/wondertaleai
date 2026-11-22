@@ -20,6 +20,20 @@ Each page has distinct scene content (960×720 PNG) matching the eight
 story beats. Do not replace the images with identical copies or change
 custom user-uploaded illustrations.
 
+## Install the reviewed ZIP (one command)
+
+From the `frontend` directory run:
+
+```bash
+npm run install:rapunzel:art -- ./ertakcha_rapunzel_8_png.zip
+```
+
+The ZIP must first be available in that directory. The installer validates the
+eight individual PNGs, file signatures, resolution, and duplicate content, then
+writes only the exact expected image paths. It never executes ZIP contents.
+This step modifies the local checkout; commit all eight images to
+`fix/private-book-access` before changing the preview environment.
+
 ## Enable only after uploading
 
 Set `VITE_RAPUNZEL_PNG_READY=true` in the **Preview** build environment,
