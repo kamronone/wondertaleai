@@ -177,14 +177,14 @@
   font-size:12px!important;
   line-height:1.4!important;
 }
-.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-legal{
+.create-page.create-reference-page .wizard-step-three-v1 .legal-consent-links{
   display:flex;
   align-items:center;
   flex-wrap:wrap;
   gap:6px!important;
   margin:0!important;
 }
-.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-legal>button{
+.create-page.create-reference-page .wizard-step-three-v1 .legal-consent-links>button{
   width:auto!important;
   min-width:0!important;
   min-height:35px!important;
