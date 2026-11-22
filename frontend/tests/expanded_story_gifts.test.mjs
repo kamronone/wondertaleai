@@ -10,9 +10,12 @@ const scenes=[
   ["snow-white",4,"flower-basket.svg"],
   ["ugly-duckling",5,"pond-lily.svg"],
   ["bremen",4,"music-bell.svg"],
-  ["rapunzel",3,"tower-flower.svg"]
+  ["rapunzel",3,"tower-flower.svg"],
+  ["hansel-gretel",2,"breadcrumb-bag.svg"],
+  ["puss-boots",2,"cat-ribbon.svg"],
+  ["sleeping-beauty",2,"fairy-star.svg"]
 ];
-test("four new fairy tales offer illustrated page-specific gifts in three languages",async()=>{
+test("seven fairy tales offer illustrated page-specific gifts in three languages",async()=>{
  const transpiled=await transform(source,{loader:"ts",format:"esm",target:"es2022"});
  const {storyGiftForPage}=await import("data:text/javascript;base64,"+Buffer.from(transpiled.code).toString("base64"));
  for(const [id,page,filename] of scenes){
