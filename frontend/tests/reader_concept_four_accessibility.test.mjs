@@ -9,7 +9,8 @@ test("reader restores global header while preserving in-reader library navigatio
   assert.match(css,/\.shell:has\(>main>\.reader-page\) > \.topbar\s*\{\s*display:flex!important/);
   assert.match(css,/\.shell > main > \.reader-page\s*\{\s*padding-bottom:calc\(165px \+ env\(safe-area-inset-bottom, 0px\)\)!important/);
   assert.match(app,/className="reader-toolbar"/);
-  assert.match(app,/className="back-button" onClick=\{\(\)=>setTab\("library"\)\}/);
+  assert.doesNotMatch(app,/className="back-button" onClick=\{\(\)=>setTab\("library"\)\}/);
+  assert.match(app,/className="mobile-tabbar"[\s\S]*?onClick=\{\(\)=>setTab\("library"\)\}/);
 });
 
 test("saved reader font sizes still work in every book appearance",()=>{
