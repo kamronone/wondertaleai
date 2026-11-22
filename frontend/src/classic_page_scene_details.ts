@@ -96,9 +96,9 @@ export function classicPageSceneDetail(classicId:string,pageIndex:number,pageTex
    ["tree",/дерев|daraxt|tree/],
    ["heart",/добр|друж|дӯст|do‘st|dost|friend|kindness/]
   ];
-  const matches=cues.filter(([,pattern])=>pattern.test(text));
-  const match=matches.find(([name])=>name===icon)??matches[0];
-  icon=match?.[0]??"book";
+  const matches=cues.map(([name,pattern])=>({name,index:text.search(pattern)})).filter(match=>match.index>=0);
+  matches.sort((a,b)=>a.index-b.index);
+  icon=matches[0]?.name??"book";
   // Generic introduction and farewell explicitly revolve around the book.
   if(page===0||page===1||page===7){
    if(cues[0][1].test(text))icon="book";
