@@ -13,7 +13,8 @@ export async function checkAiStoryAccess(
       cache:"no-store",
       signal:AbortSignal.timeout(12000),
     });
-    if(response.status===401||response.status===403)return "login";
+    if(response.status===401)return "login";
+    if(response.status===403)return "not-allowed";
     if(!response.ok)return "unavailable";
     const raw:unknown=await response.json();
     if(!raw||typeof raw!=="object")return "unavailable";
