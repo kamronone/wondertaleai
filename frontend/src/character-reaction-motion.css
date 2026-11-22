@@ -1,0 +1,94 @@
+/* Small, lightweight GIF-like character reactions over existing PNG/GIF book art.
+   Never replace an illustration, intercept page swipes or move the reader text. */
+.reader-page .story-page-image .wt-character-reaction-fx{
+  position:absolute;z-index:1;pointer-events:none;
+  width:96px;height:96px;display:grid;place-items:center;
+  transform:translate(-50%,-50%);
+  color:#fff4bc;filter:drop-shadow(0 2px 4px #53375f90);
+  border-radius:50%;
+}
+.reader-page .wt-character-reaction-fx::before{
+  content:"";position:absolute;inset:11px;border:2px solid #fff7c5a8;
+  border-radius:50%;background:radial-gradient(circle,#f9d8ff70,transparent 75%);
+  animation:wt-reaction-halo 1700ms ease-out both;
+}
+.reader-page .wt-character-reaction-fx svg{
+  position:absolute;opacity:0;
+  animation:wt-reaction-burst 1650ms ease-out both;
+}
+.reader-page .wt-character-reaction-fx svg:nth-child(1){left:30px;top:34px;--wt-tx:-8px;--wt-ty:-26px}
+.reader-page .wt-character-reaction-fx svg:nth-child(2){left:59px;top:22px;--wt-tx:17px;--wt-ty:-42px;animation-delay:130ms}
+.reader-page .wt-character-reaction-fx svg:nth-child(3){left:16px;top:52px;--wt-tx:-20px;--wt-ty:-33px;animation-delay:240ms}
+.reader-page .wt-reaction-wave svg{animation-name:wt-reaction-wave}
+.reader-page .wt-reaction-music svg{animation-name:wt-reaction-music;color:#fff1bc}
+.reader-page .wt-reaction-flutter svg{animation-name:wt-reaction-flutter;color:#ecfaff}
+.reader-page .wt-reaction-bow svg{animation-name:wt-reaction-bow;color:#ffe3f1}
+.reader-page .wt-reaction-dance svg{animation-name:wt-reaction-dance;color:#ffeac6}
+.reader-page .wt-reaction-shine svg{animation-name:wt-reaction-shine;color:#fffac9}
+.reader-page .wt-reaction-bloom svg{animation-name:wt-reaction-bloom;color:#ffe2df}
+.reader-page .wt-reaction-cheer svg{animation-name:wt-reaction-cheer;color:#ecffe0}
+@keyframes wt-reaction-halo{
+  0%{opacity:0;transform:scale(.5)}
+  25%{opacity:1;transform:scale(1)}
+  70%{opacity:.72}
+  100%{opacity:0;transform:scale(1.5)}
+}
+@keyframes wt-reaction-burst{
+  0%{opacity:0;transform:translate(0,10px) scale(.5)}
+  22%{opacity:1}
+  75%{opacity:.9}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scale(1.15)}
+}
+@keyframes wt-reaction-wave{
+  0%{opacity:0;transform:translateY(10px) rotate(-30deg) scale(.7)}
+  18%,42%,65%{opacity:1;transform:translateY(-6px) rotate(30deg)}
+  30%,54%{transform:translateY(-10px) rotate(-28deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) rotate(15deg)}
+}
+@keyframes wt-reaction-music{
+  0%{opacity:0;transform:translate(0,10px) rotate(-12deg)}
+  30%{opacity:1;transform:translate(8px,-6px) rotate(12deg)}
+  65%{opacity:1;transform:translate(-5px,-21px) rotate(-10deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) rotate(15deg)}
+}
+@keyframes wt-reaction-flutter{
+  0%{opacity:0;transform:scaleX(.35) rotate(-25deg)}
+  20%,50%,75%{opacity:1;transform:scaleX(1.2) rotate(25deg)}
+  34%,64%{transform:scaleX(.6) rotate(-25deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scaleX(.5)}
+}
+@keyframes wt-reaction-bow{
+  0%{opacity:0;transform:rotate(-10deg) scale(.65)}
+  25%{opacity:1;transform:rotate(25deg) translateY(7px)}
+  55%{opacity:1;transform:rotate(-10deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty))}
+}
+@keyframes wt-reaction-dance{
+  0%{opacity:0;transform:translateY(8px) rotate(-16deg)}
+  20%,60%{opacity:1;transform:translateY(-13px) rotate(20deg)}
+  40%,80%{opacity:1;transform:translateY(4px) rotate(-20deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty))}
+}
+@keyframes wt-reaction-shine{
+  0%{opacity:0;transform:scale(.2) rotate(-30deg)}
+  35%{opacity:1;transform:scale(1.3) rotate(60deg)}
+  70%{opacity:.95;transform:scale(1) rotate(140deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scale(.4) rotate(200deg)}
+}
+@keyframes wt-reaction-bloom{
+  0%{opacity:0;transform:scale(.1) rotate(-40deg)}
+  40%{opacity:1;transform:scale(1.3) rotate(8deg)}
+  70%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scale(1.05)}
+}
+@keyframes wt-reaction-cheer{
+  0%{opacity:0;transform:translateY(12px) scale(.65)}
+  24%,60%{opacity:1;transform:translateY(-18px) scale(1.18)}
+  42%,77%{opacity:1;transform:translateY(0) scale(.85)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty))}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-character-reaction-fx::before,
+  .reader-page .wt-character-reaction-fx svg{animation:none!important;opacity:0!important}
+}
+@media print{.reader-page .wt-character-reaction-fx{display:none!important}}
