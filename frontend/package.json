@@ -10,7 +10,8 @@
     "test": "node --test tests/*.test.mjs",
     "preview": "vite preview",
     "check:images": "node scripts/check-classic-page-assets.mjs",
-    "check:images:release": "node scripts/check-classic-page-assets.mjs --strict"
+    "check:images:release": "node scripts/check-classic-page-assets.mjs --strict",
+    "install:rapunzel:art": "node scripts/install-rapunzel-pngs.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",
