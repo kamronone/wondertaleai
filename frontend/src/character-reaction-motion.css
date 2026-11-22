@@ -92,3 +92,18 @@
   .reader-page .wt-character-reaction-fx svg{animation:none!important;opacity:0!important}
 }
 @media print{.reader-page .wt-character-reaction-fx{display:none!important}}
+
+/* Real transparent GIF: character animation overlays the actual page art.
+   Never alter the PNG/SVG/GIF scene under the overlay. */
+.reader-page .story-page-image .wt-character-reaction-gif{
+ position:absolute;inset:8px;width:80px;height:80px;
+ object-fit:contain;image-rendering:auto;pointer-events:none;
+ filter:drop-shadow(0 2px 4px #321b4c42);
+}
+.reader-page .wt-character-reaction-fx:has(.wt-character-reaction-gif)::before{display:none}
+@media(prefers-reduced-motion:reduce){
+ .reader-page .story-page-image .wt-character-reaction-gif{display:none!important}
+}
+@media print{
+ .reader-page .story-page-image .wt-character-reaction-gif{display:none!important}
+}
