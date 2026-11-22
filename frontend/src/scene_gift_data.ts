@@ -15,6 +15,38 @@ export type StoryGiftScene={
    Only built-in classic books are eligible, never private photos or AI uploads. */
 const tr=(ru:string,uz:string,en:string):Record<Lang,string>=>({ru,uz,en});
 const giftScenes:Record<string,StoryGiftScene>={
+  "snow-white:4":{
+    id:"snow-white-flowers",
+    asset:"/images/interactions/flower-basket.svg",
+    name:tr("Корзинка цветов","Gullar savati","Flower basket"),
+    instruction:tr("Передай Белоснежке цветы для новых друзей","Oppog‘oyga yangi do‘stlari uchun gullarni uzating","Give Snow White some flowers for her new friends"),
+    reply:tr("Спасибо! Эти цветы порадуют моих друзей!","Rahmat! Bu gullar do‘stlarimni xursand qiladi!","Thank you! These flowers will make my friends smile!"),
+    start:{x:.83,y:.79},target:{x:.26,y:.66}
+  },
+  "ugly-duckling:5":{
+    id:"duckling-lily",
+    asset:"/images/interactions/pond-lily.svg",
+    name:tr("Водяная лилия","Suv nilufari","Water lily"),
+    instruction:tr("Подари утёнку лилию у пруда","O‘rdakchaga hovuz yonida nilufar sovg‘a qiling","Give the duckling a lily by the pond"),
+    reply:tr("Какой красивый цветок! Мне стало веселее!","Qanday chiroyli gul! Kayfiyatim ko‘tarildi!","What a lovely flower! I feel happier now!"),
+    start:{x:.83,y:.80},target:{x:.42,y:.65}
+  },
+  "bremen:4":{
+    id:"bremen-bell",
+    asset:"/images/interactions/music-bell.svg",
+    name:tr("Музыкальный колокольчик","Musiqa qo‘ng‘irog‘i","Music bell"),
+    instruction:tr("Передай музыкантам колокольчик","Musiqachilarga qo‘ng‘iroqchani uzating","Give the musicians the little bell"),
+    reply:tr("Дзинь-дзинь! Теперь наша песня звучит ещё веселее!","Jiring-jiring! Endi qo‘shig‘imiz yanada quvnoq!","Ding-ding! Our song sounds even merrier now!"),
+    start:{x:.86,y:.79},target:{x:.48,y:.61}
+  },
+  "rapunzel:3":{
+    id:"rapunzel-flower",
+    asset:"/images/interactions/tower-flower.svg",
+    name:tr("Цветок для Рапунцель","Rapunsel uchun gul","Flower for Rapunzel"),
+    instruction:tr("Подари Рапунцель цветок у башни","Minora yonida Rapunselga gul sovg‘a qiling","Give Rapunzel a flower by the tower"),
+    reply:tr("Спасибо за цветок! Ты сделал мой день светлее!","Gul uchun rahmat! Kunim yanada yorishdi!","Thank you for the flower! You've brightened my day!"),
+    start:{x:.85,y:.79},target:{x:.50,y:.45}
+  },
   "three-pigs:7":{
     id:"three-pigs-wolf-door",
     asset:"/images/interactions/wooden-latch.svg",
