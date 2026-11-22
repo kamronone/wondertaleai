@@ -23,3 +23,12 @@ test("strict release validation requires eight real PNG files when flag enabled"
  assert.match(verify,/stories\.length\*8/);
  assert.match(verify,/if\(invalid\.length\|\|duplicated\.length\|\|\(strict&&missing\.length\)\)/);
 });
+
+test("release verification refuses replaced, missing or swapped Rapunzel pages",()=>{
+ const manifest=JSON.parse(read("../artwork/rapunzel-png-integrity.json"));
+ assert.deepEqual(manifest.pages.map(entry=>entry.page),[1,2,3,4,5,6,7,8]);
+ assert.match(verify,/hash!==expected.sha256/);
+ assert.match(verify,/does not match reviewed Rapunzel artwork/);
+ assert.match(verify,/width!==rapunzelManifest.width/);
+ assert.match(verify,/height!==rapunzelManifest.height/);
+});
