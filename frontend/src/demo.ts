@@ -723,12 +723,12 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
 
 /** Legacy copies must only be updated after explicit user confirmation. */
 export function canRefreshClassicDemoStory(book:DemoBook):boolean {
- if(!["cinderella","three-pigs","snow-white","ugly-duckling","bremen","hansel-gretel","rapunzel","sleeping-beauty","puss-boots"].includes(book.classicId||""))return false;
- if(book.pages.length!==8)return false;
- const start=book.pages[0]?.text||"";
- return start.startsWith("Однажды "+book.name+" открыл волшебную книгу.")||
-   start.startsWith("Bir kuni "+book.name+" sehrli kitobni ochdi.")||
-   start.startsWith("One day, "+book.name+" opened a magical book.");
+ if(!book.classicId||!classics.some(item=>item.id===book.classicId)||book.mode!=="browser-demo"||
+    !book.id.startsWith("local-")||book.pages.length!==8)return false;
+ const refreshed=makeClassicStory(book.classicId,book.name,book.language||"uz");
+ // Offer a non-destructive, confirmed upgrade only if this is an older copy.
+ // Private books and already-updated chapters are never silently rewritten.
+ return book.pages.some((page,index)=>page.text!==refreshed.pages[index]);
 }
 export function refreshClassicDemoStory(book:DemoBook):DemoBook {
  if(!canRefreshClassicDemoStory(book))return book;
