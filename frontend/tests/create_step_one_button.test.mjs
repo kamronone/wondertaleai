@@ -36,5 +36,6 @@ test("wizard does not stretch blank space below the Ertak oqish card",()=>{
  assert.match(compact,/padding-bottom:0!important/);
  assert.match(compact,/\.site-legal-footer\{/);
  assert.doesNotMatch(main,/className="create-reference-reading-link"/);
- assert.match(main,/className="create-v4-idea"/);
+ assert.doesNotMatch(main,/className="create-v4-idea"/);
+ assert.match(main,/className="create-hero-options"/);
 });
