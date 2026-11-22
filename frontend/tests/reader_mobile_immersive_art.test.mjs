@@ -5,10 +5,11 @@ import {readFileSync} from "node:fs";
 const css=readFileSync(new URL("../src/reader-concept-four.css",import.meta.url),"utf8");
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 
-test("reading hides duplicate bottom tabs but preserves a way back",()=>{
-  assert.match(css,/\.shell:has\(>main>\.reader-page\) \.mobile-tabbar\s*\{\s*display:none!important/);
-  assert.match(css,/bottom:calc\(10px \+ env\(safe-area-inset-bottom, 0px\)\)!important/);
-  assert.match(app,/className="back-button" onClick=\{\(\)=>setTab\("library"\)\}/);
+test("reader uses bottom library navigation instead of a duplicate top button",()=>{
+  assert.match(css,/\.shell:has\(>main>\.reader-page\) \.mobile-tabbar\s*\{\s*display:flex!important/);
+  assert.match(css,/bottom:calc\(78px \+ env\(safe-area-inset-bottom, 0px\)\)!important/);
+  assert.doesNotMatch(app,/className="back-button" onClick=\{\(\)=>setTab\("library"\)\}/);
+  assert.match(app,/className="mobile-tabbar"[\s\S]*?onClick=\{\(\)=>setTab\("library"\)\}/);
 });
 test("portrait illustrations can expand to an uncropped view",()=>{
   assert.match(app,/const \[readerImageExpanded,setReaderImageExpanded\]=useState\(false\)/);
