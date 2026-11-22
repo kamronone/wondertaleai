@@ -33,7 +33,7 @@ test("only the four illustrated classic scenes receive actions", async()=>{
 test("choices are page-local and never write personal data or alter the story",()=>{
  assert.match(component,/setChoice\(null\)/);
  assert.match(component,/\[classicId,page\]/);
- assert.match(component,/onClick=\{\(\)=>setChoice\(index\)\}/);
+ assert.match(component,/onClick=\{event=>\{event\.stopPropagation\(\);setChoice\(index\);\}\}/);
  assert.match(component,/role="status" aria-live="polite"/);
  assert.doesNotMatch(component,/localStorage|sessionStorage|fetch\(|Authorization|privateToken/);
  assert.match(component,/if\(!scene\|\|disabled\)return null/);
