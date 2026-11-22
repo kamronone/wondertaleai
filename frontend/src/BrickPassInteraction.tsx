@@ -72,7 +72,7 @@ export function BrickPassInteraction({lang}:{lang:Lang}){
     <div className="wt-brick-target" style={{left:(target.x*100)+"%",top:(target.y*100)+"%"}} aria-hidden="true">
       {delivered?<CheckCircle2 size={26}/>:<span className="wt-brick-target-ring"/>}
     </div>
-    {!delivered&&<div className="wt-brick-guide" aria-hidden="true"><span>🧱</span><span>➜</span><span>🐷</span></div>}
+    {!delivered&&<div className="wt-brick-guide" aria-hidden="true"><span>🧱</span><span>➜</span><span>🐷</span><small>{label}</small></div>}
     <div
       className={"wt-brick-item"+(dragging?" is-dragging":"")}
       style={{left:(point.x*100)+"%",top:(point.y*100)+"%"}}
