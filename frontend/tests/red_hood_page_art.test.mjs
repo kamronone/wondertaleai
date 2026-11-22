@@ -15,7 +15,7 @@ test("red hood has eight distinct local visual scene choices",()=>{
  assert.match(images,/data:image\/svg\+xml;charset=utf-8,/);
 });
 test("every new Red Riding Hood page gets its own artwork, other classics unchanged",()=>{
- assert.match(demo,/classicId\?classicReaderImage\(classicId,art\|\|"",index\):illustration\(index\)/);
+ assert.match(demo,/classicId\?classicReaderImage\(classicId,art\|\|"",index,text\):illustration\(index\)/);
  assert.match(demo,/classicId,savedOnDevice:saveOnDevice/);
 });
 test("existing browser-saved classics display updated page art without replacing user uploads",()=>{
@@ -23,7 +23,7 @@ test("existing browser-saved classics display updated page art without replacing
  const mapping=read("../src/classic_page_art.ts");
  assert.match(mapping,/export function classicReaderImage/);
  assert.match(mapping,/if\(!oldAsset&&!oldRedHood&&!oldDemoVector&&!oldGeneratedPage&&imageUrl\.trim\(\)!==""\)return imageUrl/);
- assert.match(mapping,/if\(!bundledPngIds\.has\(classicId\)\)return classicPageArtwork\(classicId,pageIndex\)/);
+ assert.match(mapping,/if\(!bundledPngIds\.has\(classicId\)\)return classicPageArtwork\(classicId,pageIndex,pageText\)/);
  assert.match(main,/PrivateReaderIllustration/);
 });
 
