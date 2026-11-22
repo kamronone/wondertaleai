@@ -3,6 +3,7 @@ import type { Lang } from "./i18n";
 import { classics, type ClassicId } from "./classics";
 import { fitSequelTitle } from "./sequel_title";
 import {classicReaderImage} from "./classic_page_art";
+import {fullClassicChapters} from "./classic_full_plots";
 export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
@@ -653,6 +654,13 @@ function pussBootsStory(name:string,language:Lang):Story{
  return {title,pages:pages[language]};
 }
 function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ const complete=fullClassicChapters(id,name,language);
+ if(complete){
+  const classic=classics.find(item=>item.id===id);
+  if(!classic)throw Error("Unknown classic");
+  const title=language==="ru"?`${name} и сказка «${classic.title.ru}»`:language==="uz"?`${name} va «${classic.title.uz}» ertagi`:`${name} and ${classic.title.en}`;
+  return {title,pages:complete};
+ }
  if(id==="puss-boots")return pussBootsStory(name,language);
  if(id==="sleeping-beauty")return sleepingBeautyStory(name,language);
  if(id==="rapunzel")return rapunzelStory(name,language);
