@@ -3,7 +3,7 @@
 // Requires the standard "unzip" command; does not download or execute ZIP content.
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
-import {existsSync,mkdirSync,writeFileSync,renameSync,mkdtempSync,rmSync} from "node:fs";
+import {existsSync,mkdirSync,writeFileSync,renameSync,mkdtempSync,rmSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join,resolve,dirname} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -16,6 +16,8 @@ if(!archive||!existsSync(archive)){
 const files=Array.from({length:8},(_,i)=>`images/classics/rapunzel/pages/page-${i+1}.png`);
 const expected=new Set(files);
 const signature=Buffer.from([137,80,78,71,13,10,26,10]);
+const integrity=JSON.parse(readFileSync(resolve(root,"artwork/rapunzel-png-integrity.json"),"utf8"));
+if(integrity.classicId!=="rapunzel"||integrity.pages?.length!==8)throw new Error("Invalid Rapunzel artwork manifest");
 const staging=mkdtempSync(join(tmpdir(),"wondertale-rapunzel-"));
 try{
  const entries=execFileSync("unzip",["-Z","-1",archive],{encoding:"utf8",maxBuffer:1024*1024}).trim().split(/\r?\n/);
@@ -31,6 +33,8 @@ try{
   const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);
   if(width<480||height<360||width>6000||height>6000)throw new Error("Invalid dimensions "+file);
   const digest=createHash("sha256").update(bytes).digest("hex");
+  const page=Number(/page-(\d+)\.png$/.exec(file)?.[1]);
+  if(digest!==integrity.pages.find(entry=>entry.page===page)?.sha256||width!==integrity.width||height!==integrity.height)throw new Error("Unexpected or swapped Rapunzel illustration "+file);
   if(digests.has(digest))throw new Error("Duplicate illustration "+file);
   digests.add(digest);
   const temporary=join(staging,file.split("/").at(-1));
