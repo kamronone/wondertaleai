@@ -30,5 +30,5 @@ test("page-specific variants remain distinct while originals stay in place",()=>
  for(const name of ["redHoodPageArtwork","threePigsPageArtwork","cinderellaPageArtwork","snowWhitePageArtwork","pussBootsPageArtwork"]){
    assert.ok(art.includes(name),"preserve existing illustrations: "+name);
  }
- assert.match(art,/const bundledPngIds = new Set\(\["red-hood","cinderella","three-pigs"\]\)/);
+ assert.match(art,/const bundledPngIds = new Set\(\["red-hood","cinderella","three-pigs",\.\.\.\(rapunzelPngReady\?/);
 });
