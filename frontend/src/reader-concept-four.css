@@ -57,9 +57,9 @@
     padding:0 5px!important;
     text-align:center;
   }
+  /* The reader needs the story title, not the child name or saved badge. */
   .reader-page .reader-title .reader-book-meta {
-    margin:0 0 3px!important;
-    gap:4px 6px!important;
+    display:none!important;
   }
   .reader-page .reader-title .reader-crown {display:none!important}
   .reader-page .reader-title .reader-child-label {font-size:10px!important;color:#856d78}
@@ -129,8 +129,8 @@
   .reader-page .story-page.book-style-classic .story-page-image,
   .reader-page .story-page.book-style-storybook .story-page-image,
   .reader-page .story-page.book-style-simple .story-page-image {
-    height:clamp(174px,28svh,255px)!important;
-    max-height:255px!important;
+    height:clamp(190px,32svh,285px)!important;
+    max-height:285px!important;
     padding:0!important;
     border-radius:19px!important;
     background:#f2e7d8!important;
@@ -138,10 +138,19 @@
     overflow:hidden!important;
     width:100%!important;
   }
+  /* Portrait PNGs fill the horizontal book illustration rather than
+     shrinking to a narrow strip with large blank sidebars. */
   .reader-page .story-page .story-page-image img,
+  .reader-page .story-page .story-page-image picture img,
+  .reader-page .story-page .story-page-image > div > img,
   .reader-page .story-page .story-page-image .story-image-fallback {
+    width:100%!important;
+    height:100%!important;
+    max-width:100%!important;
+    max-height:100%!important;
+    object-fit:cover!important;
+    object-position:center 42%!important;
     border-radius:17px!important;
-    object-fit:contain!important;
     box-shadow:none!important;
   }
   .reader-page .story-page .story-text,
@@ -227,7 +236,7 @@
   .reader-page .story-page.book-style-classic .story-page-image,
   .reader-page .story-page.book-style-storybook .story-page-image,
   .reader-page .story-page.book-style-simple .story-page-image {
-    height:clamp(145px,24svh,195px)!important;
+    height:clamp(160px,27svh,225px)!important;
   }
 }
 @media print {
