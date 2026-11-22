@@ -2,7 +2,7 @@
  * Never fetch, store or enumerate private books, account media or user uploads.
  */
 export const OFFLINE_STORY_CACHE="wondertale-offline-stories-v1";
-const supported=new Set(["red-hood","cinderella","three-pigs"]);
+const supported=new Set(["red-hood","cinderella","three-pigs","rapunzel"]);
 const animations:Record<string,string[]>={
   "red-hood":["red-hood-walk-wave"],
   "cinderella":["cinderella-walking"],
