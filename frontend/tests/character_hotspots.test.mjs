@@ -8,7 +8,7 @@ const app=read("../src/main.tsx");
 const css=read("../src/reader-mobile-v1.css");
 
 test("eleven safe classic scenes define a visible character hotspot",()=>{
- const keys=[...source.matchAll(/^  "[a-z-]+:([1-8])": \{/gm)].map(m=>m[1]+":"+m[2]).sort();
+ const keys=[...source.matchAll(/^  "([a-z-]+):([1-8])": \{/gm)].map(m=>m[1]+":"+m[2]).sort();
  assert.deepEqual(keys,["bremen:2","cinderella:5","hansel-gretel:3","puss-boots:4","rapunzel:7","red-hood:1","sleeping-beauty:5","snow-white:2","three-pigs:4","three-pigs:7","ugly-duckling:3"]);
  for(const key of keys)assert.ok(source.includes('"'+key+'"'));
  assert.match(source,/if\(!classicId\|\|!Number\.isInteger\(page\)\|\|page<1\|\|page>8\)return null/);
@@ -25,7 +25,7 @@ test("hotspot position follows the image content with object-fit contain",()=>{
 });
 
 test("hotspots preserve ordinary inline images and story navigation",()=>{
- assert.match(app,/import \{CharacterHotspot\} from "\.\/CharacterHotspot"/);
+ assert.match(app,/import \{CharacterHotspot,characterHotspotForPage\} from "\.\/CharacterHotspot"/);
  assert.match(app,/<CharacterHotspot classicId=/);
  assert.match(app,/!readerFocusMode&&!readerNightMode&&bedtimeUntil===null/);
  assert.match(app,/classicAnimatedPage\(\(active as DemoBook\)\.classicId/);
