@@ -22,7 +22,8 @@ export async function hasClassicOfflineArt(id:string):Promise<boolean>{
   try{
     const cache=await caches.open(OFFLINE_STORY_CACHE);
     for(const url of classicOfflineArtUrls(id).slice(0,8)){
-      if(!await cache.match(url))return false;
+      const response=await cache.match(url);
+      if(!response?.ok||!(response.headers.get("content-type")||"").toLowerCase().includes("image/png"))return false;
     }
     return true;
   }catch{return false;}
