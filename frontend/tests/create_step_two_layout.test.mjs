@@ -7,7 +7,7 @@ const css=readFileSync(new URL("../src/create-step-two.css",import.meta.url),"ut
 
 test("second story wizard uses its own compact layout without affecting step one",()=>{
  assert.match(app,/import "\.\/create-step-two\.css"/);
- assert.match(app,/\{createStep===2&&<div className="wizard-step-two">/);
+ assert.match(app,/\{createStep===2&&<div className="wizard-step-two wizard-step-two-v4">/);
  assert.match(app,/className="wizard-step-two-section-label"/);
  assert.match(app,/className="wizard-step-two-prompt"/);
  assert.match(css,/\.wizard-step-two \.classic-choice/);
