@@ -34,15 +34,17 @@ writes only the exact expected image paths. It never executes ZIP contents.
 This step modifies the local checkout; commit all eight images to
 `fix/private-book-access` before changing the preview environment.
 
-## Enable only after uploading
+## Automatic activation after uploading
 
-Set `VITE_RAPUNZEL_PNG_READY=true` in the **Preview** build environment,
-not Production, after all PNG files are present.
+Once all eight PNG files are committed to the working branch, the Preview
+build detects the complete collection and automatically enables it. No
+Netlify environment variable is needed. The optional variable
+`VITE_RAPUNZEL_PNG_READY=false` forces SVG fallback if visual review fails.
 
-The `check:images:release` command becomes a 32-file validation and
-fails if any of the Rapunzel images is absent, invalid or duplicated.
-Without this flag, the original 24-file check and deterministic vector
-fallback continue to work. Reader upgrades the original bundled Rapunzel
+The `check:images:release` command becomes a 32-file validation whenever
+any Rapunzel PNG is present. It fails when the set is incomplete, invalid,
+or duplicated. Without any PNGs, the original 24-file check and deterministic
+vector fallback continue to work. Reader upgrades the original bundled Rapunzel
 SVG but never overwrites private/custom illustration URLs.
 
 Check the new Netlify Ertakcha **deploy preview** before any Production
