@@ -10,7 +10,7 @@ const ids=["goldilocks","little-mermaid","frog-prince","fisherman-fish","puss-bo
 
 test("all new motifs match a classic title, not generic unrelated clipart",()=>{
  for(const id of ids){
-   assert.ok(classics.includes('id:"'+id+'"'),"missing classic "+id);
+   assert.ok(classics.includes('id:"'+id+'"')||classics.includes('"id":"'+id+'"'),"missing classic "+id);
    assert.ok(motifs.includes('"'+id+'":page=>'),"missing original SVG motif "+id);
  }
  assert.match(art,/import \{ classicStoryMotif \} from "\.\/classic_story_motifs";/);
