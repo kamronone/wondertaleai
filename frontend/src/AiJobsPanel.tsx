@@ -9,7 +9,7 @@ const labels={
 } as const satisfies Record<Lang,Record<string,string>>;
 
 export function AiJobsPanel({api,session,lang,onOpenLibrary,refreshVersion=0}:{
-  api:string;session:string;lang:Lang;onOpenLibrary:()=>void;refreshVersion?:number;
+  api:string;session:string;lang:Lang;onOpenLibrary:(bookId:string)=>void;refreshVersion?:number;
 }){
   const t=labels[lang];
   const [jobs,setJobs]=useState<AiJob[]>([]);
@@ -94,7 +94,7 @@ export function AiJobsPanel({api,session,lang,onOpenLibrary,refreshVersion=0}:{
         <span className="ai-jobs-status">{t[job.status as AiJobStatus]}</span>
         {job.status==="queued"&&<button type="button" className="small-button" disabled={!!busyId}
           onClick={()=>void cancel(job)}>{t.cancel}</button>}
-        {job.status==="completed"&&<button type="button" className="small-button" onClick={onOpenLibrary}>{t.open}</button>}
+        {job.status==="completed"&&<button type="button" className="small-button" onClick={()=>{if(job.book_id)onOpenLibrary(job.book_id);}}>{t.open}</button>}
       </li>)}
     </ul>}
   </section>;
