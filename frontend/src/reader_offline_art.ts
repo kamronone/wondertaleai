@@ -35,17 +35,23 @@ export async function downloadClassicOfflineArt(id:string):Promise<{saved:number
   let saved=0;
   const added:string[]=[];
   for(const url of urls){
+    const expected=url.endsWith(".gif")?"image/gif":"image/png";
+    // Keep an already verified image usable even when connection drops.
+    let cached:Response|undefined;
+    try{cached=await cache.match(url);}catch{/* Cache may be unavailable during cleanup. */}
+    const validCached=Boolean(cached?.ok&&(cached.headers.get("content-type")||"").toLowerCase().includes(expected));
+    const alreadyCached=validCached;
+    if(!navigator.onLine&&validCached){saved++;continue;}
     try{
-      // A failed refresh must not remove illustrations saved in an earlier session.
-      const alreadyCached=Boolean(await cache.match(url));
       const response=await fetch(url,{credentials:"omit",cache:"no-cache"});
-      const expected=url.endsWith(".gif")?"image/gif":"image/png";
       const type=response.headers.get("content-type")||"";
       if(!response.ok||!type.toLowerCase().includes(expected))throw new Error("INVALID_ART");
       await cache.put(url,response);
       if(!alreadyCached)added.push(url);
       saved++;
     }catch{
+      // A verified previously downloaded page remains usable even if refresh fails.
+      if(validCached){saved++;continue;}
       // Missing animations are optional, but every static story page is required.
       if(url.endsWith(".png")){
         // Roll back only entries added by this attempt, preserving older downloads.
