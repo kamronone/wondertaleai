@@ -25,7 +25,7 @@ test("reader uses a versioned built-in path and preserves user-provided images",
   assert.match(code,/classicId!=="red-hood"/);
   assert.match(code,/oldCover\|\|localVector\|\|builtinPage \? redHoodPagePng\(pageIndex\) : imageUrl/);
   assert.match(code,/\(\?:pages\|watercolor\)/);
-  assert.match(demo,/classicId\?classicReaderImage\(classicId,art\|\|"",index\)/);
+  assert.match(demo,/classicId\?classicReaderImage\(classicId,art\|\|"",index,text\)/);
   assert.match(reader,/classicReaderImage\(isDemoBook\(active as DemoBook\)/);
 });
 test("print version uses correct page-specific illustration too",()=>{
