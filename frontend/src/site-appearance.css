@@ -29,12 +29,8 @@
 .shell[data-site-theme="night"] .hero .primary-button{background:linear-gradient(110deg,#efd7ff,#bd9bed);color:#281d46;border-color:#fff0ff;box-shadow:0 6px 24px #0b082c88}
 .shell[data-site-theme="forest"] .primary-button:not(.hero .primary-button){background:#327b5e;color:white}
 .shell[data-site-theme="night"] .primary-button:not(.hero .primary-button){background:#9c7add;color:#17132e}
-.shell[data-site-theme="forest"] .header-actions .small-button,
-.shell[data-site-theme="forest"] .language-control select,
-.shell[data-site-theme="forest"] .wt-site-theme-cycle{background:#f6fbf2;color:#2b6147;border-color:#b8d5bd}
-.shell[data-site-theme="night"] .header-actions .small-button,
-.shell[data-site-theme="night"] .language-control select,
-.shell[data-site-theme="night"] .wt-site-theme-cycle{background:#302940;color:#eee1fb;border-color:#5d4e77}
+.shell[data-site-theme="forest"] .header-actions .small-button{background:#f6fbf2;color:#2b6147;border-color:#b8d5bd}
+.shell[data-site-theme="night"] .header-actions .small-button{background:#302940;color:#eee1fb;border-color:#5d4e77}
 .shell[data-site-theme="night"] .create-page,
 .shell[data-site-theme="night"] .library-page,
 .shell[data-site-theme="night"] .reader-page,
@@ -65,8 +61,7 @@
 .shell[data-site-theme="night"] .reader-page .story-text{color:#35294e}
 .shell[data-site-theme="night"] .reader-page .story-page.reader-night,
 .shell[data-site-theme="night"] .reader-page .story-page.reader-night .story-text{color:#f9f0e2}
-.wt-site-theme-cycle{display:inline-grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid #e5d4f1;border-radius:12px;background:#fff;color:#6b4c97}
-.wt-site-theme-cycle:focus-visible,.wt-theme-choice:focus-visible{outline:3px solid #efc578;outline-offset:2px}
+.wt-theme-choice:focus-visible{outline:3px solid #efc578;outline-offset:2px}
 .wt-theme-settings{display:flex;flex-direction:column;gap:8px;padding:10px 0}
 .wt-theme-settings-title{font-size:13px;font-weight:800}
 .wt-theme-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
@@ -77,21 +72,19 @@
 .wt-theme-choice[data-option="forest"][aria-pressed="true"]{border-color:#377d57;box-shadow:0 0 0 2px #377d5730}
 .wt-theme-choice[data-option="night"][aria-pressed="true"]{border-color:#e1baff;box-shadow:0 0 0 2px #c299e540}
 @media(max-width:420px){
- .wt-site-theme-cycle{width:40px;height:40px;flex-basis:40px}
  .wt-theme-options{gap:4px}
  .wt-theme-choice{font-size:10px;padding:6px 3px}
 }
-/* Three actions fit on iPhone SE without shrinking touch targets. */
+/* Logo and profile only: calm one-action mobile header. */
 @media(max-width:420px){
  .shell .topbar{padding-left:12px;padding-right:12px;gap:7px}
  .shell .header-actions{gap:6px;flex:0 0 auto}
  .shell .header-actions .small-button{padding:8px;min-width:40px;min-height:40px}
  .shell .header-actions .small-button span{display:none}
- .shell .language-control select{max-width:90px;min-width:0;padding:7px 19px 7px 7px;font-size:12px}
  .shell .brand{min-width:0;font-size:clamp(15px,4vw,20px);gap:6px}
  .shell .brandmark{flex:0 0 34px;width:34px;height:34px}
  .shell .brand small{display:none}
 }
 @media(prefers-reduced-motion:reduce){
- .wt-site-theme-cycle,.wt-theme-choice{transition:none!important}
+ .wt-theme-choice{transition:none!important}
 }
