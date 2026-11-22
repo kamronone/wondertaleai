@@ -44,7 +44,7 @@ import "./brick-pass-interaction.css";
 import {canDownloadClassicArt,hasClassicOfflineArt,downloadClassicOfflineArt} from "./reader_offline_art";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
-import {enqueueAiJob} from "./ai_jobs";
+import {enqueueAiJob,AiQueueError} from "./ai_jobs";
 import {AiJobsPanel} from "./AiJobsPanel";
 import {IllustrationConsentPanel} from "./IllustrationConsentPanel";
 import {PrivateReaderIllustration} from "./PrivateReaderIllustration";
@@ -1075,7 +1075,26 @@ function App(){
           ?retry.key:crypto.randomUUID().replaceAll("-","");
         aiRetry.current={token:privateToken,payload,key};
         if(AI_JOBS_ENABLED){
-          const queued=await enqueueAiJob(API,privateToken,data,key,AbortSignal.timeout(15000));
+          let queued;
+          try{
+            queued=await enqueueAiJob(API,privateToken,data,key,AbortSignal.timeout(15000));
+          }catch(error){
+            if(sessionEpoch.current!==epoch)return;
+            if(error instanceof AiQueueError){
+              const queueErrors={
+                login:{ru:"Сессия истекла. Войдите в аккаунт родителя снова.",uz:"Sessiya tugadi. Ota-ona akkauntiga qayta kiring.",en:"Session expired. Sign in to the parent account again."},
+                "not-allowed":{ru:"AI-генерация ещё не разрешена для этого аккаунта.",uz:"Bu akkaunt uchun AI ertak yaratishga hali ruxsat yo‘q.",en:"AI generation is not enabled for this account."},
+                limit:{ru:"Лимит или число активных AI-заданий достигнуты. Проверьте очередь в профиле.",uz:"AI limit yoki faol vazifalar soni to‘ldi. Profildagi navbatni tekshiring.",en:"AI quota or active job limit reached. Check your queue in the profile."},
+                "library-full":{ru:"Библиотека заполнена. Удалите ненужную книгу перед новым запросом.",uz:"Kutubxona to‘ldi. Yangi so‘rovdan oldin keraksiz kitobni o‘chiring.",en:"Your library is full. Delete an unwanted book before another request."},
+                unavailable:{ru:"AI-сервис временно недоступен. Если запрос уже отправлен, повтор сохранит тот же ключ.",uz:"AI xizmati vaqtincha ishlamayapti. Qayta urinish bir xil so‘rov kalitidan foydalanadi.",en:"AI service temporarily unavailable. Retrying keeps the same request key."},
+                "invalid-response":{ru:"Сервер ответил некорректно. Проверьте очередь в профиле перед повтором.",uz:"Server javobi noto‘g‘ri. Takrorlashdan oldin profildagi navbatni tekshiring.",en:"Unexpected server response. Check your job queue before retrying."}
+              } as const;
+              throw new Error(queueErrors[error.reason][lang]);
+            }
+            // A timed-out POST could have committed. Never create a fresh key
+            // just because Safari lost the network response.
+            throw new Error(({ru:"Соединение прервалось. Проверьте очередь в профиле. Повтор использует тот же запрос.",uz:"Aloqa uzildi. Profildagi navbatni tekshiring. Takroriy urinish avvalgi so‘rovdan foydalanadi.",en:"Connection interrupted. Check your profile queue. Retry reuses the same request."} as const)[lang]);
+          }
           if(sessionEpoch.current!==epoch)return;
           aiRetry.current=null;
           setAiJobsRefresh(v=>v+1);
