@@ -5,8 +5,9 @@ const read=path=>readFileSync(new URL(path,import.meta.url),"utf8");
 const reader=read("../src/classic_page_art.ts");
 const verify=read("../scripts/check-classic-page-assets.mjs");
 test("Rapunzel PNGs are enabled only with explicit release flag",()=>{
- assert.match(reader,/VITE_RAPUNZEL_PNG_READY==="true"/);
- assert.match(reader,/\.\.\.\(import\.meta\.env\.VITE_RAPUNZEL_PNG_READY==="true"\?\["rapunzel"\]:\[\]\)/);
+ assert.match(reader,/typeof __RAPUNZEL_PNG_READY__!=="undefined"/);
+ assert.match(read("../vite.config.ts"),/__RAPUNZEL_PNG_READY__:JSON.stringify\(process.env.VITE_RAPUNZEL_PNG_READY==="true"\)/);
+ assert.match(reader,/\.\.\.\(rapunzelPngReady\?\["rapunzel"\]:\[\]\)/);
  assert.match(reader,/if\(!bundledPngIds\.has\(classicId\)\)return classicPageArtwork/);
  assert.match(reader,/return generatedPage/);
 });
