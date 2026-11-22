@@ -395,3 +395,88 @@
 @media print {
   .reader-page .reader-art-zoom {display:none!important}
 }
+
+/* Reader photo sizing correction: every book style must fill its actual
+   image box. Older book-style selectors were more specific than cover rules.
+   Expanded mode displays the source at full frame width with natural height,
+   never in a tall fixed-size letterboxed container. */
+@media screen and (max-width:700px) {
+  .reader-page .story-page .story-page-image:not(.reader-image-expanded),
+  .reader-page .story-page.book-style-spread .story-page-image:not(.reader-image-expanded),
+  .reader-page .story-page.book-style-classic .story-page-image:not(.reader-image-expanded),
+  .reader-page .story-page.book-style-storybook .story-page-image:not(.reader-image-expanded),
+  .reader-page .story-page.book-style-simple .story-page-image:not(.reader-image-expanded) {
+    display:block!important;
+    position:relative!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:clamp(205px,31svh,285px)!important;
+    min-height:0!important;
+    max-height:285px!important;
+    padding:0!important;
+    margin:0!important;
+    overflow:hidden!important;
+  }
+  .reader-page .story-page .story-page-image:not(.reader-image-expanded) > img,
+  .reader-page .story-page .story-page-image:not(.reader-image-expanded) > svg,
+  .reader-page .story-page.book-style-spread .story-page-image:not(.reader-image-expanded) > img,
+  .reader-page .story-page.book-style-classic .story-page-image:not(.reader-image-expanded) > img,
+  .reader-page .story-page.book-style-storybook .story-page-image:not(.reader-image-expanded) > img,
+  .reader-page .story-page.book-style-simple .story-page-image:not(.reader-image-expanded) > img,
+  .reader-page .story-page .story-page-image:not(.reader-image-expanded) > .private-reader-illustration,
+  .reader-page .story-page .story-page-image:not(.reader-image-expanded) > .story-image-fallback {
+    display:block!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:100%!important;
+    max-width:100%!important;
+    min-height:100%!important;
+    max-height:100%!important;
+    object-fit:cover!important;
+    object-position:center 42%!important;
+    margin:0!important;
+    border-radius:0!important;
+  }
+  .reader-page .story-page .story-page-image.reader-image-expanded,
+  .reader-page .story-page.book-style-spread .story-page-image.reader-image-expanded,
+  .reader-page .story-page.book-style-classic .story-page-image.reader-image-expanded,
+  .reader-page .story-page.book-style-storybook .story-page-image.reader-image-expanded,
+  .reader-page .story-page.book-style-simple .story-page-image.reader-image-expanded {
+    display:block!important;
+    position:relative!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    padding:0!important;
+    margin:0!important;
+    overflow:hidden!important;
+  }
+  .reader-page .story-page .story-page-image.reader-image-expanded > img,
+  .reader-page .story-page .story-page-image.reader-image-expanded > svg,
+  .reader-page .story-page.book-style-spread .story-page-image.reader-image-expanded > img,
+  .reader-page .story-page.book-style-classic .story-page-image.reader-image-expanded > img,
+  .reader-page .story-page.book-style-storybook .story-page-image.reader-image-expanded > img,
+  .reader-page .story-page.book-style-simple .story-page-image.reader-image-expanded > img,
+  .reader-page .story-page .story-page-image.reader-image-expanded > .private-reader-illustration,
+  .reader-page .story-page .story-page-image.reader-image-expanded > .story-image-fallback {
+    display:block!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:auto!important;
+    min-width:100%!important;
+    max-width:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    aspect-ratio:auto!important;
+    object-fit:contain!important;
+    margin:0!important;
+    border-radius:0!important;
+  }
+  /* Preserve a portrait page's visible reading text and in-image controls. */
+  .reader-page .story-page .story-page-image.reader-image-expanded .reader-art-zoom {
+    top:9px;
+    right:9px;
+  }
+}
