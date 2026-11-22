@@ -1537,6 +1537,7 @@ function App(){
               </div>
             </details>}
           </div>
+        {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
           <div className="reader-edit-settings" role="group" aria-label={({ru:"Редактирование страницы",uz:"Sahifani tahrirlash",en:"Edit page"} as const)[lang]}>
           {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
@@ -1568,7 +1569,6 @@ function App(){
   return parts.active?<>{parts.before}<mark className="wt-spoken-word">{parts.active}</mark>{parts.after}</>:text;
 })()}</div></div>
         {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
-        {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
         </div>}
         {page===active.pages.length-1&&<section className="reader-finale" aria-label={({ru:"После сказки",uz:"Ertakdan keyin",en:"After the story"} as const)[lang]}>
           <div className="reader-finale-heading">
