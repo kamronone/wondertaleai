@@ -1,6 +1,13 @@
 /** Private AI queue transport. No token, prompt or child details are persisted. */
 export type AiJobStatus="queued"|"processing"|"completed"|"failed"|"needs_review"|"unavailable";
 export type AiJob={id:string;status:AiJobStatus;book_id:string|null};
+export type AiQueueFailure="login"|"not-allowed"|"limit"|"library-full"|"unavailable"|"invalid-response";
+export class AiQueueError extends Error{
+  constructor(public readonly reason:AiQueueFailure){
+    super("AI queue: "+reason);
+    this.name="AiQueueError";
+  }
+}
 const STATUSES=new Set<AiJobStatus>(["queued","processing","completed","failed","needs_review","unavailable"]);
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,6 +48,19 @@ export async function enqueueAiJob(
       Authorization:"Bearer "+token,"Content-Type":"application/json","Idempotency-Key":key
     },cache:"no-store",body:JSON.stringify(data),signal
   });
-  if(response.status!==202)throw new Error("AI job queue unavailable");
-  return parseAiJob(await response.json());
+  if(response.status!==202){
+    if(response.status===401)throw new AiQueueError("login");
+    if(response.status===403)throw new AiQueueError("not-allowed");
+    if(response.status===429)throw new AiQueueError("limit");
+    if(response.status===409)throw new AiQueueError("library-full");
+    if(response.status===503||response.status===502||response.status>=500)throw new AiQueueError("unavailable");
+    throw new AiQueueError("invalid-response");
+  }
+  try{
+    return parseAiJob(await response.json());
+  }catch{
+    // The server may already have committed this request even if the reply
+    // is corrupted. Callers must preserve their idempotency key.
+    throw new AiQueueError("invalid-response");
+  }
 }
