@@ -2,8 +2,8 @@
    Applied only to the reader on phones; all other screens remain unchanged. */
 @media screen and (max-width:700px) {
   .shell > main > .reader-page {
-    display:flex;
-    flex-direction:column;
+    display:flex!important;
+    flex-direction:column!important;
     gap:0;
     width:100%;
     min-width:0;
@@ -52,7 +52,7 @@
   }
   .reader-page > .error {order:1}
   .reader-page .reader-title {
-    order:2;
+    order:1;
     margin:3px 0 7px!important;
     padding:0 5px!important;
     text-align:center;
@@ -89,7 +89,7 @@
     border-radius:10px;
   }
   .reader-page .reader-mode-controls {
-    order:3;
+    order:4;
     display:flex!important;
     justify-content:center;
     gap:7px!important;
@@ -106,10 +106,10 @@
     background:#fffaf3;
     color:#6e4d79;
   }
-  .reader-page .reader-display-settings {order:4;margin:2px 0 9px!important}
-  .reader-page .reader-bedtime-disclosure {order:5;margin:2px 0 9px!important}
+  .reader-page .reader-display-settings {order:6;margin:2px 0 9px!important}
+  .reader-page .reader-bedtime-disclosure {order:7;margin:2px 0 9px!important}
   .reader-page .story-page {
-    order:6;
+    order:2;
     display:flex!important;
     flex-direction:column!important;
     gap:10px!important;
@@ -171,7 +171,7 @@
   }
   .reader-page .story-page .dropcap-star {color:#ad83b8!important}
   .reader-page .reader-audio-toolbar {
-    order:7;
+    order:3;
     justify-content:flex-end;
     margin:8px 0 8px!important;
     gap:7px!important;
@@ -192,9 +192,12 @@
     color:white!important;
     box-shadow:0 4px 12px rgba(106,61,131,.20);
   }
-  .reader-page .reader-ambience-button {order:8}
+  .reader-page .reader-ambience-button {order:5}
+  /* Editing and games remain available, below the reading essentials. */
   .reader-page .wt-scene-play,.reader-page .story-edit-zone,
-  .reader-page .reader-finale,.reader-page .sequel-action {order:9}
+  .reader-page .reader-finale,.reader-page .sequel-action {order:8}
+  .reader-page .reader-family-preferences {order:8}
+  .reader-page .print-book {order:9}
   .reader-page .pager {
     z-index:75!important;
     border:1px solid #e4d4db!important;
