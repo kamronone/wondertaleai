@@ -7,9 +7,9 @@ const source=read("../src/CharacterHotspot.tsx");
 const app=read("../src/main.tsx");
 const css=read("../src/reader-mobile-v1.css");
 
-test("exactly four safe classic scenes define a visible character hotspot",()=>{
- const keys=[...source.matchAll(/^  "(red-hood|cinderella|three-pigs):([1-8])": \{/gm)].map(m=>m[1]+":"+m[2]).sort();
- assert.deepEqual(keys,["cinderella:5","red-hood:1","three-pigs:4","three-pigs:7"]);
+test("eleven safe classic scenes define a visible character hotspot",()=>{
+ const keys=[...source.matchAll(/^  "[a-z-]+:([1-8])": \{/gm)].map(m=>m[1]+":"+m[2]).sort();
+ assert.deepEqual(keys,["bremen:2","cinderella:5","hansel-gretel:3","puss-boots:4","rapunzel:7","red-hood:1","sleeping-beauty:5","snow-white:2","three-pigs:4","three-pigs:7","ugly-duckling:3"]);
  for(const key of keys)assert.ok(source.includes('"'+key+'"'));
  assert.match(source,/if\(!classicId\|\|!Number\.isInteger\(page\)\|\|page<1\|\|page>8\)return null/);
 });
@@ -51,4 +51,17 @@ test("a character tap has visible feedback but respects reduced motion",()=>{
  assert.match(css,/\.wt-character-hotspot\.is-reacting/);
  assert.match(css,/@keyframes wt-character-tapped/);
  assert.match(css,/\.wt-character-hotspot\.is-reacting\{\s*animation:none!important/);
+});
+
+test("seven additional story hotspots never overlap gifts or require GIF playback",()=>{
+ const giftScenes=read("../src/scene_gift_data.ts");
+ const additional=["rapunzel:7","snow-white:2","ugly-duckling:3","bremen:2","hansel-gretel:3","puss-boots:4","sleeping-beauty:5"];
+ for(const key of additional){
+  assert.ok(source.includes('"'+key+'": {'),"missing reaction "+key);
+  assert.ok(!giftScenes.includes('"'+key+'":{'),"overlapping gift "+key);
+ }
+ assert.match(app,/characterHotspotForPage\(\(active as DemoBook\)\.classicId,page\+1\)&&/);
+ assert.match(app,/!storyGiftForPage\(\(active as DemoBook\)\.classicId,page\+1\)&&/);
+ assert.match(app,/familyReadingPreferences\.extraActivities/);
+ assert.doesNotMatch(source,/setTimeout\(|setInterval\(|nextPage\(|setPage\(/);
 });
