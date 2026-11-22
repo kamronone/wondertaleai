@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState,type KeyboardEvent as ReactKeyboardEvent,type PointerEvent as ReactPointerEvent,type TouchEvent as ReactTouchEvent} from "react";
-import {CheckCircle2} from "lucide-react";
+import {CheckCircle2,Heart,Music2,Flower2,Sun,Feather,Sparkles} from "lucide-react";
 import type {Lang} from "./i18n";
 import {storyGiftForPage,type Point} from "./scene_gift_data";
 
@@ -131,6 +131,11 @@ export function StoryGiftInteraction({classicId,page,lang}:{classicId:string|und
   };
   useEffect(()=>()=>{activePointer.current=null;activeTouch.current=false;},[]);
   if(!scene)return null;
+  const GiftEffect=classicId==="bremen"?Music2
+    :classicId==="rapunzel"||classicId==="snow-white"?Flower2
+    :classicId==="ugly-duckling"?Feather
+    :classicId==="sleeping-beauty"?Sun
+    :classicId==="puss-boots"||classicId==="hansel-gretel"?Heart:Sparkles;
   return <div
     className={"wt-gift-play"+(delivered?" is-delivered":"")}
     ref={stage}
@@ -142,6 +147,9 @@ export function StoryGiftInteraction({classicId,page,lang}:{classicId:string|und
     <div className="wt-gift-target" style={locate(scene.target)} aria-hidden="true">
       {delivered?<CheckCircle2 size={26}/>:<span className="wt-gift-target-ring"/>}
     </div>
+    {delivered&&<div className="wt-gift-reaction-fx" style={locate(scene.target)} aria-hidden="true">
+      <GiftEffect size={29} strokeWidth={2.2}/><GiftEffect size={19} strokeWidth={2.5}/>
+    </div>}
     {!delivered&&<div className="wt-gift-guide" aria-hidden="true">
       <img src={scene.asset} alt="" draggable={false}/><small>{scene.instruction[lang]}</small>
     </div>}
