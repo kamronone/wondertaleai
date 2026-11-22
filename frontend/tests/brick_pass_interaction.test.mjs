@@ -10,7 +10,7 @@ test("pig building scene allows dragging a brick directly on the illustration",(
  assert.match(app,/import \{BrickPassInteraction\} from "\.\/BrickPassInteraction";/);
  assert.match(app,/import "\.\/brick-pass-interaction\.css";/);
  assert.match(app,/\(active as DemoBook\)\.classicId==="three-pigs"&&page===3/);
- assert.match(app,/<BrickPassInteraction lang=\{lang\} \/>/);
+ assert.match(app,/<BrickPassInteraction key=\{active\.id\+"\:"\+page\} lang=\{lang\} \/>/);
  assert.match(scene,/onPointerDown=\{onDown\}/);
  assert.match(scene,/onPointerMove=\{onMove\}/);
  assert.match(scene,/onPointerUp=\{onUp\}/);
