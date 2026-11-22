@@ -202,3 +202,43 @@
     animation:none!important;
   }
 }
+
+/* A visual response from the recipient, separate from the draggable prop.
+   The illustrated PNG/GIF itself remains untouched. The reply stays readable. */
+.reader-page .wt-gift-reaction-fx{
+  position:absolute;z-index:5;pointer-events:none;
+  width:90px;height:90px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+}
+.reader-page .wt-gift-reaction-fx::before{
+  content:"";position:absolute;inset:6px;
+  border:3px solid #fff0bfc9;
+  border-radius:50%;background:radial-gradient(circle,#fee2b85c,transparent 68%);
+  animation:wt-gift-character-halo 1700ms ease-out both;
+}
+.reader-page .wt-gift-reaction-fx svg{
+  position:absolute;top:13px;left:27px;color:#fff6cf;
+  filter:drop-shadow(0 3px 4px #6e478b80);
+  animation:wt-gift-character-response 1700ms ease-out both;
+}
+.reader-page .wt-gift-reaction-fx svg:nth-child(2){
+  left:53px;top:35px;animation-delay:150ms;color:#ffe0ef;
+}
+@keyframes wt-gift-character-halo{
+  0%{opacity:0;scale:.35}
+  28%{opacity:1;scale:1}
+  70%{opacity:.7}
+  100%{opacity:0;scale:1.35}
+}
+@keyframes wt-gift-character-response{
+  0%{opacity:0;transform:translateY(8px) rotate(-20deg) scale(.5)}
+  24%{opacity:1;transform:translateY(-7px) rotate(18deg) scale(1.16)}
+  51%{opacity:1;transform:translateY(-13px) rotate(-15deg)}
+  80%{opacity:.8}
+  100%{opacity:0;transform:translate(16px,-34px) rotate(16deg) scale(.8)}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-gift-reaction-fx{display:none!important}
+}
+@media print{.reader-page .wt-gift-reaction-fx{display:none!important}}
