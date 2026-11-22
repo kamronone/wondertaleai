@@ -46,7 +46,7 @@ test("new scenes do not automatically turn pages and obey family preferences",()
 });
 
 test("iPhone pointer release uses final drop position even without the last pointermove",()=>{
- assert.match(gift,/const releasePoint=origin\.current&&rect&&rect\.width>0&&rect\.height>0/);
+ assert.match(gift,/const releasePoint=origin\.current&&width>0&&height>0/);
  assert.match(gift,/event\.clientX-origin\.current\.x/);
  assert.match(gift,/event\.clientY-origin\.current\.y/);
  assert.match(gift,/Math\.hypot\(releasePoint\.x-scene\.target\.x,releasePoint\.y-scene\.target\.y\)/);
@@ -59,4 +59,17 @@ test("gift arrival and hero response honor reduced-motion preference",()=>{
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(css,/\.wt-gift-play\.is-delivered \.wt-gift-speech\{[\s\S]*?animation:wt-gift-reply/);
  assert.match(css,/animation:none!important/);
+});
+
+test("gift positions follow the visible artwork, excluding object-fit letterboxing",()=>{
+ assert.match(gift,/function visibleArtFrame\(stage:HTMLElement\)/);
+ assert.match(gift,/querySelector<HTMLImageElement>\("img\.wt-reader-picture"\)/);
+ assert.match(gift,/Math\.min\(rect\.width\/img\.naturalWidth,rect\.height\/img\.naturalHeight\)/);
+ assert.match(gift,/\(rect\.width-width\)\/2/);
+ assert.match(gift,/\(rect\.height-height\)\/2/);
+ assert.match(gift,/style=\{locate\(scene\.target\)\}/);
+ assert.match(gift,/style=\{locate\(point\)\}/);
+ assert.match(gift,/new ResizeObserver\(refresh\)/);
+ assert.match(gift,/image\?\.addEventListener\("load",refresh\)/);
+ assert.match(gift,/observer\?\.disconnect\(\)/);
 });
