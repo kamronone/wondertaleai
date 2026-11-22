@@ -36,6 +36,8 @@ import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from
 import {StorySceneInteraction} from "./StorySceneInteraction";
 import {readFamilyReadingPreferences,saveFamilyReadingPreferences} from "./reader_family_preferences";
 import {CharacterHotspot} from "./CharacterHotspot";
+import {BrickPassInteraction} from "./BrickPassInteraction";
+import "./brick-pass-interaction.css";
 import {canDownloadClassicArt,hasClassicOfflineArt,downloadClassicOfflineArt} from "./reader_offline_art";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
@@ -1561,21 +1563,18 @@ function App(){
              fallback={<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth animatedUrl={readerArtMotion==="magic"&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&isDemoBook(active as DemoBook)?classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page):null}/>}/>
           :<StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[page].image_url,page)} alt={t.illustration+" "+(page+1)} readerFullWidth animatedUrl={readerArtMotion==="magic"&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&isDemoBook(active as DemoBook)?classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page):null}/>}
 {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
+  !((active as DemoBook).classicId==="three-pigs"&&page===3)&&
   classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page)&&
   <CharacterHotspot classicId={(active as DemoBook).classicId} page={page+1} lang={lang} />}
+{isDemoBook(active)&&(active as DemoBook).classicId==="three-pigs"&&page===3&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
+  <BrickPassInteraction lang={lang} />}
 <button type="button" className="reader-art-zoom" aria-pressed={readerImageExpanded} aria-label={readerImageExpanded?({ru:"Свернуть иллюстрацию",uz:"Rasmni kichraytirish",en:"Collapse illustration"} as const)[lang]:({ru:"Показать картинку целиком",uz:"Rasmni to'liq ko'rsatish",en:"Show full illustration"} as const)[lang]} title={readerImageExpanded?({ru:"Свернуть",uz:"Kichraytirish",en:"Collapse"} as const)[lang]:({ru:"Показать полностью",uz:"To'liq ko'rsatish",en:"Show all"} as const)[lang]} onClick={()=>setReaderImageExpanded(current=>!current)}><ImagePlus size={18} aria-hidden="true"/></button>
-<div className="wt-art-effects" aria-hidden="true">{readerArtMotion!=="off"&&!readerNightMode&&bedtimeUntil===null&&Array.from({length:6},(_,i)=><span className="wt-art-particle" key={i} style={{"--wt-x":(14+i*13)+"%","--wt-y":(18+i%3*22)+"%","--wt-dur":(9+i%4*2)+"s","--wt-delay":(-i*1.8)+"s"} as React.CSSProperties}/>)}</div></div>{isDemoBook(active as DemoBook)&&classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page)&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&
-  <div className="wt-motion-inline-row"><button type="button" className="wt-character-motion-control wt-motion-below-art" aria-pressed={readerArtMotion==="magic"} onClick={()=>setReaderArtMotion(current=>current==="magic"?"off":"magic")}>
-    <Sparkles size={16} aria-hidden="true"/>
-    {readerArtMotion==="magic"
-      ?({ru:"Остановить героев",uz:"Qahramonlarni to'xtatish",en:"Pause characters"} as const)[lang]
-      :({ru:"Оживить героев",uz:"Qahramonlarni jonlantirish",en:"Animate characters"} as const)[lang]}
-  </button></div>}<div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live={speaking?"off":"polite"} aria-atomic={speaking?false:true}><span className="dropcap-star" aria-hidden="true">✦</span>{(()=>{
+<div className="wt-art-effects" aria-hidden="true">{readerArtMotion!=="off"&&!readerNightMode&&bedtimeUntil===null&&Array.from({length:6},(_,i)=><span className="wt-art-particle" key={i} style={{"--wt-x":(14+i*13)+"%","--wt-y":(18+i%3*22)+"%","--wt-dur":(9+i%4*2)+"s","--wt-delay":(-i*1.8)+"s"} as React.CSSProperties}/>)}</div></div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live={speaking?"off":"polite"} aria-atomic={speaking?false:true}><span className="dropcap-star" aria-hidden="true">✦</span>{(()=>{
   const text=active.pages[page].text;
   const parts=spokenTextParts(text,spokenRange);
   return parts.active?<>{parts.before}<mark className="wt-spoken-word">{parts.active}</mark>{parts.after}</>:text;
 })()}</div></div>
-        {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
+        {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&!((active as DemoBook).classicId==="three-pigs"&&page===3)&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
         {page===active.pages.length-1&&<section className="reader-finale" aria-label={({ru:"После сказки",uz:"Ertakdan keyin",en:"After the story"} as const)[lang]}>
           <div className="reader-finale-heading">
             <strong>{({ru:"История закончилась. Что дальше?",uz:"Ertak tugadi. Keyin nima?",en:"The story is finished. What's next?"} as const)[lang]}</strong>
