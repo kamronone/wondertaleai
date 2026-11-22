@@ -323,3 +323,29 @@
     font-variant-numeric:tabular-nums;
   }
 }
+
+/* Focused mobile book navigation: do not stack two bottom nav bars.
+   A reader can always return with the in-reader Library action. */
+@media screen and (max-width:700px) {
+  .shell:has(>main>.reader-page) .mobile-tabbar {
+    display:none!important;
+  }
+  .shell:has(>main>.reader-page) > main {
+    padding-bottom:calc(108px + env(safe-area-inset-bottom, 0px))!important;
+    scroll-padding-bottom:calc(108px + env(safe-area-inset-bottom, 0px));
+  }
+  .shell > main > .reader-page {
+    padding-bottom:calc(108px + env(safe-area-inset-bottom, 0px))!important;
+  }
+  .reader-page .pager {
+    bottom:calc(10px + env(safe-area-inset-bottom, 0px))!important;
+    width:calc(100% - 20px)!important;
+    max-width:590px!important;
+    padding:6px!important;
+    border-radius:19px!important;
+  }
+  .reader-page .pager>button {
+    min-height:46px!important;
+    padding:9px 7px!important;
+  }
+}
