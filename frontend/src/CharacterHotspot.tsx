@@ -129,6 +129,13 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
     };
   },[classicId,page,enabled,reaction]);
   if(!reaction||!enabled)return null;
+  // Genuine 8-frame transparent GIFs for these illustrated classic scenes.
+  const gifAsset=classicId==="snow-white"&&page===2
+    ?"/images/interactions/reactions/snow-white-wave.gif"
+    :classicId==="ugly-duckling"&&page===3
+      ?"/images/interactions/reactions/duckling-flutter.gif"
+      :classicId==="bremen"&&page===2
+        ?"/images/interactions/reactions/bremen-music.gif":null;
   const MotionIcon=reaction.motion==="wave"?Hand
     :reaction.motion==="music"?Music2
     :reaction.motion==="flutter"?Feather
@@ -152,7 +159,9 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       <Sparkles size={18} aria-hidden="true"/>
     </button>}
     {visibleReaction&&point&&<div className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
-      <MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/>
+      {gifAsset
+        ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async"/>
+        :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
     </div>}
     {visibleReaction&&point&&<div className="wt-character-reaction" role="status" aria-live="polite">
       {reaction.message[lang]}
