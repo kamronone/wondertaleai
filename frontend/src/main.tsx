@@ -1537,7 +1537,12 @@ function App(){
               </div>
             </details>}
           </div>
-        </div>}
+          <div className="reader-edit-settings" role="group" aria-label={({ru:"Редактирование страницы",uz:"Sahifani tahrirlash",en:"Edit page"} as const)[lang]}>\n          {isDemoBook(active)&&<div className="story-edit-zone">
+          {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
+            <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
+              <div><button type="button" onClick={savePageEdit}>{t.savePage}</button><button type="button" onClick={()=>setEditingPage(false)}>{t.cancelEdit}</button></div>
+            </div>}
+          </div>\n        </div>}
         <div className="reader-title"><div className="reader-book-meta"><span className="reader-crown"><Crown size={16}/></span><span className="reader-child-label">{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}</div><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length} · {Math.round(((page+1)/Math.max(1,active.pages.length))*100)}%</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div key={active.id+":"+page+":image"} className={"story-page-image reader-turn-image"+(readerImageExpanded?" reader-image-expanded":"")+" wt-living-art wt-motion-"+(readerNightMode||bedtimeUntil!==null?"off":readerArtMotion)+" wt-art-"+(isDemoBook(active as DemoBook)&&["three-pigs","bremen","puss-boots"].includes((active as DemoBook).classicId||"")?"village":isDemoBook(active as DemoBook)&&["cinderella","rapunzel","sleeping-beauty","snow-white"].includes((active as DemoBook).classicId||"")?"palace":"forest")}>{active.mode==="private-account"&&privateToken&&API
@@ -1562,11 +1567,6 @@ function App(){
 })()}</div></div>
         {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
         {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Обновить сюжет сказки",uz:"Ertak hikoyasini yangilash",en:"Update story scenes"} as const)[lang]}</button></div>}
-        {isDemoBook(active)&&<div className="story-edit-zone">
-          {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
-            <div className="story-page-editor"><textarea autoFocus value={pageDraft} onChange={e=>setPageDraft(e.target.value)} minLength={12} maxLength={1500} rows={7} aria-label={t.editPage}/>
-              <div><button type="button" onClick={savePageEdit}>{t.savePage}</button><button type="button" onClick={()=>setEditingPage(false)}>{t.cancelEdit}</button></div>
-            </div>}
         </div>}
         {page===active.pages.length-1&&<section className="reader-finale" aria-label={({ru:"После сказки",uz:"Ertakdan keyin",en:"After the story"} as const)[lang]}>
           <div className="reader-finale-heading">
