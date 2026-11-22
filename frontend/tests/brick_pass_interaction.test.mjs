@@ -31,5 +31,5 @@ test("remove separate moving characters button from picture while preserving set
 test("do not duplicate pig brick as button choices beneath the page text",()=>{
  assert.match(app,/!\(\(active as DemoBook\)\.classicId==="three-pigs"&&page===3\)&&<StorySceneInteraction/);
  assert.match(scene,/event\.key==="Enter"\|\|event\.key===" "/);
- assert.match(scene,/G‘ishtni cho‘chqachaga olib boring/);
+ assert.match(scene,/G‘ishtni cho‘chqachaga uzating/);
 });
