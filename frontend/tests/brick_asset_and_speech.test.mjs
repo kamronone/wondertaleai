@@ -29,6 +29,6 @@ test("brick gestures never trigger page swipe or narration auto-next",()=>{
  assert.match(scene,/onTouchMoveCapture=\{onTouchCapture\}/);
  assert.match(scene,/onTouchEndCapture=\{onTouchCapture\}/);
  assert.match(scene,/event\.stopPropagation\(\)/);
- assert.match(app,/event\.target\.closest\("\.wt-brick-item"\)/);
+ assert.match(app,/event\.target\.closest\("\.wt-brick-item, \.wt-gift-item"\)/);
  assert.match(app,/readerAutoNext&&tab==="reader"&&page<active\.pages\.length-1&&!\(isDemoBook\(active\)/);
 });
