@@ -1,6 +1,7 @@
 import { Bell, BellOff, Check, ChevronRight, Globe2, Settings, ShieldCheck, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Lang } from "./i18n";
+import {SITE_THEMES,siteThemeLabels,type SiteTheme} from "./site_theme";
 
 type OpenPanel="notifications"|"settings"|null;
 
@@ -29,9 +30,9 @@ const words={
 } as const;
 
 export function ProfileHeader({
- lang,onLanguage,onPrivacy
+ lang,onLanguage,onPrivacy,siteTheme,onSiteTheme
 }:{
- lang:Lang;onLanguage:(language:Lang)=>void;onPrivacy:()=>void
+ lang:Lang;onLanguage:(language:Lang)=>void;onPrivacy:()=>void;siteTheme:SiteTheme;onSiteTheme:(theme:SiteTheme)=>void
 }){
  const [open,setOpen]=useState<OpenPanel>(null);
  const [permission,setPermission]=useState<NotificationPermission|"unsupported">(()=>{
@@ -84,6 +85,10 @@ export function ProfileHeader({
          <option value="uz">O‘zbekcha</option><option value="ru">Русский</option><option value="en">English</option>
        </select>
      </label>
+     <div className="wt-theme-settings" role="group" aria-label={siteThemeLabels[lang].heading}>
+       <span className="wt-theme-settings-title">{siteThemeLabels[lang].heading}</span>
+       <div className="wt-theme-options">{SITE_THEMES.map(theme=><button key={theme} type="button" className="wt-theme-choice" data-option={theme} aria-pressed={siteTheme===theme} onClick={()=>onSiteTheme(theme)}>{theme==="fairy"?"✦":theme==="forest"?"♣":"☾"}<span>{siteThemeLabels[lang][theme]}</span></button>)}</div>
+     </div>
      <button type="button" className="profile-mockup-settings-row" onClick={()=>{setOpen(null);onPrivacy();}}><ShieldCheck size={18}/><span>{labels.privacy}</span><ChevronRight size={16}/></button>
    </section>}
  </header>;
