@@ -989,7 +989,7 @@ function App(){
     if(!active||!isDemoBook(active)||!canRefreshClassicDemoStory(active as DemoBook))return;
     const notice=({
       ru:"Обновить восемь глав до полной версии? Если вы вручную редактировали текст, он будет заменён. Иллюстрации и прогресс чтения сохранятся.",
-      uz:"Sakkiz bobni to‘liq versiyaga yangilaysizmi? Qo‘lda tahrirlangan matn almashtiriladi. Rasmlar va o‘qish jarayoni saqlanadi.",
+      uz:"Sakkiz bobni töliq versiyaga yangilaysizmi? Qölda tahrirlangan matn almashtiriladi. Rasmlar va öqiş jarayoni saqlanadi.",
       en:"Update all eight chapters to the full tale? Manually edited text will be replaced. Illustrations and reading progress will be preserved."
     } as const)[lang];
     if(!window.confirm(notice))return;
@@ -1598,7 +1598,7 @@ function App(){
               </div>
             </details>}
           </div>
-        {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Получить полную версию сказки",uz:"Ertakning to‘liq versiyasini olish",en:"Get the full fairy tale"} as const)[lang]}</button></div>}
+        {isDemoBook(active)&&canRefreshClassicDemoStory(active as DemoBook)&&<div className="story-edit-zone"><button type="button" onClick={upgradeClassicStory}><WandSparkles size={15}/>{({ru:"Получить полную версию сказки",uz:"Ertakning töliq versiyasini oliş",en:"Get the full fairy tale"} as const)[lang]}</button></div>}
           <div className="reader-edit-settings" role="group" aria-label={({ru:"Редактирование страницы",uz:"Sahifani tahrirlash",en:"Edit page"} as const)[lang]}>
           {isDemoBook(active)&&<div className="story-edit-zone">
           {!editingPage?<button type="button" onClick={beginPageEdit}><WandSparkles size={15}/>{t.editPage}</button>:
