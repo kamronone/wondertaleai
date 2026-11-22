@@ -162,3 +162,43 @@
 @media print{
   .reader-page .wt-gift-play{display:none!important}
 }
+
+/* The hero's gift visibly lands, then the spoken response stays until a manual page turn.
+   Effects are purely decorative and never block swipe controls or demand sound. */
+.reader-page .wt-gift-play.is-delivered .wt-gift-target{
+  animation:wt-gift-land .48s cubic-bezier(.2,.85,.24,1.16) both;
+}
+.reader-page .wt-gift-play.is-delivered .wt-gift-target::after{
+  content:"✦";
+  position:absolute;
+  top:-19px;
+  right:-13px;
+  color:#ffe9a0;
+  font-size:25px;
+  text-shadow:0 2px 9px rgba(84,39,88,.38);
+  animation:wt-gift-sparkle .75s ease-out both;
+}
+.reader-page .wt-gift-play.is-delivered .wt-gift-speech{
+  animation:wt-gift-reply .34s ease-out both;
+}
+@keyframes wt-gift-land{
+  0%{opacity:.45;transform:translate(-50%,-50%) scale(.74)}
+  65%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@keyframes wt-gift-sparkle{
+  0%{opacity:0;transform:translateY(12px) scale(.6)}
+  40%{opacity:1;transform:translateY(-4px) scale(1.1)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes wt-gift-reply{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-gift-play.is-delivered .wt-gift-target,
+  .reader-page .wt-gift-play.is-delivered .wt-gift-target::after,
+  .reader-page .wt-gift-play.is-delivered .wt-gift-speech{
+    animation:none!important;
+  }
+}
