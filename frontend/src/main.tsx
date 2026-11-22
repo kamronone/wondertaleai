@@ -22,6 +22,7 @@ import "./reader-page-turn.css";
 import "./reader-image-fullwidth.css";
 import "./reader-living-art.css";
 import "./reader-mobile-v1.css";
+import "./reader-concept-four.css";
 import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
 import {StorySceneInteraction} from "./StorySceneInteraction";
 import {readFamilyReadingPreferences,saveFamilyReadingPreferences} from "./reader_family_preferences";
