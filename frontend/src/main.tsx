@@ -1546,6 +1546,7 @@ function App(){
               <div><button type="button" onClick={savePageEdit}>{t.savePage}</button><button type="button" onClick={()=>setEditingPage(false)}>{t.cancelEdit}</button></div>
             </div>}
           </div>
+          </div>
         </div>}
         <div className="reader-title"><div className="reader-book-meta"><span className="reader-crown"><Crown size={16}/></span><span className="reader-child-label">{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}</div><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length} · {Math.round(((page+1)/Math.max(1,active.pages.length))*100)}%</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
