@@ -15,6 +15,30 @@ export type StoryGiftScene={
    Only built-in classic books are eligible, never private photos or AI uploads. */
 const tr=(ru:string,uz:string,en:string):Record<Lang,string>=>({ru,uz,en});
 const giftScenes:Record<string,StoryGiftScene>={
+  "hansel-gretel:2":{
+    id:"hansel-trail-markers",
+    asset:"/images/interactions/breadcrumb-bag.svg",
+    name:tr("Мешочек с отметками","Yo‘l belgilari solingan xaltacha","Trail marker pouch"),
+    instruction:tr("Передай детям отметки, чтобы не потерять тропинку","Bolalarga yo‘lni topish uchun belgilarni uzating","Give the children markers to remember the safe path"),
+    reply:tr("Спасибо! Теперь мы запомним дорогу домой!","Rahmat! Endi uyga qaytish yo‘lini eslab qolamiz!","Thank you! Now we can remember the way home!"),
+    start:{x:.84,y:.8},target:{x:.44,y:.65}
+  },
+  "puss-boots:2":{
+    id:"puss-friendship-ribbon",
+    asset:"/images/interactions/cat-ribbon.svg",
+    name:tr("Красная лента","Qizil tasma","Red ribbon"),
+    instruction:tr("Подари Коту в сапогах красивую ленту","Etik kiygan mushukka chiroyli tasma sovg‘a qiling","Give Puss in Boots a lovely ribbon"),
+    reply:tr("Мяу! Эта лента мне очень идёт!","Miyov! Bu tasma menga juda yarashdi!","Meow! This ribbon suits me perfectly!"),
+    start:{x:.85,y:.79},target:{x:.47,y:.61}
+  },
+  "sleeping-beauty:2":{
+    id:"sleeping-beauty-fairy-star",
+    asset:"/images/interactions/fairy-star.svg",
+    name:tr("Добрая звёздочка","Mehrli yulduzcha","Kind little star"),
+    instruction:tr("Передай фее звёздочку добрых пожеланий","Pariga ezgu tilaklar yulduzchasini uzating","Give the fairy a star of kind wishes"),
+    reply:tr("Спасибо! Пусть в замке будет больше радости!","Rahmat! Qasrda quvonch yanada ko‘p bo‘lsin!","Thank you! May this castle be filled with joy!"),
+    start:{x:.85,y:.79},target:{x:.68,y:.58}
+  },
   "snow-white:4":{
     id:"snow-white-flowers",
     asset:"/images/interactions/flower-basket.svg",
