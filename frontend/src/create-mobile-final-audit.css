@@ -1,0 +1,94 @@
+/* First UI/UX release audit: readable five-hero selection on compact devices.
+   Five very narrow columns forced 8–9px labels and clipped long words.
+   Keep all heroes visible without horizontal scrolling or zoom. */
+@media screen and (max-width:700px) {
+  .create-page.create-reference-page .create-hero-picker {
+    width:100%;
+    min-width:0;
+  }
+  .create-page.create-reference-page .create-hero-picker>strong {
+    display:block;
+    margin-bottom:10px;
+    font-size:14px;
+    line-height:1.3;
+  }
+  .create-page.create-reference-page .create-hero-options {
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:8px!important;
+    width:100%;
+    min-width:0;
+    margin:0;
+    padding:2px 1px 5px;
+    overflow:visible!important;
+  }
+  .create-page.create-reference-page .create-hero-option {
+    display:flex!important;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    gap:5px;
+    box-sizing:border-box;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    min-height:113px!important;
+    padding:5px 5px 9px!important;
+    border-radius:13px!important;
+    overflow:visible!important;
+  }
+  .create-page.create-reference-page .create-hero-option img {
+    display:block;
+    width:100%;
+    max-width:96px;
+    height:72px!important;
+    object-fit:contain!important;
+    border-radius:9px;
+    flex-shrink:0;
+  }
+  .create-page.create-reference-page .create-hero-option>span {
+    display:block!important;
+    width:100%;
+    max-width:100%;
+    color:inherit;
+    font-size:clamp(11px,3vw,13px)!important;
+    font-weight:750;
+    line-height:1.25!important;
+    text-align:center;
+    overflow-wrap:anywhere;
+    white-space:normal!important;
+    hyphens:auto;
+  }
+  .create-page.create-reference-page .create-hero-option:focus-visible {
+    outline:3px solid #8741c0;
+    outline-offset:2px;
+  }
+  .create-page.create-reference-page .create-hero-checked {
+    z-index:2;
+  }
+  /* Reflow long step labels at narrow iPhone widths rather than clipping. */
+  .create-page.create-reference-page .wizard-progress .progress-step {
+    min-width:0;
+    flex:1 1 0;
+    text-align:center;
+    overflow-wrap:anywhere;
+  }
+  .create-page.create-reference-page .wizard-progress .progress-step>span {
+    flex-shrink:0;
+  }
+}
+@media screen and (max-width:360px) {
+  .create-page.create-reference-page .create-hero-options {
+    gap:6px!important;
+  }
+  .create-page.create-reference-page .create-hero-option {
+    padding:4px 3px 8px!important;
+    min-height:110px!important;
+  }
+  .create-page.create-reference-page .create-hero-option img {
+    height:66px!important;
+  }
+  .create-page.create-reference-page .create-hero-option>span {
+    font-size:11px!important;
+  }
+}
