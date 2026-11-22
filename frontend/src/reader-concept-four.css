@@ -619,3 +619,33 @@
     scroll-padding-bottom:calc(164px + env(safe-area-inset-bottom, 0px))!important;
   }
 }
+
+/* Advanced audio and bedtime settings belong inside Sozlamalar,
+   keeping the reading surface free of secondary full-width buttons. */
+@media screen and (max-width:700px) {
+  .reader-page .reader-display-settings .reader-advanced-sound {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    width:100%;
+    min-width:0;
+    padding:10px 0 0;
+    margin:9px 0 0;
+    border-top:1px solid #e4d7e9;
+  }
+  .reader-page .reader-display-settings .reader-advanced-sound > .reader-ambience-button {
+    display:flex;
+    width:100%!important;
+    min-height:44px!important;
+    margin:0!important;
+    order:initial!important;
+    border-radius:12px;
+    font-size:12px!important;
+  }
+  .reader-page .reader-display-settings .reader-advanced-sound > .reader-bedtime-disclosure {
+    width:100%!important;
+    box-sizing:border-box;
+    margin:0!important;
+    order:initial!important;
+  }
+}
