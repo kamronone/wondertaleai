@@ -8,7 +8,7 @@ import {fileURLToPath} from "node:url";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 const strict=process.argv.includes("--strict");
-const stories=["red-hood","cinderella","three-pigs"];
+const stories=["red-hood","cinderella","three-pigs",...(process.env.VITE_RAPUNZEL_PNG_READY==="true"?["rapunzel"]:[])];
 const missing=[];
 const invalid=[];
 const duplicated=[];
@@ -37,7 +37,7 @@ for(const story of stories) {
   valid.push(rel);
  }
 }
-console.log(`Classic page artwork: ${valid.length}/24 PNGs present.`);
+console.log(`Classic page artwork: ${valid.length}/${stories.length*8} PNGs present.`);
 if(missing.length)console.log("Missing PNGs (reader uses bundled SVG fallback):\n"+missing.join("\n"));
 if(invalid.length)console.error("Invalid PNGs:\n"+invalid.join("\n"));
 if(duplicated.length)console.error("Duplicate page artwork:\n"+duplicated.join("\n"));
