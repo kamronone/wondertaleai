@@ -48,10 +48,13 @@ export function StorySceneInteraction({classicId,page,lang,disabled=false}:{clas
   const [choice,setChoice]=useState<number|null>(null);
   useEffect(()=>{setChoice(null);},[classicId,page]);
   if(!scene||disabled)return null;
-  return <section className="wt-scene-play" aria-label={tr("Поиграем с героем","Qahramon bilan o'ynaymiz","Play with the character")[lang]}>
+  return <section className="wt-scene-play" aria-label={tr("Поиграем с героем","Qahramon bilan o'ynaymiz","Play with the character")[lang]}
+    onTouchStart={event=>event.stopPropagation()}
+    onTouchMove={event=>event.stopPropagation()}
+    onTouchEnd={event=>event.stopPropagation()}>
     <div className="wt-scene-play-heading"><Sparkles size={16} aria-hidden="true"/><strong>{scene.prompt[lang]}</strong></div>
     <div className="wt-scene-play-actions">
-      {scene.choices.map((item,index)=><button key={index} type="button" aria-pressed={choice===index} onClick={()=>setChoice(index)}><Hand size={14} aria-hidden="true"/>{item.label[lang]}</button>)}
+      {scene.choices.map((item,index)=><button key={index} type="button" aria-pressed={choice===index} onClick={event=>{event.stopPropagation();setChoice(index);}}><Hand size={14} aria-hidden="true"/>{item.label[lang]}</button>)}
     </div>
     {choice!==null&&<p role="status" aria-live="polite">{scene.choices[choice].answer[lang]}</p>}
   </section>;
