@@ -1303,7 +1303,23 @@ function App(){
           {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
           {!usePersonalAi&&<div className="device-save-option">
             <label><input type="checkbox" checked={saveOnDevice} onChange={e=>setSaveOnDevice(e.target.checked)}/><span><strong>{t.deviceSave}</strong><small>{saveOnDevice?t.deviceSaveHint:t.sessionOnly}</small></span></label>
-          </div>}
+            <div className="reader-advanced-sound" role="group" aria-label={({ru:"Звуки и сон",uz:"Tovushlar va uyqu",en:"Sounds and bedtime"} as const)[lang]}>
+            {!readerNightMode&&bedtimeUntil===null&&familyReadingPreferences.ambientSoundAllowed&&<button type="button" className={"reader-ambience-button"+(ambienceOn?" active":"")} aria-pressed={ambienceOn} onClick={toggleAmbience}>
+              <Music2 size={16} aria-hidden="true"/>
+              {ambienceOn
+                ?({ru:"Выключить звуки сказки",uz:"Ertak tovushlarini o'chirish",en:"Stop story sounds"} as const)[lang]
+                :({ru:"Звуки сказки",uz:"Ertak tovushlari",en:"Story sounds"} as const)[lang]}
+            </button>}
+            {!readerFocusMode&&<details className="reader-bedtime-disclosure">
+              <summary><MoonStar size={16} aria-hidden="true"/><span>{({ru:"Режим перед сном",uz:"Uyqu oldidan",en:"Bedtime mode"} as const)[lang]}</span>{bedtimeUntil!==null&&<span className="reader-bedtime-active">{({ru:"Таймер включён",uz:"Taymer yoqilgan",en:"Timer active"} as const)[lang]}</span>}<ChevronDown size={16} className="reader-bedtime-chevron" aria-hidden="true"/></summary>
+              <div className="bedtime-controls" role="group" aria-label={({ru:"Таймер перед сном",uz:"Uxlash taymeri",en:"Bedtime timer"} as const)[lang]}>
+                <span>{({ru:"Остановить озвучку через",uz:"Ovozni to'xtatish",en:"Stop narration after"} as const)[lang]}</span>
+                {([10,20] as const).map(minutes=><button type="button" key={minutes} aria-pressed={bedtimeUntil!==null&&Math.abs(bedtimeUntil-Date.now()-minutes*60000)<60000} onClick={()=>{setReaderNightMode(true);setReaderWarmMode(false);setBedtimeUntil(Date.now()+minutes*60000);}}>{minutes} {({ru:"мин",uz:"daq",en:"min"} as const)[lang]}</button>)}
+                {bedtimeUntil!==null&&<button type="button" onClick={()=>setBedtimeUntil(null)}>{({ru:"Отменить",uz:"Bekor qilish",en:"Cancel"} as const)[lang]}</button>}
+              </div>
+            </details>}
+          </div>
+        </div>}
           <label className="consent"><input required type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
           <label className="consent legal-consent"><input required type="checkbox" checked={acceptedLegal} onChange={e=>setAcceptedLegal(e.target.checked)}/><span>{({ru:"Я ознакомился(-ась) с условиями и политикой конфиденциальности.",uz:"Foydalanish shartlari va maxfiylik siyosatini oqib chiqdim.",en:"I have read and accept the terms and privacy policy."} as const)[lang]}</span></label>
           <div className="legal-consent-links"><button type="button" onClick={()=>openLegal("terms")}>{({ru:"Условия",uz:"Shartlar",en:"Terms"} as const)[lang]}</button><button type="button" onClick={()=>openLegal("privacy")}>{({ru:"Конфиденциальность",uz:"Maxfiylik",en:"Privacy"} as const)[lang]}</button><button type="button" onClick={()=>openLegal("parents")}>{({ru:"Данные детей",uz:"Bolalar malumoti",en:"Children's data"} as const)[lang]}</button></div>
@@ -1521,22 +1537,8 @@ function App(){
           <button type="button" className={"reader-warm-toggle"+(readerWarmMode&&!readerNightMode?" active":"")} aria-pressed={readerWarmMode&&!readerNightMode} onClick={()=>{setReaderWarmMode(value=>!value);setReaderNightMode(false);}}><BookOpen size={15}/>{({ru:"Тёплый фон",uz:"Iliq fon",en:"Warm background"} as const)[lang]}</button>
           <button type="button" className={"reader-night-toggle"+(readerNightMode?" active":"")} aria-pressed={readerNightMode} onClick={()=>{setReaderNightMode(v=>!v);setReaderWarmMode(false);}}><MoonStar size={15}/>{({ru:"Ночной режим",uz:"Tungi rejim",en:"Night mode"} as const)[lang]}</button>
         </div>}
-        {!readerFocusMode&&<details className="reader-bedtime-disclosure">
-          <summary><MoonStar size={16} aria-hidden="true"/><span>{({ru:"Режим перед сном",uz:"Uyqu oldidan",en:"Bedtime mode"} as const)[lang]}</span>{bedtimeUntil!==null&&<span className="reader-bedtime-active">{({ru:"Таймер включён",uz:"Taymer yoqilgan",en:"Timer active"} as const)[lang]}</span>}<ChevronDown size={16} className="reader-bedtime-chevron" aria-hidden="true"/></summary>
-          <div className="bedtime-controls" role="group" aria-label={({ru:"Таймер перед сном",uz:"Uxlash taymeri",en:"Bedtime timer"} as const)[lang]}>
-            <span>{({ru:"Остановить озвучку через",uz:"Ovozni to'xtatish",en:"Stop narration after"} as const)[lang]}</span>
-            {([10,20] as const).map(minutes=><button type="button" key={minutes} aria-pressed={bedtimeUntil!==null&&Math.abs(bedtimeUntil-Date.now()-minutes*60000)<60000} onClick={()=>{setReaderNightMode(true);setReaderWarmMode(false);setBedtimeUntil(Date.now()+minutes*60000);}}>{minutes} {({ru:"мин",uz:"daq",en:"min"} as const)[lang]}</button>)}
-            {bedtimeUntil!==null&&<button type="button" onClick={()=>setBedtimeUntil(null)}>{({ru:"Отменить",uz:"Bekor qilish",en:"Cancel"} as const)[lang]}</button>}
-          </div>
-        </details>}
         <div className="reader-title"><div className="reader-book-meta"><span className="reader-crown"><Crown size={16}/></span><span className="reader-child-label">{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}</div><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length} · {Math.round(((page+1)/Math.max(1,active.pages.length))*100)}%</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div></div>
         <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
-        {!readerNightMode&&bedtimeUntil===null&&familyReadingPreferences.ambientSoundAllowed&&<button type="button" className={"reader-ambience-button"+(ambienceOn?" active":"")} aria-pressed={ambienceOn} onClick={toggleAmbience}>
-          <Music2 size={16} aria-hidden="true"/>
-          {ambienceOn
-            ?({ru:"Выключить звуки сказки",uz:"Ertak tovushlarini o'chirish",en:"Stop story sounds"} as const)[lang]
-            :({ru:"Звуки сказки",uz:"Ertak tovushlari",en:"Story sounds"} as const)[lang]}
-        </button>}
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div key={active.id+":"+page+":image"} className={"story-page-image reader-turn-image"+(readerImageExpanded?" reader-image-expanded":"")+" wt-living-art wt-motion-"+(readerNightMode||bedtimeUntil!==null?"off":readerArtMotion)+" wt-art-"+(isDemoBook(active as DemoBook)&&["three-pigs","bremen","puss-boots"].includes((active as DemoBook).classicId||"")?"village":isDemoBook(active as DemoBook)&&["cinderella","rapunzel","sleeping-beauty","snow-white"].includes((active as DemoBook).classicId||"")?"palace":"forest")}>{active.mode==="private-account"&&privateToken&&API
           ?<PrivateReaderIllustration api={API} session={privateToken} bookId={active.id} pageNumber={page+1}
              alt={t.illustration+" "+(page+1)}
