@@ -5,8 +5,8 @@ import {readFileSync} from "node:fs";
 const css=readFileSync(new URL("../src/reader-concept-four.css",import.meta.url),"utf8");
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 
-test("reader frees up iPhone screen height without hiding the library header",()=>{
-  assert.match(css,/\.shell:has\(>main>\.reader-page\) > \.topbar\s*\{\s*display:none!important/);
+test("reader restores global header while preserving in-reader library navigation",()=>{
+  assert.match(css,/\.shell:has\(>main>\.reader-page\) > \.topbar\s*\{\s*display:flex!important/);
   assert.match(css,/\.shell > main > \.reader-page\s*\{\s*padding-bottom:calc\(165px \+ env\(safe-area-inset-bottom, 0px\)\)!important/);
   assert.match(app,/className="reader-toolbar"/);
   assert.match(app,/className="back-button" onClick=\{\(\)=>setTab\("library"\)\}/);
