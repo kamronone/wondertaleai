@@ -248,3 +248,200 @@
   .create-page.create-reference-page .wizard-step-three-v1>.wizard-step-three-actions{gap:6px!important}
   .create-page.create-reference-page .wizard-step-three-v1>.wizard-step-three-actions>button{font-size:11px!important;padding:5px!important}
 }
+
+/* Step 3 compact v2: replace inherited large wizard spacing with one
+   concise confirmation surface. No consents are hidden or prechecked. */
+.create-page.create-reference-page .form-card .wizard-step-three-v1{
+  gap:10px!important;
+}
+.create-page.create-reference-page .form-card .wizard-step-three-v1>.step-title.next{
+  border-top:0!important;
+  padding-top:0!important;
+  margin:0!important;
+  gap:9px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1>.step-title.next>span{
+  flex:0 0 42px;
+  width:42px!important;
+  height:42px!important;
+  font-size:19px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1>.step-title.next h3{
+  font-size:17px!important;
+  margin:0 0 2px!important;
+  line-height:1.2!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1>.step-title.next p{
+  font-size:11px!important;
+  line-height:1.35!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-mode>label{
+  font-size:12px!important;
+  margin:0 0 6px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .creator-mode-options>button{
+  min-height:44px!important;
+  height:44px!important;
+  font-size:13px!important;
+  border-radius:12px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review{
+  padding:12px!important;
+  background:#faf5ff!important;
+  border-radius:16px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 9px;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review-header>strong{
+  display:block;
+  flex:1;
+  min-width:0;
+  margin:0;
+  font-size:14px!important;
+  line-height:1.3;
+  color:#472765;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review-header>button{
+  border:1px solid #dcc2ed;
+  border-radius:10px;
+  background:white;
+  color:#78439c;
+  font-size:11px;
+  font-weight:750;
+  min-height:32px;
+  padding:4px 10px;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review>dl{
+  gap:6px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review>dl>div{
+  padding:7px 9px!important;
+  border-radius:11px!important;
+  min-height:59px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review dt{
+  font-size:10px!important;
+  line-height:1.25!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review dd{
+  font-size:13px!important;
+  line-height:1.3!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-details{
+  margin:8px 0 0!important;
+  border-radius:11px!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-details>summary{
+  min-height:36px!important;
+  padding:7px 9px!important;
+  font-size:11px!important;
+  line-height:1.35!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents{
+  display:grid;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:0!important;
+  padding:12px!important;
+  border:1px solid #e4cfee;
+  border-radius:16px;
+  background:#fffbff;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consent-header{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.3;
+  color:#4d2c6b;
+  margin:0;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consent-header svg{
+  color:#8e4ab6;
+  flex:0 0 18px;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents .device-save-option{
+  padding:9px!important;
+  border-radius:11px!important;
+  background:#f8f1fd!important;
+  border:1px solid #e9daf2!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents .device-save-option label{
+  gap:8px!important;
+  min-height:0!important;
+  margin:0!important;
+  align-items:center!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents .device-save-option strong{
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents .device-save-option small{
+  font-size:10px!important;
+  line-height:1.3!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents>.consent{
+  display:grid!important;
+  grid-template-columns:22px minmax(0,1fr)!important;
+  align-items:start!important;
+  gap:9px!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:5px 0!important;
+  background:transparent!important;
+  border:0!important;
+  color:#614e74!important;
+  line-height:1.4!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents>.consent input[type=checkbox]{
+  margin:0!important;
+  width:21px!important;
+  min-width:21px!important;
+  height:21px!important;
+  accent-color:#8741b5;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents>.consent span{
+  display:block!important;
+  font-size:11px!important;
+  font-weight:600!important;
+  line-height:1.45!important;
+  min-width:0;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents>.legal-consent-links{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:6px!important;
+  padding:0!important;
+  margin:0!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents>.legal-consent-links>button{
+  width:auto!important;
+  height:auto!important;
+  min-height:30px!important;
+  padding:4px 8px!important;
+  font-size:10px!important;
+  border-radius:9px!important;
+  margin:0!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1>.wizard-step-three-note{
+  padding:8px 10px!important;
+  font-size:10px!important;
+  line-height:1.4!important;
+  margin:0!important;
+}
+.create-page.create-reference-page .wizard-step-three-v1>.wizard-step-three-actions{
+  margin:1px 0 0!important;
+}
+@media(max-width:390px){
+  .create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-review{padding:10px!important}
+  .create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents{padding:10px!important}
+  .create-page.create-reference-page .wizard-step-three-v1 .wizard-step-three-consents>.consent span{font-size:10.5px!important}
+}
