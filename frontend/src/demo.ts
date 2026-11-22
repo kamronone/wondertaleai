@@ -226,7 +226,7 @@ export const createDemoBook=(name:string,age:number,theme:string,style:string,pr
  const classic=classics.find(x=>x.id===classicId);
  const story=classic?makeClassicStory(classic.id,name,language):demoStories[language](name,theme,prompt);
  const art=classic?"/images/classics/"+classic.id+(["red-hood","cinderella","three-pigs","snow-white","ugly-duckling","bremen"].includes(classic.id)?".svg":".webp"):null;
- const book:DemoBook={id:"local-"+crypto.randomUUID(),created_at:new Date().toISOString(),name,age,theme,style,prompt,title:story.title,language,classicId,savedOnDevice:saveOnDevice,mode:"browser-demo",pages:story.pages.map((text,index)=>({number:index+1,text,image_url:classicId?classicReaderImage(classicId,art||"",index):illustration(index)}))};
+ const book:DemoBook={id:"local-"+crypto.randomUUID(),created_at:new Date().toISOString(),name,age,theme,style,prompt,title:story.title,language,classicId,savedOnDevice:saveOnDevice,mode:"browser-demo",pages:story.pages.map((text,index)=>({number:index+1,text,image_url:classicId?classicReaderImage(classicId,art||"",index,text):illustration(index)}))};
  saveDemoBooks([book,...getDemoBooks()]);
  return book;
 };
@@ -721,7 +721,7 @@ export function refreshClassicDemoStory(book:DemoBook):DemoBook {
  return {...book,title:story.title,pages:book.pages.map((page,index)=>({
   ...page,
   text:story.pages[index],
-  image_url:classicReaderImage(book.classicId,page.image_url,index)
+  image_url:classicReaderImage(book.classicId,page.image_url,index,story.pages[index])
  }))};
 }
 
