@@ -643,6 +643,30 @@ function App(){
     setReaderFocusMode(false);setReaderSettingsOpen(false);
     setEditingPage(false);setActive(book);setPage(resumeReaderPage(book.lastPage,book.pages.length));setTab("reader");setError("");
   };
+  const openCompletedAiBook=async(bookId:string)=>{
+    if(!API||!privateToken)return;
+    const epoch=sessionEpoch.current;
+    const token=privateToken;
+    // Read-only: never retry or charge for completed AI generation.
+    setTab("library");
+    setLibraryRefreshAttempt(value=>value+1);
+    try{
+      const remote=await loadPrivateBooks(API,token);
+      if(sessionEpoch.current!==epoch)return;
+      const book=remote.find(entry=>entry.id===bookId);
+      if(!book){
+        setSyncMessage(({ru:"Сказка готова, но пока не появилась в библиотеке. Обновите библиотеку немного позже.",uz:"Ertak tayyor, lekin hali kutubxonada körinmayapti. Keyinroq yangilang.",en:"Your story is complete but is not visible in the library yet. Refresh again shortly."} as const)[lang]);
+        return;
+      }
+      setSyncMessage("");
+      setRemoteBooks(previous=>[book,...previous.filter(entry=>entry.id!==book.id)]);
+      setBooks(previous=>[book,...previous.filter(entry=>entry.id!==book.id)]);
+      openBook(book);
+    }catch{
+      if(sessionEpoch.current!==epoch)return;
+      setSyncMessage(({ru:"Не удалось открыть готовую сказку. Проверьте соединение и обновите библиотеку.",uz:"Tayyor ertakni ochib bölmadi. Ulanişni tekşiring va kutubxonani yangilang.",en:"Could not open the completed story. Check your connection and refresh the library."} as const)[lang]);
+    }
+  };
   useEffect(()=>{
     speechRun.current++;
     speechAdvanceArmed.current=false;
@@ -1350,7 +1374,7 @@ function App(){
       {tab==="legal"&&<LegalCenter lang={lang} document={legalDocument} onSelect={openLegal} onBack={()=>setTab(legalReturnTab)}/>}
       {tab==="account"&&<section className="profile-concept-three">
         <ParentAccount lang={lang} api={API} session={privateToken} syncedCount={remoteBooks.length} syncBusy={syncBusy} onLogin={loginParent} onLogout={logoutParent} onSync={syncSaved}/>
-        {AI_JOBS_ENABLED&&privateToken&&API&&<AiJobsPanel key={privateToken} api={API} session={privateToken} lang={lang} refreshVersion={aiJobsRefresh} onOpenLibrary={()=>{setLibraryRefreshAttempt(v=>v+1);setTab("library");}}/>}
+        {AI_JOBS_ENABLED&&privateToken&&API&&<AiJobsPanel key={privateToken} api={API} session={privateToken} lang={lang} refreshVersion={aiJobsRefresh} onOpenLibrary={(bookId)=>{void openCompletedAiBook(bookId);}}/>}
         {import.meta.env.VITE_ENABLE_AI_ILLUSTRATION_CONSENT==="true"&&privateToken&&API&&
           <IllustrationConsentPanel key={privateToken} api={API} session={privateToken} lang={lang}
             onOpenPrivacy={()=>openLegal("privacy")} onOpenParents={()=>openLegal("parents")}/>}
