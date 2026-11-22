@@ -4,6 +4,7 @@ import { classics, type ClassicId } from "./classics";
 import { fitSequelTitle } from "./sequel_title";
 import {classicReaderImage} from "./classic_page_art";
 import {fullClassicChapters} from "./classic_full_plots";
+import {extendIllustratedClassic} from "./classic_story_extra";
 export type DemoBook = {id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:{number:number;text:string;image_url:string}[];mode:string;language?:Lang;classicId?:ClassicId;savedOnDevice?:boolean;favorite?:boolean;lastPage?:number;originalEnding?:string;endingChoice?:"friendship"|"discovery"};
 const sessionKey="wondertale-preview-books-v1";
 const deviceKey="wondertale-opt-in-books-v1";
@@ -653,7 +654,7 @@ function pussBootsStory(name:string,language:Lang):Story{
  const title=({ru:`${name} и Кот в сапогах`,uz:`${name} va Etik kiygan mushuk`,en:`${name} and Puss in Boots`} as const)[language];
  return {title,pages:pages[language]};
 }
-function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+function makeClassicStoryBase(id:ClassicId,name:string,language:Lang):Story{
  const complete=fullClassicChapters(id,name,language);
  if(complete){
   const classic=classics.find(item=>item.id===id);
@@ -711,6 +712,12 @@ function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  "At the end of the adventure, "+name+" "+beats[3]+".",
  "The magical book closed, and "+name+" learned that helping friends is a wonderful kind of magic."
  ]} , "en");
+}
+
+
+function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+ const story=makeClassicStoryBase(id,name,language);
+ return {...story,pages:extendIllustratedClassic(id,language,story.pages)};
 }
 
 
