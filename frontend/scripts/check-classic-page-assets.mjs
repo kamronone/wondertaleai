@@ -8,7 +8,8 @@ import {fileURLToPath} from "node:url";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 const strict=process.argv.includes("--strict");
-const stories=["red-hood","cinderella","three-pigs",...(process.env.VITE_RAPUNZEL_PNG_READY==="true"?["rapunzel"]:[])];
+const rapunzelPresent=Array.from({length:8},(_,i)=>resolve(root,`public/images/classics/rapunzel/pages/page-${i+1}.png`)).some(path=>existsSync(path));
+const stories=["red-hood","cinderella","three-pigs",...(rapunzelPresent||process.env.VITE_RAPUNZEL_PNG_READY==="true"?["rapunzel"]:[])];
 const missing=[];
 const invalid=[];
 const duplicated=[];
