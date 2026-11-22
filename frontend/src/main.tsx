@@ -208,6 +208,8 @@ function App(){
   const [editingPage,setEditingPage]=useState(false);
   const readerTouchStart=useRef<{x:number;y:number;identifier:number}|null>(null);
   const onReaderTouchStart=(event:React.TouchEvent<HTMLElement>)=>{
+    // A brick drag is an interaction, never a request to swipe to the next page.
+    if(event.target instanceof Element&&event.target.closest(".wt-brick-item")){readerTouchStart.current=null;return;}
     // Never turn a page during a two-finger pinch or interrupted gesture.
     if(event.touches.length!==1){readerTouchStart.current=null;return;}
     const touch=event.touches[0];
@@ -900,7 +902,7 @@ function App(){
     };
     utterance.onend=()=>{
       if(run!==speechRun.current)return;
-      const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1;
+      const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1&&!(isDemoBook(active)&&(active as DemoBook).classicId==="three-pigs"&&page===3);
       speechAdvanceArmed.current=false;
       setSpokenRange(null);
       setSpeaking(false);setSpeechPaused(false);
@@ -1567,7 +1569,7 @@ function App(){
   classicAnimatedPage((active as DemoBook).classicId,classicReaderImage((active as DemoBook).classicId,active.pages[page].image_url,page),page)&&
   <CharacterHotspot classicId={(active as DemoBook).classicId} page={page+1} lang={lang} />}
 {isDemoBook(active)&&(active as DemoBook).classicId==="three-pigs"&&page===3&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
-  <BrickPassInteraction lang={lang} />}
+  <BrickPassInteraction key={active.id+":"+page} lang={lang} />}
 <button type="button" className="reader-art-zoom" aria-pressed={readerImageExpanded} aria-label={readerImageExpanded?({ru:"Свернуть иллюстрацию",uz:"Rasmni kichraytirish",en:"Collapse illustration"} as const)[lang]:({ru:"Показать картинку целиком",uz:"Rasmni to'liq ko'rsatish",en:"Show full illustration"} as const)[lang]} title={readerImageExpanded?({ru:"Свернуть",uz:"Kichraytirish",en:"Collapse"} as const)[lang]:({ru:"Показать полностью",uz:"To'liq ko'rsatish",en:"Show all"} as const)[lang]} onClick={()=>setReaderImageExpanded(current=>!current)}><ImagePlus size={18} aria-hidden="true"/></button>
 <div className="wt-art-effects" aria-hidden="true">{readerArtMotion!=="off"&&!readerNightMode&&bedtimeUntil===null&&Array.from({length:6},(_,i)=><span className="wt-art-particle" key={i} style={{"--wt-x":(14+i*13)+"%","--wt-y":(18+i%3*22)+"%","--wt-dur":(9+i%4*2)+"s","--wt-delay":(-i*1.8)+"s"} as React.CSSProperties}/>)}</div></div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live={speaking?"off":"polite"} aria-atomic={speaking?false:true}><span className="dropcap-star" aria-hidden="true">✦</span>{(()=>{
   const text=active.pages[page].text;
