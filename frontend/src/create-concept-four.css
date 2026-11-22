@@ -1,0 +1,304 @@
+/* WonderTale AI / selected creation concept #4.
+   All selectors are scoped to the create wizard so reading and library stay intact. */
+.create-page.create-reference-page{
+  --v4-ink:#38165a;
+  --v4-purple:#8b36c0;
+  --v4-line:#e4d1f2;
+  color:var(--v4-ink);
+}
+.create-page.create-reference-page .create-reference-hero{
+  position:relative;
+  min-height:124px;
+  padding:10px 12px 0;
+  gap:12px;
+  margin-bottom:7px;
+}
+.create-page.create-reference-page .create-reference-hero .section-heading h2{
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:clamp(24px,4.5vw,33px);
+  font-weight:850;
+  letter-spacing:-.035em;
+  color:#411363;
+}
+.create-page.create-reference-page .create-reference-hero .section-heading p{
+  font-size:13px;
+  color:#715586;
+  max-width:340px;
+}
+.create-page.create-reference-page .create-reference-hero>img{
+  width:190px;
+  max-width:35%;
+  height:128px;
+  max-height:128px;
+  object-fit:contain;
+  object-position:center;
+}
+.create-page.create-reference-page .wizard-progress{
+  margin:3px 5px 17px;
+}
+.create-page.create-reference-page .form-card{
+  background:linear-gradient(125deg,rgba(255,253,255,.98),#fbf2ff);
+  border:1px solid #ddc4ec;
+  box-shadow:0 8px 24px rgba(107,57,146,.08);
+  border-radius:24px;
+}
+.create-page.create-reference-page .create-v4-idea{
+  display:grid;
+  gap:7px;
+  font-size:13px;
+  font-weight:800;
+  color:#4b2773;
+  margin:0 0 14px;
+}
+.create-page.create-reference-page .create-v4-idea>span{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.create-page.create-reference-page .create-v4-idea>span svg{
+  color:#8d4dbb;
+}
+.create-page.create-reference-page .create-v4-idea input{
+  display:block;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:0;
+  padding:12px 15px;
+  min-height:51px;
+  border:1px solid #e7d6ee;
+  background:#fff8f1;
+  color:#442061;
+  border-radius:14px;
+  font-size:16px;
+  box-shadow:none;
+}
+.create-page.create-reference-page .create-v4-summary{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+  margin:0 0 14px;
+  min-width:0;
+  border:1px solid #e6d9ee;
+  background:linear-gradient(110deg,#fff9ec,#f4e9fa);
+  border-radius:15px;
+  padding:11px 13px;
+}
+.create-page.create-reference-page .create-v4-summary>svg{color:#8249b4;flex:0 0 18px}
+.create-page.create-reference-page .create-v4-summary>span{
+  font-size:13px;font-weight:800;color:#4c2671;
+}
+.create-page.create-reference-page .create-v4-summary>small{
+  margin-left:auto;
+  font-size:11px;
+  color:#785b90;
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+.create-page.create-reference-page .create-v4-worlds{
+  display:grid;gap:9px;margin:3px 0 17px;
+}
+.create-page.create-reference-page .create-v4-section-title{
+  display:flex;align-items:center;gap:8px;color:#4e2475;font-size:14px;
+}
+.create-page.create-reference-page .create-v4-section-title svg{color:#8a4ab8}
+.create-page.create-reference-page .create-v4-world-chips{
+  display:flex;
+  gap:7px;
+  width:100%;
+  overflow-x:auto;
+  overscroll-behavior-inline:contain;
+  scrollbar-width:none;
+  padding:3px 2px 7px;
+}
+.create-page.create-reference-page .create-v4-world-chips::-webkit-scrollbar{display:none}
+.create-page.create-reference-page .create-v4-world-chips button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  flex:0 0 auto;
+  max-width:190px;
+  min-height:44px;
+  box-sizing:border-box;
+  padding:8px 13px;
+  border:1px solid #d9c1eb;
+  border-radius:999px;
+  background:#fffbff;
+  color:#61417c;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.25;
+  white-space:normal;
+}
+.create-page.create-reference-page .create-v4-world-chips button.selected{
+  color:#fff;
+  border-color:#9b4bc9;
+  background:linear-gradient(110deg,#ac60d9,#772bb2);
+  box-shadow:0 3px 10px rgba(135,58,192,.14);
+}
+.create-page.create-reference-page .create-v4-world-chips button:focus-visible{
+  outline:3px solid #aa77cf;
+  outline-offset:2px;
+}
+.create-page.create-reference-page .create-hero-picker>p{display:none}
+.create-page.create-reference-page .create-hero-picker{
+  margin:0 0 16px;
+}
+.create-page.create-reference-page .create-hero-picker>strong{
+  margin-bottom:10px;
+  font-size:14px;
+}
+.create-page.create-reference-page .create-hero-option{
+  border-radius:15px;
+  background:linear-gradient(175deg,#fffafc,#f3e9ff);
+}
+.create-page.create-reference-page .create-reference-extras{
+  border-radius:16px;
+  margin:0 0 14px;
+  box-shadow:none;
+}
+.create-page.create-reference-page .create-reference-extras>summary{
+  min-height:52px;
+  padding:11px 13px;
+  font-size:13px;
+  border-radius:16px;
+  color:#562d80;
+}
+.create-page.create-reference-page .wizard-step-one-actions{
+  margin-top:12px!important;
+}
+.create-page.create-reference-page .wizard-step-one-actions>.wizard-step-one-next{
+  border-radius:17px!important;
+  background:linear-gradient(105deg,#b75de0,#7025b2)!important;
+}
+.shell:has(>main>.create-page.create-reference-page) > .wt-build-debug{display:none!important}
+.shell:has(>main>.create-page.create-reference-page) > .site-legal-footer{display:none!important}
+.shell:has(>main>.create-page.create-reference-page) > main{padding-bottom:0!important}
+.shell:has(>main>.create-page.create-reference-page){padding-bottom:calc(75px + env(safe-area-inset-bottom, 0px))!important;min-height:0!important}
+.create-page.create-reference-page .create-reference-reading-link{display:none!important}
+@media screen and (max-width:700px){
+  .shell > main > .create-page.create-reference-page{
+    padding:12px 12px 22px!important;
+    background:linear-gradient(160deg,#fcf7ff,#f8f0ff);
+  }
+  .create-page.create-reference-page .create-reference-hero{
+    min-height:94px;
+    padding:5px 2px 0;
+    margin-bottom:5px;
+    gap:4px;
+  }
+  .create-page.create-reference-page .create-reference-hero .section-heading h2{
+    font-size:clamp(22px,6.3vw,28px);
+    line-height:1.14;
+    letter-spacing:-.025em;
+  }
+  .create-page.create-reference-page .create-reference-hero .section-heading p{
+    font-size:11px;
+    line-height:1.4;
+    margin:5px 0 0;
+  }
+  .create-page.create-reference-page .create-reference-hero>img{
+    width:120px;
+    height:97px;
+    max-width:37%;
+    max-height:97px;
+    object-fit:contain;
+  }
+  .create-page.create-reference-page .wizard-progress{
+    margin:0 2px 13px;
+  }
+  .create-page.create-reference-page .form-card{
+    padding:13px 12px 16px!important;
+    border-radius:21px;
+  }
+  .create-page.create-reference-page .step-title{
+    margin-bottom:12px;
+  }
+  .create-page.create-reference-page .step-title h3{font-size:16px}
+  .create-page.create-reference-page .step-title p{font-size:11px}
+  .create-page.create-reference-page .create-v4-idea{margin-bottom:10px;font-size:12px}
+  .create-page.create-reference-page .create-v4-idea input{
+    min-height:46px;
+    padding:9px 11px;
+  }
+  .create-page.create-reference-page .create-v4-summary{
+    padding:9px 10px;
+    margin-bottom:11px;
+    gap:4px 7px;
+  }
+  .create-page.create-reference-page .create-v4-summary>small{
+    flex:1 0 100%;
+    margin-left:0;
+    font-size:10px;
+    padding-left:25px;
+  }
+  /* iPhone gets two compact form fields, as in the selected reference. */
+  .create-page.create-reference-page .form-grid{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:8px!important;
+    margin-bottom:12px;
+  }
+  .create-page.create-reference-page .form-grid label{font-size:11px}
+  .create-page.create-reference-page .form-grid input,
+  .create-page.create-reference-page .form-grid select{
+    width:100%;
+    box-sizing:border-box;
+    min-height:47px;
+    height:47px;
+    margin-top:5px;
+    padding:8px 9px;
+    font-size:16px;
+  }
+  .create-page.create-reference-page .create-v4-worlds{margin-bottom:12px;gap:6px}
+  .create-page.create-reference-page .create-v4-section-title{font-size:12px}
+  .create-page.create-reference-page .create-v4-world-chips button{
+    min-height:40px;
+    font-size:11px;
+    padding:7px 10px;
+  }
+  .create-page.create-reference-page .create-hero-options{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:5px;
+  }
+  .create-page.create-reference-page .create-hero-option{
+    min-height:96px;
+    border-radius:12px;
+  }
+  .create-page.create-reference-page .create-hero-option img{
+    height:66px;
+    object-fit:cover;
+  }
+  .create-page.create-reference-page .create-reference-extras>summary{
+    min-height:48px;
+    padding:9px 11px;
+    font-size:12px;
+  }
+  .create-page.create-reference-page .form-card .wizard-step-one-actions>.wizard-step-one-next{
+    flex:1 1 100%!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:48px!important;
+    height:48px!important;
+    border-radius:15px!important;
+    font-size:14px!important;
+    box-shadow:0 6px 16px rgba(138,60,192,.2)!important;
+  }
+  .create-page.create-reference-page .wizard-step-two>.wizard-step-actions,
+  .create-page.create-reference-page .wizard-step-three-actions{
+    margin-bottom:4px!important;
+  }
+}
+@media screen and (max-width:365px){
+  .create-page.create-reference-page .form-card{padding:11px 9px 14px!important}
+  .create-page.create-reference-page .create-reference-hero>img{width:92px}
+  .create-page.create-reference-page .create-hero-option>span{font-size:9px}
+  .create-page.create-reference-page .create-hero-options{gap:3px}
+}
+@media(prefers-reduced-motion:reduce){
+  .create-page.create-reference-page .create-hero-option,
+  .create-page.create-reference-page .create-v4-world-chips button{transition:none!important}
+}
