@@ -17,7 +17,9 @@ test("eleven safe classic scenes define a visible character hotspot",()=>{
 test("hotspot position follows the image content with object-fit contain",()=>{
  assert.match(source,/Math\.min\(width\/image\.naturalWidth,height\/image\.naturalHeight\)/);
  assert.match(source,/\(width-drawnW\)\/2\+drawnW\*position\.x/);
+ assert.match(source,/Math\.max\(edge,Math\.min\(containerRect\.width-edge,left\)\)/);
  assert.match(source,/\(height-drawnH\)\/2\+drawnH\*position\.y/);
+ assert.match(source,/Math\.max\(edge,Math\.min\(containerRect\.height-edge,top\)\)/);
  assert.match(source,/new ResizeObserver\(update\)/);
  assert.match(source,/querySelector<HTMLImageElement>\("img\.wt-reader-picture"\)/);
  assert.match(source,/addEventListener\("load",update\)/);
@@ -64,4 +66,12 @@ test("seven additional story hotspots never overlap gifts or require GIF playbac
  assert.match(app,/!storyGiftForPage\(\(active as DemoBook\)\.classicId,page\+1\)&&/);
  assert.match(app,/familyReadingPreferences\.extraActivities/);
  assert.doesNotMatch(source,/setTimeout\(|setInterval\(|nextPage\(|setPage\(/);
+});
+
+test("character markers stay tappable on iPhone and expose pressed state",()=>{
+ assert.match(source,/const edge=24/);
+ assert.match(source,/onPointerDown=\{event=>event\.stopPropagation\(\)\}/);
+ assert.match(source,/aria-pressed=\{visibleReaction\}/);
+ assert.match(css,/width:44px/);
+ assert.match(css,/height:44px/);
 });
