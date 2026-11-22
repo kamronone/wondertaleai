@@ -49,6 +49,17 @@
   box-shadow:0 3px 10px rgba(30,10,29,.18);
   pointer-events:none;
 }
+.reader-page .wt-brick-guide>span{flex:0 0 auto}
+.reader-page .wt-brick-guide>small{
+  display:block;
+  min-width:0;
+  max-width:155px;
+  font-size:10px;
+  font-weight:750;
+  line-height:1.2;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
 .reader-page .wt-brick-item{
   position:absolute;
   display:grid;
