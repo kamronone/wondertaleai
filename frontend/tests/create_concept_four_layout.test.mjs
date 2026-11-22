@@ -12,15 +12,17 @@ test("selected concept four is imported after earlier wizard styles",()=>{
  assert.ok(imports.indexOf('create-concept-four.css')>imports.indexOf('create-reference.css'));
 });
 
-test("first step shows editable story idea, world and avatar picker",()=>{
- assert.match(render,/className="create-v4-idea"/);
- assert.match(render,/maxLength=\{1200\} value=\{prompt\}/);
- assert.match(render,/className="create-v4-summary"/);
- assert.match(render,/className="create-v4-worlds"/);
- assert.match(render,/aria-pressed=\{themeIndex===index\}/);
- assert.match(render,/onClick=\{\(\)=>setThemeIndex\(index\)\}/);
- assert.match(render,/className="create-hero-options"/);
- assert.match(render,/aria-pressed=\{heroKind===kind\}/);
+test("first step focuses on child profile and avatar without duplicated story controls",()=>{
+ const first=render.slice(render.indexOf('{createStep===1&&'),render.indexOf('{createStep===2&&'));
+ const second=render.slice(render.indexOf('{createStep===2&&'),render.indexOf('{createStep===3&&'));
+ assert.match(first,/className="form-grid"/);
+ assert.match(first,/className="create-hero-options"/);
+ assert.match(first,/aria-pressed=\{heroKind===kind\}/);
+ assert.doesNotMatch(first,/className="create-v4-idea"/);
+ assert.doesNotMatch(first,/className="create-v4-worlds"/);
+ assert.doesNotMatch(first,/className="create-v4-summary"/);
+ assert.match(second,/className="wizard-step-two-worlds"/);
+ assert.match(second,/className="wizard-step-two-prompt"/);
 });
 
 test("preserves guided generation and parental consents",()=>{
