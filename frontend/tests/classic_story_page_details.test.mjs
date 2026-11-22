@@ -32,7 +32,7 @@ test("all twenty generic SVG storybooks receive eight distinct chapter-specific 
  }
 });
 test("new scenes compose on top of previous story-specific SVGs",()=>{
- assert.match(art,/classicPageSceneDetail\(classicId,page\)/);
+ assert.match(art,/classicPageSceneDetail\(classicId,page,pageText\)/);
  assert.match(art,/import \{ classicPageSceneDetail \} from "\.\/classic_page_scene_details"/);
  for(const id of ids){
    assert.ok(first.includes('"'+id+'":page=>')||remainder.includes('"'+id+'":page=>'),"missing primary motif "+id);
