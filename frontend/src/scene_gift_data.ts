@@ -69,7 +69,7 @@ const giftScenes:Record<string,StoryGiftScene>={
     name:tr("Цветок для Рапунцель","Rapunsel uchun gul","Flower for Rapunzel"),
     instruction:tr("Подари Рапунцель цветок у башни","Minora yonida Rapunselga gul sovg‘a qiling","Give Rapunzel a flower by the tower"),
     reply:tr("Спасибо за цветок! Ты сделал мой день светлее!","Gul uchun rahmat! Kunim yanada yorishdi!","Thank you for the flower! You've brightened my day!"),
-    start:{x:.85,y:.79},target:{x:.50,y:.45}
+    start:{x:.85,y:.79},target:{x:.74,y:.33}
   },
   "three-pigs:7":{
     id:"three-pigs-wolf-door",
