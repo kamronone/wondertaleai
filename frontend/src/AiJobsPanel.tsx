@@ -18,6 +18,8 @@ export function AiJobsPanel({api,session,lang,onOpenLibrary,refreshVersion=0}:{
   const [busyId,setBusyId]=useState<string|null>(null);
   const [revision,setRevision]=useState(0);
   const epoch=useRef(0);
+  const loadedIdentity=useRef("");
+  const pending=jobs.some(job=>job.status==="queued"||job.status==="processing");
   const reload=useCallback(async(signal:AbortSignal,expected:number)=>{
     try{
       const entries=await listAiJobs(api,session,signal);
@@ -31,10 +33,41 @@ export function AiJobsPanel({api,session,lang,onOpenLibrary,refreshVersion=0}:{
   useEffect(()=>{
     const controller=new AbortController();
     const current=++epoch.current;
-    setJobs([]);setError("");setLoading(true);
+    // Keep the current status visible during background refreshes; reset it
+    // only when the parent account or server actually changes.
+    const identity=api+"\\u0000"+session;
+    if(loadedIdentity.current!==identity){
+      loadedIdentity.current=identity;
+      setJobs([]);
+      setError("");
+      setLoading(true);
+    }
     void reload(controller.signal,current);
     return ()=>{++epoch.current;controller.abort();};
-  },[reload,revision,refreshVersion]);
+  },[api,session,reload,revision,refreshVersion]);
+
+  // Poll the status endpoint only while a job is active and the profile is
+  // visible. This never submits or retries story generation.
+  useEffect(()=>{
+    if(!pending||loading||error)return;
+    const timer=window.setInterval(()=>{
+      if(document.visibilityState==="visible"&&navigator.onLine){
+        setRevision(value=>value+1);
+      }
+    },15000);
+    const onVisible=()=>{
+      if(document.visibilityState==="visible"&&navigator.onLine){
+        setRevision(value=>value+1);
+      }
+    };
+    document.addEventListener("visibilitychange",onVisible);
+    window.addEventListener("online",onVisible);
+    return ()=>{
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange",onVisible);
+      window.removeEventListener("online",onVisible);
+    };
+  },[pending,loading,error]);
   const cancel=async(job:AiJob)=>{
     if(busyId||job.status!=="queued")return;
     const current=epoch.current;
@@ -52,6 +85,7 @@ export function AiJobsPanel({api,session,lang,onOpenLibrary,refreshVersion=0}:{
     <div className="ai-jobs-head"><div><h3>{t.title}</h3><p>{t.hint}</p></div>
       <button type="button" className="small-button" onClick={()=>setRevision(v=>v+1)} disabled={loading}>{t.refresh}</button>
     </div>
+    {pending&&!error&&<p className="ai-jobs-auto-refresh" role="status">{({ru:"Статус обновляется автоматически, пока открыт профиль.",uz:"Profil ochiq turganda holat avtomatik yangilanadi.",en:"Status updates automatically while this profile is open."} as const)[lang]}</p>}
     {loading&&<p role="status">{({ru:"Загрузка…",uz:"Yuklanmoqda…",en:"Loading…"} as const)[lang]}</p>}
     {error&&<p role="alert">{error}</p>}
     {!loading&&!error&&jobs.length===0&&<p>{t.empty}</p>}
