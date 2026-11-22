@@ -13,7 +13,8 @@ test("creation wizard implements the approved reference without replacing its th
   assert.match(app,/createStep===2/);
   assert.match(app,/createStep===3/);
   assert.match(app,/className="create-reference-hero"/);
-  assert.match(app,/className="create-reference-reading-link"/);
+  assert.doesNotMatch(app,/className="create-reference-reading-link"/);
+  assert.match(app,/className="create-v4-worlds"/);
 });
 
 test("all seven reference artworks are real PNGs",()=>{
