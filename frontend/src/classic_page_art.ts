@@ -9,6 +9,7 @@ import { hanselGretelPageArtwork } from "./hansel_gretel_page_art";
 import { rapunzelPageArtwork } from "./rapunzel_page_art";
 import { sleepingBeautyPageArtwork } from "./sleeping_beauty_page_art";
 import { pussBootsPageArtwork } from "./puss_boots_page_art";
+import { classicStoryMotif } from "./classic_story_motifs";
 
 /**
  * Offline, page-specific illustrations for the 30 built-in classics.
@@ -43,6 +44,8 @@ function scenery(theme:string, page:number, accent:string):string {
   return `<path d="M100 480l30-310h60l35 310m385 0 25-345h65l30 345" fill="#ad8471"/><g fill="#78a485"><circle cx="160" cy="165" r="125"/><circle cx="655" cy="123" r="134"/><circle cx="270" cy="125" r="75"/></g><path d="M270 600q100-210 190-210t190 210" fill="#efcca0"/>`;
 }
 function subject(id:string,page:number):string {
+  const motif=classicStoryMotif(id,page);
+  if(motif)return motif;
   const variant = page%4;
   const name = id.split("-").join(" ");
   const hues = ["#a85e77","#5e8d9b","#c18a65","#8a77ac"];
