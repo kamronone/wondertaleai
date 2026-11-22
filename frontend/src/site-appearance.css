@@ -81,6 +81,17 @@
  .wt-theme-options{gap:4px}
  .wt-theme-choice{font-size:10px;padding:6px 3px}
 }
+/* Three actions fit on iPhone SE without shrinking touch targets. */
+@media(max-width:420px){
+ .shell .topbar{padding-left:12px;padding-right:12px;gap:7px}
+ .shell .header-actions{gap:6px;flex:0 0 auto}
+ .shell .header-actions .small-button{padding:8px;min-width:40px;min-height:40px}
+ .shell .header-actions .small-button span{display:none}
+ .shell .language-control select{max-width:90px;min-width:0;padding:7px 19px 7px 7px;font-size:12px}
+ .shell .brand{min-width:0;font-size:clamp(15px,4vw,20px);gap:6px}
+ .shell .brandmark{flex:0 0 34px;width:34px;height:34px}
+ .shell .brand small{display:none}
+}
 @media(prefers-reduced-motion:reduce){
  .wt-site-theme-cycle,.wt-theme-choice{transition:none!important}
 }
