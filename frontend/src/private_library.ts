@@ -21,8 +21,12 @@ const fetchWithToken=(api:string,path:string,token:string,init?:RequestInit)=>fe
  headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json",...init?.headers},
  signal:init?.signal?AbortSignal.any([init.signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000),
 });
+const publicPageArt=new Set(["red-hood","cinderella","three-pigs","rapunzel"]);
 const cleanImage=(source:string,classicId?:string)=>{
- // Never transfer browser-generated image data, uploads or remote image URLs.
+ // Preserve exact, bundled public story artwork. Never transfer child uploads,
+ // data URLs, arbitrary external images or private account media.
+ const page=/^\/images\/classics\/([a-z0-9-]+)\/pages\/page-[1-8]\.png$/.exec(source);
+ if(page&&publicPageArt.has(page[1])&&(!classicId||classicId===page[1]))return source;
  if(source.startsWith("/images/classics/")&&/^\/images\/classics\/[a-z0-9-]+\.(svg|webp)$/.test(source))return source;
  if(classicId&&/^[a-z0-9-]+$/.test(classicId))return "/images/classics/"+classicId+".webp";
  return "/images/wondertale-hero.webp";
