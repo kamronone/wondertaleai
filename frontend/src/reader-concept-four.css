@@ -562,3 +562,31 @@
     color:#58394d!important;
   }
 }
+
+/* Reader-only footer / safe-area cleanup.
+   Keep ONE clearance for the fixed page controls, not three stacked
+   paddings from the shell, main, reader and footer. */
+@media screen and (max-width:700px) {
+  .shell:has(>main>.reader-page) {
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:0!important;
+    justify-content:flex-start!important;
+  }
+  .shell:has(>main>.reader-page) > main {
+    flex:0 0 auto!important;
+    min-height:0!important;
+    padding-bottom:0!important;
+    margin-bottom:0!important;
+    scroll-padding-bottom:calc(86px + env(safe-area-inset-bottom, 0px))!important;
+  }
+  .shell:has(>main>.reader-page) > .site-legal-footer {
+    display:none!important;
+  }
+  .shell > main > .reader-page {
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:calc(86px + env(safe-area-inset-bottom, 0px))!important;
+    margin-bottom:0!important;
+  }
+}
