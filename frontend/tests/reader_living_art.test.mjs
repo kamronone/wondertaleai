@@ -41,13 +41,12 @@ test("the original PNG remains intact without remote AI or video",()=>{
  assert.doesNotMatch(app,/autoplay\s*=/);
 });
 
-test("first-time visitors see real character motion without opening settings",()=>{
+test("first-time visitors see animated art while motion controls stay in settings",()=>{
  assert.match(app,/saved==="off"\|\|saved==="gentle"\|\|saved==="magic"\?saved:"magic"/);
  assert.match(app,/catch\{return "magic";\}/);
- assert.match(app,/wt-character-motion-control/);
- assert.match(app,/aria-pressed=\{readerArtMotion==="magic"\}/);
- assert.match(app,/setReaderArtMotion\(current=>current==="magic"\?"off":"magic"\)/);
- assert.match(mobile,/\.wt-motion-inline-row \.wt-character-motion-control\{/);
- assert.match(mobile,/min-height:44px/);
- assert.doesNotMatch(css,/\.story-page-image \.wt-character-motion-control\{/);
+ assert.match(app,/className="wt-art-motion-toggle"/);
+ assert.match(app,/aria-pressed=\{readerArtMotion===motion\}/);
+ assert.match(app,/setReaderArtMotion\(motion\)/);
+ assert.doesNotMatch(app,/wt-character-motion-control/);
+ assert.doesNotMatch(app,/className="wt-motion-inline-row"/);
 });
