@@ -93,6 +93,7 @@ export function classicPageSceneDetail(classicId:string,pageIndex:number,pageTex
    ["map",/карт|xarita|map/],
    ["pearl",/жемчуж|marvarid|pearl/],
    ["bowl",/каша|миска|bo'tqa|bo‘tqa|bowl|porridge/],
+   ["apple",/яблок|olma|apple/],
    ["tree",/дерев|daraxt|tree/],
    ["heart",/добр|друж|дӯст|do‘st|dost|friend|kindness/]
   ];
