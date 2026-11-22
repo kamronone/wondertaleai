@@ -15,7 +15,7 @@ test("mobile shell no longer stretches main and keeps only a single bottom-nav r
 });
 
 test("mobile footer follows content while the navigation stays fixed",()=>{
-  assert.match(app,/return <div className="shell">/);
+  assert.match(app,/return <div className="shell" data-site-theme=\{siteTheme\}>/);
   assert.match(app,/<main>/);
   assert.match(app,/<footer className="site-legal-footer">/);
   assert.match(app, /<ProfileLegalMenu lang=\{lang\} onOpen=\{openLegal\}\/>/);
