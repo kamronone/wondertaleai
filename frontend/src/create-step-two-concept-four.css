@@ -297,3 +297,23 @@
     font-size:10px!important;
   }
 }
+
+/* Bundled PNG scene illustrations replace emoji without introducing layout shifts. */
+.create-page.create-reference-page .wizard-step-two-v4 .world-scene-icon {
+  overflow:hidden;
+  background:#f3e8fb;
+  border-radius:11px;
+}
+.create-page.create-reference-page .wizard-step-two-v4 .world-scene-icon img {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  border-radius:inherit;
+}
+.create-page.create-reference-page .wizard-step-two-v4 .world-choice-card.selected .world-scene-icon {
+  background:#f3e8fb;
+  box-shadow:0 0 0 1px rgba(255,255,255,.28);
+}
