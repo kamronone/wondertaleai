@@ -80,9 +80,13 @@ function imagePoint(container:HTMLElement,position:Position):{left:number;top:nu
   const scale=Math.min(width/image.naturalWidth,height/image.naturalHeight);
   const drawnW=image.naturalWidth*scale,drawnH=image.naturalHeight*scale;
   const containerRect=container.getBoundingClientRect();
+  // Keep the 44px touch target fully inside the image/card on narrow iPhones.
+  const left=rect.left-containerRect.left+(width-drawnW)/2+drawnW*position.x;
+  const top=rect.top-containerRect.top+(height-drawnH)/2+drawnH*position.y;
+  const edge=24;
   return {
-    left:rect.left-containerRect.left+(width-drawnW)/2+drawnW*position.x,
-    top:rect.top-containerRect.top+(height-drawnH)/2+drawnH*position.y
+    left:Math.max(edge,Math.min(containerRect.width-edge,left)),
+    top:Math.max(edge,Math.min(containerRect.height-edge,top))
   };
 }
 
@@ -123,6 +127,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       onTouchStart={event=>event.stopPropagation()}
       onTouchMove={event=>event.stopPropagation()}
       onTouchEnd={event=>event.stopPropagation()}
+      onPointerDown={event=>event.stopPropagation()}
+      aria-pressed={visibleReaction}
       onClick={event=>{event.stopPropagation();setVisibleReaction(value=>!value);}}>
       <Sparkles size={18} aria-hidden="true"/>
     </button>}
