@@ -21,7 +21,7 @@ Date of draft: 20 November 2026. Scope: frontend legal copy only in `fix/private
 7. **Explain AI provider processing accurately:** which vendor receives prompts, contract/data usage and retention, moderation, and whether information is transmitted outside Uzbekistan. The current UI intentionally rejects child photos for the AI generator; do not activate photos without a separate assessment.
 8. **Commercial legal setup:** before accepting money, confirm trading eligibility/registration and publish seller identity, product/service scope, prices/taxes, payment methods, cancellation/subscription renewal, refunds and complaint handling. Review Electronic Commerce Act ZRU-792 and Consumer Protection Act 221-I.
 9. **Version and evidence:** obtain legal review of final documents; publish effective dates, old versions and appropriate evidence of consent and updates. The current draft displays its preparation date, not a legally approved effective date.
-10. **Operational validation:** review authentication, user isolation, cookie/session management, PWA cache rules, emergency contact and security handling. Current Backend CI failures remain unresolved; keep deployment blocked pending test and security review.
+10. **Operational validation:** review authentication, user isolation, cookie/session management, PWA cache rules, emergency contact and security handling. A passing Backend CI run is not a deployed multi-account security audit; keep public release blocked until real-environment access tests and legal review pass.
 
 ## Authoritative primary sources
 
