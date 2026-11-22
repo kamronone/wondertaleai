@@ -61,10 +61,18 @@ export function StoryGiftInteraction({classicId,page,lang}:{classicId:string|und
     event.preventDefault();
     event.stopPropagation();
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
+    // Use the release coordinates too: iOS may emit pointerup without a final move.
+    const rect=stage.current?.getBoundingClientRect();
+    const releasePoint=origin.current&&rect&&rect.width>0&&rect.height>0
+      ? {
+          x:Math.max(.06,Math.min(.94,origin.current.point.x+(event.clientX-origin.current.x)/rect.width)),
+          y:Math.max(.08,Math.min(.92,origin.current.point.y+(event.clientY-origin.current.y)/rect.height))
+        }
+      :latest.current;
     activePointer.current=null;
     origin.current=null;
     setDragging(false);
-    if(Math.hypot(latest.current.x-scene.target.x,latest.current.y-scene.target.y)<.18)finish();
+    if(Math.hypot(releasePoint.x-scene.target.x,releasePoint.y-scene.target.y)<.18)finish();
     else move(scene.start);
   };
   const cancel=(event:ReactPointerEvent<HTMLDivElement>)=>{
