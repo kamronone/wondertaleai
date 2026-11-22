@@ -22,10 +22,11 @@ test("three appearance themes are localized for RU UZ EN and persist safely",asy
  assert.match(site,/try\{localStorage\.setItem\(SITE_THEME_KEY,theme\);\}catch/);
  assert.match(site,/try\{[\s\S]*localStorage\.getItem\(SITE_THEME_KEY\)/);
 });
-test("site theme controls cover header and profile without changing reader preferences",()=>{
+test("site theme is configurable in profile only, with a clean header",()=>{
  assert.match(app,/data-site-theme=\{siteTheme\}/);
- assert.match(app,/className="wt-site-theme-cycle"/);
- assert.match(app,/nextSiteTheme\(siteTheme\)/);
+ assert.doesNotMatch(app,/className="wt-site-theme-cycle"/);
+ assert.doesNotMatch(app,/className="language-control"/);
+ assert.match(app,/className="header-actions"><button type="button" className="small-button"/);
  assert.match(app,/onSiteTheme=\{changeSiteTheme\}/);
  assert.match(profile,/SITE_THEMES\.map\(theme=>/);
  assert.match(profile,/aria-pressed=\{siteTheme===theme\}/);
