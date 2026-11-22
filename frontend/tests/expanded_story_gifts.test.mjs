@@ -44,3 +44,19 @@ test("new scenes do not automatically turn pages and obey family preferences",()
  assert.doesNotMatch(gift,/setTimeout\(|setPage\(|nextPage\(/);
  assert.match(app,/isDemoBook\(active\)&&familyReadingPreferences\.extraActivities&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&storyGiftForPage/);
 });
+
+test("iPhone pointer release uses final drop position even without the last pointermove",()=>{
+ assert.match(gift,/const releasePoint=origin\.current&&rect&&rect\.width>0&&rect\.height>0/);
+ assert.match(gift,/event\.clientX-origin\.current\.x/);
+ assert.match(gift,/event\.clientY-origin\.current\.y/);
+ assert.match(gift,/Math\.hypot\(releasePoint\.x-scene\.target\.x,releasePoint\.y-scene\.target\.y\)/);
+ assert.match(gift,/setDelivered\(true\)/);
+});
+test("gift arrival and hero response honor reduced-motion preference",()=>{
+ const css=read("../src/story-gift-interaction.css");
+ assert.match(css,/@keyframes wt-gift-land/);
+ assert.match(css,/@keyframes wt-gift-reply/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.match(css,/\.wt-gift-play\.is-delivered \.wt-gift-speech\{[\s\S]*?animation:wt-gift-reply/);
+ assert.match(css,/animation:none!important/);
+});
