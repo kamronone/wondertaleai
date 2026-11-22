@@ -14,7 +14,7 @@ test("all new motifs match a classic title, not generic unrelated clipart",()=>{
    assert.ok(motifs.includes('"'+id+'":page=>'),"missing original SVG motif "+id);
  }
  assert.match(art,/import \{ classicStoryMotif \} from "\.\/classic_story_motifs";/);
- assert.match(art,/const motif=classicStoryMotif\(id,page\);\s*if\(motif\)return motif/);
+ assert.match(art,/const motif=classicStoryMotif\(id,page\)\|\|remainingClassicMotif\(id,page\);\s*if\(motif\)return motif/);
 });
 
 test("motifs are dedicated book artwork, never uploaded photos or remote AI images",()=>{
