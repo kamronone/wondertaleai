@@ -17,7 +17,7 @@ test("private API reads and offline parent verification bypass HTTP caches",()=>
   assert.match(queue,/fetch\(api\+"\/api\/me",\{\s*cache:"no-store"/);
 });
 test("service worker never intercepts auth or API paths",()=>{
-  assert.match(sw,/const PRIVATE_PATH = \^/);
+  assert.match(sw,/const PRIVATE_PATH = \/\^/);
   assert.match(sw,/PRIVATE_PATH\.test\(url\.pathname\)/);
   assert.match(sw,/request\.headers\.has\("Authorization"\)/);
 });
