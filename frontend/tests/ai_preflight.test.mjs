@@ -21,6 +21,7 @@ test("preflight requires a validated parent session",async()=>{
   assert.equal(await checkAiStoryAccess("","test-token"),"login");
   assert.equal(await checkAiStoryAccess("https://api.example.com",""),"login");
   assert.equal(await checkAiStoryAccess("https://api.example.com","test-token",mocked(401,{})),"login");
+  assert.equal(await checkAiStoryAccess("https://api.example.com","test-token",mocked(403,{})),"not-allowed");
 });
 
 test("pilot eligibility is checked before spending any AI quota",async()=>{
