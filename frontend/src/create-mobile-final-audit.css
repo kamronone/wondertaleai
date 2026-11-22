@@ -234,3 +234,61 @@
     padding:8px 4px!important;
   }
 }
+
+/* Hero artwork alignment: reserve identical art and caption rows for all five
+   characters. Individual transparent PNGs may contain different empty margins;
+   a fixed contain frame stops their sizes from changing the card layout. */
+@media screen and (max-width:700px) {
+  .create-page.create-reference-page .create-hero-options {
+    align-items:stretch!important;
+    grid-auto-rows:1fr;
+  }
+  .create-page.create-reference-page .create-hero-option,
+  .create-page.create-reference-page .create-hero-option.selected {
+    display:grid!important;
+    grid-template-rows:minmax(0,1fr) minmax(34px,auto);
+    align-items:stretch!important;
+    justify-items:center;
+    row-gap:4px!important;
+    height:100%!important;
+    min-height:140px!important;
+    padding:8px 5px 9px!important;
+  }
+  .create-page.create-reference-page .create-hero-option img {
+    display:block!important;
+    align-self:center!important;
+    justify-self:center!important;
+    width:100%!important;
+    max-width:112px!important;
+    height:92px!important;
+    min-height:92px!important;
+    margin:0 auto!important;
+    padding:0!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    flex:none!important;
+    border-radius:9px;
+  }
+  .create-page.create-reference-page .create-hero-option>span {
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    align-self:end!important;
+    min-height:34px!important;
+    margin:0!important;
+    padding:0 2px!important;
+    text-align:center!important;
+  }
+}
+@media screen and (max-width:360px) {
+  .create-page.create-reference-page .create-hero-option,
+  .create-page.create-reference-page .create-hero-option.selected {
+    min-height:128px!important;
+    padding:6px 3px 7px!important;
+  }
+  .create-page.create-reference-page .create-hero-option img {
+    max-width:100px!important;
+    height:82px!important;
+    min-height:82px!important;
+  }
+}
