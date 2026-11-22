@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/mobile-nav-library-audit.css",import.meta.url),"utf8");
-const lib=app.slice(app.indexOf('{tab==="library"&&'),app.indexOf('{tab==="create"&&'));
+const lib=app.slice(app.indexOf('{tab==="library"&&'),app.indexOf('{tab==="reader"&&'));
 const nav=app.slice(app.indexOf('className="mobile-tabbar"'),app.indexOf('</nav>',app.indexOf('className="mobile-tabbar"')));
 
 test("four real route actions stay in a fixed safe-area-aware bottom menu",()=>{
