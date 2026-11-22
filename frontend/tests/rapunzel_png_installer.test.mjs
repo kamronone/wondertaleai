@@ -19,3 +19,15 @@ test("installer rejects an absent archive without changing images",()=>{
  assert.equal(result.status,1);
  assert.match(result.stderr,/Usage: npm run install:rapunzel:art/);
 });
+
+test("installer pins every page to its reviewed PNG checksum and dimensions",()=>{
+ const manifest=JSON.parse(readFileSync(new URL("../artwork/rapunzel-png-integrity.json",import.meta.url),"utf8"));
+ assert.equal(manifest.classicId,"rapunzel");
+ assert.equal(manifest.width,960);
+ assert.equal(manifest.height,720);
+ assert.deepEqual(manifest.pages.map(item=>item.page),[1,2,3,4,5,6,7,8]);
+ assert.equal(new Set(manifest.pages.map(item=>item.sha256)).size,8);
+ for(const item of manifest.pages)assert.match(item.sha256,/^[a-f0-9]{64}$/);
+ assert.match(install,/integrity.pages.find\(entry=>entry.page===page\)\?\.sha256/);
+ assert.match(install,/Unexpected or swapped Rapunzel illustration/);
+});
