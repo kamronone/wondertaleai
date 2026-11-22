@@ -32,6 +32,9 @@ test("the reaction remains visible until manually dismissed, with accessible red
  const css=read("../src/character-reaction-motion.css").toString("utf8");
  assert.match(app,/visibleReaction&&point&&<div className="wt-character-reaction"/);
  assert.match(app,/className="wt-character-reaction-gif"/);
+ assert.match(app,/gifAsset&&!gifFailed/);
+ assert.match(app,/onError=\{\(\)=>setGifFailed\(true\)\}/);
+ assert.match(app,/setGifFailed\(false\)/);
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.match(css,/\.wt-character-reaction-gif\{display:none!important\}/);
  assert.match(css,/pointer-events:none/);
