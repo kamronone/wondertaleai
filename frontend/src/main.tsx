@@ -1571,7 +1571,6 @@ function App(){
   return parts.active?<>{parts.before}<mark className="wt-spoken-word">{parts.active}</mark>{parts.after}</>:text;
 })()}</div></div>
         {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
-        </div>}
         {page===active.pages.length-1&&<section className="reader-finale" aria-label={({ru:"После сказки",uz:"Ertakdan keyin",en:"After the story"} as const)[lang]}>
           <div className="reader-finale-heading">
             <strong>{({ru:"История закончилась. Что дальше?",uz:"Ertak tugadi. Keyin nima?",en:"The story is finished. What's next?"} as const)[lang]}</strong>
