@@ -10,6 +10,7 @@ export default defineConfig({
   server:{port:5173,host:true},
   define:{
     __WONDERTALE_BUILD_SHA__:JSON.stringify(sha),
-    __WONDERTALE_BUILD_BRANCH__:JSON.stringify(branch)
+    __WONDERTALE_BUILD_BRANCH__:JSON.stringify(branch),
+    __RAPUNZEL_PNG_READY__:JSON.stringify(process.env.VITE_RAPUNZEL_PNG_READY==="true")
   }
 });
