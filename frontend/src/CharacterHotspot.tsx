@@ -110,7 +110,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
   const ref=useRef<HTMLDivElement|null>(null);
   const [point,setPoint]=useState<{left:number;top:number}|null>(null);
   const [visibleReaction,setVisibleReaction]=useState(false);
-  useEffect(()=>{setVisibleReaction(false);setPoint(null);},[classicId,page]);
+  const [gifFailed,setGifFailed]=useState(false);
+  useEffect(()=>{setVisibleReaction(false);setGifFailed(false);setPoint(null);},[classicId,page]);
   useEffect(()=>{
     if(!reaction||!enabled)return;
     const stage=ref.current?.parentElement;
@@ -159,8 +160,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       <Sparkles size={18} aria-hidden="true"/>
     </button>}
     {visibleReaction&&point&&<div className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
-      {gifAsset
-        ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async"/>
+      {gifAsset&&!gifFailed
+        ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" onError={()=>setGifFailed(true)}/>
         :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
     </div>}
     {visibleReaction&&point&&<div className="wt-character-reaction" role="status" aria-live="polite">
