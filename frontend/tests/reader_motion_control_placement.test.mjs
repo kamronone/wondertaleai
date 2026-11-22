@@ -3,22 +3,24 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
-const css=readFileSync(new URL("../src/reader-mobile-v1.css",import.meta.url),"utf8");
+const brick=readFileSync(new URL("../src/BrickPassInteraction.tsx",import.meta.url),"utf8");
+const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
 
-test("character GIF controls do not cover the picture",()=>{
- const image=app.indexOf('className={"story-page-image reader-turn-image');
- const effects=app.indexOf('<div className="wt-art-effects"',image);
- const imageEnd=app.indexOf('</div></div>{isDemoBook(active as DemoBook)',effects);
- const row=app.indexOf('<div className="wt-motion-inline-row">',image);
- const storyText=app.indexOf('className="story-text reader-turn-text"',row);
- assert.ok(image>=0&&effects>image&&imageEnd>effects&&row>imageEnd&&storyText>row);
- assert.match(css,/\.wt-motion-inline-row \.wt-character-motion-control\{[^}]*position:static!important/s);
- assert.match(css,/max-width:100%/);
+test("pig scene uses a movable brick on the image rather than a motion-toggle row",()=>{
+ const picture=app.indexOf('className={"story-page-image reader-turn-image');
+ const brickAt=app.indexOf('<BrickPassInteraction lang={lang} />',picture);
+ const imageEnd=app.indexOf('<div key={active.id+":"+page+":text"}',picture);
+ assert.ok(picture>=0 && brickAt>picture && imageEnd>brickAt);
+ assert.doesNotMatch(app,/className="wt-motion-inline-row"/);
+ assert.match(app,/className="wt-art-motion-toggle"/);
+ assert.match(brick,/onPointerDown=\{onDown\}/);
+ assert.match(brick,/onPointerUp=\{onUp\}/);
+ assert.match(css,/touch-action:none!important/);
 });
-test("no empty row appears on pages without a character GIF",()=>{
- assert.ok(app.includes("classicAnimatedPage((active as DemoBook).classicId"));
- assert.ok(app.includes(")&&!reduceArtMotion&&!readerNightMode&&bedtimeUntil===null&&"));
- assert.match(app,/bedtimeUntil===null&&\s*<div className="wt-motion-inline-row">/);
+test("drag interaction is only shown on Three Little Pigs scene four",()=>{
+ assert.match(app,/\(active as DemoBook\)\.classicId==="three-pigs"&&page===3/);
+ assert.match(app,/!readerFocusMode&&!readerNightMode&&bedtimeUntil===null/);
+ assert.match(brick,/if\(distance<\.17\)/);
 });
 test("in-reader art remains inline and never reopens the removed zoom modal",()=>{
  assert.doesNotMatch(app,/createPortal|wt-reader-image-open|setZoomOpen/);
