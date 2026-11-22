@@ -16,6 +16,8 @@ const duplicated=[];
 const valid=[];
 const hashes=new Map();
 const signature=Buffer.from([137,80,78,71,13,10,26,10]);
+const rapunzelManifest=JSON.parse(readFileSync(resolve(root,"artwork/rapunzel-png-integrity.json"),"utf8"));
+if(rapunzelManifest.classicId!=="rapunzel"||rapunzelManifest.pages?.length!==8)throw new Error("Invalid Rapunzel art manifest");
 
 for(const story of stories) {
  for(let page=1;page<=8;page++){
@@ -32,6 +34,12 @@ for(const story of stories) {
     invalid.push(rel+": unsupported dimensions "+width+"x"+height);continue;
   }
   const hash=createHash("sha256").update(bytes).digest("hex");
+  if(story==="rapunzel"){
+   const expected=rapunzelManifest.pages.find(entry=>entry.page===page);
+   if(!expected||hash!==expected.sha256||width!==rapunzelManifest.width||height!==rapunzelManifest.height){
+    invalid.push(rel+": does not match reviewed Rapunzel artwork");continue;
+   }
+  }
   const previous=hashes.get(hash);
   if(previous)duplicated.push(rel+" duplicates "+previous);
   hashes.set(hash,rel);
