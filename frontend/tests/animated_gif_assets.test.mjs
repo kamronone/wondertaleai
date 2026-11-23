@@ -25,7 +25,8 @@ test("three independent real GIFs are generated from versioned binary data",()=>
 test("GIF decoding runs before dev, tests and production build",()=>{
  for(const command of ["predev","pretest","prebuild"])assert.equal(pkg.scripts[command],"npm run reaction:gif:install");
  assert.equal(pkg.scripts["reaction:gif:install"],"node scripts/install-reaction-gifs.mjs");
- assert.match(installer,/if\(frames!==8\|\|at!==data.length\)/);
+ assert.match(installer,/if\(frames!==expectedFrames\|\|at!==data.length\)/);
+ assert.match(installer,/checkedGif\(bytes,asset,256,256,6,8\)/);
  assert.match(installer,/writeFileSync\(dest,bytes\)/);
  assert.doesNotMatch(installer,/fetch\(|exec\(|https?:\/\/|Authorization|privateToken/);
 });
