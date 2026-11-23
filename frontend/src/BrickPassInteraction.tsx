@@ -2,6 +2,7 @@ import {useEffect,useRef,useState,type PointerEvent as ReactPointerEvent,type To
 import {CheckCircle2} from "lucide-react";
 import type {Lang} from "./i18n";
 import {SceneReplyAudio} from "./SceneReplyAudio";
+import {reactionGifData} from "./reaction_gif_assets";
 
 type Point={x:number;y:number};
 const start:Point={x:.80,y:.78};
@@ -127,6 +128,7 @@ export function BrickPassInteraction({lang,onBeforeReply}:{lang:Lang;onBeforeRep
       onKeyDown={onKeyDown}>
       <img src={brickImage} alt="" className="wt-brick-image" draggable={false}/>
     </div>
+    {delivered&&<img className="wt-brick-reaction-gif" src={reactionGifData["three-pigs:4"]} alt="" aria-hidden="true" draggable={false} width={80} height={80}/>}
     {delivered&&<SceneReplyAudio text={success} lang={lang} onBeforeSpeak={onBeforeReply}/>}
     {delivered&&<div className="wt-brick-speech" role="status" aria-live="polite">
       <span className="wt-brick-speech-pig" aria-hidden="true">🐷</span>
