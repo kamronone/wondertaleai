@@ -10,7 +10,7 @@ const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const src = (file) => readFileSync(resolve(root, "src", file), "utf8");
 const catalog = src("classics.ts");
 const artwork = src("classic_page_art.ts");
-const vite = src("vite.config.ts");
+const vite = readFileSync(resolve(root, "vite.config.ts"), "utf8");
 const allIds = [...catalog.matchAll(/(?:\bid:|"id":)\s*"([^"]+)"/g)].map((match) => match[1]);
 const requiredPng = ["red-hood", "cinderella", "three-pigs", "rapunzel"];
 
