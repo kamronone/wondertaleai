@@ -584,6 +584,8 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
     import illustration_worker as worker
 
     client,module,register,_=api
+    # Earlier tests can reload secure_main; bind the worker to this test DB.
+    monkeypatch.setattr(worker,"db",module)
     email,auth=register()
     _,other=register()
     monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
