@@ -166,7 +166,7 @@ test("new storybook reactions integrate with their readers, including brick deli
  const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
  const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
  assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
- assert.match(brick,/delivered&&<img className="wt-brick-reaction-gif"/);
+ assert.match(brick,/delivered&&<><img className="wt-brick-reaction-gif"/);
  assert.ok(brick.includes('reactionGifData["three-pigs:4"]'));
  assert.match(css,/\.wt-brick-reaction-gif\{/);
  assert.match(css,/pointer-events:none/);
