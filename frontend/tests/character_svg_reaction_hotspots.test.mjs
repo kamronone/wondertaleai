@@ -70,7 +70,7 @@ test("mutation reactions cannot retrigger endless coordinate updates",()=>{
 test("each story page owns a fresh character reaction lifecycle",()=>{
  const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
  assert.match(main,/<CharacterHotspot key=\{active\.id\+"\:"\+page\}/);
- assert.match(hotspot,/useEffect\(\(\)=>\{setVisibleReaction\(false\);setReactionReplay\(0\);setGifFailed\(false\);setPoint\(null\);\},\[classicId,page\]\)/);
+ assert.match(hotspot,/useEffect\(\(\)=>\{setVisibleReaction\(false\);setReactionReplay\(0\);setPoint\(null\);\},\[classicId,page\]\)/);
 });
 
 test("hotspot icon represents actual scene action instead of generic sparkles",()=>{
@@ -110,4 +110,10 @@ test("six more classics have chapter reactions with translated dialogue",()=>{
    assert.match(entry,/message:words\(/);
    assert.match(entry,/position:\{x:/);
  }
+});
+
+test("character reactions do not request GIF assets absent from repository",()=>{
+ assert.doesNotMatch(hotspot,/snow-white-wave\.gif|duckling-flutter\.gif|bremen-music\.gif/);
+ assert.doesNotMatch(hotspot,/gifFailed|gifAsset/);
+ assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
 });
