@@ -128,7 +128,7 @@ export function BrickPassInteraction({lang,onBeforeReply}:{lang:Lang;onBeforeRep
       onKeyDown={onKeyDown}>
       <img src={brickImage} alt="" className="wt-brick-image" draggable={false}/>
     </div>
-    {delivered&&<img className="wt-brick-reaction-gif" src={reactionGifData["three-pigs:4"]} alt="" aria-hidden="true" draggable={false} width={80} height={80}/>}
+    {delivered&&<><img className="wt-brick-reaction-gif" src={reactionGifData["three-pigs:4"]} alt="" aria-hidden="true" draggable={false} width={80} height={80}/><CheckCircle2 className="wt-brick-reaction-still" size={38} aria-hidden="true"/></>}
     {delivered&&<SceneReplyAudio text={success} lang={lang} onBeforeSpeak={onBeforeReply}/>}
     {delivered&&<div className="wt-brick-speech" role="status" aria-live="polite">
       <span className="wt-brick-speech-pig" aria-hidden="true">🐷</span>
