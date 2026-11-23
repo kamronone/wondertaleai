@@ -59,3 +59,6 @@ for(const asset of assets){
  writeFileSync(dest,bytes);
  console.log("Verified original GIF:",asset,bytes.length+" bytes / 8 frames");
 }
+
+// Also materialize the five hero portraits before dev, test and Vite build.
+await import("./install-hero-pngs.mjs");
