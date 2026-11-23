@@ -15,7 +15,8 @@
     "reaction:gif:install": "node scripts/install-reaction-gifs.mjs",
     "predev": "npm run reaction:gif:install",
     "pretest": "npm run reaction:gif:install",
-    "prebuild": "npm run reaction:gif:install"
+    "prebuild": "npm run reaction:gif:install",
+    "check:dist": "node scripts/check-dist.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",
