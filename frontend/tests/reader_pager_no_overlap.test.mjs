@@ -13,7 +13,8 @@ test("mobile reader pager is fixed above navigation without covering story end",
  assert.match(css,/\.story-page \.story-text\{[\s\S]*?overflow:visible!important/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
  assert.match(css,/position:fixed!important/);
- assert.match(css,/padding-bottom:calc\(190px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
+ assert.match(css,/\.shell:has\(>main>\.reader-page\)>main\{[\s\S]*?padding-bottom:0!important/);
+ assert.match(css,/\.shell:has\(>main>\.reader-page\)>main>\.reader-page\{[\s\S]*?padding-bottom:calc\(138px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
 });
 
 test("print hides navigation controls",()=>{
@@ -74,4 +75,14 @@ test("previous and next override old higher-specificity 50px buttons and cannot 
  assert.match(css,/\.pager,[\s\S]*?overflow:hidden!important/);
  const legacy=readFileSync(new URL("../src/reader-library-responsive-audit.css",import.meta.url),"utf8");
  assert.match(legacy,/\.pager>button:first-child,[\s\S]*?\.pager>button:last-child\{[\s\S]*?height:50px!important/);
+});
+
+test("reader final action has no duplicated bottom padding or empty colored band",()=>{
+ const css=readFileSync(new URL("../src/reader-pager-no-overlap.css",import.meta.url),"utf8");
+ const mainSection=css.slice(css.indexOf("/* Reserve clearance only inside"),css.indexOf("@media print"));
+ assert.match(mainSection,/main\{\s*padding-bottom:0!important/);
+ assert.match(mainSection,/main>\.reader-page\{\s*padding-bottom:calc\(138px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
+ assert.doesNotMatch(mainSection,/190px/);
+ assert.match(css,/bottom:calc\(78px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
+ assert.match(css,/height:48px!important/);
 });
