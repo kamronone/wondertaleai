@@ -5,8 +5,8 @@ import {readFileSync} from "node:fs";
 const css=readFileSync(new URL("../src/create-mobile-final-audit.css",import.meta.url),"utf8");
 const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 
-test("all five hero cards use a uniform image region and bottom caption",()=>{
-  assert.match(app,/\["boy","girl","animal","robot","magical"\]/);
+test("all six hero cards use a uniform image region and bottom caption",()=>{
+  assert.match(app,/\["boy","girl","animal","robot","magical","superhero"\]/);
   assert.match(css,/Hero artwork alignment:/);
   assert.match(css,/grid-auto-rows:1fr/);
   assert.match(css,/grid-template-rows:minmax\(0,1fr\) minmax\(34px,auto\)/);
