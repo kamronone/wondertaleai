@@ -136,13 +136,18 @@
     overflow:visible!important;
     padding-bottom:12px!important;
   }
-  /* Both floating bars need reserved space at the end of long chapters. */
+  /* Reserve clearance only inside the warm reading surface.
+     The old 190px main padding painted a large, empty lavender strip after
+     the finale and before the fixed page controls. Two stacked reservations
+     are not needed: the 48px pager sits above the 78px app tabbar. */
   .shell:has(>main>.reader-page)>main{
-    padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))!important;
-    scroll-padding-bottom:calc(190px + env(safe-area-inset-bottom,0px));
+    padding-bottom:0!important;
+    margin-bottom:0!important;
+    scroll-padding-bottom:calc(138px + env(safe-area-inset-bottom,0px));
   }
   .shell:has(>main>.reader-page)>main>.reader-page{
-    padding-bottom:12px!important;
+    padding-bottom:calc(138px + env(safe-area-inset-bottom,0px))!important;
+    margin-bottom:0!important;
   }
 }
 @media print{
