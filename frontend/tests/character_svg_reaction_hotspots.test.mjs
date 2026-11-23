@@ -17,7 +17,7 @@ test("cover-cropped classic artwork uses visible rectangle for hotspots",()=>{
 });
 
 test("hotspots update if the primary image is replaced with SVG fallback",()=>{
-  assert.match(hotspot,/new MutationObserver\(update\)/);
+  assert.match(hotspot,/new MutationObserver\(\(\)=>\{/);
   assert.match(hotspot,/mediaObserver\?\.observe\(stage,\{childList:true,subtree:true\}\)/);
   assert.match(hotspot,/mediaObserver\?\.disconnect\(\)/);
 });
@@ -58,4 +58,11 @@ test("six additional fairy tales include a localized chapter-one reaction",()=>{
    assert.ok(entry.includes("label:words("),id+" defines localized labels");
    assert.ok(entry.includes("message:words("),id+" defines localized dialogue");
  }
+});
+
+test("mutation reactions cannot retrigger endless coordinate updates",()=>{
+ assert.match(hotspot,/setPoint\(previous=>previous\?\.left===next\?\.left&&previous\?\.top===next\?\.top\?previous:next\)/);
+ assert.match(hotspot,/if\(next===picture\)return/);
+ assert.match(hotspot,/picture\?\.removeEventListener\("load",update\)/);
+ assert.match(hotspot,/picture\?\.addEventListener\("load",update\)/);
 });
