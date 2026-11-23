@@ -44,9 +44,10 @@ function serviceWorker(fakeFetch) {
   return {dispatch,saved};
 }
 
-test("all three original GIF reactions are precached optionally, without child content",()=>{
+test("original reaction GIFs are cached lazily, not during PWA installation",()=>{
   assert.match(source,/wondertale-public-v16/);
-  for(const path of reactions)assert.ok(source.includes('"' + path + '"'),path);
+  assert.match(source,/images\\\/interactions\\\/reactions/);
+  for(const path of reactions)assert.doesNotMatch(source,new RegExp('"' + path + '"'));
   assert.doesNotMatch(source,/OPTIONAL_ART\s*=\s*\[[^\]]*\/api\//s);
   assert.doesNotMatch(source,/OPTIONAL_ART\s*=\s*\[[^\]]*\/account\//s);
 });
