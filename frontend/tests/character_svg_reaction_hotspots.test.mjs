@@ -164,3 +164,21 @@ test("new storybook reactions integrate with their readers, including brick deli
  assert.match(css,/pointer-events:none/);
  assert.ok(main.includes('<BrickPassInteraction key={active.id+":"+page}'));
 });
+
+test("Reduce Motion keeps a static character reaction visible instead of an empty layer",()=>{
+ const motion=readFileSync(new URL("../src/character-reaction-motion.css",import.meta.url),"utf8");
+ assert.match(hotspot,/className="wt-character-reaction-still"/);
+ assert.match(motion,/prefers-reduced-motion:reduce/);
+ assert.match(motion,/\.wt-character-reaction-still svg\{/);
+ assert.match(motion,/opacity:1!important/);
+ assert.match(motion,/wt-character-reaction-fx:not\(:has\(\.wt-character-reaction-gif\)\)>svg:first-child/);
+});
+
+test("brick delivery retains a static success icon when pig GIF is hidden",()=>{
+ const brick=readFileSync(new URL("../src/BrickPassInteraction.tsx",import.meta.url),"utf8");
+ const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
+ assert.match(brick,/<CheckCircle2 className="wt-brick-reaction-still"/);
+ assert.match(css,/\.wt-brick-reaction-still\{/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+ assert.match(css,/display:block!important/);
+});
