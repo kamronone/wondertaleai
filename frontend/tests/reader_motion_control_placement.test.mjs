@@ -8,7 +8,7 @@ const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.u
 
 test("pig scene uses a movable brick on the image rather than a motion-toggle row",()=>{
  const picture=app.indexOf('className={"story-page-image reader-turn-image');
- const brickAt=app.indexOf('<BrickPassInteraction key={active.id+\":\"+page} lang={lang} />',picture);
+ const brickAt=app.indexOf('<BrickPassInteraction key={active.id+":"+page} lang={lang} onBeforeReply={stopSpeech} />',picture);
  const imageEnd=app.indexOf('<div key={active.id+":"+page+":text"}',picture);
  assert.ok(picture>=0 && brickAt>picture && imageEnd>brickAt);
  assert.doesNotMatch(app,/className="wt-motion-inline-row"/);
