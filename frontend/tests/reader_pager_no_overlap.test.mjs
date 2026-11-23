@@ -52,3 +52,15 @@ test("previous and next stay after story in the DOM and follow the viewport",()=
  assert.match(css,/\.reader-page \.pager[\s\S]*?position:fixed!important/);
  assert.match(css,/\.reader-page \.pager[\s\S]*?bottom:calc\(78px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
 });
+
+test("compact fixed pager has equal 44px buttons and a truly centered page counter",()=>{
+ const readerCss=css.slice(css.indexOf("@media screen and (max-width:700px){"));
+ assert.match(readerCss,/height:52px!important/);
+ assert.match(readerCss,/grid-template-columns:minmax\(0,1fr\) 48px minmax\(0,1fr\)!important/);
+ assert.match(readerCss,/\.pager>button\{[\s\S]*?height:44px!important/);
+ assert.match(readerCss,/\.pager>button\{[\s\S]*?justify-content:center!important/);
+ assert.match(readerCss,/\.pager>\.pager-indicators\{[\s\S]*?justify-self:center!important/);
+ assert.match(readerCss,/\.pager \.pager-mobile-current\{[\s\S]*?text-align:center!important/);
+ assert.match(readerCss,/\.pager>button svg\{[\s\S]*?width:17px!important/);
+ assert.match(readerCss,/width:calc\(100vw - 32px\)!important/);
+});
