@@ -41,7 +41,7 @@
     height:auto!important;
     max-height:none!important;
     overflow:visible!important;
-    padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))!important;
+    padding-bottom:12px!important;
   }
   /* Both floating bars need reserved space at the end of long chapters. */
   .shell:has(>main>.reader-page)>main{
