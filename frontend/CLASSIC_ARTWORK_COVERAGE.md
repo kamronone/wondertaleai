@@ -38,3 +38,11 @@ This is **208 additional original PNG pages** (26 stories × 8 pages). Generate 
 - Run `npm test && npm run build && npm run check:images:release` from `frontend/` before a Preview release.
 
 A passing source test cannot prove PNG visual quality, live deployment correctness or iPhone Safari rendering. Those remain independent release checks.
+
+## Snow White bundle prepared (November 23, 2026)
+
+Eight individual PNGs, each 960 × 720, were checked against `frontend/artwork/snow-white-png-integrity.json` (unique SHA-256 per page). A deployment-ready archive exists in the conversation, with paths prefixed `frontend/public/images/classics/snow-white/pages/`.
+
+**Important:** GitHub does not yet contain these eight binary PNGs. The presence of the JSON manifest and installer is not the same as installing the images. Do not count Snow White as a deployed PNG story until the binaries have been uploaded, and `npm test && npm run build && npm run check:images:release` pass.
+
+For a manual upload, extract the archive at the repository root on `fix/private-book-access`; commit the eight PNGs (without changing existing user media), then run all checks. The archive also contains the integrity manifest and README. The existing build flag only enables Snow White PNG when every file is present. `main` and Netlify Production remain out of scope.
