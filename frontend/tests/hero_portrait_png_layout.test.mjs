@@ -36,7 +36,7 @@ test("six updated portraits are real transparent PNGs installed for every build"
    assert.equal(png.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
    assert.equal(png.readUInt32BE(16),320);
    assert.equal(png.readUInt32BE(20),320);
-   assert.ok(png.includes(Buffer.from("tRNS")),name+" retains transparent alpha palette");
+   assert.ok(png[25]===6||png.includes(Buffer.from("tRNS")),name+" retains RGBA or palette transparency");
    assert.equal(png.subarray(-8,-4).toString("ascii"),"IEND");
    assert.ok(png.length>5000);
  }
