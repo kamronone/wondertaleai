@@ -1,0 +1,50 @@
+/* iPhone reader regression: page controls must never cover the book text.
+   The fixed bottom tabbar remains; page navigation belongs to document flow.
+   This is imported last to override older fixed-pager experiments. */
+@media screen and (max-width:700px){
+  .shell:has(>main>.reader-page) .reader-page .pager,
+  .shell > main > .reader-page .pager{
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    transform:none!important;
+    z-index:auto!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    margin:14px 0 12px!important;
+    padding:7px!important;
+    min-height:64px!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr)!important;
+    gap:8px!important;
+    align-items:center!important;
+    border-radius:17px!important;
+  }
+  .shell:has(>main>.reader-page) .reader-page .story-page{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  .shell:has(>main>.reader-page) .reader-page .story-page .story-text{
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding-bottom:12px!important;
+  }
+  /* Reserve bottom navigation space exactly once in the shell. */
+  .shell:has(>main>.reader-page)>main{
+    padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important;
+    scroll-padding-bottom:calc(94px + env(safe-area-inset-bottom,0px));
+  }
+  .shell:has(>main>.reader-page)>main>.reader-page{
+    padding-bottom:12px!important;
+  }
+}
+@media print{
+  .reader-page .pager{display:none!important;}
+}
