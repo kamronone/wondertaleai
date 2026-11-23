@@ -6,9 +6,10 @@ const component=read("../src/CharacterHotspot.tsx");
 const animation=read("../src/character-reaction-motion.css");
 const main=read("../src/main.tsx");
 
-test("all eleven public classic character reactions have specific visual motions",()=>{
+test("all current public classic character reactions have specific visual motions",()=>{
  const motions=[...component.matchAll(/^  "([a-z-]+):([1-8])": \{\s*motion:"([a-z]+)",/gm)];
- assert.equal(motions.length,11);
+ assert.equal(motions.length,29);
+ assert.equal(new Set(motions.map(match=>match[1]+":"+match[2])).size,motions.length);
  const types=new Set(motions.map(match=>match[3]));
  assert.deepEqual([...types].sort(),["bloom","bow","cheer","dance","flutter","music","shine","wave"]);
  for(const effect of types)assert.ok(animation.includes(".wt-reaction-"+effect+" svg"),"Missing "+effect+" animation");
@@ -19,7 +20,8 @@ test("all eleven public classic character reactions have specific visual motions
 
 test("feedback stays visible after the motion ends and never advances the book",()=>{
  assert.match(component,/visibleReaction&&point&&<div className="wt-character-reaction"/);
- assert.match(component,/setVisibleReaction\(value=>!value\)/);
+ assert.match(component,/setVisibleReaction\(true\)/);
+ assert.match(component,/setReactionReplay\(value=>value\+1\)/);
  assert.match(component,/setVisibleReaction\(false\)/);
  assert.match(component,/role="status" aria-live="polite"/);
  assert.doesNotMatch(component,/nextPage|setPage|setActive|fetch\(|setTimeout|setInterval/);
