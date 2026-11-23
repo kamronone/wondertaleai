@@ -127,7 +127,7 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
     if(scene)move(scene.start);
   };
   const guardTouch=(event:ReactTouchEvent<HTMLDivElement>)=>{
-    if(event.type==="touchstart"&&event.target instanceof Element&&event.target.closest(".wt-gift-item"))activeTouch.current=true;
+    if(event.type==="touchstart"&&event.target instanceof Element&&event.target.closest(".wt-gift-item, .wt-gift-target.is-selected"))activeTouch.current=true;
     if(!activeTouch.current)return;
     event.stopPropagation();
     if(event.type==="touchend"||event.type==="touchcancel")activeTouch.current=false;
@@ -167,7 +167,7 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
       <GiftEffect size={29} strokeWidth={2.2}/><GiftEffect size={19} strokeWidth={2.5}/>
     </div>}
     {!delivered&&<div className="wt-gift-guide" aria-hidden="true">
-      <img src={scene.asset} alt="" draggable={false}/><small>{scene.instruction[lang]}</small>
+      <img src={scene.asset} alt="" draggable={false}/><small>{selected?({ru:"Коснись светящейся цели",uz:"Yorqin nishonga teging",en:"Tap the glowing target"} as const)[lang]:scene.instruction[lang]}</small>
     </div>}
     <div
       className={"wt-gift-item"+(dragging?" is-dragging":"")+(selected?" is-selected":"")}
