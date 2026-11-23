@@ -244,3 +244,26 @@
     height:19px;
   }
 }
+
+/* The pig thanks the reader with a genuine six-frame transparent GIF.
+   Appears only once a brick has been delivered; never intercepts touch. */
+.reader-page .story-page-image .wt-brick-reaction-gif{
+  position:absolute;
+  z-index:8;
+  left:37%;
+  top:54%;
+  width:80px;
+  height:80px;
+  max-width:25%;
+  object-fit:contain;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  image-rendering:auto;
+  filter:drop-shadow(0 3px 5px rgba(43,26,50,.25));
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .story-page-image .wt-brick-reaction-gif{display:none!important}
+}
+@media print{
+  .reader-page .story-page-image .wt-brick-reaction-gif{display:none!important}
+}
