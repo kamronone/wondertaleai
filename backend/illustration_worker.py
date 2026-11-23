@@ -5,11 +5,12 @@ both an independent content moderator and a renderer. A reservation is never
 automatically refunded or retried after the renderer can have been called.
 """
 import os
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Callable
 
-from illustration_planning import illustration_brief
+from illustration_planning import illustration_brief,plan_story_illustrations
 import secure_main as db
 
 def _cap(name:str)->int:
@@ -58,6 +59,35 @@ def illustration_attempt_snapshot()->dict:
     return {"day":day,"paused":illustration_emergency_paused(),
             "reserved_attempts_today":int(global_row[0]) if global_row else 0,
             "job_counts":{str(status):int(count) for status,count in jobs}}
+
+
+def private_storyboard_prompt(book_id:str,owner:str,page_number:int,style:str)->str:
+    """Read only the authenticated owner's book and select a curated prompt.
+
+    Private chapters are used in-process only. Never forward their text, names,
+    emails or account identifiers to the renderer or image moderator.
+    """
+    with db.connection() as c:
+        row=db.sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
+    if not row:
+        raise ValueError("Private book is unavailable")
+    try:
+        story=json.loads(row[0])
+        pages=story["pages"]
+        if not isinstance(pages,list) or not 1<=page_number<=len(pages)<=20:
+            raise ValueError("Invalid private story pages")
+        if len(pages) not in (8,12,20):
+            # Legacy book formats retain their original safe generic illustration.
+            return illustration_brief(book_id,page_number,style).prompt
+        if any(not isinstance(page,dict) or page.get("number")!=index+1
+               or not isinstance(page.get("text"),str)
+               for index,page in enumerate(pages)):
+            raise ValueError("Untrusted chapter format")
+        chapters=[page["text"] for page in pages]
+        planned=plan_story_illustrations(book_id,chapters,style)
+        return planned[page_number-1].prompt
+    except (ValueError,TypeError,KeyError,IndexError) as exc:
+        raise ValueError("Invalid private story format") from exc
 
 
 def process_one_illustration_job(
@@ -147,10 +177,10 @@ def process_one_illustration_job(
                (uuid.uuid4().hex,job_id,"processing",started))
         c.commit()
 
-    # Build only a generic original fictional scene; never transmit private
-    # story text, names, photos, account IDs or book IDs to the renderer.
+    # Read the private story for local selection of a generic fictional scene.
+    # Only the pre-reviewed prompt reaches the renderer, not the story itself.
     try:
-        prompt=illustration_brief(book_id,page_number,style).prompt
+        prompt=private_storyboard_prompt(book_id,owner,page_number,style)
         if moderator(prompt) is not True:
             _finish(job_id,"failed")
             return job_id
