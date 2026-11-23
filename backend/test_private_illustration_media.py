@@ -642,7 +642,7 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
         )
         assert completed==job
         details=client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=auth)
-        assert details.status_code==200,details.text
+        assert details.status_code==200,(page,details.text,client.get("/api/illustrations/jobs",headers=auth).json())
         assert details.json()=={"job_id":job}
         assert client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=other).status_code==404
         assert client.get(f"/api/illustrations/media/{job}",headers=other).status_code==404
