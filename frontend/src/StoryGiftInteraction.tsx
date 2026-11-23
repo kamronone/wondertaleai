@@ -27,6 +27,8 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
   const [point,setPoint]=useState<Point>(scene?.start??{x:.8,y:.8});
   const latest=useRef<Point>(scene?.start??{x:.8,y:.8});
   const [dragging,setDragging]=useState(false);
+  const [selected,setSelected]=useState(false);
+  const movedDuringDrag=useRef(false);
   const [artFrame,setArtFrame]=useState<ArtFrame|null>(null);
   const locate=(p:Point)=>artFrame
     ?{left:artFrame.left+artFrame.width*p.x,top:artFrame.top+artFrame.height*p.y}
@@ -40,6 +42,8 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
     latest.current=reset;
     setPoint(reset);
     setDragging(false);
+    setSelected(false);
+    movedDuringDrag.current=false;
     setDelivered(false);
     activePointer.current=null;
     activeTouch.current=false;
@@ -65,6 +69,7 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
     activeTouch.current=false;
     origin.current=null;
     setDragging(false);
+    setSelected(false);
     move(scene.target);
     setDelivered(true);
   };
@@ -73,6 +78,7 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
     event.preventDefault();
     event.stopPropagation();
     activePointer.current=event.pointerId;
+    movedDuringDrag.current=false;
     origin.current={x:event.clientX,y:event.clientY,point:latest.current};
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragging(true);
@@ -84,6 +90,7 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
     const rect=stage.current.getBoundingClientRect();
     const width=artFrame?.width??rect.width,height=artFrame?.height??rect.height;
     if(width<=0||height<=0)return;
+    if(Math.hypot(event.clientX-origin.current.x,event.clientY-origin.current.y)>10)movedDuringDrag.current=true;
     move({
       x:Math.max(.06,Math.min(.94,origin.current.point.x+(event.clientX-origin.current.x)/width)),
       y:Math.max(.08,Math.min(.92,origin.current.point.y+(event.clientY-origin.current.y)/height))
@@ -103,6 +110,7 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
           y:Math.max(.08,Math.min(.92,origin.current.point.y+(event.clientY-origin.current.y)/height))
         }
       :latest.current;
+    if(origin.current&&Math.hypot(event.clientX-origin.current.x,event.clientY-origin.current.y)>10)movedDuringDrag.current=true;
     activePointer.current=null;
     origin.current=null;
     setDragging(false);
@@ -115,6 +123,7 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
     activePointer.current=null;
     origin.current=null;
     setDragging(false);
+    movedDuringDrag.current=false;
     if(scene)move(scene.start);
   };
   const guardTouch=(event:ReactTouchEvent<HTMLDivElement>)=>{
@@ -145,7 +154,13 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
     onTouchMoveCapture={guardTouch}
     onTouchEndCapture={guardTouch}
     onTouchCancelCapture={guardTouch}>
-    <div className="wt-gift-target" style={locate(scene.target)} aria-hidden="true">
+    <div className={"wt-gift-target"+(selected?" is-selected":"")} style={locate(scene.target)}
+      role={selected&&!delivered?"button":undefined}
+      tabIndex={selected&&!delivered?0:undefined}
+      aria-label={selected&&!delivered?({ru:"Передать подарок герою",uz:"Sovğani qahramonga uzatiş",en:"Give the gift to the character"} as const)[lang]:undefined}
+      aria-hidden={!selected||delivered?true:undefined}
+      onClick={event=>{if(!selected||delivered)return;event.preventDefault();event.stopPropagation();finish();}}
+      onKeyDown={event=>{if(!selected||delivered)return;if(event.key==="Enter"||event.key===" "){event.preventDefault();event.stopPropagation();finish();}}}>
       {delivered?<CheckCircle2 size={26}/>:<span className="wt-gift-target-ring"/>}
     </div>
     {delivered&&<div className="wt-gift-reaction-fx" style={locate(scene.target)} aria-hidden="true">
@@ -155,18 +170,19 @@ export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classi
       <img src={scene.asset} alt="" draggable={false}/><small>{scene.instruction[lang]}</small>
     </div>}
     <div
-      className={"wt-gift-item"+(dragging?" is-dragging":"")}
+      className={"wt-gift-item"+(dragging?" is-dragging":"")+(selected?" is-selected":"")}
       style={locate(point)}
       role="button"
       tabIndex={delivered?-1:0}
       aria-label={scene.instruction[lang]}
       title={scene.name[lang]}
       aria-disabled={delivered}
+      aria-pressed={selected}
       onPointerDown={down}
       onPointerMove={drag}
       onPointerUp={end}
       onPointerCancel={cancel}
-      onClick={event=>{event.preventDefault();event.stopPropagation();}}
+      onClick={event=>{event.preventDefault();event.stopPropagation();if(delivered||movedDuringDrag.current){movedDuringDrag.current=false;return;}setSelected(value=>!value);}}
       onKeyDown={keyboard}>
       <img src={scene.asset} alt="" draggable={false}/>
     </div>
