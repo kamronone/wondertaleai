@@ -58,6 +58,13 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
             raise ValueError("Language mismatch")
         if len(parsed.pages)!=pages_expected:
             raise ValueError("Unexpected page count")
+        # A full-length book must contain distinct chapters, not the same
+        # paragraph repeated twenty times to satisfy the requested count.
+        # This is structural validation, not a claim of literary quality.
+        if pages_expected==20:
+            normalized=[" ".join(page.casefold().split()) for page in parsed.pages]
+            if len(set(normalized))!=len(normalized):
+                raise ValueError("Repeated chapters in full-length story")
         title=parsed.title.strip()
         if len(title)<3 or len(title)>120 or any(len(text.strip())<70 or len(text)>1200 for text in parsed.pages):
             raise ValueError("Story title or page length out of bounds")
@@ -118,6 +125,13 @@ def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
         "Keep recognizable public-domain fairy-tale plot beats when a classic is provided, "
         "but do not imitate modern film adaptations, dialogue, character designs or protected translations. "
         f"Exactly {data.pages_count} pages, 80 to 150 words per page, age-appropriate and gentle. "
+        "Plan one continuous plot before writing the pages: establish the setting and protagonist in the opening, "
+        "introduce one clear problem early, let meaningful choices and consequences build across the middle, "
+        "reach a turning point and climax in the final quarter, then resolve the central problem on the final page. "
+        "Do not stop at a cliffhanger, write 'to be continued', or end by merely promising another adventure. "
+        "Each page must advance the same causal story with a new scene, discovery, or decision; "
+        "do not repeat the same paragraph or recycle a generic moral as filler. "
+        "Maintain consistent characters, locations, and plot facts from beginning to end. "
         "The first child is the main character. If other heroes are provided, give each a meaningful role. "
         "Avoid injury, cruelty, explicit content, fear and shame. "
         "Never reveal real-world identifying details about children. "
