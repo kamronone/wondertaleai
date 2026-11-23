@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {Sparkles,Hand,Music2,Feather,Heart,Flower2,Sun,Footprints,X} from "lucide-react";
 import type {Lang} from "./i18n";
+import {reactionGifData} from "./reaction_gif_assets";
 
 type Position={x:number;y:number};
 type ReactionMotion="wave"|"music"|"flutter"|"bow"|"dance"|"shine"|"bloom"|"cheer";
@@ -272,8 +273,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
     };
   },[classicId,page,enabled,reaction]);
   if(!reaction||!enabled)return null;
-  // Play local CSS motion immediately; no missing GIF requests or 404 flicker.
-  // Re-enable real GIF overlays only after their binary assets exist in public/.
+  // GIF89a data URLs are bundled locally and work offline without 404 requests.
+  const gifAsset=reactionGifData[`${classicId}:${page}`]??null;
   const MotionIcon=reaction.motion==="wave"?Hand
     :reaction.motion==="music"?Music2
     :reaction.motion==="flutter"?Feather
@@ -297,7 +298,9 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       <MotionIcon size={20} aria-hidden="true"/>
     </button>}
     {visibleReaction&&point&&<div key={reactionReplay} className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
-      <MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/>
+      {gifAsset
+        ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" draggable={false}/>
+        :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
     </div>}
     {visibleReaction&&point&&<div className="wt-character-reaction" onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()} onPointerUp={event=>event.stopPropagation()} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
       <span role="status" aria-live="polite">{reaction.message[lang]}</span>
