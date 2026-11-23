@@ -203,13 +203,30 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
     if(!reaction||!enabled)return;
     const stage=ref.current?.parentElement;
     if(!stage)return;
-    const update=()=>setPoint(imagePoint(stage,reaction.position));
-    const picture=stage.querySelector<HTMLImageElement>("img.wt-reader-picture, .story-page-image > img");
-    picture?.addEventListener("load",update);
+    // Ignore identical coordinates: otherwise observing the reaction layer itself
+    // creates a render -> DOM mutation -> render loop on iPhone Safari.
+    const update=()=>{
+      const next=imagePoint(stage,reaction.position);
+      setPoint(previous=>previous?.left===next?.left&&previous?.top===next?.top?previous:next);
+    };
+    let picture:HTMLImageElement|null=null;
+    const bindImage=()=>{
+      const next=stage.querySelector<HTMLImageElement>("img.wt-reader-picture, .story-page-image > img");
+      if(next===picture)return;
+      picture?.removeEventListener("load",update);
+      picture=next;
+      picture?.addEventListener("load",update);
+    };
+    bindImage();
     window.addEventListener("resize",update);
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(update):null;
     observer?.observe(stage);
-    const mediaObserver=typeof MutationObserver!=="undefined"?new MutationObserver(update):null;
+    const mediaObserver=typeof MutationObserver!=="undefined"?new MutationObserver(()=>{
+      bindImage();
+      update();
+    }):null;
+    // The observer covers image replacement, but coordinate equality prevents
+    // feedback when React inserts animation and dialogue nodes inside the stage.
     mediaObserver?.observe(stage,{childList:true,subtree:true});
     update();
     return ()=>{
