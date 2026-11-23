@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const read=path=>readFileSync(new URL(path,import.meta.url));
 const app=read("../src/CharacterHotspot.tsx").toString("utf8");
+const gifMap=read("../src/reaction_gif_assets.ts").toString("utf8");
 const installer=read("../scripts/install-reaction-gifs.mjs").toString("utf8");
 const pkg=JSON.parse(read("../package.json").toString("utf8"));
 const assets=["snow-white-wave","duckling-flutter","bremen-music"];
@@ -18,7 +19,7 @@ test("three independent real GIFs are generated from versioned binary data",()=>
   assert.equal(output.at(-1),0x3b);
   assert.deepEqual(output,original);
   assert.ok(output.length>10000);
-  assert.ok(app.includes('"/images/interactions/reactions/'+name+'.gif"'));
+  assert.ok(gifMap.includes('"/images/interactions/reactions/'+name+'.gif"'));
  }
 });
 test("GIF decoding runs before dev, tests and production build",()=>{
