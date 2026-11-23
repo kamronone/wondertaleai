@@ -124,7 +124,7 @@ test("character reactions resolve three generated GIFs and three embedded GIFs",
    assert.ok(assets.includes("/images/interactions/reactions/"+filename+".gif"),filename+" uses generated image");
  }
  assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
- for(const id of ["red-hood:1","cinderella:5","three-pigs:4"]){
+ for(const id of ["red-hood:1","cinderella:5"]){
    assert.ok(assets.includes('"'+id+'":"data:image/gif;base64,R0lGODlh'),id+" embeds GIF89a");
  }
  assert.match(hotspot,/className="wt-character-reaction-gif"/);
@@ -133,7 +133,7 @@ test("character reactions resolve three generated GIFs and three embedded GIFs",
 
 test("inline reaction GIFs contain six transparent 56px frames",()=>{
  const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
- for(const id of ["red-hood:1","cinderella:5","three-pigs:4"]){
+ for(const id of ["red-hood:1","cinderella:5"]){
    const start=assets.indexOf('"'+id+'":"data:image/gif;base64,');
    assert.ok(start>=0,id+" has an embedded GIF");
    const base64Start=start+('"'+id+'":"data:image/gif;base64,').length;
@@ -161,14 +161,15 @@ test("inline reaction GIFs contain six transparent 56px frames",()=>{
  }
 });
 
-test("new storybook reactions integrate with their readers, including brick delivery",()=>{
+test("storybook GIFs stay local and brick delivery uses a clean illustrated success state",()=>{
  const brick=readFileSync(new URL("../src/BrickPassInteraction.tsx",import.meta.url),"utf8");
  const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
  const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
  assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
- assert.match(brick,/delivered&&<><img className="wt-brick-reaction-gif"/);
- assert.ok(brick.includes('reactionGifData["three-pigs:4"]'));
- assert.match(css,/\.wt-brick-reaction-gif\{/);
+ assert.match(brick,/delivered&&<CheckCircle2 className="wt-brick-reaction-still"/);
+ assert.doesNotMatch(brick,/reactionGifData|wt-brick-reaction-gif/);
+ assert.match(css,/\.wt-brick-reaction-still\{/);
+ assert.doesNotMatch(css,/wt-brick-reaction-gif/);
  assert.match(css,/pointer-events:none/);
  assert.ok(main.includes('<BrickPassInteraction key={active.id+":"+page}'));
 });
@@ -182,13 +183,13 @@ test("Reduce Motion keeps a static character reaction visible instead of an empt
  assert.match(motion,/wt-character-reaction-fx:not\(:has\(\.wt-character-reaction-gif\)\)>svg:first-child/);
 });
 
-test("brick delivery retains a static success icon when pig GIF is hidden",()=>{
+test("brick delivery preserves illustrated pig and shows a small success check",()=>{
  const brick=readFileSync(new URL("../src/BrickPassInteraction.tsx",import.meta.url),"utf8");
  const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
  assert.match(brick,/<CheckCircle2 className="wt-brick-reaction-still"/);
  assert.match(css,/\.wt-brick-reaction-still\{/);
- assert.match(css,/prefers-reduced-motion:reduce/);
- assert.match(css,/display:block!important/);
+ assert.match(css,/\.wt-brick-reaction-still\{[\s\S]*?display:block/);
+ assert.doesNotMatch(brick,/wt-brick-reaction-gif/);
 });
 
 test("high-resolution GIF asset sources are versioned and validated by the installer",()=>{
