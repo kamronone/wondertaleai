@@ -87,3 +87,27 @@ test("reaction dialogue can be dismissed without changing the story page",()=>{
  assert.match(css,/min-height:44px/);
  assert.match(css,/max-height:min\(45%,180px\)/);
 });
+
+test("dialogue pointer and touch events never turn a reader page",()=>{
+ assert.match(hotspot,/className="wt-character-reaction" onPointerDown=\{event=>event\.stopPropagation\(\)\}/);
+ assert.match(hotspot,/onPointerMove=\{event=>event\.stopPropagation\(\)\}/);
+ assert.match(hotspot,/onTouchMove=\{event=>event\.stopPropagation\(\)\}/);
+ assert.match(hotspot,/<span role="status" aria-live="polite">\{reaction\.message\[lang\]\}<\/span>/);
+ assert.match(hotspot,/event\.key==="Escape"/);
+});
+
+test("six more classics have chapter reactions with translated dialogue",()=>{
+ const ids=["frog-prince","princess-pea","little-mermaid","snow-queen","nutcracker","aladdin"];
+ const catalog=readFileSync(new URL("../src/classics.ts",import.meta.url),"utf8");
+ for(const id of ids){
+   assert.ok(catalog.includes('"'+id+'"'),"missing classic "+id);
+   const start=hotspot.indexOf('"'+id+':1": {');
+   assert.ok(start>=0,"missing reaction "+id);
+   const end=hotspot.indexOf(String.fromCharCode(10)+"  },",start);
+   assert.ok(end>start,"incomplete reaction "+id);
+   const entry=hotspot.slice(start,end);
+   assert.match(entry,/label:words\(/);
+   assert.match(entry,/message:words\(/);
+   assert.match(entry,/position:\{x:/);
+ }
+});
