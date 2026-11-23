@@ -26,3 +26,10 @@ test("hotspot interactions do not navigate between story pages",()=>{
   assert.match(hotspot,/onClick=\{event=>\{event\.stopPropagation\(\);setVisibleReaction/);
   assert.doesNotMatch(hotspot,/setPage\(|nextReaderPage\(/);
 });
+
+test("every character tap restarts animation and keeps dialogue visible",()=>{
+  assert.match(hotspot,/setReactionReplay\(value=>value\+1\)/);
+  assert.match(hotspot,/key=\{reactionReplay\}/);
+  assert.match(hotspot,/setVisibleReaction\(true\)/);
+  assert.doesNotMatch(hotspot,/setVisibleReaction\(value=>!value\)/);
+});
