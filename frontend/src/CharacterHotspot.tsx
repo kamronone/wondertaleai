@@ -234,7 +234,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
   const [point,setPoint]=useState<{left:number;top:number}|null>(null);
   const [visibleReaction,setVisibleReaction]=useState(false);
   const [reactionReplay,setReactionReplay]=useState(0);
-  useEffect(()=>{setVisibleReaction(false);setReactionReplay(0);setPoint(null);},[classicId,page]);
+  const [gifFailed,setGifFailed]=useState(false);
+  useEffect(()=>{setVisibleReaction(false);setReactionReplay(0);setGifFailed(false);setPoint(null);},[classicId,page]);
   useEffect(()=>{
     if(!reaction||!enabled)return;
     const stage=ref.current?.parentElement;
@@ -298,8 +299,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       <MotionIcon size={20} aria-hidden="true"/>
     </button>}
     {visibleReaction&&point&&<div key={reactionReplay} className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
-      {gifAsset
-        ?<><img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" draggable={false}/><span className="wt-character-reaction-still"><MotionIcon size={30} aria-hidden="true"/></span></>
+      {gifAsset&&!gifFailed
+        ?<><img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" draggable={false} onError={()=>setGifFailed(true)}/><span className="wt-character-reaction-still"><MotionIcon size={30} aria-hidden="true"/></span></>
         :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
     </div>}
     {visibleReaction&&point&&<div className="wt-character-reaction" onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()} onPointerUp={event=>event.stopPropagation()} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
