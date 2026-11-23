@@ -10,6 +10,42 @@ const words=(ru:string,uz:string,en:string):Record<Lang,string>=>({ru,uz,en});
 /* Coordinates are fractions of the visible artwork, not the padded card.
    Never use a hotspot on a private photo or generated user illustration. */
 const reactions:Record<string,Reaction>={
+  "kolobok:1": {
+    motion:"dance",
+    position:{x:.51,y:.56},
+    label:words("Поздороваться с Колобком","Bo‘g‘irsoqqa salom berish","Greet the runaway bun"),
+    message:words("Колобок весело подпрыгивает и приглашает тебя в путешествие!","Bo‘g‘irsoq quvonib sakraydi va seni sayohatga chorlaydi!","The little bun bounces happily and invites you on an adventure!")
+  },
+  "turnip:1": {
+    motion:"cheer",
+    position:{x:.55,y:.62},
+    label:words("Помочь вытащить репку","Sholg‘omni tortishga yordam berish","Help pull the turnip"),
+    message:words("Раз, два, три! Вместе тянуть репку намного легче!","Bir, ikki, uch! Sholg‘omni birga tortish osonroq!","One, two, three! Pulling together makes the job easier!")
+  },
+  "pinocchio:1": {
+    motion:"wave",
+    position:{x:.49,y:.55},
+    label:words("Поздороваться с Пиноккио","Pinokkioga salom berish","Greet Pinocchio"),
+    message:words("Пиноккио машет тебе и обещает говорить правду!","Pinokkio senga qo‘l silkitib, rost gapirishga va’da beradi!","Pinocchio waves and promises to tell the truth!")
+  },
+  "thumbelina:1": {
+    motion:"bloom",
+    position:{x:.51,y:.57},
+    label:words("Подарить Дюймовочке улыбку","Dyuymovochkaga tabassum hadya etish","Smile at Thumbelina"),
+    message:words("Цветы раскрываются, и Дюймовочка улыбается тебе в ответ!","Gullar ochiladi, Dyuymovochka esa senga tabassum qiladi!","The flowers bloom, and Thumbelina smiles back at you!")
+  },
+  "jack-beanstalk:1": {
+    motion:"shine",
+    position:{x:.52,y:.62},
+    label:words("Пожелать Джеку удачи","Jekka omad tilash","Wish Jack luck"),
+    message:words("Джек благодарит тебя и смело начинает своё приключение!","Jek senga rahmat aytib, sarguzashtini dadil boshlaydi!","Jack thanks you and begins his adventure bravely!")
+  },
+  "goldilocks:1": {
+    motion:"flutter",
+    position:{x:.51,y:.54},
+    label:words("Напомнить о вежливости","Xushmuomalalikni eslatish","Remind Goldilocks to be polite"),
+    message:words("Златовласка кивает: чужие вещи нужно беречь и спрашивать разрешения.","Oltinsoch bosh irg‘aydi: boshqalarning buyumlarini ehtiyot qilish va ruxsat so‘rash kerak.","Goldilocks nods: always ask before using somebody else's things.")
+  },
   "snow-white:1": {
     motion:"shine",
     position:{x:.49,y:.66},
