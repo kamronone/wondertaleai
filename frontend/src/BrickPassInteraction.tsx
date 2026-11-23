@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState,type PointerEvent as ReactPointerEvent,type TouchEvent as ReactTouchEvent,type KeyboardEvent as ReactKeyboardEvent} from "react";
 import {CheckCircle2} from "lucide-react";
 import type {Lang} from "./i18n";
+import {SceneReplyAudio} from "./SceneReplyAudio";
 
 type Point={x:number;y:number};
 const start:Point={x:.80,y:.78};
@@ -9,7 +10,7 @@ const brickImage="/images/story-brick.svg";
 const tr=(ru:string,uz:string,en:string):Record<Lang,string>=>({ru,uz,en});
 
 /** Local interaction only: no book mutations, timers, page navigation or uploads. */
-export function BrickPassInteraction({lang}:{lang:Lang}){
+export function BrickPassInteraction({lang,onBeforeReply}:{lang:Lang;onBeforeReply:()=>void}){
   const layer=useRef<HTMLDivElement|null>(null);
   const [point,setPoint]=useState<Point>(start);
   const [dragging,setDragging]=useState(false);
@@ -117,6 +118,7 @@ export function BrickPassInteraction({lang}:{lang:Lang}){
       onKeyDown={onKeyDown}>
       <img src={brickImage} alt="" className="wt-brick-image" draggable={false}/>
     </div>
+    {delivered&&<SceneReplyAudio text={success} lang={lang} onBeforeSpeak={onBeforeReply}/>}
     {delivered&&<div className="wt-brick-speech" role="status" aria-live="polite">
       <span className="wt-brick-speech-pig" aria-hidden="true">🐷</span>
       <span>{success}</span>
