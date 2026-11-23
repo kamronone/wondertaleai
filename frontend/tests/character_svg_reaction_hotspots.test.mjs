@@ -66,3 +66,14 @@ test("mutation reactions cannot retrigger endless coordinate updates",()=>{
  assert.match(hotspot,/picture\?\.removeEventListener\("load",update\)/);
  assert.match(hotspot,/picture\?\.addEventListener\("load",update\)/);
 });
+
+test("each story page owns a fresh character reaction lifecycle",()=>{
+ const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
+ assert.match(main,/<CharacterHotspot key=\{active\.id\+"\:"\+page\}/);
+ assert.match(hotspot,/useEffect\(\(\)=>\{setVisibleReaction\(false\);setReactionReplay\(0\);setGifFailed\(false\);setPoint\(null\);\},\[classicId,page\]\)/);
+});
+
+test("hotspot icon represents actual scene action instead of generic sparkles",()=>{
+ assert.match(hotspot,/<MotionIcon size=\{20\} aria-hidden="true"\/>/);
+ assert.doesNotMatch(hotspot,/<Sparkles size=\{18\} aria-hidden="true"\/>/);
+});
