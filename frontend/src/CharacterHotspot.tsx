@@ -10,6 +10,42 @@ const words=(ru:string,uz:string,en:string):Record<Lang,string>=>({ru,uz,en});
 /* Coordinates are fractions of the visible artwork, not the padded card.
    Never use a hotspot on a private photo or generated user illustration. */
 const reactions:Record<string,Reaction>={
+  "frog-prince:1": {
+    motion:"wave",
+    position:{x:.48,y:.60},
+    label:words("Поздороваться с лягушонком","Qurbaqacha bilan salomlashish","Greet the little frog"),
+    message:words("Лягушонок приветливо квакает и рад знакомству!","Qurbaqacha quvonib qurillaydi va tanishganidan xursand!","The little frog croaks a happy hello!")
+  },
+  "princess-pea:1": {
+    motion:"shine",
+    position:{x:.54,y:.58},
+    label:words("Поприветствовать принцессу","Malikani kutib olish","Welcome the princess"),
+    message:words("Принцесса благодарит тебя за тёплый приём!","Malika samimiy kutib olganing uchun rahmat aytadi!","The princess thanks you for your warm welcome!")
+  },
+  "little-mermaid:1": {
+    motion:"flutter",
+    position:{x:.50,y:.62},
+    label:words("Помахать Русалочке","Suv parisiga qo‘l silkitish","Wave to the mermaid"),
+    message:words("Русалочка улыбается, а вокруг неё кружатся пузырьки!","Suv parisi jilmayadi, atrofida pufakchalar aylanadi!","The mermaid smiles as bubbles swirl around her!")
+  },
+  "snow-queen:1": {
+    motion:"shine",
+    position:{x:.49,y:.57},
+    label:words("Зажечь огонёк дружбы","Do‘stlik nurini yoqish","Light up friendship"),
+    message:words("Тёплый свет дружбы сияет даже среди снегов!","Do‘stlikning iliq nuri qorlar orasida ham porlaydi!","The warm light of friendship shines even in the snow!")
+  },
+  "nutcracker:1": {
+    motion:"dance",
+    position:{x:.51,y:.58},
+    label:words("Позвать Щелкунчика","Yong‘oq chaqadigan askarchani chaqirish","Call the Nutcracker"),
+    message:words("Щелкунчик весело кланяется и начинает танцевать!","Askarcha quvonib ta’zim qiladi va raqsga tushadi!","The Nutcracker bows and starts to dance!")
+  },
+  "aladdin:1": {
+    motion:"shine",
+    position:{x:.52,y:.55},
+    label:words("Поздороваться с Аладдином","Alovuddinga salom berish","Greet Aladdin"),
+    message:words("Аладдин машет тебе, и волшебная лампа мягко сияет!","Alovuddin qo‘l silkitadi, sehrli chiroq mayin porlaydi!","Aladdin waves while the magic lamp glows softly!")
+  },
   "kolobok:1": {
     motion:"dance",
     position:{x:.51,y:.56},
