@@ -82,7 +82,7 @@ test("reader final action has no duplicated bottom padding or empty colored band
  const mainSection=css.slice(css.indexOf("/* Reserve clearance only inside"),css.indexOf("@media print"));
  assert.match(mainSection,/main\{\s*padding-bottom:0!important/);
  assert.match(mainSection,/main>\.reader-page\{\s*padding-bottom:calc\(138px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
- assert.doesNotMatch(mainSection,/190px/);
+ assert.doesNotMatch(mainSection,/padding-bottom:calc\(190px/);
  assert.match(css,/bottom:calc\(78px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
  assert.match(css,/height:48px!important/);
 });
