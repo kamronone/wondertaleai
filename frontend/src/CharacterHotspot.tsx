@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from "react";
-import {Sparkles,Hand,Music2,Feather,Heart,Flower2,Sun,Footprints} from "lucide-react";
+import {Sparkles,Hand,Music2,Feather,Heart,Flower2,Sun,Footprints,X} from "lucide-react";
 import type {Lang} from "./i18n";
 
 type Position={x:number;y:number};
@@ -272,7 +272,17 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
         :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
     </div>}
     {visibleReaction&&point&&<div className="wt-character-reaction" role="status" aria-live="polite">
-      {reaction.message[lang]}
+      <span>{reaction.message[lang]}</span>
+      <button
+        type="button"
+        className="wt-character-reaction-close"
+        aria-label={words("Закрыть реплику","Javobni yopish","Close reply")[lang]}
+        title={words("Закрыть","Yopish","Close")[lang]}
+        onPointerDown={event=>event.stopPropagation()}
+        onTouchStart={event=>event.stopPropagation()}
+        onTouchEnd={event=>event.stopPropagation()}
+        onClick={event=>{event.stopPropagation();setVisibleReaction(false);}}
+      ><X size={16} aria-hidden="true"/></button>
     </div>}
   </div>;
 }
