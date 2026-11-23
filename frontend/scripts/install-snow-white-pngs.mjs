@@ -15,11 +15,19 @@ if(!archive||!existsSync(archive)){
 }
 const manifest=JSON.parse(readFileSync(resolve(root,"artwork/snow-white-png-integrity.json"),"utf8"));
 if(manifest.classicId!=="snow-white"||manifest.pages?.length!==8)throw Error("Invalid Snow White manifest");
-const prefix="images/classics/snow-white/pages/";
-const entries=Array.from({length:8},(_,i)=>prefix+"page-"+(i+1)+".png");
-const expected=new Set([...entries,"manifest.json"]);
+// Accept the original art bundle and the repository-ready ZIP (which was
+// assembled with frontend/ paths). Reject mixed layouts and unknown entries.
+const layouts=[
+ {prefix:"images/classics/snow-white/pages/",extras:["manifest.json"]},
+ {prefix:"frontend/public/images/classics/snow-white/pages/",extras:["frontend/artwork/snow-white-png-integrity.json","README_RU.txt"]}
+];
 const listed=execFileSync("unzip",["-Z","-1",archive],{encoding:"utf8",maxBuffer:1024*1024}).trim().split(/\r?\n/);
-if(listed.length!==expected.size||listed.some(item=>!expected.has(item))||entries.some(item=>!listed.includes(item)))throw Error("ZIP entries differ from the reviewed Snow White pack");
+const layout=layouts.find(({prefix,extras})=>{
+ const expected=new Set([...Array.from({length:8},(_,i)=>prefix+"page-"+(i+1)+".png"),...extras]);
+ return listed.length===expected.size&&listed.every(item=>expected.has(item));
+});
+if(!layout)throw Error("ZIP entries differ from the two reviewed Snow White layouts");
+const entries=Array.from({length:8},(_,i)=>layout.prefix+"page-"+(i+1)+".png");
 const staging=mkdtempSync(join(tmpdir(),"wondertale-snow-white-"));
 try{
  const distinct=new Set();
