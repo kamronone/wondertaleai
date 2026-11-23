@@ -148,3 +148,38 @@
 @media print{
   .reader-page .story-page-image .wt-character-reaction{display:none!important}
 }
+
+/* In reduced-motion mode the reaction still has a visible static cue.
+   GIF scenes use a single icon; CSS-only scenes keep their first icon. */
+.reader-page .story-page-image .wt-character-reaction-still{
+  display:none;
+  position:absolute;
+  inset:0;
+  place-items:center;
+  color:#fff5ce;
+  filter:drop-shadow(0 2px 5px #543565a3);
+  pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .story-page-image .wt-character-reaction-still{
+    display:grid!important;
+  }
+  .reader-page .story-page-image .wt-character-reaction-still svg{
+    position:static!important;
+    display:block!important;
+    opacity:1!important;
+    animation:none!important;
+    transform:none!important;
+  }
+  .reader-page .wt-character-reaction-fx:not(:has(.wt-character-reaction-gif))>svg:first-child{
+    display:block!important;
+    opacity:1!important;
+    top:34px!important;
+    left:35px!important;
+    animation:none!important;
+    transform:none!important;
+  }
+  .reader-page .wt-character-reaction-fx:not(:has(.wt-character-reaction-gif))>svg:not(:first-child){
+    display:none!important;
+  }
+}
