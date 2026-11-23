@@ -10,7 +10,7 @@ test("each narration has a generation token so old end events cannot turn pages"
  assert.match(src,/utterance\.onend=\(\)=>\{\s*if\(run!==speechRun\.current\)return;/);
  assert.match(src,/utterance\.onerror=event=>\{\s*if\(run!==speechRun\.current\)return;/);
  assert.match(src,/if\(run!==speechRun\.current\|\|!speechAdvanceArmed\.current\|\|event\.name==="sentence"\)return;/);
- assert.match(src,/if\(mayAdvance\)setPage/);
+ assert.match(src,/if\(mayAdvance\)\{\s*autoAudioTarget\.current=\{bookId:active\.id,page:page\+1\};\s*setPage/);
 });
 test("Safari backgrounding and pagehide safely reset speech without autoskip",()=>{
  assert.match(src,/document\.addEventListener\("visibilitychange",onVisibilityChange\)/);
@@ -25,5 +25,5 @@ test("narration start exceptions restore buttons and show existing voice failure
  assert.match(src,/try\{\s*engine\.speak\(utterance\)/);
  assert.match(src,/catch\{\s*if\(run===speechRun\.current\)/);
  assert.match(src,/setError\(t\.noVoice\)/);
- assert.match(src,/const stopSpeech=\(\)=>\{\s*speechRun\.current\+\+/);
+ assert.match(src,/const stopSpeech=\(\)=>\{\s*autoAudioTarget\.current=null;\s*speechRun\.current\+\+/);
 });
