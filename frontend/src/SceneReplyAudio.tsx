@@ -53,7 +53,14 @@ export function SceneReplyAudio({text,lang,onBeforeSpeak}:{text:string;lang:Lang
      current.current=null;setPlaying(false);setUnavailable(true);
    }
  };
- return <div className="wt-scene-reply-controls" onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
+ return <div className="wt-scene-reply-controls"
+   onPointerDown={event=>event.stopPropagation()}
+   onPointerMove={event=>event.stopPropagation()}
+   onPointerUp={event=>event.stopPropagation()}
+   onTouchStart={event=>event.stopPropagation()}
+   onTouchMove={event=>event.stopPropagation()}
+   onTouchEnd={event=>event.stopPropagation()}
+   onTouchCancel={event=>event.stopPropagation()}>
    <button type="button" aria-pressed={playing} onClick={event=>{event.stopPropagation();toggle();}}>
     {playing?<Square size={15} aria-hidden="true"/>:<Volume2 size={16} aria-hidden="true"/>}
     {playing?({ru:"Остановить ответ",uz:"Javobni töxtatiş",en:"Stop reply"} as const)[lang]
