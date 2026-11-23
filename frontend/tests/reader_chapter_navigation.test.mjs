@@ -9,8 +9,10 @@ test("long books get a native chapter chooser, short illustrated classics stay u
  assert.match(reader,/active\.pages\.length>=12&&<div className="wt-chapter-navigator"/);
  assert.match(reader,/id="wt-story-chapter-select"/);
  assert.match(reader,/value=\{page\}/);
- assert.match(reader,/active\.pages\.map\(\(chapter,index\)=><option/);
- assert.match(reader,/\{index\+1\}/);
+ assert.match(reader,/readerStoryParts\(active\.pages\.length,lang\)\.map\(part=><optgroup/);
+ assert.match(reader,/active\.pages\.slice\(part\.start,part\.end\+1\)\.map/);
+ assert.match(reader,/value=\{part\.start\+index\}/);
+ assert.match(reader,/\{part\.start\+index\+1\}/);
  assert.match(reader,/ru:"Перейти к главе"/);
  assert.match(reader,/uz:"Bobga ötiş"/);
  assert.match(reader,/en:"Go to chapter"/);
