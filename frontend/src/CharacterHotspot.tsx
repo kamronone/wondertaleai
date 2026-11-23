@@ -124,8 +124,9 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
   const ref=useRef<HTMLDivElement|null>(null);
   const [point,setPoint]=useState<{left:number;top:number}|null>(null);
   const [visibleReaction,setVisibleReaction]=useState(false);
+  const [reactionReplay,setReactionReplay]=useState(0);
   const [gifFailed,setGifFailed]=useState(false);
-  useEffect(()=>{setVisibleReaction(false);setGifFailed(false);setPoint(null);},[classicId,page]);
+  useEffect(()=>{setVisibleReaction(false);setReactionReplay(0);setGifFailed(false);setPoint(null);},[classicId,page]);
   useEffect(()=>{
     if(!reaction||!enabled)return;
     const stage=ref.current?.parentElement;
@@ -173,10 +174,10 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       onTouchEnd={event=>event.stopPropagation()}
       onPointerDown={event=>event.stopPropagation()}
       aria-pressed={visibleReaction}
-      onClick={event=>{event.stopPropagation();setVisibleReaction(value=>!value);}}>
+      onClick={event=>{event.stopPropagation();setVisibleReaction(true);setReactionReplay(value=>value+1);}}>
       <Sparkles size={18} aria-hidden="true"/>
     </button>}
-    {visibleReaction&&point&&<div className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
+    {visibleReaction&&point&&<div key={reactionReplay} className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
       {gifAsset&&!gifFailed
         ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" onError={()=>setGifFailed(true)}/>
         :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
