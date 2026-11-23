@@ -1680,7 +1680,7 @@ function App(){
 {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
   !((active as DemoBook).classicId==="three-pigs"&&page===3)&&!storyGiftForPage((active as DemoBook).classicId,page+1)&&
   characterHotspotForPage((active as DemoBook).classicId,page+1)&&
-  <CharacterHotspot classicId={(active as DemoBook).classicId} page={page+1} lang={lang} />}
+  <CharacterHotspot key={active.id+":"+page} classicId={(active as DemoBook).classicId} page={page+1} lang={lang} />}
 {isDemoBook(active)&&(active as DemoBook).classicId==="three-pigs"&&page===3&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&
   <BrickPassInteraction key={active.id+":"+page} lang={lang} onBeforeReply={stopSpeech} />}
 {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&storyGiftForPage((active as DemoBook).classicId,page+1)&&
