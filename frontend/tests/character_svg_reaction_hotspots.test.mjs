@@ -42,3 +42,18 @@ test("new classic chapter reactions are available in all supported languages",()
    assert.match(source.slice(0,620),/message:words\(/,key+" has three localized messages");
  }
 });
+
+test("six additional fairy tales include a localized chapter-one reaction",()=>{
+ const catalog=readFileSync(new URL("../src/classics.ts",import.meta.url),"utf8");
+ for(const id of ["kolobok","turnip","pinocchio","thumbelina","jack-beanstalk","goldilocks"]){
+   assert.ok(catalog.includes('"'+id+'"'),id+" exists in the classic catalog");
+   const marker='"'+id+':1": {';
+   const start=hotspot.indexOf(marker);
+   assert.ok(start>=0,id+" has an interactive first chapter");
+   const entry=hotspot.slice(start,hotspot.indexOf("\\n  },",start));
+   assert.match(entry,/motion:"(?:wave|music|flutter|bow|dance|shine|bloom|cheer)"/);
+   assert.match(entry,/position:\\{x:\\.\\d+,y:\\.\\d+\\}/);
+   assert.match(entry,/label:words\\("[^"]+","[^"]+","[^"]+"\\)/);
+   assert.match(entry,/message:words\\("[^"]+","[^"]+","[^"]+"\\)/);
+ }
+});
