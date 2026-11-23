@@ -51,7 +51,7 @@ def test_ai_adapter_uses_no_child_photo(monkeypatch):
 @pytest.mark.parametrize("pages",[8,12,20])
 def test_expected_book_lengths(pages):
     payload=json.loads(valid_story("en"))
-    payload["pages"]=payload["pages"][:1]*pages
+    payload["pages"]=[f"Chapter {index+1}: " + payload["pages"][0] for index in range(pages)]
     result=validate_generated_story(json.dumps(payload),"en",pages)
     assert len(result.pages)==pages
 
@@ -149,3 +149,12 @@ def test_provider_page_with_only_whitespace_is_rejected():
 def test_non_text_provider_output_is_rejected(raw):
     with pytest.raises(ValueError,match="Model did not return a valid story"):
         validate_generated_story(raw,"en")
+
+
+def test_full_length_story_rejects_repeated_pages_with_different_whitespace():
+    payload=json.loads(valid_story("en"))
+    pages=[f"Chapter {index+1}: "+payload["pages"][0] for index in range(20)]
+    pages[19]="  "+pages[3].upper()+"  "
+    payload["pages"]=pages
+    with pytest.raises(ValueError,match="valid story"):
+        validate_generated_story(json.dumps(payload),"en",20)
