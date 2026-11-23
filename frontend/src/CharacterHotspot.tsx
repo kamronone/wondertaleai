@@ -264,7 +264,7 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       onPointerDown={event=>event.stopPropagation()}
       aria-pressed={visibleReaction}
       onClick={event=>{event.stopPropagation();setVisibleReaction(true);setReactionReplay(value=>value+1);}}>
-      <Sparkles size={18} aria-hidden="true"/>
+      <MotionIcon size={20} aria-hidden="true"/>
     </button>}
     {visibleReaction&&point&&<div key={reactionReplay} className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
       {gifAsset&&!gifFailed
