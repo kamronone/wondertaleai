@@ -1558,11 +1558,11 @@ function App(){
           <fieldset className="reader-speech-speed">
             <legend>{({ru:"Скорость озвучки",uz:"Ovoz tezligi",en:"Narration speed"} as const)[lang]}</legend>
             <div role="group" aria-label={({ru:"Скорость голоса",uz:"Ovoz tezligi",en:"Voice speed"} as const)[lang]}>
-              {(["slow","normal","fast"] as const).map((speed,index)=><button type="button" key={speed} aria-pressed={readerSpeechSpeed===speed} className={readerSpeechSpeed===speed?"active":""} onClick={()=>{if(speaking&&"speechSynthesis" in window){speechRun.current++;speechAdvanceArmed.current=false;window.speechSynthesis.cancel();setSpeaking(false);setSpeechPaused(false);}setReaderSpeechSpeed(speed);}}>
+              {(["slow","normal","fast"] as const).map((speed,index)=><button type="button" key={speed} aria-pressed={readerSpeechSpeed===speed} className={readerSpeechSpeed===speed?"active":""} onClick={()=>{if(speed===readerSpeechSpeed)return;if(speaking){speechRun.current++;speechAdvanceArmed.current=false;if("speechSynthesis" in window)window.speechSynthesis.cancel();setSpokenRange(null);setSpeechResumeAvailable(speechBookmark.current!==null);setSpeaking(false);setSpeechPaused(false);}setReaderSpeechSpeed(speed);}}>
                 {({ru:["Медленно","Обычно","Быстро"],uz:["Sekin","Oddiy","Tez"],en:["Slow","Normal","Fast"]} as const)[lang][index]}
               </button>)}
             </div>
-            <small>{({ru:"Изменение скорости остановит текущую озвучку. Нажмите «Слушать», чтобы начать заново.",uz:"Tezlikni o'zgartirish hozirgi ovozni to'xtatadi. Qayta boshlash uchun «Tinglash»ni bosing.",en:"Changing speed stops current narration. Tap Listen to restart."} as const)[lang]}</small>
+            <small>{({ru:"После смены скорости нажмите «Продолжить слушать». Если Safari не сообщил позицию, глава начнётся сначала.",uz:"Tezlikni özgartirgandan söng «Tinglaşni davom ettiriş»ni bosing. Safari joyni aniqlamasa, bob boşidan öqiladi.",en:"After changing speed, tap Continue listening. If Safari has no position, the chapter restarts."} as const)[lang]}</small>
           </fieldset>
           <label className="reader-auto-next">
             <input type="checkbox" checked={readerAutoNext} onChange={event=>setReaderAutoNext(event.target.checked)}/>
