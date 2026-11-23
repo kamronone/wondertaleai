@@ -627,12 +627,6 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
     monkeypatch.setattr(worker,"datetime",TestClock)
     prompts=[]
     jobs=[]
-    sql_trace=[]
-    original_sql=module.sql
-    def traced_sql(connection,statement,params=()):
-        sql_trace.append(statement[:95])
-        return original_sql(connection,statement,params)
-    monkeypatch.setattr(module,"sql",traced_sql)
     def renderer(prompt):
         assert secret not in prompt
         assert book_id not in prompt
@@ -655,19 +649,11 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
         completed=worker.process_one_illustration_job(
             renderer=renderer,
             moderator=lambda prompt:"no identifying information" in prompt and secret not in prompt,
-            image_moderator=lambda binary:binary.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+            image_moderator=lambda binary:binary.startswith(bytes((137,80,78,71,13,10,26,10)))
         )
         assert completed==job
         details=client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=auth)
-        if details.status_code!=200:
-            markers=[("quota" if "illustration_daily_quota" in line else
-                      "consent" if "illustration_parent_consent" in line else
-                      "parent" if "FROM parents" in line else
-                      "book" if "FROM books" in line else
-                      "fail" if "status='failed'" in line else
-                      "process" if "status='processing'" in line else
-                      "other") for line in sql_trace]
-            pytest.fail("page="+str(page)+" state="+str(client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"])+" trace="+",".join(markers[-16:]))
+        assert details.status_code==200,(page,details.text)
         assert details.json()=={"job_id":job}
         assert client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=other).status_code==404
         assert client.get(f"/api/illustrations/media/{job}",headers=other).status_code==404
@@ -700,7 +686,7 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
         assert media.status_code==200
         assert media.headers["content-type"]=="image/png"
         assert media.headers["cache-control"]=="private, no-store"
-        assert media.content.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+        assert media.content.startswith(bytes((137,80,78,71,13,10,26,10)))
         digests.append(__import__("hashlib").sha256(media.content).hexdigest())
     assert len(set(digests))==20
     assert client.get(f"/api/illustrations/media/{jobs[0]}",headers=other).status_code==404
