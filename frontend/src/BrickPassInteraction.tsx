@@ -56,10 +56,19 @@ export function BrickPassInteraction({lang,onBeforeReply}:{lang:Lang;onBeforeRep
     event.preventDefault();
     event.stopPropagation();
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
+    // iOS Safari can release the finger without a final pointermove.
+    // Resolve against pointerup coordinates just like the gift interactions.
+    const rect=layer.current?.getBoundingClientRect();
+    const release=initial.current&&rect&&rect.width>0&&rect.height>0
+      ?{
+        x:Math.min(.94,Math.max(.06,initial.current.point.x+(event.clientX-initial.current.screenX)/rect.width)),
+        y:Math.min(.92,Math.max(.08,initial.current.point.y+(event.clientY-initial.current.screenY)/rect.height))
+      }
+      :latest.current;
     activePointer.current=null;
     initial.current=null;
     setDragging(false);
-    const distance=Math.hypot(latest.current.x-target.x,latest.current.y-target.y);
+    const distance=Math.hypot(release.x-target.x,release.y-target.y);
     if(distance<.17){complete();}else{move(start);}
   };
   const onCancel=(event:ReactPointerEvent<HTMLDivElement>)=>{
