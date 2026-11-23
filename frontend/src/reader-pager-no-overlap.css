@@ -4,6 +4,8 @@
 @media screen and (max-width:700px){
   .shell:has(>main>.reader-page) .reader-page .pager,
   .shell > main > .reader-page .pager{
+    /* This page is a flex column: other reader blocks use order 0–9. */
+    order:10!important;
     position:relative!important;
     inset:auto!important;
     left:auto!important;
