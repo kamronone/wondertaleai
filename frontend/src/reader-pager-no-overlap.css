@@ -48,3 +48,46 @@
 @media print{
   .reader-page .pager{display:none!important;}
 }
+
+/* Compact the reader's top actions on phones. Three 44px icon targets are
+   enough; oversized controls were pushing the chapter below the fold. */
+@media screen and (max-width:700px){
+  .shell:has(>main>.reader-page) .reader-page .reader-toolbar{
+    display:flex!important;
+    justify-content:flex-end!important;
+    align-items:center!important;
+    min-height:48px!important;
+    margin:0 0 8px!important;
+    padding:0!important;
+  }
+  .shell:has(>main>.reader-page) .reader-page .reader-actions{
+    display:flex!important;
+    width:auto!important;
+    max-width:100%!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-end!important;
+    align-items:center!important;
+    gap:8px!important;
+    margin:0!important;
+  }
+  .shell:has(>main>.reader-page) .reader-page .reader-actions>.icon-button{
+    box-sizing:border-box!important;
+    display:inline-flex!important;
+    flex:0 0 44px!important;
+    width:44px!important;
+    height:44px!important;
+    min-width:44px!important;
+    min-height:44px!important;
+    max-width:44px!important;
+    max-height:44px!important;
+    padding:0!important;
+    align-items:center!important;
+    justify-content:center!important;
+    border-radius:13px!important;
+  }
+  .shell:has(>main>.reader-page) .reader-page .reader-actions>.icon-button svg{
+    width:19px!important;
+    height:19px!important;
+    flex-shrink:0!important;
+  }
+}
