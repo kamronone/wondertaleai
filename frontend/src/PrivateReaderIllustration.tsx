@@ -37,6 +37,6 @@ export function PrivateReaderIllustration({api,session,bookId,pageNumber,alt,fal
   },[api,session,bookId,pageNumber,key]);
   return image?.key===key
     ?<img src={image.blobUrl} alt={alt} decoding="async" className="private-reader-illustration wt-reader-picture"
-      onError={()=>setImage(null)}/>
+      onError={()=>{URL.revokeObjectURL(image.blobUrl);setImage(null);}}/>
     :<>{fallback}</>;
 }
