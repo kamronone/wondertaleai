@@ -70,7 +70,7 @@ test("mutation reactions cannot retrigger endless coordinate updates",()=>{
 test("each story page owns a fresh character reaction lifecycle",()=>{
  const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
  assert.match(main,/<CharacterHotspot key=\{active\.id\+"\:"\+page\}/);
- assert.match(hotspot,/useEffect\(\(\)=>\{setVisibleReaction\(false\);setReactionReplay\(0\);setPoint\(null\);\},\[classicId,page\]\)/);
+ assert.match(hotspot,/useEffect\(\(\)=>\{setVisibleReaction\(false\);setReactionReplay\(0\);setGifFailed\(false\);setPoint\(null\);\},\[classicId,page\]\)/);
 });
 
 test("hotspot icon represents actual scene action instead of generic sparkles",()=>{
@@ -203,4 +203,11 @@ test("high-resolution GIF asset sources are versioned and validated by the insta
    assert.ok(installer.includes(filename));
    assert.ok(readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8").includes('"'+key+'":"/images/interactions/reactions/'+filename+'.gif"'));
  }
+});
+
+test("built GIF load failures gracefully fall back without broken images",()=>{
+ assert.match(hotspot,/const \[gifFailed,setGifFailed\]=useState\(false\)/);
+ assert.match(hotspot,/gifAsset&&!gifFailed/);
+ assert.match(hotspot,/onError=\{\(\)=>setGifFailed\(true\)\}/);
+ assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
 });
