@@ -572,3 +572,110 @@ def test_revoking_consent_during_moderation_never_calls_renderer(api,monkeypatch
     }).status_code==403
     with module.connection() as c:
         assert module.sql(c,"SELECT COUNT(*) FROM illustration_assets WHERE job_id=?",(job,)).fetchone()[0]==0
+
+
+def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch):
+    """20 illustrated chapters, two simulated quota days, logout/login, isolation.
+
+    Uses real API and DB paths with an in-memory deterministic renderer.
+    No image provider or external accounts are contacted.
+    """
+    from datetime import datetime,timedelta,timezone
+    import illustration_worker as worker
+
+    client,module,register,_=api
+    email,auth=register()
+    _,other=register()
+    monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
+    monkeypatch.setenv("ENABLE_AI_ILLUSTRATIONS_WORKER","true")
+    monkeypatch.setenv("MAX_ILLUSTRATIONS_PER_DAY","10")
+    monkeypatch.setenv("MAX_PARENT_ILLUSTRATIONS_PER_DAY","10")
+
+    secret="PrivateChildIdentityMustNeverReachRenderer"
+    pages=[
+        {"number":i+1,"text":(
+            "Our friends discovered a secret map in a hollow tree. "
+            if i==2 else "Finally the travelers returned home at sunrise. "
+            if i==19 else f"Chapter {i+1}: The forest friends learned something new. "
+        )+secret,"image_url":""}
+        for i in range(20)
+    ]
+    made=client.post("/api/books",headers=auth,json={
+        "title":"Twenty chapters and twenty illustrations","child_name":secret,
+        "age":7,"story":json.dumps({"version":1,"language":"en","pages":pages})
+    })
+    assert made.status_code==201,made.text
+    book_id=made.json()["id"]
+
+    class TestClock(datetime):
+        day_offset=0
+        @classmethod
+        def now(cls,tz=None):
+            return datetime.now(tz)+timedelta(days=cls.day_offset)
+
+    monkeypatch.setattr(worker,"datetime",TestClock)
+    prompts=[]
+    jobs=[]
+    def renderer(prompt):
+        assert secret not in prompt
+        assert book_id not in prompt
+        assert email not in prompt
+        prompts.append(prompt)
+        idx=len(prompts)
+        output=io.BytesIO()
+        Image.new("RGB",(96,96),(idx*11%255,idx*7%255,idx*13%255)).save(output,format="PNG")
+        return output.getvalue()
+
+    for page in range(1,21):
+        if page==11:
+            TestClock.day_offset=1
+        queued=client.post("/api/illustrations/jobs",headers=auth,json={
+            "book_id":book_id,"page_number":page,"style":"storybook"
+        })
+        assert queued.status_code==202,queued.text
+        job=queued.json()["id"]
+        jobs.append(job)
+        completed=worker.process_one_illustration_job(
+            renderer=renderer,
+            moderator=lambda prompt:"no identifying information" in prompt and secret not in prompt,
+            image_moderator=lambda binary:binary.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+        )
+        assert completed==job
+        details=client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=auth)
+        assert details.status_code==200,details.text
+        assert details.json()=={"job_id":job}
+        assert client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=other).status_code==404
+        assert client.get(f"/api/illustrations/media/{job}",headers=other).status_code==404
+
+    assert len(set(prompts))==20
+    assert len(jobs)==20
+    assert len(set(jobs))==20
+    assert all(secret not in prompt for prompt in prompts)
+    assert worker.process_one_illustration_job(
+        renderer=renderer,moderator=lambda _:True,image_moderator=lambda _:True
+    ) is None
+
+    assert client.post("/api/auth/logout",headers=auth).status_code==204
+    assert client.get(f"/api/illustrations/media/{jobs[0]}",headers=auth).status_code==401
+    again=client.post("/api/auth/login",json={
+        "email":email,"password":"private-media-test-password-2026"
+    })
+    assert again.status_code==200,again.text
+    new_auth={"Authorization":"Bearer "+again.json()["access_token"]}
+    library=client.get("/api/books",headers=new_auth)
+    assert library.status_code==200
+    assert any(row["id"]==book_id for row in library.json())
+
+    digests=[]
+    for page,job in enumerate(jobs,start=1):
+        lookup=client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=new_auth)
+        assert lookup.status_code==200
+        assert lookup.json()["job_id"]==job
+        media=client.get(f"/api/illustrations/media/{job}",headers=new_auth)
+        assert media.status_code==200
+        assert media.headers["content-type"]=="image/png"
+        assert media.headers["cache-control"]=="private, no-store"
+        assert media.content.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+        digests.append(__import__("hashlib").sha256(media.content).hexdigest())
+    assert len(set(digests))==20
+    assert client.get(f"/api/illustrations/media/{jobs[0]}",headers=other).status_code==404
