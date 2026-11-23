@@ -24,8 +24,19 @@ export async function loadPrivatePageIllustration(
   if(!response.headers.get("content-type")?.toLowerCase().startsWith("image/png"))
     throw new Error("Unexpected illustration type");
   const file=await response.blob();
-  if(file.size===0||file.size>3_000_000||file.type!=="image/png")
+  if(file.size<45||file.size>3_000_000||file.type!=="image/png")
     throw new Error("Invalid illustration payload");
+  // Content-Type is untrusted. Require an actual PNG signature and IHDR before
+  // creating an object URL, even if a proxy has mislabeled HTML as image/png.
+  const header=new Uint8Array(await file.slice(0,24).arrayBuffer());
+  const signature=[137,80,78,71,13,10,26,10];
+  if(!signature.every((value,index)=>header[index]===value)||
+     header[12]!==73||header[13]!==72||header[14]!==68||header[15]!==82)
+    throw new Error("Invalid PNG signature");
+  const width=new DataView(header.buffer).getUint32(16,false);
+  const height=new DataView(header.buffer).getUint32(20,false);
+  if(width<1||height<1||width>2048||height>2048)
+    throw new Error("Invalid illustration dimensions");
   if(signal.aborted)throw new DOMException("Aborted","AbortError");
   const url=URL.createObjectURL(file);
   if(signal.aborted){URL.revokeObjectURL(url);throw new DOMException("Aborted","AbortError");}
