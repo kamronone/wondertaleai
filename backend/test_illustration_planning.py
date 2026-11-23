@@ -123,3 +123,25 @@ def test_single_page_brief_remains_backward_compatible():
     for bad in (0,21,True,-1):
         with pytest.raises(ValueError):
             illustration_brief(book,2,"pencil",scene_number=bad)
+
+
+def test_private_worker_integration_is_exercised_by_backend_ci(monkeypatch):
+    # The regular secure-api workflow runs this module explicitly.
+    from test_private_storyboard_worker import private_connection
+    from illustration_worker import private_storyboard_prompt
+    from illustration_planning import SAFETY
+    book=str(uuid.uuid4())
+    owner=str(uuid.uuid4())
+    chapters=["The friends explore a quiet forest."]*20
+    chapters[1]="They discovered a secret map hidden in a tree."
+    chapters[-1]="Finally everyone returned home at sunrise."
+    statements=private_connection(monkeypatch,book,owner,chapters)
+    selected=private_storyboard_prompt(book,owner,2,"storybook")
+    ending=private_storyboard_prompt(book,owner,20,"storybook")
+    assert SCENES[9] in selected
+    assert SCENES[19] in ending
+    assert selected.endswith(SAFETY)
+    assert len(statements)==2
+    assert all(args==(book,owner) for _,args in statements)
+    with pytest.raises(ValueError,match="unavailable"):
+        private_storyboard_prompt(book,str(uuid.uuid4()),2,"storybook")
