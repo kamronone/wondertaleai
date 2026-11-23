@@ -78,6 +78,7 @@ import { getReadingAchievements } from "./reading_achievements";
 import { StoryBranchQuest } from "./StoryBranchQuest";
 import { CharacterBuilder } from "./CharacterBuilder";
 import {spokenWordRange,spokenTextParts,type SpokenRange} from "./reader_speech_highlight";
+import {readerParagraphs} from "./reader_paragraphs";
 import {voicesForStoryLanguage,preferredStoryVoice,parseStoredVoiceChoices,STORY_VOICE_STORAGE_KEY,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 
 type Page={number:number;text:string;image_url:string};
@@ -1628,8 +1629,17 @@ function App(){
 <button type="button" className="reader-art-zoom" aria-pressed={readerImageExpanded} aria-label={readerImageExpanded?({ru:"Свернуть иллюстрацию",uz:"Rasmni kichraytirish",en:"Collapse illustration"} as const)[lang]:({ru:"Показать картинку целиком",uz:"Rasmni to'liq ko'rsatish",en:"Show full illustration"} as const)[lang]} title={readerImageExpanded?({ru:"Свернуть",uz:"Kichraytirish",en:"Collapse"} as const)[lang]:({ru:"Показать полностью",uz:"To'liq ko'rsatish",en:"Show all"} as const)[lang]} onClick={()=>setReaderImageExpanded(current=>!current)}><ImagePlus size={18} aria-hidden="true"/></button>
 <div className="wt-art-effects" aria-hidden="true">{readerArtMotion!=="off"&&!readerNightMode&&bedtimeUntil===null&&Array.from({length:6},(_,i)=><span className="wt-art-particle" key={i} style={{"--wt-x":(14+i*13)+"%","--wt-y":(18+i%3*22)+"%","--wt-dur":(9+i%4*2)+"s","--wt-delay":(-i*1.8)+"s"} as React.CSSProperties}/>)}</div></div><div key={active.id+":"+page+":text"} className="story-text reader-turn-text" aria-live={speaking?"off":"polite"} aria-atomic={speaking?false:true}><span className="dropcap-star" aria-hidden="true">✦</span>{(()=>{
   const text=active.pages[page].text;
-  const parts=spokenTextParts(text,spokenRange);
-  return parts.active?<>{parts.before}<mark className="wt-spoken-word">{parts.active}</mark>{parts.after}</>:text;
+  return readerParagraphs(text).map(paragraph=>{
+    // Highlight ranges are absolute in the original text; translate each
+    // fragment into its local offset without changing speech synthesis input.
+    const localRange=spokenRange&&spokenRange.end>paragraph.start&&spokenRange.start<paragraph.end
+      ?{start:Math.max(0,spokenRange.start-paragraph.start),end:Math.min(paragraph.text.length,spokenRange.end-paragraph.start)}
+      :null;
+    const parts=spokenTextParts(paragraph.text,localRange);
+    return <p key={paragraph.start} className="wt-reader-paragraph">{parts.active
+      ?<>{parts.before}<mark className="wt-spoken-word">{parts.active}</mark>{parts.after}</>
+      :paragraph.text}</p>;
+  });
 })()}</div></div>
         {isDemoBook(active)&&familyReadingPreferences.extraActivities&&!readerNightMode&&bedtimeUntil===null&&!((active as DemoBook).classicId==="three-pigs"&&page===3)&&!storyGiftForPage((active as DemoBook).classicId,page+1)&&<StorySceneInteraction classicId={(active as DemoBook).classicId} page={page+1} lang={lang} disabled={readerFocusMode}/>}
         {page===active.pages.length-1&&<section className="reader-finale" aria-label={({ru:"После сказки",uz:"Ertakdan keyin",en:"After the story"} as const)[lang]}>
