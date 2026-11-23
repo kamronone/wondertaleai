@@ -5,3 +5,9 @@
 .wt-chapter-navigator select:focus-visible{outline:2px solid #8660bf;outline-offset:2px}
 .reader-night .wt-chapter-navigator select{background:#2c2241;color:#f8f1ff;border-color:#645477}
 @media(max-width:480px){.wt-chapter-navigator{justify-content:space-between;gap:8px}.wt-chapter-navigator label{font-size:12px}.wt-chapter-navigator select{min-width:130px;max-width:60%;font-size:13px}}
+
+/* Plot landmark: a quiet cue, not another oversized navigation button. */
+.wt-chapter-navigator .wt-story-part-label{font-size:12px;font-weight:700;color:inherit;opacity:.84;white-space:nowrap}
+.wt-chapter-navigator select optgroup{font-weight:700}
+.wt-chapter-navigator select option{font-weight:400}
+@media(max-width:480px){.wt-chapter-navigator .wt-story-part-label{flex:1 1 100%;text-align:center;font-size:12px}.wt-chapter-navigator label{font-size:12px}}
