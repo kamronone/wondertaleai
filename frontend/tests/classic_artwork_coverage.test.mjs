@@ -13,6 +13,7 @@ const artwork = src("classic_page_art.ts");
 const vite = readFileSync(resolve(root, "vite.config.ts"), "utf8");
 const allIds = [...catalog.matchAll(/(?:\bid:|"id":)\s*"([^"]+)"/g)].map((match) => match[1]);
 const requiredPng = ["red-hood", "cinderella", "three-pigs", "rapunzel"];
+const optionalPng = ["snow-white"];
 
 test("all 30 built-in classic books are represented uniquely", () => {
   assert.equal(allIds.length, 30);
@@ -27,12 +28,16 @@ test("every built-in book has a deterministic, page-specific offline illustratio
   for (const id of requiredPng) assert.ok(allIds.includes(id));
 });
 
-test("the 32 committed PNG paths are not confused with complete coverage of 30 stories", () => {
+test("committed PNG bundles are complete and optional Snow White is not required until installed", () => {
   for (const id of requiredPng) {
     for (let page = 1; page <= 8; page++) {
       const path = resolve(root, "public/images/classics", id, "pages", `page-${page}.png`);
       assert.ok(existsSync(path), `missing original PNG: ${id}, page ${page}`);
     }
+  }
+  for (const id of optionalPng) {
+    const present = Array.from({length:8}, (_,i) => existsSync(resolve(root, "public/images/classics", id, "pages", `page-${i+1}.png`)));
+    assert.ok(present.every(Boolean) || present.every(value => !value), `incomplete optional PNG bundle: ${id}`);
   }
   assert.match(artwork, /if\(!bundledPngIds\.has\(classicId\)\)return classicPageArtwork/);
   assert.match(artwork, /return match&&ids\.has\(match\[1\]\)\?classicPageArtwork/);
