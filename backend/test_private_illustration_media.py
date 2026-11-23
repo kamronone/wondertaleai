@@ -627,6 +627,12 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
     monkeypatch.setattr(worker,"datetime",TestClock)
     prompts=[]
     jobs=[]
+    sql_trace=[]
+    original_sql=module.sql
+    def traced_sql(connection,statement,params=()):
+        sql_trace.append(statement[:95])
+        return original_sql(connection,statement,params)
+    monkeypatch.setattr(module,"sql",traced_sql)
     def renderer(prompt):
         assert secret not in prompt
         assert book_id not in prompt
@@ -653,7 +659,7 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
         )
         assert completed==job
         details=client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=auth)
-        assert details.status_code==200,(page,details.text,client.get("/api/illustrations/jobs",headers=auth).json())
+        assert details.status_code==200,(page,details.text,client.get("/api/illustrations/jobs",headers=auth).json(),sql_trace[-20:])
         assert details.json()=={"job_id":job}
         assert client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=other).status_code==404
         assert client.get(f"/api/illustrations/media/{job}",headers=other).status_code==404
