@@ -112,8 +112,13 @@ test("six more classics have chapter reactions with translated dialogue",()=>{
  }
 });
 
-test("character reactions do not request GIF assets absent from repository",()=>{
- assert.doesNotMatch(hotspot,/snow-white-wave\.gif|duckling-flutter\.gif|bremen-music\.gif/);
- assert.doesNotMatch(hotspot,/gifFailed|gifAsset/);
+test("character reactions use embedded GIF89a assets rather than missing remote paths",()=>{
+ const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
+ assert.doesNotMatch(hotspot,/snow-white-wave\\.gif|duckling-flutter\\.gif|bremen-music\\.gif/);
+ assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
+ for(const id of ["snow-white:2","ugly-duckling:3","bremen:2"]){
+   assert.ok(assets.includes('"'+id+'":"data:image/gif;base64,R0lGODlh'),id+" embeds GIF89a");
+ }
+ assert.match(hotspot,/className="wt-character-reaction-gif"/);
  assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
 });
