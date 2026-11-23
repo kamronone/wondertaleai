@@ -77,3 +77,13 @@ test("hotspot icon represents actual scene action instead of generic sparkles",(
  assert.match(hotspot,/<MotionIcon size=\{20\} aria-hidden="true"\/>/);
  assert.doesNotMatch(hotspot,/<Sparkles size=\{18\} aria-hidden="true"\/>/);
 });
+
+test("reaction dialogue can be dismissed without changing the story page",()=>{
+ assert.match(hotspot,/className="wt-character-reaction-close"/);
+ assert.match(hotspot,/aria-label=\{words\("Закрыть реплику","Javobni yopish","Close reply"\)\[lang\]\}/);
+ assert.match(hotspot,/onClick=\{event=>\{event\.stopPropagation\(\);setVisibleReaction\(false\);\}\}/);
+ const css=readFileSync(new URL("../src/character-reaction-motion.css",import.meta.url),"utf8");
+ assert.match(css,/\.wt-character-reaction-close\{/);
+ assert.match(css,/min-height:44px/);
+ assert.match(css,/max-height:min\(45%,180px\)/);
+});
