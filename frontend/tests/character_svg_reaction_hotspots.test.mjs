@@ -112,20 +112,28 @@ test("six more classics have chapter reactions with translated dialogue",()=>{
  }
 });
 
-test("character reactions use embedded GIF89a assets rather than missing remote paths",()=>{
+test("character reactions resolve three generated GIFs and three embedded GIFs",()=>{
  const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
- assert.doesNotMatch(hotspot,/snow-white-wave\\.gif|duckling-flutter\\.gif|bremen-music\\.gif/);
+ const packageJson=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8"));
+ const installer=readFileSync(new URL("../scripts/install-reaction-gifs.mjs",import.meta.url),"utf8");
+ assert.equal(packageJson.scripts.prebuild,"npm run reaction:gif:install");
+ assert.equal(packageJson.scripts.pretest,"npm run reaction:gif:install");
+ assert.equal(packageJson.scripts.predev,"npm run reaction:gif:install");
+ for(const filename of ["snow-white-wave","duckling-flutter","bremen-music"]){
+   assert.ok(installer.includes('"'+filename+'"'),filename+" is bundled for prebuild");
+   assert.ok(assets.includes("/images/interactions/reactions/"+filename+".gif"),filename+" uses generated image");
+ }
  assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
- for(const id of ["snow-white:2","ugly-duckling:3","bremen:2","red-hood:1","cinderella:5","three-pigs:4"]){
+ for(const id of ["red-hood:1","cinderella:5","three-pigs:4"]){
    assert.ok(assets.includes('"'+id+'":"data:image/gif;base64,R0lGODlh'),id+" embeds GIF89a");
  }
  assert.match(hotspot,/className="wt-character-reaction-gif"/);
  assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
 });
 
-test("embedded reaction GIFs contain six transparent 56px frames",()=>{
+test("inline reaction GIFs contain six transparent 56px frames",()=>{
  const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
- for(const id of ["snow-white:2","ugly-duckling:3","bremen:2","red-hood:1","cinderella:5","three-pigs:4"]){
+ for(const id of ["red-hood:1","cinderella:5","three-pigs:4"]){
    const start=assets.indexOf('"'+id+'":"data:image/gif;base64,');
    assert.ok(start>=0,id+" has an embedded GIF");
    const base64Start=start+('"'+id+'":"data:image/gif;base64,').length;
@@ -181,4 +189,18 @@ test("brick delivery retains a static success icon when pig GIF is hidden",()=>{
  assert.match(css,/\.wt-brick-reaction-still\{/);
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.match(css,/display:block!important/);
+});
+
+test("high-resolution GIF asset sources are versioned and validated by the installer",()=>{
+ const installer=readFileSync(new URL("../scripts/install-reaction-gifs.mjs",import.meta.url),"utf8");
+ for(const [filename,key] of [["snow-white-wave","snow-white:2"],["duckling-flutter","ugly-duckling:3"],["bremen-music","bremen:2"]]){
+   const encoded=readFileSync(new URL("../artwork/reaction-gifs/"+filename+".gif.b64",import.meta.url),"utf8").trim();
+   const gif=Buffer.from(encoded,"base64");
+   assert.equal(gif.toString("ascii",0,6),"GIF89a");
+   assert.equal(gif.readUInt16LE(6),80);
+   assert.equal(gif.readUInt16LE(8),80);
+   assert.ok(gif.length>1000);
+   assert.ok(installer.includes(filename));
+   assert.ok(readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8").includes('"'+key+'":"/images/interactions/reactions/'+filename+'.gif"'));
+ }
 });
