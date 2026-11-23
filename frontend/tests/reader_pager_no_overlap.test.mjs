@@ -53,14 +53,25 @@ test("previous and next stay after story in the DOM and follow the viewport",()=
  assert.match(css,/\.reader-page \.pager[\s\S]*?bottom:calc\(78px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
 });
 
-test("compact fixed pager has equal 44px buttons and a truly centered page counter",()=>{
+test("compact fixed pager has equal 40px buttons inside a 48px bar and centered counter",()=>{
  const readerCss=css.slice(css.indexOf("@media screen and (max-width:700px){"));
- assert.match(readerCss,/height:52px!important/);
+ assert.match(readerCss,/height:48px!important/);
  assert.match(readerCss,/grid-template-columns:minmax\(0,1fr\) 48px minmax\(0,1fr\)!important/);
- assert.match(readerCss,/\.pager>button\{[\s\S]*?height:44px!important/);
+ assert.match(readerCss,/\.pager>button\{[\s\S]*?height:40px!important/);
  assert.match(readerCss,/\.pager>button\{[\s\S]*?justify-content:center!important/);
  assert.match(readerCss,/\.pager>\.pager-indicators\{[\s\S]*?justify-self:center!important/);
  assert.match(readerCss,/\.pager \.pager-mobile-current\{[\s\S]*?text-align:center!important/);
  assert.match(readerCss,/\.pager>button svg\{[\s\S]*?width:17px!important/);
  assert.match(readerCss,/width:calc\(100vw - 32px\)!important/);
+});
+
+test("previous and next override old higher-specificity 50px buttons and cannot overflow frame",()=>{
+ assert.match(css,/\.pager>button:first-child,[\s\S]*?\.pager>button:last-child/);
+ assert.match(css,/\.pager>button:last-child\{[\s\S]*?height:40px!important/);
+ assert.match(css,/\.pager>button:last-child\{[\s\S]*?max-height:40px!important/);
+ assert.match(css,/\.pager>button:last-child\{[\s\S]*?align-self:center!important/);
+ assert.match(css,/\.pager>button:last-child\{[\s\S]*?overflow:hidden!important/);
+ assert.match(css,/\.pager,[\s\S]*?overflow:hidden!important/);
+ const legacy=readFileSync(new URL("../src/reader-library-responsive-audit.css",import.meta.url),"utf8");
+ assert.match(legacy,/\.pager>button:first-child,[\s\S]*?\.pager>button:last-child\{[\s\S]*?height:50px!important/);
 });
