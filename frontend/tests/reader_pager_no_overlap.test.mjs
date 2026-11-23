@@ -39,3 +39,15 @@ test("old fixed pager rules are deliberately superseded at the end of the CSS ca
  assert.match(css,/z-index:auto!important/);
  assert.match(css,/bottom:auto!important/);
 });
+
+test("mobile previous and next buttons render below the full story, not above the title",()=>{
+ const concept=readFileSync(new URL("../src/reader-concept-four.css",import.meta.url),"utf8");
+ assert.match(concept,/\.reader-page \.story-page\s*\{\s*order:2;/);
+ assert.match(concept,/\.reader-page \.print-book \{order:9\}/);
+ assert.match(css,/\.reader-page \.pager,[\s\S]*?order:10!important/);
+ const storyEnd=main.indexOf('        </article>}');
+ const pager=main.indexOf('        <div className="pager">');
+ assert.ok(storyEnd>=0&&pager>storyEnd,"pager stays after the story in DOM");
+ assert.match(css,/\.reader-page \.pager[\s\S]*?position:relative!important/);
+ assert.match(css,/\.reader-page \.pager[\s\S]*?bottom:auto!important/);
+});
