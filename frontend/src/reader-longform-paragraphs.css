@@ -1,0 +1,29 @@
+/* Readable long-form pages: small paragraph gaps, never a new control. */
+.reader-page .story-page .story-text .wt-reader-paragraph{
+  display:block;
+  max-width:68ch;
+  margin:0 auto 0.8em;
+  padding:0;
+  font:inherit;
+  line-height:inherit;
+  color:inherit;
+  text-align:inherit;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  hyphens:auto;
+}
+.reader-page .story-page .story-text .wt-reader-paragraph:last-child{margin-bottom:0}
+@media screen and (max-width:700px){
+  .reader-page .story-page .story-text .wt-reader-paragraph{
+    max-width:100%;
+    margin-bottom:0.85em;
+    line-height:1.7;
+  }
+}
+@media print{
+  .reader-page .story-page .story-text .wt-reader-paragraph{
+    break-inside:avoid;
+    orphans:2;
+    widows:2;
+  }
+}
