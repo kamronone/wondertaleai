@@ -1,23 +1,28 @@
-/* iPhone reader regression: page controls must never cover the book text.
-   The fixed bottom tabbar remains; page navigation belongs to document flow.
-   This is imported last to override older fixed-pager experiments. */
+/* iPhone reader: keep previous/next visible above the fixed app tabbar.
+   Reserve a matching scroll-safe area so long stories can be read to the end.
+   Imported last to override legacy reader pager experiments. */
 @media screen and (max-width:700px){
   .shell:has(>main>.reader-page) .reader-page .pager,
   .shell > main > .reader-page .pager{
-    /* This page is a flex column: other reader blocks use order 0–9. */
+    /* Fixed to the viewport, not the story's flex-column order. */
     order:10!important;
-    position:relative!important;
+    position:fixed!important;
     inset:auto!important;
-    left:auto!important;
+    left:50%!important;
     right:auto!important;
     top:auto!important;
-    bottom:auto!important;
-    transform:none!important;
-    z-index:auto!important;
-    width:100%!important;
-    max-width:100%!important;
+    bottom:calc(78px + env(safe-area-inset-bottom,0px))!important;
+    transform:translateX(-50%)!important;
+    z-index:85!important;
+    width:calc(100vw - 24px)!important;
+    max-width:620px!important;
     box-sizing:border-box!important;
-    margin:14px 0 12px!important;
+    margin:0!important;
+    border:1px solid #dfcdea!important;
+    background:rgba(255,250,246,.98)!important;
+    box-shadow:0 5px 20px rgba(43,25,64,.16)!important;
+    -webkit-backdrop-filter:blur(12px);
+    backdrop-filter:blur(12px);
     padding:7px!important;
     min-height:64px!important;
     display:grid!important;
@@ -36,12 +41,12 @@
     height:auto!important;
     max-height:none!important;
     overflow:visible!important;
-    padding-bottom:12px!important;
+    padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))!important;
   }
-  /* Reserve bottom navigation space exactly once in the shell. */
+  /* Both floating bars need reserved space at the end of long chapters. */
   .shell:has(>main>.reader-page)>main{
-    padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important;
-    scroll-padding-bottom:calc(94px + env(safe-area-inset-bottom,0px));
+    padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))!important;
+    scroll-padding-bottom:calc(190px + env(safe-area-inset-bottom,0px));
   }
   .shell:has(>main>.reader-page)>main>.reader-page{
     padding-bottom:12px!important;
