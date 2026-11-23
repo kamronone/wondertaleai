@@ -659,7 +659,15 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
         )
         assert completed==job
         details=client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=auth)
-        assert details.status_code==200,(page,details.text,client.get("/api/illustrations/jobs",headers=auth).json(),sql_trace[-20:])
+        if details.status_code!=200:
+            markers=[("quota" if "illustration_daily_quota" in line else
+                      "consent" if "illustration_parent_consent" in line else
+                      "parent" if "FROM parents" in line else
+                      "book" if "FROM books" in line else
+                      "fail" if "status='failed'" in line else
+                      "process" if "status='processing'" in line else
+                      "other") for line in sql_trace]
+            pytest.fail("page="+str(page)+" state="+str(client.get("/api/illustrations/jobs",headers=auth).json()[0]["status"])+" trace="+",".join(markers[-16:]))
         assert details.json()=={"job_id":job}
         assert client.get(f"/api/illustrations/books/{book_id}/pages/{page}",headers=other).status_code==404
         assert client.get(f"/api/illustrations/media/{job}",headers=other).status_code==404
