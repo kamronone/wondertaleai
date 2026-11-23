@@ -271,8 +271,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
         ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" onError={()=>setGifFailed(true)}/>
         :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
     </div>}
-    {visibleReaction&&point&&<div className="wt-character-reaction" role="status" aria-live="polite">
-      <span>{reaction.message[lang]}</span>
+    {visibleReaction&&point&&<div className="wt-character-reaction" onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()} onPointerUp={event=>event.stopPropagation()} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
+      <span role="status" aria-live="polite">{reaction.message[lang]}</span>
       <button
         type="button"
         className="wt-character-reaction-close"
@@ -280,8 +280,10 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
         title={words("Закрыть","Yopish","Close")[lang]}
         onPointerDown={event=>event.stopPropagation()}
         onTouchStart={event=>event.stopPropagation()}
+        onTouchMove={event=>event.stopPropagation()}
         onTouchEnd={event=>event.stopPropagation()}
         onClick={event=>{event.stopPropagation();setVisibleReaction(false);}}
+        onKeyDown={event=>{if(event.key==="Escape"){event.stopPropagation();setVisibleReaction(false);}}}
       ><X size={16} aria-hidden="true"/></button>
     </div>}
   </div>;
