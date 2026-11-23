@@ -1,4 +1,4 @@
-/** A private, in-memory speech checkpoint. Never stored in localStorage or sent to API.
+/** A private, in-memory speech checkpoint. Never persisted in browser storage or sent to API.
  * Safari provides no reliable progress events on every device, so unknown
  * progress deliberately starts the current page from the beginning.
  */
