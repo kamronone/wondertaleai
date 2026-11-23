@@ -7,28 +7,30 @@ const source=read("../src/CharacterHotspot.tsx");
 const app=read("../src/main.tsx");
 const css=read("../src/reader-mobile-v1.css");
 
-test("eleven safe classic scenes define a visible character hotspot",()=>{
+test("expanded safe classic scenes define unique visible character hotspots",()=>{
  const keys=[...source.matchAll(/^  "([a-z-]+):([1-8])": \{/gm)].map(m=>m[1]+":"+m[2]).sort();
- assert.deepEqual(keys,["bremen:2","cinderella:5","hansel-gretel:3","puss-boots:4","rapunzel:7","red-hood:1","sleeping-beauty:5","snow-white:2","three-pigs:4","three-pigs:7","ugly-duckling:3"]);
+ assert.equal(keys.length,29);
+ assert.equal(new Set(keys).size,keys.length);
+ for(const original of ["bremen:2","cinderella:5","hansel-gretel:3","puss-boots:4","rapunzel:7","red-hood:1","sleeping-beauty:5","snow-white:2","three-pigs:4","three-pigs:7","ugly-duckling:3"])assert.ok(keys.includes(original),"missing legacy reaction "+original);
  for(const key of keys)assert.ok(source.includes('"'+key+'"'));
  assert.match(source,/if\(!classicId\|\|!Number\.isInteger\(page\)\|\|page<1\|\|page>8\)return null/);
 });
 
 test("hotspot position follows the image content with object-fit contain",()=>{
- assert.match(source,/Math\.min\(width\/image\.naturalWidth,height\/image\.naturalHeight\)/);
- assert.match(source,/\(width-drawnW\)\/2\+drawnW\*position\.x/);
+ assert.match(source,/Math\.min\(rect\.width\/media\.naturalWidth,rect\.height\/media\.naturalHeight\)/);
+ assert.match(source,/offsetX\+drawnW\*position\.x/);
  assert.match(source,/Math\.max\(edge,Math\.min\(containerRect\.width-edge,left\)\)/);
- assert.match(source,/\(height-drawnH\)\/2\+drawnH\*position\.y/);
+ assert.match(source,/offsetY\+drawnH\*position\.y/);
  assert.match(source,/Math\.max\(edge,Math\.min\(containerRect\.height-edge,top\)\)/);
  assert.match(source,/new ResizeObserver\(update\)/);
- assert.match(source,/querySelector<HTMLImageElement>\("img\.wt-reader-picture"\)/);
+ assert.match(source,/querySelector<HTMLImageElement>\("img\.wt-reader-picture, \.story-page-image > img"\)/);
  assert.match(source,/addEventListener\("load",update\)/);
  assert.match(source,/observer\?\.disconnect\(\)/);
 });
 
 test("hotspots preserve ordinary inline images and story navigation",()=>{
  assert.match(app,/import \{CharacterHotspot,characterHotspotForPage\} from "\.\/CharacterHotspot"/);
- assert.match(app,/<CharacterHotspot classicId=/);
+ assert.match(app,/<CharacterHotspot key=\{active\.id\+"\:"\+page\} classicId=/);
  assert.match(app,/!readerFocusMode&&!readerNightMode&&bedtimeUntil===null/);
  assert.match(app,/classicAnimatedPage\(\(active as DemoBook\)\.classicId/);
  assert.match(source,/onTouchStart=\{event=>event\.stopPropagation\(\)\}/);
