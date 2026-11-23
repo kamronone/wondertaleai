@@ -32,6 +32,7 @@ import "./reader-controls-compact.css";
 import "./create-mobile-final-audit.css";
 import "./mobile-nav-library-audit.css";
 import "./reader-library-responsive-audit.css";
+import "./reader-longform-paragraphs.css";
 import { worldArt } from "./world_art";
 import {startReaderAmbience,readerAmbienceForClassic,type AmbiencePlayback} from "./reader_ambience";
 import {StorySceneInteraction} from "./StorySceneInteraction";
