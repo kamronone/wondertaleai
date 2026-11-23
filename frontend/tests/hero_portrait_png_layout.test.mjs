@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const read=path=>readFileSync(new URL(path,import.meta.url),"utf8");
 
-test("all five hero types retain dedicated PNG paths and readable labels",()=>{
+test("all six hero types retain dedicated PNG paths and readable labels",()=>{
  const app=read("../src/main.tsx");
- assert.match(app,/\["boy","girl","animal","robot","magical"\]/);
- assert.match(app,/\{boy:"boy",girl:"girl",animal:"fox",robot:"robot",magical:"dragon"\}/);
+ assert.match(app,/\["boy","girl","animal","robot","magical","superhero"\]/);
+ assert.match(app,/\{boy:"boy",girl:"girl",animal:"fox",robot:"robot",magical:"dragon",superhero:"superhero"\}/);
  assert.match(app,/create-hero-option/);
  assert.match(app,/className=\{"create-hero-option"\+/);
 });
@@ -24,11 +24,11 @@ test("hero portrait styles are imported after earlier mobile overrides",()=>{
  assert.match(css,/@media screen and \(max-width:360px\)/);
 });
 
-test("five updated portraits are real transparent PNGs installed for every build",()=>{
+test("six updated portraits are real transparent PNGs installed for every build",()=>{
  const install=read("../scripts/install-hero-pngs.mjs");
  const gifInstall=read("../scripts/install-reaction-gifs.mjs");
  assert.ok(gifInstall.includes('await import("./install-hero-pngs.mjs")'));
- const pngNames=["boy","girl","fox","robot","dragon"];
+ const pngNames=["boy","girl","fox","robot","dragon","superhero"];
  for(const name of pngNames){
    assert.ok(install.includes('"'+name+'"'),name+" in installer");
    const base64=read("../artwork/hero-pngs/create-"+name+".png.b64").replace(/\\s+/g,"");
@@ -40,4 +40,14 @@ test("five updated portraits are real transparent PNGs installed for every build
    assert.equal(png.subarray(-8,-4).toString("ascii"),"IEND");
    assert.ok(png.length>5000);
  }
+});
+
+test("superhero is selectable with localized labels and reaches the story prompt",()=>{
+ const app=read("../src/main.tsx");
+ assert.ok(app.includes('useState<"boy"|"girl"|"animal"|"robot"|"magical"|"superhero">'));
+ assert.ok(app.includes('superhero:"Супергерой"'));
+ assert.ok(app.includes('superhero:"Superqahramon"'));
+ assert.ok(app.includes('superhero:"Superhero"'));
+ assert.ok(app.includes('heroKindLabel+"."'));
+ assert.ok(app.includes('superhero:"superhero"'));
 });
