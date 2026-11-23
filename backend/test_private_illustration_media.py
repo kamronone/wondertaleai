@@ -608,6 +608,15 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
     })
     assert made.status_code==201,made.text
     book_id=made.json()["id"]
+    assert client.get("/api/illustrations/consent",headers=auth).json()["agreed"] is True
+    with module.connection() as check:
+        parents=module.sql(check,"SELECT id,email FROM parents WHERE email=?",(email,)).fetchall()
+        assert len(parents)==1
+        assert module.illustration_consent_active(parents[0][0],check)
+        assert module.sql(check,"SELECT id FROM books WHERE id=? AND owner_id=?",
+                          (book_id,parents[0][0])).fetchone() is not None
+    assert worker._cap("MAX_ILLUSTRATIONS_PER_DAY")==10
+    assert worker._cap("MAX_PARENT_ILLUSTRATIONS_PER_DAY")==10
 
     class TestClock(datetime):
         day_offset=0
