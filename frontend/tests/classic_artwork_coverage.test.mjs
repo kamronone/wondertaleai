@@ -44,3 +44,22 @@ test("custom and private images retain priority over bundled artwork", () => {
   assert.match(artwork, /imageUrl\.trim\(\)!==""\)return imageUrl/);
   assert.match(artwork, /if\(imageUrl!==expected\)return null/);
 });
+
+test("Snow White release uses a complete eight-page build gate and checksum verification", () => {
+  assert.match(artwork, /__SNOW_WHITE_PNG_READY__/);
+  assert.match(artwork, /snowWhitePngReady\?\["snow-white"\]:\[\]/);
+  assert.match(vite, /snowWhitePngComplete/);
+  assert.match(vite, /__SNOW_WHITE_PNG_READY__:JSON\.stringify\(snowWhitePngComplete\)/);
+  const installer = readFileSync(resolve(root, "scripts/install-snow-white-pngs.mjs"), "utf8");
+  const checker = readFileSync(resolve(root, "scripts/check-classic-page-assets.mjs"), "utf8");
+  const manifest = JSON.parse(readFileSync(resolve(root, "artwork/snow-white-png-integrity.json"), "utf8"));
+  assert.equal(manifest.classicId, "snow-white");
+  assert.equal(manifest.pages.length, 8);
+  assert.equal(new Set(manifest.pages.map(page => page.sha256)).size, 8);
+  for (const [index, page] of manifest.pages.entries()) {
+    assert.equal(page.page, index + 1);
+    assert.match(page.sha256, /^[a-f0-9]{64}$/);
+  }
+  assert.match(installer, /PNG fails integrity review/);
+  assert.match(checker, /does not match reviewed Snow White artwork/);
+});
