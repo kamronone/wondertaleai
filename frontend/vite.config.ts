@@ -11,6 +11,9 @@ const artworkRoot=dirname(fileURLToPath(import.meta.url));
 const rapunzelPngComplete=Array.from({length:8},(_,i)=>
   resolve(artworkRoot,"public","images","classics","rapunzel","pages",`page-${i+1}.png`)
 ).every(path=>existsSync(path));
+const snowWhitePngComplete=Array.from({length:8},(_,i)=>
+  resolve(artworkRoot,"public","images","classics","snow-white","pages",`page-${i+1}.png`)
+).every(path=>existsSync(path));
 const branch=/^[A-Za-z0-9._/-]{1,100}$/.test(source)?source:"local";
 
 export default defineConfig({
@@ -18,6 +21,7 @@ export default defineConfig({
   define:{
     __WONDERTALE_BUILD_SHA__:JSON.stringify(sha),
     __WONDERTALE_BUILD_BRANCH__:JSON.stringify(branch),
-    __RAPUNZEL_PNG_READY__:JSON.stringify(rapunzelPngComplete&&process.env.VITE_RAPUNZEL_PNG_READY!=="false")
+    __RAPUNZEL_PNG_READY__:JSON.stringify(rapunzelPngComplete&&process.env.VITE_RAPUNZEL_PNG_READY!=="false"),
+    __SNOW_WHITE_PNG_READY__:JSON.stringify(snowWhitePngComplete)
   }
 });
