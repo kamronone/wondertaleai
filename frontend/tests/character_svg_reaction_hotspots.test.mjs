@@ -122,3 +122,33 @@ test("character reactions use embedded GIF89a assets rather than missing remote 
  assert.match(hotspot,/className="wt-character-reaction-gif"/);
  assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
 });
+
+test("embedded reaction GIFs contain six transparent 56px frames",()=>{
+ const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
+ for(const id of ["snow-white:2","ugly-duckling:3","bremen:2"]){
+   const start=assets.indexOf('"'+id+'":"data:image/gif;base64,');
+   assert.ok(start>=0,id+" has an embedded GIF");
+   const base64Start=start+('"'+id+'":"data:image/gif;base64,').length;
+   const base64End=assets.indexOf('"',base64Start);
+   const gif=Buffer.from(assets.slice(base64Start,base64End),"base64");
+   assert.equal(gif.toString("ascii",0,6),"GIF89a");
+   assert.equal(gif.readUInt16LE(6),56);
+   assert.equal(gif.readUInt16LE(8),56);
+   assert.equal(gif[gif.length-1],0x3b);
+   // Skip sub-blocks instead of searching raw pixels for image delimiters.
+   let cursor=13+3*(1<<((gif[10]&7)+1)),frames=0;
+   while(cursor<gif.length){
+     const marker=gif[cursor++];
+     if(marker===0x3b)break;
+     if(marker===0x21){cursor++;while(true){const length=gif[cursor++];if(!length)break;cursor+=length;}continue;}
+     assert.equal(marker,0x2c,id+" contains a valid image descriptor");
+     cursor+=8;
+     const packed=gif[cursor++];
+     if(packed&0x80)cursor+=3*(1<<((packed&7)+1));
+     cursor++; // LZW minimum code size.
+     while(true){const length=gif[cursor++];if(!length)break;cursor+=length;}
+     frames++;
+   }
+   assert.equal(frames,6,id+" has six animation frames");
+ }
+});
