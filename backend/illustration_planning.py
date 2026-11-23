@@ -29,6 +29,18 @@ SCENES=(
     "sharing a picnic with kind woodland friends",
     "helping a lost butterfly find a safe meadow",
     "watching the first stars appear in the sky",
+    "following a trail of gentle lanterns into a moonlit orchard",
+    "finding an old map hidden inside a hollow tree",
+    "carefully crossing a mossy stone staircase beside a waterfall",
+    "meeting a friendly tortoise who points toward the mountain village",
+    "discovering a locked wooden gate surrounded by blue flowers",
+    "solving a picture puzzle on an ancient stone fountain",
+    "guiding woodland friends across a newly built little bridge",
+    "returning a lost silver bell to the village clock tower",
+    "gathering friends to restore the colors of a faded garden mural",
+    "opening a sunlit gate as colorful butterflies rise around it",
+    "celebrating a shared success with kind friends in the village square",
+    "walking home beneath warm sunrise light with a cherished keepsake",
 )
 SAFETY=(
     "Original child-safe artwork, not based on any existing franchise. "
@@ -65,6 +77,8 @@ def illustration_brief(book_id:str,page_number:int,style:IllustrationStyle)->Ill
         raise ValueError("Page outside permitted range")
     seed=int.from_bytes(hashlib.sha256(normalized.encode()).digest()[:4],"big")
     character=MASCOTS[seed%len(MASCOTS)]
-    scene=SCENES[(page_number-1)%len(SCENES)]
+    # All twenty possible pages have distinct, curated images. Previously
+    # pages 9-20 recycled the first eight images, regardless of story length.
+    scene=SCENES[page_number-1]
     prompt=f"{STYLES[style]}. Depict {character} {scene}. {SAFETY}"
     return IllustrationBrief(normalized,page_number,style,character,scene,prompt)
