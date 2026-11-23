@@ -116,7 +116,7 @@ test("character reactions use embedded GIF89a assets rather than missing remote 
  const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
  assert.doesNotMatch(hotspot,/snow-white-wave\\.gif|duckling-flutter\\.gif|bremen-music\\.gif/);
  assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
- for(const id of ["snow-white:2","ugly-duckling:3","bremen:2"]){
+ for(const id of ["snow-white:2","ugly-duckling:3","bremen:2","red-hood:1","cinderella:5","three-pigs:4"]){
    assert.ok(assets.includes('"'+id+'":"data:image/gif;base64,R0lGODlh'),id+" embeds GIF89a");
  }
  assert.match(hotspot,/className="wt-character-reaction-gif"/);
@@ -125,7 +125,7 @@ test("character reactions use embedded GIF89a assets rather than missing remote 
 
 test("embedded reaction GIFs contain six transparent 56px frames",()=>{
  const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
- for(const id of ["snow-white:2","ugly-duckling:3","bremen:2"]){
+ for(const id of ["snow-white:2","ugly-duckling:3","bremen:2","red-hood:1","cinderella:5","three-pigs:4"]){
    const start=assets.indexOf('"'+id+'":"data:image/gif;base64,');
    assert.ok(start>=0,id+" has an embedded GIF");
    const base64Start=start+('"'+id+'":"data:image/gif;base64,').length;
@@ -151,4 +151,16 @@ test("embedded reaction GIFs contain six transparent 56px frames",()=>{
    }
    assert.equal(frames,6,id+" has six animation frames");
  }
+});
+
+test("new storybook reactions integrate with their readers, including brick delivery",()=>{
+ const brick=readFileSync(new URL("../src/BrickPassInteraction.tsx",import.meta.url),"utf8");
+ const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
+ const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
+ assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
+ assert.match(brick,/delivered&&<img className="wt-brick-reaction-gif"/);
+ assert.ok(brick.includes('reactionGifData["three-pigs:4"]'));
+ assert.match(css,/\.wt-brick-reaction-gif\{/);
+ assert.match(css,/pointer-events:none/);
+ assert.ok(main.includes('<BrickPassInteraction key={active.id+":"+page}'));
 });
