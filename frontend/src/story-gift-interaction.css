@@ -242,3 +242,25 @@
   .reader-page .wt-gift-reaction-fx{display:none!important}
 }
 @media print{.reader-page .wt-gift-reaction-fx{display:none!important}}
+
+/* No extra oversized button: children can tap the object, then its glowing target. */
+.reader-page .wt-gift-target.is-selected{
+  pointer-events:auto!important;
+  cursor:pointer;
+  background:rgba(130,88,180,.42);
+  border:3px solid #ffeca8;
+  outline:3px solid rgba(255,253,223,.72);
+  outline-offset:3px;
+  box-shadow:0 0 0 9px rgba(255,243,187,.22);
+  z-index:8;
+}
+.reader-page .wt-gift-target.is-selected:focus-visible{
+  outline:4px solid #f5d68c;
+  outline-offset:5px;
+}
+.reader-page .wt-gift-item.is-selected{
+  filter:drop-shadow(0 0 9px rgba(255,226,137,.95));
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-gift-target.is-selected{animation:none!important}
+}
