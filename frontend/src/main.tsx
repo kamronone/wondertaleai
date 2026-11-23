@@ -80,6 +80,7 @@ import { StoryBranchQuest } from "./StoryBranchQuest";
 import { CharacterBuilder } from "./CharacterBuilder";
 import {spokenWordRange,spokenTextParts,type SpokenRange} from "./reader_speech_highlight";
 import {speechStartOffset,speechBoundaryBookmark,type SpeechBookmark} from "./reader_speech_resume";
+import {pausedSpeechAction} from "./reader_speech_engine";
 import {readerParagraphs} from "./reader_paragraphs";
 import {voicesForStoryLanguage,preferredStoryVoice,parseStoredVoiceChoices,STORY_VOICE_STORAGE_KEY,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 
@@ -904,18 +905,30 @@ function App(){
     }
     const engine=window.speechSynthesis;
     if(speaking){
-      try{
-        if(speechPaused){engine.resume();setSpeechPaused(false);}
-        else{engine.pause();setSpeechPaused(true);}
-      }catch{
-        // Safari may invalidate a suspended utterance after an app switch.
+      // Safari may discard a paused utterance without firing onend/onerror.
+      // Its resume() then does nothing. Start a new utterance at the last
+      // confirmed word instead; never pretend the lost audio is still active.
+      const action=speechPaused?pausedSpeechAction(engine):"pause";
+      if(action==="restart"){
         speechRun.current++;
         speechAdvanceArmed.current=false;
-        try{engine.cancel();}catch{/* Ignore an invalidated device engine. */}
-        setSpokenRange(null);setSpeaking(false);setSpeechPaused(false);
-        setError(t.noVoice);
+        try{engine.cancel();}catch{/* Already invalidated by WebKit. */}
+        setSpokenRange(null);
+        setSpeaking(false);setSpeechPaused(false);
+      }else{
+        try{
+          if(action==="resume"){engine.resume();setSpeechPaused(false);}
+          else{engine.pause();setSpeechPaused(true);}
+        }catch{
+          speechRun.current++;
+          speechAdvanceArmed.current=false;
+          try{engine.cancel();}catch{/* Ignore an invalidated device engine. */}
+          setSpeechResumeAvailable(speechBookmark.current!==null);
+          setSpokenRange(null);setSpeaking(false);setSpeechPaused(false);
+          setError(t.noVoice);
+        }
+        return;
       }
-      return;
     }
     const run=++speechRun.current;
     speechAdvanceArmed.current=false;
