@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState,type KeyboardEvent as ReactKeyboardEvent,type PointerEvent as ReactPointerEvent,type TouchEvent as ReactTouchEvent} from "react";
 import {CheckCircle2,Heart,Music2,Flower2,Sun,Feather,Sparkles} from "lucide-react";
 import type {Lang} from "./i18n";
+import {SceneReplyAudio} from "./SceneReplyAudio";
 import {storyGiftForPage,type Point} from "./scene_gift_data";
 
 type ArtFrame={left:number;top:number;width:number;height:number};
@@ -17,7 +18,7 @@ function visibleArtFrame(stage:HTMLElement):ArtFrame|null{
 
 
 /** Drag an illustrated story object to a character. No network or page navigation. */
-export function StoryGiftInteraction({classicId,page,lang}:{classicId:string|undefined;page:number;lang:Lang}){
+export function StoryGiftInteraction({classicId,page,lang,onBeforeReply}:{classicId:string|undefined;page:number;lang:Lang;onBeforeReply:()=>void}){
   const scene=storyGiftForPage(classicId,page);
   const stage=useRef<HTMLDivElement|null>(null);
   const activePointer=useRef<number|null>(null);
@@ -169,6 +170,7 @@ export function StoryGiftInteraction({classicId,page,lang}:{classicId:string|und
       onKeyDown={keyboard}>
       <img src={scene.asset} alt="" draggable={false}/>
     </div>
+    {delivered&&<SceneReplyAudio text={scene.reply[lang]} lang={lang} onBeforeSpeak={onBeforeReply}/>}
     {delivered&&<div className="wt-gift-speech" role="status" aria-live="polite">
       <span aria-hidden="true"><CheckCircle2 size={19}/></span>{scene.reply[lang]}
     </div>}
