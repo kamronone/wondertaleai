@@ -22,6 +22,7 @@ import "./reader-page-turn.css";
 import "./reader-image-fullwidth.css";
 import "./reader-living-art.css";
 import "./reader-mobile-v1.css";
+import "./reader-chapter-navigation.css";
 import "./reader-concept-four.css";
 import "./legal-release-notice.css";
 import "./create-concept-four.css";
