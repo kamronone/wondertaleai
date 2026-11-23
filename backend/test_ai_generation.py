@@ -11,7 +11,7 @@ def _story(language="uz", count=8):
     return json.dumps({
         "title": "Mehribon yulduz",
         "language": language,
-        "pages": ["A gentle original story for children. " * 5 for _ in range(count)],
+        "pages": [f"Chapter {index+1}: " + "A gentle original story for children. " * 5 for index in range(count)],
     })
 
 
@@ -111,3 +111,26 @@ def test_structured_generation_rejects_missing_or_non_json_model_output(monkeypa
     for output in ("", "This story is unavailable", '{"pages": []}'):
         with pytest.raises(ValueError, match="valid story"):
             generate_story(payload, client=SimpleNamespace(responses=FakeResponses(output)))
+
+
+def test_twenty_page_ai_stories_require_distinct_chapters():
+    import json
+    payload=json.loads(_story("en",20))
+    payload["pages"][18]=payload["pages"][7]
+    with pytest.raises(ValueError,match="valid story"):
+        validate_generated_story(json.dumps(payload),"en",20)
+
+
+def test_full_story_prompt_requires_causal_arc_and_real_conclusion(monkeypatch):
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    responses=FakeResponses(_story("en",20))
+    payload=GenerateStoryInput(name="Sam",age=7,language="en",pages_count=20,idea="An adventurous journey to a kind magical forest")
+    generate_story(payload,client=SimpleNamespace(responses=responses))
+    instructions=responses.calls[0]["instructions"]
+    assert "one continuous plot" in instructions
+    assert "climax" in instructions
+    assert "resolve the central problem on the final page" in instructions
+    assert "do not repeat the same paragraph" in instructions
+    assert "Maintain consistent characters" in instructions
+    assert "to be continued" in instructions
+    assert responses.calls[0]["store"] is False
