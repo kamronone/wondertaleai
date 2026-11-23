@@ -81,6 +81,7 @@ import { CharacterBuilder } from "./CharacterBuilder";
 import {spokenWordRange,spokenTextParts,type SpokenRange} from "./reader_speech_highlight";
 import {speechStartOffset,speechBoundaryBookmark,type SpeechBookmark} from "./reader_speech_resume";
 import {pausedSpeechAction} from "./reader_speech_engine";
+import {canAutoAdvanceAudio,consumeAudioAdvanceTarget,type AudioAdvanceTarget} from "./reader_audio_sequence";
 import {readerParagraphs} from "./reader_paragraphs";
 import {voicesForStoryLanguage,preferredStoryVoice,parseStoredVoiceChoices,STORY_VOICE_STORAGE_KEY,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 
@@ -482,9 +483,11 @@ function App(){
   });
   const speechAdvanceArmed=useRef(false);
   const speechRun=useRef(0);
+  const autoAudioTarget=useRef<AudioAdvanceTarget|null>(null);
   useEffect(()=>{
     const stopOnBackground=()=>{
       // Safari may suspend speech silently while the screen is locked.
+      autoAudioTarget.current=null;
       // Cancel rather than leaving a stuck Play/Pause button or advancing a page.
       speechRun.current++;
       speechAdvanceArmed.current=false;
@@ -685,6 +688,7 @@ function App(){
     speechRun.current++;
     speechAdvanceArmed.current=false;
     speechBookmark.current=null;
+    if(!autoAudioTarget.current||autoAudioTarget.current.bookId!==active?.id||autoAudioTarget.current.page!==page)autoAudioTarget.current=null;
     setSpeechResumeAvailable(false);
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpokenRange(null);
@@ -963,13 +967,23 @@ function App(){
     };
     utterance.onend=()=>{
       if(run!==speechRun.current)return;
-      const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1&&!(isDemoBook(active)&&((active as DemoBook).classicId==="three-pigs"&&page===3||storyGiftForPage((active as DemoBook).classicId,page+1)!==null));
+      const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1&&canAutoAdvanceAudio({
+        page,pageCount:active.pages.length,
+        classicId:isDemoBook(active)?(active as DemoBook).classicId:undefined,
+        giftsEnabled:familyReadingPreferences.extraActivities,
+        focusMode:readerFocusMode,nightMode:readerNightMode,
+        bedtimeActive:bedtimeUntil!==null,
+        hasGift:isDemoBook(active)&&storyGiftForPage((active as DemoBook).classicId,page+1)!==null
+      });
       speechAdvanceArmed.current=false;
       speechBookmark.current=null;
       setSpeechResumeAvailable(false);
       setSpokenRange(null);
       setSpeaking(false);setSpeechPaused(false);
-      if(mayAdvance)setPage(previous=>Math.min(active.pages.length-1,previous+1));
+      if(mayAdvance){
+        autoAudioTarget.current={bookId:active.id,page:page+1};
+        setPage(previous=>Math.min(active.pages.length-1,previous+1));
+      }
     };
     utterance.onerror=event=>{
       if(run!==speechRun.current)return;
@@ -992,6 +1006,7 @@ function App(){
     }
   };
   const stopSpeech=()=>{
+    autoAudioTarget.current=null;
     speechRun.current++;
     speechBookmark.current=null;
     setSpeechResumeAvailable(false);
@@ -1000,6 +1015,17 @@ function App(){
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpeaking(false);setSpeechPaused(false);
   };
+
+  // Page cleanup runs in an earlier effect. Start a fresh utterance only
+  // after React has rendered the intended next page and invalidated old runs.
+  // Audio begins automatically only for an explicitly enabled reading session.
+  useEffect(()=>{
+    const target=autoAudioTarget.current;
+    if(!target)return;
+    autoAudioTarget.current=null;
+    if(tab!=="reader"||!readerAutoNext||!active||!consumeAudioAdvanceTarget(target,active.id,page)||document.visibilityState==="hidden")return;
+    speakPage();
+  },[tab,page,active?.id,readerAutoNext]);
   const applyLocalBookChange=(book:Book)=>{
     if(!isDemoBook(book))return;
     saveDemoBooks(getDemoBooks().map(b=>b.id===book.id?{...b,...book}:b));
