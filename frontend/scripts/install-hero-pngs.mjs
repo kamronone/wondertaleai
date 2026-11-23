@@ -1,11 +1,11 @@
-/* Install the five original WonderTale character PNGs from checked versioned
+/* Install the six original WonderTale character PNGs from checked versioned
    Base64. This preserves the real PNG format on every local/CI/Netlify build
    without relying on external image servers or Git LFS. */
 import {readFileSync,mkdirSync,writeFileSync} from "node:fs";
 import {dirname,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
-const names=["boy","girl","fox","robot","dragon"];
+const names=["boy","girl","fox","robot","dragon","superhero"];
 const signature=Buffer.from([137,80,78,71,13,10,26,10]);
 for(const name of names){
  const src=resolve(root,"artwork","hero-pngs","create-"+name+".png.b64");
