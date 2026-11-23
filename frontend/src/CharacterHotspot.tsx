@@ -233,8 +233,7 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
   const [point,setPoint]=useState<{left:number;top:number}|null>(null);
   const [visibleReaction,setVisibleReaction]=useState(false);
   const [reactionReplay,setReactionReplay]=useState(0);
-  const [gifFailed,setGifFailed]=useState(false);
-  useEffect(()=>{setVisibleReaction(false);setReactionReplay(0);setGifFailed(false);setPoint(null);},[classicId,page]);
+  useEffect(()=>{setVisibleReaction(false);setReactionReplay(0);setPoint(null);},[classicId,page]);
   useEffect(()=>{
     if(!reaction||!enabled)return;
     const stage=ref.current?.parentElement;
@@ -273,13 +272,8 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
     };
   },[classicId,page,enabled,reaction]);
   if(!reaction||!enabled)return null;
-  // Genuine 8-frame transparent GIFs for these illustrated classic scenes.
-  const gifAsset=classicId==="snow-white"&&page===2
-    ?"/images/interactions/reactions/snow-white-wave.gif"
-    :classicId==="ugly-duckling"&&page===3
-      ?"/images/interactions/reactions/duckling-flutter.gif"
-      :classicId==="bremen"&&page===2
-        ?"/images/interactions/reactions/bremen-music.gif":null;
+  // Play local CSS motion immediately; no missing GIF requests or 404 flicker.
+  // Re-enable real GIF overlays only after their binary assets exist in public/.
   const MotionIcon=reaction.motion==="wave"?Hand
     :reaction.motion==="music"?Music2
     :reaction.motion==="flutter"?Feather
@@ -303,9 +297,7 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
       <MotionIcon size={20} aria-hidden="true"/>
     </button>}
     {visibleReaction&&point&&<div key={reactionReplay} className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
-      {gifAsset&&!gifFailed
-        ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" onError={()=>setGifFailed(true)}/>
-        :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
+      <MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/>
     </div>}
     {visibleReaction&&point&&<div className="wt-character-reaction" onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()} onPointerUp={event=>event.stopPropagation()} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
       <span role="status" aria-live="polite">{reaction.message[lang]}</span>
