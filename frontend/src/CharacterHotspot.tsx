@@ -10,6 +10,42 @@ const words=(ru:string,uz:string,en:string):Record<Lang,string>=>({ru,uz,en});
 /* Coordinates are fractions of the visible artwork, not the padded card.
    Never use a hotspot on a private photo or generated user illustration. */
 const reactions:Record<string,Reaction>={
+  "snow-white:1": {
+    motion:"shine",
+    position:{x:.49,y:.66},
+    label:words("Поздороваться с Белоснежкой","Oppog‘oyga salom berish","Greet Snow White"),
+    message:words("Белоснежка улыбается и приглашает тебя в сказку!","Oppog‘oy jilmayib, seni ertakka taklif qiladi!","Snow White smiles and welcomes you into the story!")
+  },
+  "snow-white:4": {
+    motion:"cheer",
+    position:{x:.52,y:.60},
+    label:words("Подбодрить Белоснежку","Oppog‘oyga dalda berish","Encourage Snow White"),
+    message:words("Белоснежка набирается смелости и благодарит тебя!","Oppog‘oy dadilroq bo‘lib, senga rahmat aytadi!","Snow White feels braver and thanks you!")
+  },
+  "snow-white:8": {
+    motion:"bloom",
+    position:{x:.50,y:.58},
+    label:words("Порадоваться вместе","Birga quvonish","Celebrate together"),
+    message:words("Все радуются счастливому окончанию сказки!","Hamma ertakning baxtli yakunidan quvonadi!","Everyone celebrates the story's happy ending!")
+  },
+  "red-hood:2": {
+    motion:"flutter",
+    position:{x:.51,y:.56},
+    label:words("Поздороваться в лесу","O‘rmonda salomlashish","Say hello in the forest"),
+    message:words("Лесные друзья радостно встречают тебя!","O‘rmondagi do‘stlar seni quvonib kutib oladi!","The forest friends greet you happily!")
+  },
+  "cinderella:1": {
+    motion:"shine",
+    position:{x:.53,y:.60},
+    label:words("Поддержать Золушку","Zolushkaga dalda berish","Cheer for Cinderella"),
+    message:words("Золушка улыбается: даже маленькая доброта творит чудеса!","Zolushka jilmayadi: kichik yaxshilik ham mo‘jiza yaratadi!","Cinderella smiles: even a little kindness can make magic!")
+  },
+  "rapunzel:1": {
+    motion:"bloom",
+    position:{x:.50,y:.61},
+    label:words("Поприветствовать Рапунцель","Rapunsel bilan salomlashish","Greet Rapunzel"),
+    message:words("Рапунцель отвечает тебе приветливой улыбкой!","Rapunsel senga samimiy tabassum bilan javob beradi!","Rapunzel welcomes you with a warm smile!")
+  },
   "rapunzel:7": {
     motion:"bloom",
     position:{x:.40,y:.62},
