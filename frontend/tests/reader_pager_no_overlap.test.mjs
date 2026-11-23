@@ -5,14 +5,15 @@ import {readFileSync} from "node:fs";
 const css=readFileSync(new URL("../src/reader-pager-no-overlap.css",import.meta.url),"utf8");
 const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
 
-test("mobile reader page controls follow text instead of floating over it",()=>{
+test("mobile reader pager is fixed above navigation without covering story end",()=>{
  assert.match(main,/import "\.\/reader-pager-no-overlap\.css";/);
- assert.match(css,/\.reader-page \.pager[\s\S]*?position:relative!important/);
- assert.match(css,/bottom:auto!important/);
- assert.match(css,/transform:none!important/);
+ assert.match(css,/\.reader-page \.pager[\s\S]*?position:fixed!important/);
+ assert.match(css,/bottom:calc\(78px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
+ assert.match(css,/transform:translateX\(-50%\)!important/);
  assert.match(css,/\.story-page \.story-text\{[\s\S]*?overflow:visible!important/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
- assert.doesNotMatch(css,/position:fixed!important/);
+ assert.match(css,/position:fixed!important/);
+ assert.match(css,/padding-bottom:calc\(190px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
 });
 
 test("print hides navigation controls",()=>{
@@ -32,15 +33,15 @@ test("the reader pager correction is the last stylesheet import",()=>{
  assert.equal(styles.at(-1),'import "./reader-pager-no-overlap.css";');
 });
 
-test("old fixed pager rules are deliberately superseded at the end of the CSS cascade",()=>{
+test("final fixed pager rules override older mobile styles",()=>{
  const legacy=readFileSync(new URL("../src/reader-mobile-v1.css",import.meta.url),"utf8");
  assert.match(legacy,/position:fixed!important/);
- assert.match(css,/\.shell:has\(>main>\.reader-page\) \.reader-page \.pager,[\s\S]*?position:relative!important/);
- assert.match(css,/z-index:auto!important/);
- assert.match(css,/bottom:auto!important/);
+ assert.match(css,/\.shell:has\(>main>\.reader-page\) \.reader-page \.pager,[\s\S]*?position:fixed!important/);
+ assert.match(css,/z-index:85!important/);
+ assert.match(css,/bottom:calc\(78px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
 });
 
-test("mobile previous and next buttons render below the full story, not above the title",()=>{
+test("previous and next stay after story in the DOM and follow the viewport",()=>{
  const concept=readFileSync(new URL("../src/reader-concept-four.css",import.meta.url),"utf8");
  assert.match(concept,/\.reader-page \.story-page\s*\{\s*order:2;/);
  assert.match(concept,/\.reader-page \.print-book \{order:9\}/);
@@ -48,6 +49,6 @@ test("mobile previous and next buttons render below the full story, not above th
  const storyEnd=main.indexOf('        </article>}');
  const pager=main.indexOf('        <div className="pager">');
  assert.ok(storyEnd>=0&&pager>storyEnd,"pager stays after the story in DOM");
- assert.match(css,/\.reader-page \.pager[\s\S]*?position:relative!important/);
- assert.match(css,/\.reader-page \.pager[\s\S]*?bottom:auto!important/);
+ assert.match(css,/\.reader-page \.pager[\s\S]*?position:fixed!important/);
+ assert.match(css,/\.reader-page \.pager[\s\S]*?bottom:calc\(78px \+ env\(safe-area-inset-bottom,0px\)\)!important/);
 });
