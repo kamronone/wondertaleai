@@ -23,3 +23,21 @@ test("hero portrait styles are imported after earlier mobile overrides",()=>{
  assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
  assert.match(css,/@media screen and \(max-width:360px\)/);
 });
+
+test("five updated portraits are real transparent PNGs installed for every build",()=>{
+ const install=read("../scripts/install-hero-pngs.mjs");
+ const gifInstall=read("../scripts/install-reaction-gifs.mjs");
+ assert.ok(gifInstall.includes('await import("./install-hero-pngs.mjs")'));
+ const pngNames=["boy","girl","fox","robot","dragon"];
+ for(const name of pngNames){
+   assert.ok(install.includes('"'+name+'"'),name+" in installer");
+   const base64=read("../artwork/hero-pngs/create-"+name+".png.b64").replace(/\\s+/g,"");
+   const png=Buffer.from(base64,"base64");
+   assert.equal(png.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
+   assert.equal(png.readUInt32BE(16),320);
+   assert.equal(png.readUInt32BE(20),320);
+   assert.ok(png.includes(Buffer.from("tRNS")),name+" retains transparent alpha palette");
+   assert.equal(png.subarray(-8,-4).toString("ascii"),"IEND");
+   assert.ok(png.length>5000);
+ }
+});
