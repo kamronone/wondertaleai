@@ -1,0 +1,40 @@
+{
+  "classicId": "snow-white",
+  "version": 1,
+  "width": 960,
+  "height": 720,
+  "pages": [
+    {
+      "page": 1,
+      "sha256": "b2f783b186a42a369f9869d041018c1aab0171290d0739763c210d8b14a33a21"
+    },
+    {
+      "page": 2,
+      "sha256": "0b54faf270f18ef98a667850d38ce3dcc63d9ea5c2c5f189ed7073060c4641c7"
+    },
+    {
+      "page": 3,
+      "sha256": "b5875f793b1afe842d3040a71b4d032e98cb88599b503ffe551aa9dc0cd1a55f"
+    },
+    {
+      "page": 4,
+      "sha256": "c844cc57149da21162b7b086e1d554665766870d2a40ed70102e57c4a844be3d"
+    },
+    {
+      "page": 5,
+      "sha256": "b10ed18ead5b5d80fd8afcb96970c9372273e4ec20bd44f43760d66c39bf60ad"
+    },
+    {
+      "page": 6,
+      "sha256": "7dd1f7a23e86f64bec1dea701765f6817c70dfc2c9b9c7a7b7cb585aaf8d2f91"
+    },
+    {
+      "page": 7,
+      "sha256": "b893a4eade3fb4a64254da05e81c2b39f2f8fdfabd17215d1d7d011a729fa529"
+    },
+    {
+      "page": 8,
+      "sha256": "abcd18bed745e80aeca18eac6ae88661750da3bba84834c0e8f63c98b7fee874"
+    }
+  ]
+}
