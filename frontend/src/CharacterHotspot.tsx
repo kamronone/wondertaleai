@@ -84,17 +84,31 @@ export function characterHotspotForPage(classicId:string|undefined,page:number):
 }
 
 function imagePoint(container:HTMLElement,position:Position):{left:number;top:number}|null{
-  const image=container.querySelector<HTMLImageElement>("img.wt-reader-picture");
-  if(!image?.naturalWidth||!image.naturalHeight)return null;
-  const rect=image.getBoundingClientRect();
-  const width=rect.width,height=rect.height;
-  if(width<=0||height<=0)return null;
-  const scale=Math.min(width/image.naturalWidth,height/image.naturalHeight);
-  const drawnW=image.naturalWidth*scale,drawnH=image.naturalHeight*scale;
+  // Rendered classics can be a PNG/GIF, an authored SVG image, or the local
+  // inline SVG fallback. A reaction must not disappear when PNG is unavailable.
+  const media=container.querySelector<HTMLElement>("img.wt-reader-picture, img.story-page-image-art, svg.story-image-fallback, .story-page-image > img, .story-page-image > svg");
+  if(!media)return null;
+  const rect=media.getBoundingClientRect();
+  if(rect.width<=0||rect.height<=0)return null;
+
+  let drawnW=rect.width,drawnH=rect.height;
+  let offsetX=0,offsetY=0;
+  if(media instanceof HTMLImageElement){
+    if(!media.naturalWidth||!media.naturalHeight)return null;
+    const fit=window.getComputedStyle(media).objectFit;
+    // When the image is cropped by object-fit:cover, its visible rectangle
+    // is the actual element box, not the entire source image.
+    if(fit!=="cover"&&fit!=="fill"&&fit!=="none"){
+      const scale=Math.min(rect.width/media.naturalWidth,rect.height/media.naturalHeight);
+      drawnW=media.naturalWidth*scale;
+      drawnH=media.naturalHeight*scale;
+      offsetX=(rect.width-drawnW)/2;
+      offsetY=(rect.height-drawnH)/2;
+    }
+  }
   const containerRect=container.getBoundingClientRect();
-  // Keep the 44px touch target fully inside the image/card on narrow iPhones.
-  const left=rect.left-containerRect.left+(width-drawnW)/2+drawnW*position.x;
-  const top=rect.top-containerRect.top+(height-drawnH)/2+drawnH*position.y;
+  const left=rect.left-containerRect.left+offsetX+drawnW*position.x;
+  const top=rect.top-containerRect.top+offsetY+drawnH*position.y;
   const edge=24;
   return {
     left:Math.max(edge,Math.min(containerRect.width-edge,left)),
@@ -117,16 +131,19 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
     const stage=ref.current?.parentElement;
     if(!stage)return;
     const update=()=>setPoint(imagePoint(stage,reaction.position));
-    const picture=stage.querySelector<HTMLImageElement>("img.wt-reader-picture");
+    const picture=stage.querySelector<HTMLImageElement>("img.wt-reader-picture, .story-page-image > img");
     picture?.addEventListener("load",update);
     window.addEventListener("resize",update);
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(update):null;
     observer?.observe(stage);
+    const mediaObserver=typeof MutationObserver!=="undefined"?new MutationObserver(update):null;
+    mediaObserver?.observe(stage,{childList:true,subtree:true});
     update();
     return ()=>{
       picture?.removeEventListener("load",update);
       window.removeEventListener("resize",update);
       observer?.disconnect();
+      mediaObserver?.disconnect();
     };
   },[classicId,page,enabled,reaction]);
   if(!reaction||!enabled)return null;
