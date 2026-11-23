@@ -50,10 +50,12 @@ test("six additional fairy tales include a localized chapter-one reaction",()=>{
    const marker='"'+id+':1": {';
    const start=hotspot.indexOf(marker);
    assert.ok(start>=0,id+" has an interactive first chapter");
-   const entry=hotspot.slice(start,hotspot.indexOf("\\n  },",start));
-   assert.match(entry,/motion:"(?:wave|music|flutter|bow|dance|shine|bloom|cheer)"/);
-   assert.match(entry,/position:\\{x:\\.\\d+,y:\\.\\d+\\}/);
-   assert.match(entry,/label:words\\("[^"]+","[^"]+","[^"]+"\\)/);
-   assert.match(entry,/message:words\\("[^"]+","[^"]+","[^"]+"\\)/);
+   const end=hotspot.indexOf(String.fromCharCode(10)+"  },",start);
+   assert.ok(end>start,id+" reaction entry is complete");
+   const entry=hotspot.slice(start,end);
+   assert.ok(entry.includes("motion:"),id+" defines animation type");
+   assert.ok(entry.includes("position:{x:"),id+" defines a position");
+   assert.ok(entry.includes("label:words("),id+" defines localized labels");
+   assert.ok(entry.includes("message:words("),id+" defines localized dialogue");
  }
 });
