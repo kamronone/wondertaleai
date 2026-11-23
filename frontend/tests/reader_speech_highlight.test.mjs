@@ -39,7 +39,8 @@ test("empty, missing, invalid or punctuation-only boundary never claims a spoken
 test("SpeechSynthesis boundary event only highlights while active, and always resets",()=>{
  assert.match(app,/utterance\.onboundary=event=>/);
  assert.match(app,/event\.name==="sentence"/);
- assert.match(app,/setSpokenRange\(spokenWordRange\(utterance\.text,event\.charIndex,event\.charLength\)\)/);
+ assert.match(app,/const absoluteIndex=resumeOffset\+event\.charIndex/);
+ assert.match(app,/setSpokenRange\(spokenWordRange\(fullText,absoluteIndex,event\.charLength\)\)/);
  assert.match(app,/setSpokenRange\(null\)/);
  assert.match(app,/className="wt-spoken-word"/);
  assert.match(css,/\.wt-spoken-word\{/);
