@@ -51,7 +51,8 @@ test("Uzbek, Russian and emoji story text retain exact UTF-16 speech offsets",()
 test("reader preserves the original text for speech and existing position persistence",()=>{
  const app=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
  const css=readFileSync(new URL("../src/reader-longform-paragraphs.css",import.meta.url),"utf8");
- assert.match(app,/new SpeechSynthesisUtterance\(active\.pages\[page\]\.text\)/);
+ assert.match(app,/const fullText=active\.pages\[page\]\.text/);
+ assert.match(app,/new SpeechSynthesisUtterance\(fullText\.slice\(resumeOffset\)\)/);
  assert.match(app,/readerParagraphs\(text\)\.map\(paragraph=>/);
  assert.match(app,/spokenTextParts\(paragraph\.text,localRange\)/);
  assert.match(app,/className="wt-reader-paragraph"/);
