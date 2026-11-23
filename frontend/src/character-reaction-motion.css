@@ -107,3 +107,44 @@
 @media print{
  .reader-page .story-page-image .wt-character-reaction-gif{display:none!important}
 }
+
+/* Dismiss only the speech bubble, never trigger a swipe or page advance.
+   The close target is 44px for small iPhone screens. */
+.reader-page .story-page-image .wt-character-reaction{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  max-height:min(45%,180px);
+  overflow-y:auto;
+  box-sizing:border-box;
+  pointer-events:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.reader-page .story-page-image .wt-character-reaction>span{
+  flex:1;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.reader-page .story-page-image .wt-character-reaction-close{
+  display:grid;
+  place-items:center;
+  flex:0 0 44px;
+  width:44px;
+  height:44px;
+  min-height:44px;
+  border:1px solid #d7bee9;
+  border-radius:12px;
+  background:#fff;
+  color:#624082;
+  padding:0;
+  cursor:pointer;
+  touch-action:manipulation;
+  pointer-events:auto;
+}
+.reader-page .story-page-image .wt-character-reaction-close:focus-visible{
+  outline:3px solid #ac7bd3;
+  outline-offset:2px;
+}
+@media print{
+  .reader-page .story-page-image .wt-character-reaction{display:none!important}
+}
