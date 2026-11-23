@@ -12,9 +12,9 @@ test("final stylesheet overrides narrow five-column hero layout",()=>{
  assert.match(css,/\.create-hero-option>span\s*\{[\s\S]*?font-size:clamp\(11px,3vw,13px\)!important/);
  assert.match(css,/white-space:normal!important/);
 });
-test("all five actual PNG heroes remain selectable without overflow",()=>{
+test("all six actual PNG heroes remain selectable without overflow",()=>{
  const first=app.slice(app.indexOf('{createStep===1&&'),app.indexOf('{createStep===2&&'));
- assert.match(first,/\["boy","girl","animal","robot","magical"\] as const/);
+ assert.match(first,/\["boy","girl","animal","robot","magical","superhero"\] as const/);
  assert.match(first,/aria-pressed=\{heroKind===kind\}/);
  assert.match(first,/onClick=\{\(\)=>setHeroKind\(kind\)\}/);
  assert.match(css,/\.create-hero-options\s*\{[\s\S]*?overflow:visible!important/);
