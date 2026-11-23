@@ -299,7 +299,7 @@ export function CharacterHotspot({classicId,page,lang,enabled=true}:{classicId:s
     </button>}
     {visibleReaction&&point&&<div key={reactionReplay} className={"wt-character-reaction-fx wt-reaction-"+reaction.motion} style={{left:point.left,top:point.top}} aria-hidden="true">
       {gifAsset
-        ?<img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" draggable={false}/>
+        ?<><img className="wt-character-reaction-gif" src={gifAsset} alt="" width={80} height={80} decoding="async" draggable={false}/><span className="wt-character-reaction-still"><MotionIcon size={30} aria-hidden="true"/></span></>
         :<><MotionIcon size={26} strokeWidth={2.2}/><MotionIcon size={19} strokeWidth={2.3}/><MotionIcon size={15} strokeWidth={2.4}/></>}
     </div>}
     {visibleReaction&&point&&<div className="wt-character-reaction" onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()} onPointerUp={event=>event.stopPropagation()} onTouchStart={event=>event.stopPropagation()} onTouchMove={event=>event.stopPropagation()} onTouchEnd={event=>event.stopPropagation()}>
