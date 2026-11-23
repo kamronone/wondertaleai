@@ -33,3 +33,12 @@ test("every character tap restarts animation and keeps dialogue visible",()=>{
   assert.match(hotspot,/setVisibleReaction\(true\)/);
   assert.doesNotMatch(hotspot,/setVisibleReaction\(value=>!value\)/);
 });
+
+test("new classic chapter reactions are available in all supported languages",()=>{
+ for(const key of ["snow-white:1","snow-white:4","snow-white:8","red-hood:2","cinderella:1","rapunzel:1"]){
+   const source=hotspot.slice(hotspot.indexOf('"'+key+'"'));
+   assert.ok(source.startsWith('"'+key+'": {'),key+" is present");
+   assert.match(source.slice(0,350),/label:words\(/,key+" has three localized labels");
+   assert.match(source.slice(0,620),/message:words\(/,key+" has three localized messages");
+ }
+});
