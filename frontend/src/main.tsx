@@ -79,6 +79,7 @@ import { getReadingAchievements } from "./reading_achievements";
 import { StoryBranchQuest } from "./StoryBranchQuest";
 import { CharacterBuilder } from "./CharacterBuilder";
 import {spokenWordRange,spokenTextParts,type SpokenRange} from "./reader_speech_highlight";
+import {speechStartOffset,speechBoundaryBookmark,type SpeechBookmark} from "./reader_speech_resume";
 import {readerParagraphs} from "./reader_paragraphs";
 import {voicesForStoryLanguage,preferredStoryVoice,parseStoredVoiceChoices,STORY_VOICE_STORAGE_KEY,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 
@@ -448,6 +449,8 @@ function App(){
   const [pageDraft,setPageDraft]=useState("");
   const [speaking,setSpeaking]=useState(false);
   const [speechPaused,setSpeechPaused]=useState(false);
+  const [speechResumeAvailable,setSpeechResumeAvailable]=useState(false);
+  const speechBookmark=useRef<SpeechBookmark|null>(null);
   const [spokenRange,setSpokenRange]=useState<SpokenRange|null>(null);
   const [deviceVoices,setDeviceVoices]=useState<SpeechSynthesisVoice[]>([]);
   const [voiceChoices,setVoiceChoices]=useState<Record<Lang,string>>(()=>{
@@ -485,6 +488,7 @@ function App(){
       speechRun.current++;
       speechAdvanceArmed.current=false;
       if("speechSynthesis" in window)window.speechSynthesis.cancel();
+      setSpeechResumeAvailable(speechBookmark.current!==null);
       setSpokenRange(null);
       setSpeaking(false);
       setSpeechPaused(false);
@@ -679,6 +683,8 @@ function App(){
   useEffect(()=>{
     speechRun.current++;
     speechAdvanceArmed.current=false;
+    speechBookmark.current=null;
+    setSpeechResumeAvailable(false);
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
     setSpokenRange(null);
     setSpeaking(false);setSpeechPaused(false);setEditingPage(false);
@@ -916,7 +922,10 @@ function App(){
     engine.cancel();
     setSpokenRange(null);
     setError("");
-    const utterance=new SpeechSynthesisUtterance(active.pages[page].text);
+    const fullText=active.pages[page].text;
+    const resumeOffset=speechStartOffset(active.id,page,fullText,speechBookmark.current);
+    const utterance=new SpeechSynthesisUtterance(fullText.slice(resumeOffset));
+    setSpeechResumeAvailable(false);
     const narrationLanguage=active.language||storyLang;
     utterance.lang=STORY_SPEECH_LOCALE[narrationLanguage];
     // iOS may load voices asynchronously, including after the first tap.
@@ -934,12 +943,17 @@ function App(){
     // keep the paragraph unchanged rather than inventing a reading position.
     utterance.onboundary=event=>{
       if(run!==speechRun.current||!speechAdvanceArmed.current||event.name==="sentence")return;
-      setSpokenRange(spokenWordRange(utterance.text,event.charIndex,event.charLength));
+      const absoluteIndex=resumeOffset+event.charIndex;
+      const checkpoint=speechBoundaryBookmark(active.id,page,fullText,absoluteIndex);
+      if(checkpoint)speechBookmark.current=checkpoint;
+      setSpokenRange(spokenWordRange(fullText,absoluteIndex,event.charLength));
     };
     utterance.onend=()=>{
       if(run!==speechRun.current)return;
       const mayAdvance=speechAdvanceArmed.current&&readerAutoNext&&tab==="reader"&&page<active.pages.length-1&&!(isDemoBook(active)&&((active as DemoBook).classicId==="three-pigs"&&page===3||storyGiftForPage((active as DemoBook).classicId,page+1)!==null));
       speechAdvanceArmed.current=false;
+      speechBookmark.current=null;
+      setSpeechResumeAvailable(false);
       setSpokenRange(null);
       setSpeaking(false);setSpeechPaused(false);
       if(mayAdvance)setPage(previous=>Math.min(active.pages.length-1,previous+1));
@@ -947,6 +961,7 @@ function App(){
     utterance.onerror=event=>{
       if(run!==speechRun.current)return;
       speechAdvanceArmed.current=false;
+      setSpeechResumeAvailable(speechBookmark.current!==null);
       setSpokenRange(null);
       setSpeaking(false);setSpeechPaused(false);
       if(event.error!=="canceled"&&event.error!=="interrupted")setError(t.noVoice);
@@ -965,6 +980,8 @@ function App(){
   };
   const stopSpeech=()=>{
     speechRun.current++;
+    speechBookmark.current=null;
+    setSpeechResumeAvailable(false);
     setSpokenRange(null);
     speechAdvanceArmed.current=false;
     if("speechSynthesis" in window)window.speechSynthesis.cancel();
@@ -1613,7 +1630,7 @@ function App(){
           </div>
         </div>}
         <div className="reader-title"><div className="reader-book-meta"><span className="reader-crown"><Crown size={16}/></span><span className="reader-child-label">{t.forChild} {active.name}</span>{isDemoBook(active)&&(active as import("./demo").DemoBook).savedOnDevice&&<span className="reader-saved-tag"><CheckCircle2 size={14}/>{t.savedOnDevice}</span>}</div><h2>{active.title}</h2><p>{t.page} {page+1} {t.of} {active.pages.length} · {Math.round(((page+1)/Math.max(1,active.pages.length))*100)}%</p><div className="reader-progress-track" role="progressbar" aria-label={t.page+" "+(page+1)+" "+t.of+" "+active.pages.length} aria-valuemin={0} aria-valuemax={active.pages.length} aria-valuenow={page+1}><span style={{width:((page+1)/Math.max(1,active.pages.length)*100)+"%"}}/></div>{active.pages.length>=12&&<div className="wt-chapter-navigator"><span className="wt-story-part-label" aria-live="off">{readerStoryPartForPage(page,active.pages.length,lang)?.label}</span><label htmlFor="wt-story-chapter-select">{({ru:"Перейти к главе",uz:"Bobga ötiş",en:"Go to chapter"} as const)[lang]}</label><select id="wt-story-chapter-select" aria-label={({ru:"Выберите главу",uz:"Bobni tanlang",en:"Choose a chapter"} as const)[lang]} value={page} onChange={event=>{const target=Number(event.target.value);if(!Number.isInteger(target)||target<0||target>=active.pages.length)return;stopSpeech();setEditingPage(false);setPage(target);}}>{readerStoryParts(active.pages.length,lang).map(part=><optgroup key={part.id} label={part.label+" · "+(part.start+1)+"–"+(part.end+1)}>{active.pages.slice(part.start,part.end+1).map((chapter,index)=><option key={chapter.number} value={part.start+index}>{({ru:"Глава",uz:"Bob",en:"Chapter"} as const)[lang]} {part.start+index+1} {({ru:"из",uz:"/",en:"of"} as const)[lang]} {active.pages.length}</option>)}</optgroup>)}</select></div>}</div>
-        <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
+        <div className="reader-audio-toolbar"><button type="button" onClick={speakPage}><Volume2 size={17}/>{speaking?(speechPaused?t.resumeAudio:t.pauseAudio):speechResumeAvailable?({ru:"Продолжить слушать",uz:"Tinglaşni davom ettiriş",en:"Continue listening"} as const)[lang]:t.listen}{speaking?(speechPaused?<Play size={16}/>:<PauseCircle size={16}/>):null}</button>{speaking&&<button type="button" onClick={stopSpeech}><Square size={15}/>{t.stopAudio}</button>}</div>
         <div className={"story-page reader-font-"+readerFontScale+" book-style-"+readerBookStyle+(readerNightMode?" reader-night":readerWarmMode?" reader-warm":"")} ref={storyPageRef} onTouchStart={onReaderTouchStart} onTouchMove={onReaderTouchMove} onTouchEnd={onReaderTouchEnd} onTouchCancel={onReaderTouchCancel} aria-label={({ru:"Страница сказки. Листайте влево или вправо.",uz:"Ertak sahifasi. Chapga yoki öngga suring.",en:"Story page. Swipe left or right to turn pages."} as const)[lang]}><div key={active.id+":"+page+":image"} className={"story-page-image reader-turn-image"+(readerImageExpanded?" reader-image-expanded":"")+" wt-living-art wt-motion-"+(readerNightMode||bedtimeUntil!==null?"off":readerArtMotion)+" wt-art-"+(isDemoBook(active as DemoBook)&&["three-pigs","bremen","puss-boots"].includes((active as DemoBook).classicId||"")?"village":isDemoBook(active as DemoBook)&&["cinderella","rapunzel","sleeping-beauty","snow-white"].includes((active as DemoBook).classicId||"")?"palace":"forest")}>{active.mode==="private-account"&&privateToken&&API
           ?<PrivateReaderIllustration api={API} session={privateToken} bookId={active.id} pageNumber={page+1}
              alt={t.illustration+" "+(page+1)}
