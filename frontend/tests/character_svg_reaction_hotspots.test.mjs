@@ -112,28 +112,28 @@ test("six more classics have chapter reactions with translated dialogue",()=>{
  }
 });
 
-test("character reactions resolve three generated GIFs and three embedded GIFs",()=>{
+test("character reactions resolve four generated GIFs and one embedded GIF",()=>{
  const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
  const packageJson=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8"));
  const installer=readFileSync(new URL("../scripts/install-reaction-gifs.mjs",import.meta.url),"utf8");
  assert.equal(packageJson.scripts.prebuild,"npm run reaction:gif:install");
  assert.equal(packageJson.scripts.pretest,"npm run reaction:gif:install");
  assert.equal(packageJson.scripts.predev,"npm run reaction:gif:install");
- for(const filename of ["snow-white-wave","duckling-flutter","bremen-music"]){
+ for(const filename of ["snow-white-wave","duckling-flutter","bremen-music","red-hood-wave"]){
    assert.ok(installer.includes('"'+filename+'"'),filename+" is bundled for prebuild");
    assert.ok(assets.includes("/images/interactions/reactions/"+filename+".gif"),filename+" uses generated image");
  }
  assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
- for(const id of ["red-hood:1","cinderella:5"]){
+ for(const id of ["cinderella:5"]){
    assert.ok(assets.includes('"'+id+'":"data:image/gif;base64,R0lGODlh'),id+" embeds GIF89a");
  }
  assert.match(hotspot,/className="wt-character-reaction-gif"/);
  assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
 });
 
-test("inline reaction GIFs contain six transparent 56px frames",()=>{
+test("remaining inline Cinderella GIF has six transparent 56px frames",()=>{
  const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
- for(const id of ["red-hood:1","cinderella:5"]){
+ for(const id of ["cinderella:5"]){
    const start=assets.indexOf('"'+id+'":"data:image/gif;base64,');
    assert.ok(start>=0,id+" has an embedded GIF");
    const base64Start=start+('"'+id+'":"data:image/gif;base64,').length;
@@ -190,6 +190,20 @@ test("brick delivery preserves illustrated pig and shows a small success check",
  assert.match(css,/\.wt-brick-reaction-still\{/);
  assert.match(css,/\.wt-brick-reaction-still\{[\s\S]*?display:block/);
  assert.doesNotMatch(brick,/wt-brick-reaction-gif/);
+});
+
+test("Red Riding Hood uses real full-size six-frame GIF instead of pixel art",()=>{
+ const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
+ const installer=readFileSync(new URL("../scripts/install-reaction-gifs.mjs",import.meta.url),"utf8");
+ const encoded=readFileSync(new URL("../artwork/reaction-gifs/red-hood-wave.gif.b64",import.meta.url),"utf8").trim();
+ const gif=Buffer.from(encoded,"base64");
+ assert.equal(gif.toString("ascii",0,6),"GIF89a");
+ assert.equal(gif.readUInt16LE(6),256);
+ assert.equal(gif.readUInt16LE(8),256);
+ assert.ok(gif.length>20000);
+ assert.ok(assets.includes('"red-hood:1":"/images/interactions/reactions/red-hood-wave.gif"'));
+ assert.ok(installer.includes('checkedGif(bytes,asset,256,256,6,8)'));
+ assert.ok(!assets.includes('"red-hood:1":"data:image/gif;base64,'));
 });
 
 test("high-resolution GIF asset sources are versioned and validated by the installer",()=>{
