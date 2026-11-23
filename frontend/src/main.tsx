@@ -520,7 +520,7 @@ function App(){
     ?({ru:"Хранилище Safari недоступно. Не удалось сохранить изменения. Проверьте настройки браузера, не очищая данные сайта.",uz:"Safari xotirasi mavjud emas. Özgarişlar saqlanmadi. Sayt ma’lumotlarini öçirmasdan brauzer sozlamalarini tekşiring.",en:"Safari storage is unavailable. Changes were not saved. Check browser settings without clearing site data."} as const)[lang]
     :({ru:"Не удалось сохранить изменения на этом устройстве. Проверьте свободное место и настройки браузера.",uz:"Özgarişlarni qurilmaga saqlab bölmadi. Böş xotira va brauzer sozlamalarini tekşiring.",en:"Could not save changes on this device. Check available storage and browser settings."} as const)[lang];
   const [usePersonalAi,setUsePersonalAi]=useState(false);
-  const [aiPagesCount,setAiPagesCount]=useState<8|12|20>(8);
+  const [aiPagesCount,setAiPagesCount]=useState<8|12|20>(20);
   const [aiJobsRefresh,setAiJobsRefresh]=useState(0);
 
   // Child profile details must never carry over between parent sessions.
@@ -1360,7 +1360,7 @@ function App(){
              </dl>
              <details className="wizard-step-three-details"><summary>{({ru:"Сюжет и дополнительные данные",uz:"Syujet va qöşimcha ma’lumotlar",en:"Plot and more details"} as const)[lang]}</summary><p>{prompt}</p><dl>{secondHero.trim()&&<div><dt>{t.extraHero}</dt><dd>{secondHero.trim()}</dd></div>}<div><dt>{t.storyLanguage}</dt><dd>{languages.find(item=>item.id===storyLang)?.label||storyLang}</dd></div><div><dt>{t.style}</dt><dd>{style}</dd></div></dl></details>
            </div>
-           {usePersonalAi&&<label>{({ru:"Длина AI-сказки",uz:"AI ertak uzunligi",en:"AI story length"} as const)[lang]}<select value={aiPagesCount} onChange={e=>setAiPagesCount(Number(e.target.value) as 8|12|20)}><option value={8}>8 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={12}>12 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option><option value={20}>20 {({ru:"страниц",uz:"sahifa",en:"pages"} as const)[lang]}</option></select></label>}
+           {usePersonalAi&&<label>{({ru:"Длина AI-сказки",uz:"AI ertak uzunligi",en:"AI story length"} as const)[lang]}<select value={aiPagesCount} onChange={e=>setAiPagesCount(Number(e.target.value) as 8|12|20)}><option value={8}>8 {({ru:"страниц · короткая",uz:"sahifa · qisqa",en:"pages · short"} as const)[lang]}</option><option value={12}>12 {({ru:"страниц · средняя",uz:"sahifa · o‘rta",en:"pages · medium"} as const)[lang]}</option><option value={20}>20 {({ru:"страниц · полная сказка",uz:"sahifa · töliq ertak",en:"pages · full tale"} as const)[lang]}</option></select></label>}
           {usePersonalAi&&<p className="notice">{({ru:"AI создаёт только текст, без фото ребёнка и персональных иллюстраций. Требуются вход в аккаунт и доступ к пилотной AI-генерации.",uz:"AI faqat matn yaratadi. Bolaning rasmi yuborilmaydi. Akkaunt va AI sinov ruxsati kerak.",en:"AI currently generates text only, without child photos or custom illustrations. A parent account and pilot AI access are required."} as const)[lang]}</p>}
           <div className="wizard-step-three-consents"><div className="wizard-step-three-consent-header"><CheckCircle2 size={18} aria-hidden="true"/><strong>{({ru:"Подтверждение",uz:"Tasdiqlash",en:"Confirmation"} as const)[lang]}</strong></div>
           {!usePersonalAi&&<div className="device-save-option">
