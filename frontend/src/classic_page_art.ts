@@ -21,8 +21,10 @@ import { classicPageSceneDetail } from "./classic_page_scene_details";
 const ids = new Set(classics.map(item => item.id));
 // PNG collections are only shipped for these classics. Never request missing PNGs.
 declare const __RAPUNZEL_PNG_READY__:boolean;
+declare const __SNOW_WHITE_PNG_READY__:boolean;
 const rapunzelPngReady=typeof __RAPUNZEL_PNG_READY__!=="undefined"&&__RAPUNZEL_PNG_READY__===true;
-const bundledPngIds = new Set(["red-hood","cinderella","three-pigs",...(rapunzelPngReady?["rapunzel"]:[])]);
+const snowWhitePngReady=typeof __SNOW_WHITE_PNG_READY__!=="undefined"&&__SNOW_WHITE_PNG_READY__===true;
+const bundledPngIds = new Set(["red-hood","cinderella","three-pigs",...(rapunzelPngReady?["rapunzel"]:[]),...(snowWhitePngReady?["snow-white"]:[])]);
 const groups: Record<string, string[]> = {
   forest: ["hansel-gretel","snow-white","goldilocks","kolobok","masha-bears","twelve-months","teremok","ryaba","turnip"],
   castle: ["cinderella","rapunzel","sleeping-beauty","princess-pea","snow-queen","aladdin","emperor-clothes"],
