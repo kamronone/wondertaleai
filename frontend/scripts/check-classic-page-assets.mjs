@@ -18,6 +18,8 @@ const valid=[];
 const hashes=new Map();
 const signature=Buffer.from([137,80,78,71,13,10,26,10]);
 const rapunzelManifest=JSON.parse(readFileSync(resolve(root,"artwork/rapunzel-png-integrity.json"),"utf8"));
+const snowWhiteManifest=JSON.parse(readFileSync(resolve(root,"artwork/snow-white-png-integrity.json"),"utf8"));
+if(snowWhiteManifest.classicId!=="snow-white"||snowWhiteManifest.pages?.length!==8)throw new Error("Invalid Snow White art manifest");
 if(rapunzelManifest.classicId!=="rapunzel"||rapunzelManifest.pages?.length!==8)throw new Error("Invalid Rapunzel art manifest");
 
 for(const story of stories) {
@@ -39,6 +41,12 @@ for(const story of stories) {
    const expected=rapunzelManifest.pages.find(entry=>entry.page===page);
    if(!expected||hash!==expected.sha256||width!==rapunzelManifest.width||height!==rapunzelManifest.height){
     invalid.push(rel+": does not match reviewed Rapunzel artwork");continue;
+   }
+  }
+  if(story==="snow-white"){
+   const expected=snowWhiteManifest.pages.find(entry=>entry.page===page);
+   if(!expected||hash!==expected.sha256||width!==snowWhiteManifest.width||height!==snowWhiteManifest.height){
+    invalid.push(rel+": does not match reviewed Snow White artwork");continue;
    }
   }
   const previous=hashes.get(hash);
