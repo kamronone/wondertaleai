@@ -40,3 +40,12 @@ jobs:
         run: npm run build
       - name: Validate bundled classic PNGs (same as Netlify)
         run: npm run check:images:release
+      - name: Verify built PWA distribution
+        run: npm run check:dist
+      - name: Keep isolated preview build for troubleshooting
+        uses: actions/upload-artifact@v4
+        with:
+          name: wondertale-preview-dist
+          path: frontend/dist/
+          retention-days: 7
+          if-no-files-found: error
