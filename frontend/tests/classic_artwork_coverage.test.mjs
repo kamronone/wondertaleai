@@ -63,3 +63,12 @@ test("Snow White release uses a complete eight-page build gate and checksum veri
   assert.match(installer, /PNG fails integrity review/);
   assert.match(checker, /does not match reviewed Snow White artwork/);
 });
+
+test("Snow White installer accepts both vetted ZIP layouts without unsafe extraction", () => {
+  const installer = readFileSync(resolve(root, "scripts/install-snow-white-pngs.mjs"), "utf8");
+  assert.match(installer, /images\/classics\/snow-white\/pages\//);
+  assert.match(installer, /frontend\/public\/images\/classics\/snow-white\/pages\//);
+  assert.match(installer, /listed\.length===expected\.size&&listed\.every\(item=>expected\.has\(item\)\)/);
+  assert.match(installer, /PNG fails integrity review/);
+  assert.doesNotMatch(installer, /execFileSync\("unzip",\["-o"/);
+});
