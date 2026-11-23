@@ -25,3 +25,17 @@ test("reader toolbar actions stay compact and keep accessible touch targets",()=
  assert.match(css,/\.reader-actions>\.icon-button\{[\s\S]*?max-width:44px!important/);
  assert.match(css,/\.reader-actions>\.icon-button svg\{[\s\S]*?width:19px!important/);
 });
+
+test("the reader pager correction is the last stylesheet import",()=>{
+ const styles=[...main.matchAll(/^import "\.\/[^"]+\.css";$/gm)].map(match=>match[0]);
+ assert.ok(styles.length>0);
+ assert.equal(styles.at(-1),'import "./reader-pager-no-overlap.css";');
+});
+
+test("old fixed pager rules are deliberately superseded at the end of the CSS cascade",()=>{
+ const legacy=readFileSync(new URL("../src/reader-mobile-v1.css",import.meta.url),"utf8");
+ assert.match(legacy,/position:fixed!important/);
+ assert.match(css,/\.shell:has\(>main>\.reader-page\) \.reader-page \.pager,[\s\S]*?position:relative!important/);
+ assert.match(css,/z-index:auto!important/);
+ assert.match(css,/bottom:auto!important/);
+});
