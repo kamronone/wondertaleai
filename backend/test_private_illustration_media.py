@@ -690,3 +690,25 @@ def test_full_twenty_page_book_private_png_roundtrip_after_login(api,monkeypatch
         digests.append(__import__("hashlib").sha256(media.content).hexdigest())
     assert len(set(digests))==20
     assert client.get(f"/api/illustrations/media/{jobs[0]}",headers=other).status_code==404
+
+
+def test_photo_reference_normalizer_is_safe_but_not_publicly_exposed():
+    """Run core reference-photo safety assertions in the existing backend CI suite."""
+    from private_photo_reference import normalize_private_reference_photo
+    marker="CHILD_GPS_SECRET_NEVER_KEEP"
+    metadata=PngImagePlugin.PngInfo()
+    metadata.add_text("Comment",marker)
+    src=io.BytesIO()
+    Image.new("RGB",(112,160),(80,150,230)).save(src,format="PNG",pnginfo=metadata)
+    result=normalize_private_reference_photo(src.getvalue())
+    assert result.startswith(bytes((255,216,255)))
+    assert marker.encode() not in result
+    with Image.open(io.BytesIO(result)) as clean:
+        assert clean.size==(112,160)
+        assert clean.getexif()=={}
+    with pytest.raises(ValueError):
+        normalize_private_reference_photo(b"invalid upload")
+    from pathlib import Path
+    routes=Path(__file__).with_name("secure_main.py").read_text()
+    assert 'from private_photo_reference import' not in routes
+    assert '/api/photos' not in routes
