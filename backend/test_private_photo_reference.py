@@ -22,7 +22,7 @@ def encode_png(size=(128, 96), alpha=False):
 def test_png_strips_sensitive_metadata_and_never_returns_input_bytes():
     original = encode_png(alpha=True)
     cleaned = normalize_private_reference_photo(original)
-    assert cleaned.startswith(b"\\xff\\xd8\\xff")
+    assert cleaned.startswith(bytes((255, 216, 255)))
     assert cleaned != original
     assert b"SECRET_CHILD_PHOTO_METADATA" not in cleaned
     with Image.open(BytesIO(cleaned)) as output:
