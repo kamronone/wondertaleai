@@ -25,7 +25,7 @@ The default is **demo mode**, requiring no paid API key. Set `GENERATION_MODE=ai
 ## Features
 
 - Create personalized eight-page fairy tales with name, age, theme and parent prompt
-- Optional child photograph with parental consent (not stored)
+- Photo-based personalized heroes are currently **unavailable** in the public wizard; no child image uploads are accepted by the secure API.
 - Reader, local book library, downloadable PDF
 - Demo art is decorative only and is not based on the child photograph
 - Backend ready for replacing local SQLite with PostgreSQL and implementing a queued animation pipeline
@@ -52,6 +52,8 @@ Required for a private preview of `secure_main.py`:
 - `VITE_API_BASE`: public API hostname, set in the frontend build environment only.
 - `ENABLE_REGISTRATION`: enable only after verifying the email delivery configuration, account safety, and rate limits.
 - `ENABLE_TEXT_AI=true`, `OPENAI_API_KEY`, `AI_ALLOWED_EMAILS`, and `MAX_AI_STORIES_PER_DAY`: optional, strictly limited AI pilot. Without these, AI mode must fail closed.
+
+A standalone, **internal-only** portrait preprocessor now lives at `backend/private_photo_reference.py`. It validates JPEG/PNG/WebP inputs, applies EXIF orientation, strips EXIF/GPS/ICC metadata, resizes oversized images and returns a newly encoded JPEG **in memory only**. There is deliberately no public photo-upload API, image-provider call, facial identification, saved child portrait or enabled photo-based story generation. The preprocessor does not replace the required photo-specific parental consent, retention/deletion controls, rate limits, safety reviews or isolated image worker.
 
 The AI pilot currently generates **text only**; it never uploads children's photos or creates custom illustrations. It requires parent login and explicit mode selection. Generated stories are saved to owner-scoped PostgreSQL rows, in the private library's JSON page format. Story image references use a static fallback until private media storage is implemented.
 
