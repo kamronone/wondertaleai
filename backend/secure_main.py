@@ -18,9 +18,10 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import Response
 from private_illustration_media import normalize_private_illustration
+from private_photo_reference import MAX_UPLOAD_BYTES, normalize_private_reference_photo
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 from email_auth import verification_required, mail_configured, new_code, digest_code, send_account_email
@@ -54,7 +55,7 @@ app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=False,
 async def protect_private_responses(request, call_next):
     """Prevent private books, sessions and account responses from being cached."""
     response=await call_next(request)
-    if request.url.path.startswith(("/api/books", "/api/auth", "/api/me", "/api/children", "/api/billing", "/api/ai", "/api/illustrations")):
+    if request.url.path.startswith(("/api/books", "/api/auth", "/api/me", "/api/children", "/api/billing", "/api/ai", "/api/illustrations", "/api/photos")):
         response.headers["Cache-Control"]="private, no-store"
         response.headers["Pragma"]="no-cache"
         response.headers["X-Content-Type-Options"]="nosniff"
@@ -91,6 +92,8 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_parent_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
         sql(c, "CREATE TABLE IF NOT EXISTS photo_parent_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
+        sql(c, f"CREATE TABLE IF NOT EXISTS photo_reference_temp (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, jpeg_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)")
+        sql(c, "CREATE INDEX IF NOT EXISTS photo_reference_temp_expiry_idx ON photo_reference_temp(expires_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
@@ -937,6 +940,92 @@ def photo_consent_active(owner:str,c=None)->bool:
         return False
 
 
+PHOTO_REFERENCE_TTL_SECONDS=900
+
+
+def photo_reference_upload_enabled()->bool:
+    """Explicitly local development only. Never expose this gate in deployed APIs."""
+    return (APP_ENV=="development" and
+            os.getenv("ENABLE_DEV_PHOTO_UPLOAD","false").lower()=="true")
+
+
+def expire_photo_references(c):
+    """Delete expired portraits whenever the preview-only route is accessed."""
+    sql(c,"DELETE FROM photo_reference_temp WHERE expires_at<=?",(int(time.time()),))
+
+
+@app.post("/api/photos/reference",status_code=201)
+async def upload_photo_reference(request:Request,owner:str=Depends(current_parent)):
+    """Temporarily keep one sanitized portrait for one parent, never send to AI.
+
+    Raw request streaming avoids multipart spooling raw child photographs to disk.
+    This route is disabled by default and impossible in preview/production.
+    """
+    if not photo_reference_upload_enabled():
+        raise HTTPException(503,"Photo uploads are unavailable")
+    if (request.headers.get("content-type","").split(";")[0].strip().lower()
+            not in ("image/jpeg","image/png","image/webp")):
+        raise HTTPException(415,"Unsupported photo media type")
+    length=request.headers.get("content-length")
+    if length:
+        try:
+            if int(length)>MAX_UPLOAD_BYTES or int(length)<1:
+                raise HTTPException(413,"Photo exceeds size limit")
+        except ValueError:
+            raise HTTPException(400,"Invalid content length")
+    total=0
+    chunks=[]
+    async for part in request.stream():
+        total+=len(part)
+        if total>MAX_UPLOAD_BYTES:
+            raise HTTPException(413,"Photo exceeds size limit")
+        chunks.append(part)
+    try:
+        clean=normalize_private_reference_photo(b"".join(chunks))
+    except ValueError:
+        raise HTTPException(422,"Invalid photo")
+    # Never store the source bytes, metadata, filename or user-supplied MIME.
+    now=int(time.time())
+    expires=now+PHOTO_REFERENCE_TTL_SECONDS
+    with connection() as c:
+        if IS_PG:
+            sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        expire_photo_references(c)
+        if not photo_consent_active(owner,c):
+            raise HTTPException(403,"Photo-specific parental consent is required")
+        digest=hashlib.sha256(clean).hexdigest()
+        sql(c,("INSERT INTO photo_reference_temp(owner_id,jpeg_bytes,sha256,created_at,expires_at) "
+               "VALUES(?,?,?,?,?) ON CONFLICT(owner_id) DO UPDATE SET "
+               "jpeg_bytes=excluded.jpeg_bytes,sha256=excluded.sha256,"
+               "created_at=excluded.created_at,expires_at=excluded.expires_at"),
+            (owner,clean,digest,now,expires))
+        c.commit()
+    return {"stored":True,"expires_at":expires,"photo_generation_enabled":False}
+
+
+@app.get("/api/photos/reference")
+def photo_reference_status(owner:str=Depends(current_parent)):
+    if not photo_reference_upload_enabled():
+        raise HTTPException(503,"Photo uploads are unavailable")
+    with connection() as c:
+        expire_photo_references(c)
+        row=sql(c,"SELECT expires_at FROM photo_reference_temp WHERE owner_id=?",(owner,)).fetchone()
+        c.commit()
+    return {"stored":bool(row),"expires_at":row[0] if row else None,
+            "photo_generation_enabled":False}
+
+
+@app.delete("/api/photos/reference",status_code=204)
+def delete_photo_reference(owner:str=Depends(current_parent)):
+    # Permit deleting already stored data even after disabling the upload feature.
+    with connection() as c:
+        sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+        c.commit()
+    return Response(status_code=204)
+
+
 class PhotoConsentRequest(BaseModel):
     agreed: bool
     policy_version: str=Field(min_length=1,max_length=64)
@@ -946,7 +1035,7 @@ class PhotoConsentRequest(BaseModel):
 def get_photo_consent(owner:str=Depends(current_parent)):
     """Read a parent-scoped permission; no photograph is stored or exposed."""
     return {"agreed":photo_consent_active(owner),"policy_version":PHOTO_CONSENT_VERSION,
-            "photo_upload_enabled":False}
+            "photo_upload_enabled":photo_reference_upload_enabled()}
 
 
 @app.post("/api/photos/consent")
@@ -971,8 +1060,10 @@ def update_photo_consent(body:PhotoConsentRequest,owner:str=Depends(current_pare
                    "VALUES(?,?,NULL,?) ON CONFLICT(owner_id) DO UPDATE SET "
                    "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
                 (owner,PHOTO_CONSENT_VERSION,now))
+            sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
         c.commit()
-    return {"agreed":body.agreed,"policy_version":PHOTO_CONSENT_VERSION,"photo_upload_enabled":False}
+    return {"agreed":body.agreed,"policy_version":PHOTO_CONSENT_VERSION,
+            "photo_upload_enabled":photo_reference_upload_enabled()}
 
 
 ILLUSTRATION_CONSENT_VERSION="illustration-pilot-v1"
