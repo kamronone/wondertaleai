@@ -431,7 +431,6 @@ function App(){
   const combinedHeroName=secondHero.trim()?name.trim()+({ru:" и ",uz:" va ",en:" and "}[storyLang])+secondHero.trim():name.trim();
   const heroNameTooLong=combinedHeroName.length>60;
   const heroNameLengthError=({ru:"Имена двух героев вместе должны содержать не более 60 символов.",uz:"Ikki qahramon ismi birga 60 belgidan oshmasligi kerak.",en:"Both hero names together must be 60 characters or fewer."} as const)[lang];
-  const [photo,setPhoto]=useState<File|null>(null);
   const [showInstallGuide,setShowInstallGuide]=useState(false);
   const [consent,setConsent]=useState(false);
   const [acceptedLegal,setAcceptedLegal]=useState(false);
@@ -440,7 +439,7 @@ function App(){
   const openCreate=(preservePreset=false)=>{
     setCreateStep(1);setConsent(false);setAcceptedLegal(false);setUsePersonalAi(false);setError("");
     // Avoid showing a previous child's personal details when starting a new story.
-    setName("");setSecondHero("");setAge("5");setPhoto(null);setHeroKind("boy");
+    setName("");setSecondHero("");setAge("5");setHeroKind("boy");
     if(!preservePreset){setClassicId(null);setPrompt("");setThemeIndex(0);setStyleIndex(0);}
     setTab("create");
   };
@@ -539,7 +538,7 @@ function App(){
   const [aiJobsRefresh,setAiJobsRefresh]=useState(0);
 
   // Child profile details must never carry over between parent sessions.
-  const clearChildDraft=()=>{setName("");setAge("5");setSecondHero("");setPhoto(null);};
+  const clearChildDraft=()=>{setName("");setAge("5");setSecondHero("");};
 
   // API health alone never authorizes uploading a child photo or generating a story.
   // The old demo FormData endpoint is not compatible with secure_main.py JSON routes.
@@ -1122,11 +1121,6 @@ function App(){
       setError(({ru:"Для AI-сказки опишите сюжет минимум 12 символами.",uz:"AI ertak uçun syujetni kamida 12 ta belgi bilan yozing.",en:"For an AI story, describe the plot in at least 12 characters."} as const)[lang]);
       return;
     }
-    if(usePersonalAi&&photo){
-      setError(({ru:"AI пока не принимает фото ребёнка. Удалите фото на первом шаге.",uz:"AI hozir bolaning rasmini qabul qilmaydi. Birinçi bosqiçda rasmni olib taşlang.",en:"AI does not accept child photos yet. Remove the photo in step one."} as const)[lang]);
-      setCreateStep(1);
-      return;
-    }
     setError("");
     setBusy(true);
     try{
@@ -1137,9 +1131,6 @@ function App(){
         }
         if(!API||!privateToken){
           throw new Error(({ru:"Войдите в аккаунт родителя для AI-генерации.",uz:"AI ertak yaratiş uçun ota-ona akkauntiga kiring.",en:"Sign in to a parent account to generate AI stories."} as const)[lang]);
-        }
-        if(photo){
-          throw new Error(({ru:"AI-генерация пока не принимает фото ребёнка. Удалите фото и повторите.",uz:"AI hozirça bolaning rasmini qabul qilmaydi. Rasmni olib taşlang.",en:"AI generation does not accept child photos yet. Remove the photo first."} as const)[lang]);
         }
         const data={
           name:name.trim(),age:Number(age),language:storyLang,
@@ -1394,8 +1385,13 @@ function App(){
           <details className="create-reference-extras"><summary><SlidersHorizontal size={17}/>{({ru:"Дополнительные настройки",uz:"Qoshimcha sozlamalar",en:"Additional options"} as const)[lang]}<ChevronDown size={17}/></summary><div className="create-reference-extras-inner">
           <label className="second-hero-field">{t.extraHero}<input maxLength={45} aria-invalid={heroNameTooLong} aria-describedby={heroNameTooLong?"hero-name-limit":undefined} value={secondHero} onChange={e=>{setSecondHero(e.target.value);if(error===heroNameLengthError)setError("");}} placeholder={t.extraHeroHint}/></label>{heroNameTooLong&&<p className="wizard-inline-error" id="hero-name-limit" role="status">{heroNameLengthError}</p>}
           <details className="wizard-optional-character"><summary><UserRound size={16}/>{({ru:"Добавить персонажа",uz:"Qahramon qoshish",en:"Add a character"} as const)[lang]}<ChevronDown size={16}/></summary><CharacterBuilder key={privateToken?"private":"demo"} lang={lang} allowSave={!privateToken} onApply={hero=>{setSecondHero(hero);setError("");}}/></details>
-          <label className="upload"> <ImagePlus size={25}/><strong>{photo?photo.name:t.photo}</strong><small>{t.photoHint}</small><input type="file" accept="image/jpeg,image/png,image/webp" disabled={usePersonalAi} onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
-          {photo&&<button type="button" className="secondary-button" onClick={()=>setPhoto(null)}>{({ru:"Убрать фото",uz:"Rasmni olib taşlaş",en:"Remove photo"} as const)[lang]}</button>}
+          <div className="create-photo-unavailable" role="note">
+            <ImagePlus size={20} aria-hidden="true"/>
+            <div>
+              <strong>{({ru:"Герой по фотографии — пока недоступно",uz:"Suratdan qahramon yaratish — hozircha mavjud emas",en:"Photo-based characters — not yet available"} as const)[lang]}</strong>
+              <p>{({ru:"Загрузка фото отключена: текущая версия создаёт сказку по имени и выбранному персонажу, но не рисует ребёнка по снимку. Для ИИ-иллюстраций понадобятся отдельное согласие родителя и защищённая генерация.",uz:"Surat yuklash o‘chirilgan: hozirgi versiya ism va tanlangan qahramon asosida ertak yaratadi, ammo bola suratidan yangi rasm yasamaydi. Buning uchun ota-ona roziligi va xavfsiz AI tasvir yaratish tizimi kerak.",en:"Photo upload is disabled: this version creates a story using the name and selected character, but cannot illustrate the child from a photo. Secure image generation and separate parental consent are required."} as const)[lang]}</p>
+            </div>
+          </div>
           </div></details>
           <div className="wizard-step-actions wizard-step-one-actions"><button type="button" className="primary-button wizard-step-one-next" onClick={()=>{if(!name.trim()){setError(({ru:"Введите имя ребёнка.",uz:"Bolaning ismini kiriting.",en:"Enter the child's name."} as const)[lang]);return;}if(heroNameTooLong){setError(heroNameLengthError);return;}setError("");setCreateStep(2);}}>{t.next}<ArrowRight size={17}/></button></div></>}
           {createStep===2&&<div className="wizard-step-two wizard-step-two-v4"><div className="step-title next"><span>02</span><div><h3>{t.classicFormTitle}</h3><p>{t.storyStepDesc}</p></div></div>
