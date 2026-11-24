@@ -710,7 +710,8 @@ def test_photo_reference_normalizer_is_safe_but_not_publicly_exposed():
         normalize_private_reference_photo(b"invalid upload")
     from pathlib import Path
     routes=Path(__file__).with_name("secure_main.py").read_text()
-    assert 'from private_photo_reference import' not in routes
+    assert 'normalize_private_reference_photo' in routes
+    assert 'APP_ENV=="development"' in routes
     assert '/api/photos/upload' not in routes
     assert 'ENABLE_DEV_PHOTO_UPLOAD' in routes
     assert 'APP_ENV=="development"' in routes
