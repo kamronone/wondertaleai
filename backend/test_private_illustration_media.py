@@ -711,4 +711,56 @@ def test_photo_reference_normalizer_is_safe_but_not_publicly_exposed():
     from pathlib import Path
     routes=Path(__file__).with_name("secure_main.py").read_text()
     assert 'from private_photo_reference import' not in routes
-    assert '/api/photos' not in routes
+    assert '/api/photos/upload' not in routes
+    assert '@app.post("/api/photos/reference")' not in routes
+
+
+def test_photo_consent_is_separate_explicit_and_owner_scoped(api):
+    client,module,register,_=api
+    _,alice=register()
+    _,bob=register()
+    path="/api/photos/consent"
+    expected="photo-reference-v1"
+
+    assert client.get(path).status_code==401
+    assert client.post(path,json={"agreed":True,"policy_version":expected}).status_code==401
+    assert client.get(path,headers=alice).json()=={
+        "agreed":False,"policy_version":expected,"photo_upload_enabled":False
+    }
+    assert client.get(path,headers=bob).json()["agreed"] is False
+    assert client.post(path,headers=alice,json={
+        "agreed":True,"policy_version":"obsolete-policy"
+    }).status_code==422
+    accepted=client.post(path,headers=alice,json={
+        "agreed":True,"policy_version":expected
+    })
+    assert accepted.status_code==200,accepted.text
+    assert accepted.json()["photo_upload_enabled"] is False
+    assert client.get(path,headers=alice).json()["agreed"] is True
+    assert client.get(path,headers=bob).json()["agreed"] is False
+    # Photo consent cannot silently opt anyone into AI illustration consent.
+    assert client.get("/api/illustrations/consent",headers=bob).json()["agreed"] is True
+    revoked=client.post(path,headers=alice,json={
+        "agreed":False,"policy_version":expected
+    })
+    assert revoked.status_code==200
+    assert client.get(path,headers=alice).json()["agreed"] is False
+    # No upload, no storage of photograph bytes and no third-party provider calls.
+    assert client.post("/api/photos/upload",headers=alice,files={
+        "file":("example.png",fake_png(),"image/png")
+    }).status_code==404
+
+
+def test_photo_consent_deleted_with_parent_account(api):
+    client,module,register,_=api
+    _,auth=register()
+    version="photo-reference-v1"
+    assert client.post("/api/photos/consent",headers=auth,json={
+        "agreed":True,"policy_version":version
+    }).status_code==200
+    with module.connection() as c:
+        parent=module.current_parent(auth["Authorization"])
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_parent_consent WHERE owner_id=?",(parent,)).fetchone()[0]==1
+    assert client.delete("/api/me",headers=auth).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_parent_consent WHERE owner_id=?",(parent,)).fetchone()[0]==0
