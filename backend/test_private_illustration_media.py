@@ -855,3 +855,66 @@ def test_reference_upload_blocked_when_environment_is_preview(api,monkeypatch):
     assert module.photo_reference_upload_enabled() is False
     monkeypatch.setattr(module,"APP_ENV","production")
     assert module.photo_reference_upload_enabled() is False
+
+
+def test_local_portrait_preview_is_private_and_not_an_ai_generation(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    _,other=register()
+    uri="/api/photos/reference/preview"
+    upload="/api/photos/reference"
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.get(uri).status_code==401
+    assert client.get(uri,headers=parent).status_code==403
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.get(uri,headers=parent).status_code==404
+    assert client.post(upload,headers={**parent,"Content-Type":"image/png"},
+                       content=fake_png()).status_code==201
+    assert client.get(uri,headers=other).status_code==403
+    preview=client.get(uri,headers=parent)
+    assert preview.status_code==200,preview.text
+    assert preview.headers["content-type"]=="image/png"
+    assert preview.headers["cache-control"]=="private, no-store"
+    assert preview.headers["x-content-type-options"]=="nosniff"
+    assert preview.content.startswith(bytes((137,80,78,71,13,10,26,10)))
+    with Image.open(io.BytesIO(preview.content)) as art:
+        assert art.size==(512,512)
+        assert art.getexif()=={}
+    with module.connection() as c:
+        owner=module.current_parent(parent["Authorization"])
+        count=module.sql(c,"SELECT COUNT(*) FROM photo_reference_temp WHERE owner_id=?",(owner,)).fetchone()[0]
+        assert count==1
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":False,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.get(uri,headers=parent).status_code==403
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","false")
+    assert client.get(uri,headers=parent).status_code==503
+
+
+def test_portrait_preview_expiry_integrity_and_no_outbound_calls(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    uri="/api/photos/reference"
+    assert client.post(uri,headers={**parent,"Content-Type":"image/png"},content=fake_png()).status_code==201
+    with module.connection() as c:
+        owner=module.current_parent(parent["Authorization"])
+        module.sql(c,"UPDATE photo_reference_temp SET sha256=? WHERE owner_id=?",("0"*64,owner))
+        c.commit()
+    assert client.get(uri+"/preview",headers=parent).status_code==503
+    with module.connection() as c:
+        module.sql(c,"UPDATE photo_reference_temp SET expires_at=0 WHERE owner_id=?",(owner,))
+        c.commit()
+    assert client.get(uri+"/preview",headers=parent).status_code==404
+    from pathlib import Path
+    source=Path(__file__).with_name("private_photo_preview.py").read_text()
+    assert "openai" not in source.lower()
+    assert "requests" not in source.lower()
+    assert "write_bytes" not in source
+    assert "image model" not in source.lower()
