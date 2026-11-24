@@ -712,7 +712,8 @@ def test_photo_reference_normalizer_is_safe_but_not_publicly_exposed():
     routes=Path(__file__).with_name("secure_main.py").read_text()
     assert 'from private_photo_reference import' not in routes
     assert '/api/photos/upload' not in routes
-    assert '@app.post("/api/photos/reference")' not in routes
+    assert 'ENABLE_DEV_PHOTO_UPLOAD' in routes
+    assert 'APP_ENV=="development"' in routes
 
 
 def test_photo_consent_is_separate_explicit_and_owner_scoped(api):
@@ -764,3 +765,92 @@ def test_photo_consent_deleted_with_parent_account(api):
     assert client.delete("/api/me",headers=auth).status_code==204
     with module.connection() as c:
         assert module.sql(c,"SELECT COUNT(*) FROM photo_parent_consent WHERE owner_id=?",(parent,)).fetchone()[0]==0
+
+
+def test_reference_upload_is_dev_only_requires_consent_and_has_ttl(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    _,stranger=register()
+    uri="/api/photos/reference"
+    image=fake_png()
+    headers={**parent,"Content-Type":"image/png"}
+    assert client.post(uri,headers=headers,content=image).status_code==503
+    assert client.get(uri,headers=parent).status_code==503
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.post(uri,headers=headers,content=image).status_code==403
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.post(uri,headers={**parent,"Content-Type":"text/plain"},content=image).status_code==415
+    assert client.post(uri,headers=headers,content=b"fake").status_code==422
+    assert client.post(uri,headers=headers,content=b"x"*5_000_001).status_code==413
+    saved=client.post(uri,headers=headers,content=image)
+    assert saved.status_code==201,saved.text
+    assert saved.json()["photo_generation_enabled"] is False
+    assert saved.json()["expires_at"]>int(__import__("time").time())
+    assert client.get(uri,headers=parent).json()["stored"] is True
+    assert client.get(uri,headers=stranger).json()["stored"] is False
+    with module.connection() as c:
+        owner=module.current_parent(parent["Authorization"])
+        row=module.sql(c,"SELECT jpeg_bytes,sha256 FROM photo_reference_temp WHERE owner_id=?",(owner,)).fetchone()
+        assert row and bytes(row[0]).startswith(bytes((255,216,255)))
+        assert row[1]==__import__("hashlib").sha256(bytes(row[0])).hexdigest()
+        assert b"SECRET-METADATA-NEVER-KEEP" not in bytes(row[0])
+        assert image!=bytes(row[0])
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":False,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.get(uri,headers=parent).json()["stored"] is False
+    assert client.post(uri,headers=headers,content=image).status_code==403
+    # Missing consent remains private to the account.
+    assert client.get(uri).status_code==401
+
+
+def test_reference_expires_and_can_be_deleted_even_if_feature_switched_off(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    consent={"agreed":True,"policy_version":"photo-reference-v1"}
+    assert client.post("/api/photos/consent",headers=parent,json=consent).status_code==200
+    uri="/api/photos/reference"
+    headers={**parent,"Content-Type":"image/png"}
+    assert client.post(uri,headers=headers,content=fake_png()).status_code==201
+    with module.connection() as c:
+        owner=module.current_parent(parent["Authorization"])
+        module.sql(c,"UPDATE photo_reference_temp SET expires_at=0 WHERE owner_id=?",(owner,))
+        c.commit()
+    assert client.get(uri,headers=parent).json()["stored"] is False
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_reference_temp WHERE owner_id=?",(owner,)).fetchone()[0]==0
+    assert client.post(uri,headers=headers,content=fake_png()).status_code==201
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","false")
+    assert client.post(uri,headers=headers,content=fake_png()).status_code==503
+    assert client.delete(uri,headers=parent).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_reference_temp WHERE owner_id=?",(owner,)).fetchone()[0]==0
+
+
+def test_reference_storage_is_removed_when_parent_deleted(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.post("/api/photos/reference",headers={
+        **parent,"Content-Type":"image/png"
+    },content=fake_png()).status_code==201
+    with module.connection() as c:
+        owner=module.current_parent(parent["Authorization"])
+    assert client.delete("/api/me",headers=parent).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_reference_temp WHERE owner_id=?",(owner,)).fetchone()[0]==0
+
+
+def test_reference_upload_blocked_when_environment_is_preview(api,monkeypatch):
+    _,module,_,_=api
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setattr(module,"APP_ENV","preview")
+    assert module.photo_reference_upload_enabled() is False
+    monkeypatch.setattr(module,"APP_ENV","production")
+    assert module.photo_reference_upload_enabled() is False
