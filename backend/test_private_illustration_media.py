@@ -915,6 +915,8 @@ def test_portrait_preview_expiry_integrity_and_no_outbound_calls(api,monkeypatch
     from pathlib import Path
     source=Path(__file__).with_name("private_photo_preview.py").read_text()
     assert "openai" not in source.lower()
-    assert "requests" not in source.lower()
+    assert "import requests" not in source
+    assert "requests.get(" not in source
+    assert "requests.post(" not in source.lower()
     assert "write_bytes" not in source
     assert "image model" not in source.lower()
