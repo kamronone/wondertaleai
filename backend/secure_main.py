@@ -90,6 +90,7 @@ def init_schema():
         sql(c, "CREATE TABLE IF NOT EXISTS ai_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, UNIQUE(owner_id,request_key))")
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_parent_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
+        sql(c, "CREATE TABLE IF NOT EXISTS photo_parent_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
@@ -915,6 +916,63 @@ def process_one_queued_ai_job():
             sql(c,"UPDATE ai_jobs SET status='needs_review',completed_at=?,payload='' WHERE id=? AND status='processing'",(datetime.now(timezone.utc).isoformat(),job_id))
             c.commit()
         return job_id
+
+
+PHOTO_CONSENT_VERSION="photo-reference-v1"
+
+
+def photo_consent_active(owner:str,c=None)->bool:
+    """A distinct, opt-in permission for future child reference photographs.
+
+    This does not enable an upload API or grant permission for other media.
+    """
+    try:
+        if c is not None:
+            row=sql(c,"SELECT policy_version,granted_at,revoked_at FROM photo_parent_consent WHERE owner_id=?",(owner,)).fetchone()
+        else:
+            with connection() as db:
+                row=sql(db,"SELECT policy_version,granted_at,revoked_at FROM photo_parent_consent WHERE owner_id=?",(owner,)).fetchone()
+        return bool(row and row[0]==PHOTO_CONSENT_VERSION and row[1] and not row[2])
+    except Exception:
+        return False
+
+
+class PhotoConsentRequest(BaseModel):
+    agreed: bool
+    policy_version: str=Field(min_length=1,max_length=64)
+
+
+@app.get("/api/photos/consent")
+def get_photo_consent(owner:str=Depends(current_parent)):
+    """Read a parent-scoped permission; no photograph is stored or exposed."""
+    return {"agreed":photo_consent_active(owner),"policy_version":PHOTO_CONSENT_VERSION,
+            "photo_upload_enabled":False}
+
+
+@app.post("/api/photos/consent")
+def update_photo_consent(body:PhotoConsentRequest,owner:str=Depends(current_parent)):
+    """Explicit opt-in or revocation. Never triggers uploads or provider calls."""
+    if body.policy_version!=PHOTO_CONSENT_VERSION:
+        raise HTTPException(422,"Photo consent policy version is outdated")
+    now=datetime.now(timezone.utc).isoformat()
+    with connection() as c:
+        if IS_PG:
+            if not sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone():
+                raise HTTPException(404,"Parent not found")
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        if body.agreed:
+            sql(c,("INSERT INTO photo_parent_consent(owner_id,policy_version,granted_at,revoked_at) "
+                   "VALUES(?,?,?,NULL) ON CONFLICT(owner_id) DO UPDATE SET "
+                   "policy_version=excluded.policy_version,granted_at=excluded.granted_at,revoked_at=NULL"),
+                (owner,PHOTO_CONSENT_VERSION,now))
+        else:
+            sql(c,("INSERT INTO photo_parent_consent(owner_id,policy_version,granted_at,revoked_at) "
+                   "VALUES(?,?,NULL,?) ON CONFLICT(owner_id) DO UPDATE SET "
+                   "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
+                (owner,PHOTO_CONSENT_VERSION,now))
+        c.commit()
+    return {"agreed":body.agreed,"policy_version":PHOTO_CONSENT_VERSION,"photo_upload_enabled":False}
 
 
 ILLUSTRATION_CONSENT_VERSION="illustration-pilot-v1"
