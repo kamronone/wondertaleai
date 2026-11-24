@@ -1390,7 +1390,7 @@ function App(){
             <ImagePlus size={20} aria-hidden="true"/>
             <div>
               <strong>{({ru:"Герой по фотографии — пока недоступно",uz:"Suratdan qahramon yaratish — hozircha mavjud emas",en:"Photo-based characters — not yet available"} as const)[lang]}</strong>
-              <p>{({ru:"Загрузка фото отключена: текущая версия создаёт сказку по имени и выбранному персонажу, но не рисует ребёнка по снимку. Для ИИ-иллюстраций понадобятся отдельное согласие родителя и защищённая генерация.",uz:"Surat yuklash o‘chirilgan: hozirgi versiya ism va tanlangan qahramon asosida ertak yaratadi, ammo bola suratidan yangi rasm yasamaydi. Buning uchun ota-ona roziligi va xavfsiz AI tasvir yaratish tizimi kerak.",en:"Photo upload is disabled: this version creates a story using the name and selected character, but cannot illustrate the child from a photo. Secure image generation and separate parental consent are required."} as const)[lang]}</p>
+              <p>{({ru:"Загрузка фото отключена: текущая версия создаёт сказку по имени и выбранному персонажу, но не рисует ребёнка по снимку. Для ИИ-иллюстраций понадобятся отдельное согласие родителя и защищённая генерация.",uz:"Surat yuklash o'chirilgan: hozirgi versiya ism va tanlangan qahramon asosida ertak yaratadi, ammo bola suratidan yangi rasm yasamaydi. Buning uchun ota-ona roziligi va xavfsiz AI tasvir yaratish tizimi kerak.",en:"Photo upload is disabled: this version creates a story using the name and selected character, but cannot illustrate the child from a photo. Secure image generation and separate parental consent are required."} as const)[lang]}</p>
             </div>
           </div>
           </div></details>
