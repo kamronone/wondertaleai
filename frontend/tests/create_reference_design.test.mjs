@@ -41,7 +41,9 @@ test("essential controls remain visible and supplementary personal info is colla
   assert.match(app,/value=\{name\} onChange=\{e=>\{setName/);
   assert.match(app,/value=\{age\} onChange=\{e=>setAge/);
   assert.match(app,/<details className="create-reference-extras">/);
-  assert.match(app,/type="file" accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(app,/className="create-photo-unavailable"/);
+  assert.match(app,/Загрузка фото отключена/);
+  assert.doesNotMatch(app,/type="file" accept="image\/jpeg,image\/png,image\/webp"/);
   assert.match(app,/className="wizard-step-actions"/);
 });
 
