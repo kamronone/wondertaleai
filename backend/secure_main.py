@@ -1051,6 +1051,45 @@ def private_photo_visual_preview(owner:str=Depends(current_parent)):
     })
 
 
+@app.get("/api/photos/reference/pages/{page_number}")
+def private_photo_storyboard_page(page_number:int,page_count:int=8,
+                                  owner:str=Depends(current_parent)):
+    """Local-only page mock-up with identical photo crop; NOT an AI image.
+
+    One parent, one current consent, one unexpired reference. No child photo
+    leaves the API, no page content is sent to a provider, no artwork is saved.
+    """
+    if not photo_reference_upload_enabled():
+        raise HTTPException(503,"Photo storyboard is unavailable")
+    if page_count not in (8,12,20) or not 1<=page_number<=page_count:
+        raise HTTPException(422,"Unsupported storyboard page")
+    with connection() as c:
+        if not IS_PG:
+            c.execute("BEGIN IMMEDIATE")
+        expire_photo_references(c)
+        if not photo_consent_active(owner,c):
+            c.commit()
+            raise HTTPException(403,"Photo-specific parental consent is required")
+        row=sql(c,"SELECT jpeg_bytes,sha256 FROM photo_reference_temp WHERE owner_id=? AND expires_at>?",
+                (owner,int(time.time()))).fetchone()
+        c.commit()
+    if not row:
+        raise HTTPException(404,"Photo reference not found")
+    source=bytes(row[0])
+    if not hmac.compare_digest(hashlib.sha256(source).hexdigest(),row[1]):
+        raise HTTPException(503,"Photo reference failed integrity verification")
+    from private_photo_preview import render_local_story_page
+    try:
+        image=render_local_story_page(source,page_number,page_count)
+    except ValueError:
+        raise HTTPException(422,"Invalid storyboard reference")
+    return Response(content=image,media_type="image/png",headers={
+        "Cache-Control":"private, no-store",
+        "X-Content-Type-Options":"nosniff",
+        "Content-Security-Policy":"default-src 'none'; sandbox",
+    })
+
+
 @app.delete("/api/photos/reference",status_code=204)
 def delete_photo_reference(owner:str=Depends(current_parent)):
     # Permit deleting already stored data even after disabling the upload feature.
