@@ -1162,6 +1162,67 @@ def private_photo_storyboard_page(page_number:int,page_count:int=8,
     })
 
 
+@app.get("/api/photos/books/{book_id}/pages/{page_number}/preview")
+def private_book_photo_page_preview(book_id:str,page_number:int,
+                                    owner:str=Depends(current_parent)):
+    """Development-only story-aware mock-up for a private book and portrait.
+
+    Scene selection is local: never transmit child's name, chapter text or
+    reference image to an image provider. Return a transient uncached PNG only.
+    This is a PHOTO mock-up, not a likeness-preserving AI illustration.
+    """
+    if not photo_reference_upload_enabled():
+        raise HTTPException(503,"Personalized book preview is unavailable")
+    if not re.fullmatch(r"[0-9a-f-]{36}",book_id) or not 1<=page_number<=20:
+        raise HTTPException(404,"Book page not found")
+    with connection() as c:
+        if not IS_PG:
+            c.execute("BEGIN IMMEDIATE")
+        expire_photo_references(c)
+        book=sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",
+                 (book_id,owner)).fetchone()
+        if not book:
+            c.commit()
+            raise HTTPException(404,"Book page not found")
+        if not photo_consent_active(owner,c):
+            c.commit()
+            raise HTTPException(403,"Photo-specific parental consent is required")
+        source=sql(c,"SELECT jpeg_bytes,sha256 FROM photo_reference_temp "
+                       "WHERE owner_id=? AND expires_at>?",
+                   (owner,int(time.time()))).fetchone()
+        c.commit()
+    if not source:
+        raise HTTPException(404,"Photo reference not found")
+    photo=bytes(source[0])
+    if not hmac.compare_digest(hashlib.sha256(photo).hexdigest(),source[1]):
+        raise HTTPException(503,"Photo reference failed integrity verification")
+    try:
+        from illustration_planning import SCENES,plan_story_illustrations
+        from private_photo_preview import render_local_story_page
+        record=json.loads(book[0])
+        pages=record["pages"]
+        if not isinstance(pages,list) or len(pages) not in (8,12,20):
+            raise ValueError("Unsupported story length")
+        if page_number>len(pages):
+            raise ValueError("Page outside the private story")
+        if any(not isinstance(page,dict) or page.get("number")!=i+1 or
+               not isinstance(page.get("text"),str)
+               for i,page in enumerate(pages)):
+            raise ValueError("Invalid private story format")
+        chapters=[page["text"] for page in pages]
+        briefs=plan_story_illustrations(book_id,chapters,"storybook")
+        scene_number=SCENES.index(briefs[page_number-1].scene)+1
+        media=render_local_story_page(photo,page_number,len(pages),
+                                      scene_number=scene_number)
+    except (ValueError,TypeError,KeyError,IndexError):
+        raise HTTPException(422,"Private story cannot be previewed")
+    return Response(content=media,media_type="image/png",headers={
+        "Cache-Control":"private, no-store",
+        "X-Content-Type-Options":"nosniff",
+        "Content-Security-Policy":"default-src 'none'; sandbox",
+    })
+
+
 @app.delete("/api/photos/reference",status_code=204)
 def delete_photo_reference(owner:str=Depends(current_parent)):
     # Permit deleting already stored data even after disabling the upload feature.
