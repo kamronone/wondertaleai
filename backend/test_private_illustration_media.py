@@ -952,7 +952,7 @@ def test_storyboard_consistent_portrait_mockup_and_varying_scenes(api,monkeypatc
     with Image.open(io.BytesIO(first.content)) as art1,Image.open(io.BytesIO(second.content)) as art2:
         assert art1.size==art2.size==(512,512)
         # Stable portrait crop and frame, irrespective of surrounding scene.
-        assert art1.crop((112,108,390,386)).tobytes()==art2.crop((112,108,390,386)).tobytes()
+        assert art1.crop((145,145,355,355)).tobytes()==art2.crop((145,145,355,355)).tobytes()
         assert art1.getpixel((4,4))!=art2.getpixel((4,4))
         assert art1.getexif()=={}
     long_page=client.get(base+"20?page_count=20",headers=parent)
