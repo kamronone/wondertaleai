@@ -920,3 +920,60 @@ def test_portrait_preview_expiry_integrity_and_no_outbound_calls(api,monkeypatch
     assert "requests.post(" not in source.lower()
     assert "write_bytes" not in source
     assert "image model" not in source.lower()
+
+
+def test_storyboard_consistent_portrait_mockup_and_varying_scenes(api,monkeypatch):
+    """Identical portrait region across pages; backgrounds differ; never AI."""
+    client,module,register,_=api
+    _,parent=register()
+    _,other=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    consent={"agreed":True,"policy_version":"photo-reference-v1"}
+    assert client.post("/api/photos/consent",headers=parent,json=consent).status_code==200
+    assert client.post("/api/photos/reference",headers={
+        **parent,"Content-Type":"image/png"
+    },content=fake_png()).status_code==201
+    base="/api/photos/reference/pages/"
+    assert client.get(base+"1").status_code==401
+    assert client.get(base+"1",headers=other).status_code==403
+    assert client.get(base+"0",headers=parent).status_code==422
+    assert client.get(base+"9",headers=parent).status_code==422
+    assert client.get(base+"1?page_count=9",headers=parent).status_code==422
+    assert client.get(base+"21?page_count=20",headers=parent).status_code==422
+
+    first=client.get(base+"1",headers=parent)
+    second=client.get(base+"2",headers=parent)
+    repeated=client.get(base+"1",headers=parent)
+    assert first.status_code==second.status_code==repeated.status_code==200
+    assert first.content==repeated.content
+    assert first.content!=second.content
+    assert first.headers["cache-control"]=="private, no-store"
+    assert first.headers["content-type"]=="image/png"
+    with Image.open(io.BytesIO(first.content)) as art1,Image.open(io.BytesIO(second.content)) as art2:
+        assert art1.size==art2.size==(512,512)
+        # Stable portrait crop and frame, irrespective of surrounding scene.
+        assert art1.crop((112,108,390,386)).tobytes()==art2.crop((112,108,390,386)).tobytes()
+        assert art1.getpixel((4,4))!=art2.getpixel((4,4))
+        assert art1.getexif()=={}
+    long_page=client.get(base+"20?page_count=20",headers=parent)
+    assert long_page.status_code==200
+    assert long_page.content.startswith(bytes((137,80,78,71,13,10,26,10)))
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":False,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.get(base+"1",headers=parent).status_code==403
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","false")
+    assert client.get(base+"1",headers=parent).status_code==503
+
+
+def test_storyboard_mockup_rejects_invalid_pages_without_external_provider():
+    from private_photo_preview import render_local_story_page
+    ref=fake_png()
+    for number,count in ((0,8),(9,8),(21,20),(1,7),(1,21),(True,8),(1,True)):
+        with pytest.raises(ValueError):
+            render_local_story_page(ref,number,count)
+    from pathlib import Path
+    code=Path(__file__).with_name("private_photo_preview.py").read_text()
+    assert "from openai import" not in code
+    assert "images.generate(" not in code
+    assert "write_bytes(" not in code
