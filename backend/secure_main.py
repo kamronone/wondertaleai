@@ -92,6 +92,7 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_parent_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
         sql(c, "CREATE TABLE IF NOT EXISTS photo_parent_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
+        sql(c, "CREATE TABLE IF NOT EXISTS photo_external_transfer_consent (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, policy_version TEXT NOT NULL, granted_at TEXT, revoked_at TEXT)")
         sql(c, f"CREATE TABLE IF NOT EXISTS photo_reference_temp (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, jpeg_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS photo_reference_temp_expiry_idx ON photo_reference_temp(expires_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
@@ -940,6 +941,77 @@ def photo_consent_active(owner:str,c=None)->bool:
         return False
 
 
+PHOTO_EXTERNAL_TRANSFER_VERSION="photo-external-ai-v1"
+
+
+def external_photo_transfer_consent_active(owner:str,c=None)->bool:
+    """Separate external processing opt-in, requiring current local photo consent.
+
+    A true result does NOT activate an image provider or authorize a worker
+    automatically. Future processing must enforce consent at execution time.
+    """
+    try:
+        if c is None:
+            with connection() as db:
+                return external_photo_transfer_consent_active(owner,db)
+        if not photo_consent_active(owner,c):
+            return False
+        row=sql(c,"SELECT policy_version,granted_at,revoked_at FROM photo_external_transfer_consent WHERE owner_id=?",(owner,)).fetchone()
+        return bool(row and row[0]==PHOTO_EXTERNAL_TRANSFER_VERSION and row[1] and not row[2])
+    except Exception:
+        return False
+
+
+class ExternalPhotoTransferConsentRequest(BaseModel):
+    agreed: bool
+    policy_version: str=Field(min_length=1,max_length=64)
+    acknowledged_provider_transfer: bool=False
+
+
+@app.get("/api/photos/external-transfer-consent")
+def get_external_photo_transfer_consent(owner:str=Depends(current_parent)):
+    return {"agreed":external_photo_transfer_consent_active(owner),
+            "policy_version":PHOTO_EXTERNAL_TRANSFER_VERSION,
+            "external_photo_processing_enabled":False}
+
+
+@app.post("/api/photos/external-transfer-consent")
+def update_external_photo_transfer_consent(body:ExternalPhotoTransferConsentRequest,
+                                          owner:str=Depends(current_parent)):
+    """Parent explicitly opts into potential external processing or revokes it.
+
+    Never calls a provider. No upload feature is enabled by giving consent.
+    """
+    if body.policy_version!=PHOTO_EXTERNAL_TRANSFER_VERSION:
+        raise HTTPException(422,"External photo consent policy version is outdated")
+    if body.agreed and body.acknowledged_provider_transfer is not True:
+        raise HTTPException(422,"Explicit external provider acknowledgement required")
+    now=datetime.now(timezone.utc).isoformat()
+    with connection() as c:
+        if IS_PG:
+            if not sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone():
+                raise HTTPException(404,"Parent not found")
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        if body.agreed and not photo_consent_active(owner,c):
+            raise HTTPException(403,"Photo-specific parental consent is required")
+        if body.agreed:
+            sql(c,("INSERT INTO photo_external_transfer_consent(owner_id,policy_version,granted_at,revoked_at) "
+                   "VALUES(?,?,?,NULL) ON CONFLICT(owner_id) DO UPDATE SET "
+                   "policy_version=excluded.policy_version,granted_at=excluded.granted_at,revoked_at=NULL"),
+                (owner,PHOTO_EXTERNAL_TRANSFER_VERSION,now))
+        else:
+            sql(c,("INSERT INTO photo_external_transfer_consent(owner_id,policy_version,granted_at,revoked_at) "
+                   "VALUES(?,?,NULL,?) ON CONFLICT(owner_id) DO UPDATE SET "
+                   "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
+                (owner,PHOTO_EXTERNAL_TRANSFER_VERSION,now))
+            # No previously consented reference may be reused after revocation.
+            sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+        c.commit()
+    return {"agreed":body.agreed,"policy_version":PHOTO_EXTERNAL_TRANSFER_VERSION,
+            "external_photo_processing_enabled":False}
+
+
 PHOTO_REFERENCE_TTL_SECONDS=900
 
 
@@ -1134,6 +1206,10 @@ def update_photo_consent(body:PhotoConsentRequest,owner:str=Depends(current_pare
                    "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
                 (owner,PHOTO_CONSENT_VERSION,now))
             sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+            sql(c,("INSERT INTO photo_external_transfer_consent(owner_id,policy_version,granted_at,revoked_at) "
+                   "VALUES(?,?,NULL,?) ON CONFLICT(owner_id) DO UPDATE SET "
+                   "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
+                (owner,PHOTO_EXTERNAL_TRANSFER_VERSION,now))
         c.commit()
     return {"agreed":body.agreed,"policy_version":PHOTO_CONSENT_VERSION,
             "photo_upload_enabled":photo_reference_upload_enabled()}
