@@ -983,6 +983,7 @@ def test_storyboard_mockup_rejects_invalid_pages_without_external_provider():
 # Existing backend CI explicitly selects this file. Import the new isolated
 # photo-edit adapter contract tests so they run in that controlled test suite.
 from test_private_reference_image_edits import (
+    enabled,
     test_mock_edit_normalizes_photo_and_uses_only_curated_scene,
     test_identical_character_guide_across_pages_but_different_scene,
     test_prompt_rejects_unapproved_values,
