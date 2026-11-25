@@ -40,7 +40,7 @@ def render_local_portrait_preview(reference_jpeg:bytes)->bytes:
         return encoded
 
 
-def render_local_story_page(reference_jpeg:bytes,page_number:int,page_count:int=8)->bytes:
+def render_local_story_page(reference_jpeg:bytes,page_number:int,page_count:int=8,*,scene_number:int|None=None)->bytes:
     """Local storyboard prototype: consistent portrait, different illustrated scenes.
 
     This is a mock-up, NOT a generated likeness or an AI-painted character.
@@ -51,6 +51,9 @@ def render_local_story_page(reference_jpeg:bytes,page_number:int,page_count:int=
         raise ValueError("Unsupported page count")
     if type(page_number) is not int or not 1<=page_number<=page_count:
         raise ValueError("Invalid storyboard page")
+    if scene_number is not None and (type(scene_number) is not int or not 1<=scene_number<=20):
+        raise ValueError("Invalid curated scene number")
+    scene_index=scene_number if scene_number is not None else page_number
     from PIL import ImageDraw
     import math
 
@@ -69,7 +72,7 @@ def render_local_story_page(reference_jpeg:bytes,page_number:int,page_count:int=
         ((213,231,200),(248,230,204),(103,148,95)),
         ((184,190,229),(240,209,233),(112,117,171)),
     )
-    sky,ground,accent=palette[(page_number-1)%len(palette)]
+    sky,ground,accent=palette[(scene_index-1)%len(palette)]
     canvas=Image.new("RGB",PREVIEW_SIZE,sky)
     draw=ImageDraw.Draw(canvas)
     # Original decorative scene geometry varies by page but never uses
@@ -78,12 +81,12 @@ def render_local_story_page(reference_jpeg:bytes,page_number:int,page_count:int=
     draw.ellipse((-100,275,355,640),fill=ground)
     draw.ellipse((245,294,670,665),fill=tuple(max(0,c-24) for c in ground))
     for i in range(6):
-        x=(i*97+page_number*29)%540-15
+        x=(i*97+scene_index*29)%540-15
         y=235+(i%3)*56
         draw.line((x,y+85,x,y+25),fill=accent,width=7)
         draw.ellipse((x-25,y-5,x+25,y+43),fill=accent)
     for i in range(9):
-        a=i*2*math.pi/9+page_number/7
+        a=i*2*math.pi/9+scene_index/7
         x=int(260+217*math.cos(a))
         y=int(250+208*math.sin(a))
         draw.ellipse((x-3,y-3,x+3,y+3),fill=(255,250,229))
