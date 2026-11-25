@@ -1070,3 +1070,82 @@ def test_external_consent_revocation_clears_temporary_portrait(api,monkeypatch):
     assert client.delete("/api/me",headers=parent).status_code==204
     with module.connection() as c:
         assert module.sql(c,"SELECT COUNT(*) FROM photo_external_transfer_consent WHERE owner_id=?",(owner,)).fetchone()[0]==0
+
+
+
+def test_owned_story_page_photo_preview_is_local_scene_matched_and_private(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    _,other=register()
+    from illustration_planning import SCENES,plan_story_illustrations
+    from private_photo_preview import render_local_story_page
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.post("/api/photos/reference",headers={**parent,"Content-Type":"image/png"},
+                       content=fake_png()).status_code==201
+    chapters=["A fox walks along a winding path."]+[
+        "The character visits a friendly garden."
+        for _ in range(6)
+    ]+["The first stars shine at night."]
+    book=client.post("/api/books",headers=parent,json={
+        "title":"Private forest story","child_name":"Invented character","age":7,
+        "story":json.dumps({"pages":[{"number":i+1,"text":text}
+                                      for i,text in enumerate(chapters)]})
+    })
+    assert book.status_code==201,book.text
+    book_id=book.json()["id"]
+    path=f"/api/photos/books/{book_id}/pages/1/preview"
+    assert client.get(path).status_code==401
+    assert client.get(path,headers=other).status_code==404
+    assert client.get("/api/photos/books/not-a-uuid/pages/1/preview",headers=parent).status_code==404
+    assert client.get(f"/api/photos/books/{book_id}/pages/9/preview",headers=parent).status_code==422
+    actual=client.get(path,headers=parent)
+    assert actual.status_code==200,actual.text
+    assert actual.headers["cache-control"]=="private, no-store"
+    assert actual.headers["content-type"]=="image/png"
+    with Image.open(io.BytesIO(actual.content)) as image:
+        assert image.size==(512,512)
+        assert image.getexif()=={}
+    with module.connection() as c:
+        owner=module.current_parent(parent["Authorization"])
+        row=module.sql(c,"SELECT jpeg_bytes FROM photo_reference_temp WHERE owner_id=?",
+                       (owner,)).fetchone()
+    briefs=plan_story_illustrations(book_id,chapters,"storybook")
+    scene_number=SCENES.index(briefs[0].scene)+1
+    expected=render_local_story_page(bytes(row[0]),1,8,scene_number=scene_number)
+    assert actual.content==expected
+    assert client.get(path,headers=parent).content==actual.content
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":False,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.get(path,headers=parent).status_code==403
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","false")
+    assert client.get(path,headers=parent).status_code==503
+
+
+def test_private_book_photo_preview_rejects_wrong_owner_and_malformed_story(api,monkeypatch):
+    client,module,register,_=api
+    _,owner=register()
+    _,different=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    for auth in (owner,different):
+        assert client.post("/api/photos/consent",headers=auth,json={
+            "agreed":True,"policy_version":"photo-reference-v1"
+        }).status_code==200
+        assert client.post("/api/photos/reference",headers={**auth,"Content-Type":"image/png"},
+                           content=fake_png()).status_code==201
+    bad=client.post("/api/books",headers=owner,json={
+        "title":"Legacy","child_name":"Fictional","age":6,
+        "story":json.dumps({"pages":[{"number":1,"text":"Hello"}]})
+    })
+    assert bad.status_code==201
+    path=f"/api/photos/books/{bad.json()['id']}/pages/1/preview"
+    assert client.get(path,headers=owner).status_code==422
+    assert client.get(path,headers=different).status_code==404
+    from private_photo_preview import render_local_story_page
+    with pytest.raises(ValueError):
+        render_local_story_page(fake_png(),1,8,scene_number=0)
+    with pytest.raises(ValueError):
+        render_local_story_page(fake_png(),1,8,scene_number=21)
