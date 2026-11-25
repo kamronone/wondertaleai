@@ -994,3 +994,79 @@ from test_private_reference_image_edits import (
     test_provider_error_has_no_automatic_paid_retry,
     test_adapter_has_no_api_route_or_implicit_database_access,
 )
+
+
+
+def test_external_photo_transfer_consent_requires_independent_parent_opt_in(api):
+    client,module,register,_=api
+    _,parent=register()
+    _,stranger=register()
+    endpoint="/api/photos/external-transfer-consent"
+    version="photo-external-ai-v1"
+    assert client.get(endpoint).status_code==401
+    assert client.post(endpoint,json={"agreed":True,"policy_version":version,
+                                       "acknowledged_provider_transfer":True}).status_code==401
+    state=client.get(endpoint,headers=parent)
+    assert state.status_code==200
+    assert state.json()=={
+        "agreed":False,"policy_version":version,
+        "external_photo_processing_enabled":False
+    }
+    assert client.post(endpoint,headers=parent,json={"agreed":True,
+        "policy_version":version,"acknowledged_provider_transfer":True}).status_code==403
+    local={"agreed":True,"policy_version":"photo-reference-v1"}
+    assert client.post("/api/photos/consent",headers=parent,json=local).status_code==200
+    assert client.get(endpoint,headers=parent).json()["agreed"] is False
+    assert client.post(endpoint,headers=parent,json={"agreed":True,
+        "policy_version":version}).status_code==422
+    assert client.post(endpoint,headers=parent,json={"agreed":True,
+        "policy_version":"old-version",
+        "acknowledged_provider_transfer":True}).status_code==422
+    opted=client.post(endpoint,headers=parent,json={"agreed":True,
+        "policy_version":version,"acknowledged_provider_transfer":True})
+    assert opted.status_code==200,opted.text
+    assert opted.json()["agreed"] is True
+    assert opted.json()["external_photo_processing_enabled"] is False
+    assert client.get(endpoint,headers=parent).json()["agreed"] is True
+    assert client.get(endpoint,headers=stranger).json()["agreed"] is False
+    revoked=client.post(endpoint,headers=parent,json={"agreed":False,
+        "policy_version":version})
+    assert revoked.status_code==200
+    assert client.get(endpoint,headers=parent).json()["agreed"] is False
+
+
+def test_external_consent_revocation_clears_temporary_portrait(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    external={"agreed":True,"policy_version":"photo-external-ai-v1",
+              "acknowledged_provider_transfer":True}
+    endpoint="/api/photos/external-transfer-consent"
+    assert client.post(endpoint,headers=parent,json=external).status_code==200
+    ref="/api/photos/reference"
+    assert client.post(ref,headers={**parent,"Content-Type":"image/png"},
+                       content=fake_png()).status_code==201
+    assert client.get(ref,headers=parent).json()["stored"] is True
+    assert client.post(endpoint,headers=parent,json={
+        "agreed":False,"policy_version":"photo-external-ai-v1"
+    }).status_code==200
+    assert client.get(ref,headers=parent).json()["stored"] is False
+    assert client.post(endpoint,headers=parent,json=external).status_code==200
+    # Revoking LOCAL consent automatically invalidates separate external consent.
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":False,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.get(endpoint,headers=parent).json()["agreed"] is False
+    assert client.post("/api/photos/consent",headers=parent,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.get(endpoint,headers=parent).json()["agreed"] is False
+    with module.connection() as c:
+        owner=module.current_parent(parent["Authorization"])
+        assert module.external_photo_transfer_consent_active(owner,c) is False
+    assert client.delete("/api/me",headers=parent).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_external_transfer_consent WHERE owner_id=?",(owner,)).fetchone()[0]==0
