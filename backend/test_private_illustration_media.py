@@ -977,3 +977,19 @@ def test_storyboard_mockup_rejects_invalid_pages_without_external_provider():
     assert "from openai import" not in code
     assert "images.generate(" not in code
     assert "write_bytes(" not in code
+
+
+
+# Existing backend CI explicitly selects this file. Import the new isolated
+# photo-edit adapter contract tests so they run in that controlled test suite.
+from test_private_reference_image_edits import (
+    test_mock_edit_normalizes_photo_and_uses_only_curated_scene,
+    test_identical_character_guide_across_pages_but_different_scene,
+    test_prompt_rejects_unapproved_values,
+    test_all_edit_flags_required,
+    test_never_calls_provider_outside_local_development,
+    test_parent_must_explicitly_consent_to_external_transfer,
+    test_bad_provider_response_rejected,
+    test_provider_error_has_no_automatic_paid_retry,
+    test_adapter_has_no_api_route_or_implicit_database_access,
+)
