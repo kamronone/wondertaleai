@@ -1398,3 +1398,102 @@ def test_photo_dry_run_never_imports_paid_provider_or_exposes_endpoint():
     assert "photo_illustration_review" not in api_code
     assert "@app." not in code
     assert "write_bytes(" not in code
+
+
+def test_mock_png_worker_stores_only_parent_owned_private_image(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    _,other=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_REVIEW_DRY_RUN","true")
+    monkeypatch.setenv("ENABLE_PHOTO_MOCK_STORAGE","true")
+    request_id=_make_photo_review_request(client,parent)
+    from photo_illustration_mock_worker import save_mock_photo_page
+    called={"photo":0,"prompt":0,"image":0}
+    def photo_check(photo):
+        called["photo"]+=1
+        assert photo.startswith(bytes((255,216,255)))
+        return True
+    def prompt_check(prompt):
+        called["prompt"]+=1
+        assert "fictional" not in prompt.lower()
+        return True
+    def image_check(png):
+        called["image"]+=1
+        assert png.startswith(bytes((137,80,78,71,13,10,26,10)))
+        return True
+    result=save_mock_photo_page(request_id,photo_moderator=photo_check,
+          prompt_moderator=prompt_check,image_moderator=image_check)
+    assert result=={"id":request_id,"status":"mock_ready",
+                   "generated_by_ai":False,"provider_called":False,"cost_usd":0}
+    assert called=={"photo":1,"prompt":1,"image":1}
+    endpoint=f"/api/photos/illustration-requests/{request_id}/mock-image"
+    assert client.get(endpoint).status_code==401
+    assert client.get(endpoint,headers=other).status_code==404
+    png=client.get(endpoint,headers=parent)
+    assert png.status_code==200
+    assert png.headers["content-type"]=="image/png"
+    assert png.headers["cache-control"]=="private, no-store"
+    with Image.open(io.BytesIO(png.content)) as art:
+        assert art.size==(512,512)
+        assert art.getexif()=={}
+    assert save_mock_photo_page(request_id,photo_moderator=photo_check,
+          prompt_moderator=prompt_check,image_moderator=image_check)["status"]=="mock_ready"
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_mock_assets").fetchone()[0]==1
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_assets").fetchone()[0]==0
+    assert client.post("/api/photos/external-transfer-consent",headers=parent,json={
+       "agreed":False,"policy_version":"photo-external-ai-v1"
+    }).status_code==200
+    assert client.get(endpoint,headers=parent).status_code==404
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_mock_assets").fetchone()[0]==0
+
+
+def test_mock_png_worker_requires_output_moderation_and_stops_on_revoke(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_REVIEW_DRY_RUN","true")
+    monkeypatch.setenv("ENABLE_PHOTO_MOCK_STORAGE","true")
+    request_id=_make_photo_review_request(client,parent)
+    from photo_illustration_mock_worker import save_mock_photo_page
+    from photo_illustration_review import PhotoDryRunDenied
+    callbacks={"photo_moderator":lambda photo:True,
+               "prompt_moderator":lambda prompt:True}
+    with pytest.raises(PhotoDryRunDenied,match="Mock image moderation"):
+        save_mock_photo_page(request_id,**callbacks,image_moderator=lambda image:False)
+    def revoke_during_image(image):
+        assert client.post("/api/photos/consent",headers=parent,json={
+          "agreed":False,"policy_version":"photo-reference-v1"
+        }).status_code==200
+        return True
+    with pytest.raises(PhotoDryRunDenied):
+        save_mock_photo_page(request_id,**callbacks,image_moderator=revoke_during_image)
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_mock_assets").fetchone()[0]==0
+
+
+def test_mock_png_worker_disabled_in_prod_and_without_opt_in(api,monkeypatch):
+    client,module,register,_=api
+    _,parent=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_REVIEW_DRY_RUN","true")
+    request_id=_make_photo_review_request(client,parent)
+    from photo_illustration_mock_worker import save_mock_photo_page
+    from photo_illustration_review import PhotoDryRunDenied
+    checks={"photo_moderator":lambda b:True,"prompt_moderator":lambda p:True,
+            "image_moderator":lambda b:True}
+    with pytest.raises(PhotoDryRunDenied,match="disabled"):
+        save_mock_photo_page(request_id,**checks)
+    monkeypatch.setenv("ENABLE_PHOTO_MOCK_STORAGE","true")
+    monkeypatch.setattr(module,"APP_ENV","production")
+    with pytest.raises(PhotoDryRunDenied):
+        save_mock_photo_page(request_id,**checks)
+    assert client.get(f"/api/photos/illustration-requests/{request_id}/mock-image",
+                      headers=parent).status_code==503
+    from pathlib import Path
+    source=Path(__file__).with_name("photo_illustration_mock_worker.py").read_text()
+    assert "images.edit(" not in source
+    assert "OpenAI(" not in source
+    assert "requests.post(" not in source
