@@ -50,13 +50,19 @@ test("studio is lazy-loaded and local-only; narration stops when leaving or hidi
  assert.doesNotMatch(storyboard,/createDemoBook\(|saveDemoBooks\(|fetch\(/);
 });
 
-test("Three Little Pigs ships a playable MP4 container with complete localized caption tracks",()=>{
+test("Three Little Pigs ships MP4 variants with narrated audio and complete localized captions",()=>{
  const mediaDirectory="../public/cartoons/three-pigs/";
  const film=readFileSync(new URL(mediaDirectory+"film.mp4",import.meta.url));
  assert.equal(film.toString("ascii",4,8),"ftyp");
  assert.ok(film.indexOf("moov")<film.indexOf("mdat")&&film.indexOf("moov")>0);
  const timestamp=seconds=>`${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(seconds%60).padStart(2,"0")}.000`;
  for(const lang of ["ru","uz","en"]){
+  const narrated=readFileSync(new URL(mediaDirectory+"film-"+lang+".mp4",import.meta.url));
+  const mediaStart=narrated.indexOf("mdat");
+  assert.equal(narrated.toString("ascii",4,8),"ftyp");
+  assert.ok(narrated.indexOf("moov")>0&&narrated.indexOf("moov")<mediaStart);
+  const metadata=narrated.subarray(0,mediaStart);
+  assert.ok(metadata.includes("avc1")&&metadata.includes("mp4a"));
   const [header,...cues]=read(mediaDirectory+lang+".vtt").trim().split("\n\n");
   assert.equal(header,"WEBVTT");
   assert.equal(cues.length,16);
