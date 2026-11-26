@@ -1,0 +1,19 @@
+.cartoon-entry{width:100%;display:flex;align-items:center;gap:12px;padding:14px;margin:12px 0;border:1px solid #d9c5e9;border-radius:18px;background:#f7efff;color:#432567;text-align:left;cursor:pointer;box-sizing:border-box}
+.cartoon-entry>span:first-child,.cartoon-heading>span{display:grid;place-items:center;flex:0 0 44px;height:44px;border-radius:14px;background:#6d41a0;color:white}
+.cartoon-entry>div{flex:1;min-width:0}.cartoon-entry strong{display:block;font-size:15px}.cartoon-entry small{display:block;font-size:12px;line-height:1.45;margin-top:3px}
+.cartoon-studio{max-width:760px;margin:0 auto;padding:16px 0 112px;display:grid;gap:14px;color:inherit}
+.cartoon-back{justify-self:start;display:inline-flex;gap:6px;align-items:center;padding:7px 12px;border:1px solid #d9c5e9;border-radius:12px;color:#65428c;background:#faf5ff;font-size:13px;font-weight:650}
+.cartoon-heading{display:flex;align-items:center;gap:12px}.cartoon-heading h1{font-size:23px;line-height:1.2;margin:0}.cartoon-heading p{font-size:13px;line-height:1.4;margin:4px 0 0}
+.cartoon-select{display:grid;gap:6px;font-size:13px;font-weight:650}.cartoon-select select{width:100%;min-height:44px;border:1px solid #d9c5e9;border-radius:12px;background:#fff;color:#432567;padding:8px 12px;font:inherit}
+.cartoon-screen{position:relative;aspect-ratio:4/3;overflow:hidden;background:#251a3b;border-radius:19px;isolation:isolate}
+.cartoon-picture{position:absolute;inset:0;display:grid;place-items:center}.cartoon-picture img{width:100%;height:100%;object-fit:contain;display:block}.cartoon-moving img{animation:wt-camera 18s ease-in-out infinite alternate}
+@keyframes wt-camera{from{transform:scale(1)}to{transform:scale(1.08) translateY(-1%)}}
+.cartoon-screen-label,.cartoon-scene-label{position:absolute;top:12px;padding:6px 9px;font-size:11px;border-radius:8px;background:#211439d9;color:white}.cartoon-screen-label{left:12px}.cartoon-scene-label{right:12px}
+.cartoon-end{position:absolute;inset:0;display:grid;place-items:center;color:white;background:#20152caf;font-size:27px;font-weight:750}
+.cartoon-progress{height:5px;border-radius:5px;background:#d7c4e5;overflow:hidden}.cartoon-progress>span{display:block;height:100%;background:#8658b6;transition:width .2s linear}
+.cartoon-controls{display:flex;gap:6px;align-items:center;justify-content:center}.cartoon-controls button,.cartoon-strip button{min-height:40px;min-width:40px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px;border:1px solid #d9c5e9;border-radius:11px;background:#fff;color:#55377d;font-size:13px;font-weight:650}.cartoon-controls button:disabled{opacity:.4}.cartoon-controls .cartoon-play{flex:1;background:#684297;color:white;border-color:#684297}
+.cartoon-caption{font-size:15px;line-height:1.65;margin:0;padding:14px;border-radius:14px;background:#fbf5e9;color:#42364b;white-space:pre-line;overflow-wrap:anywhere}
+.cartoon-strip{display:flex;gap:6px;overflow-x:auto;padding:2px}.cartoon-strip button{flex-shrink:0}.cartoon-strip button[aria-current=step]{background:#684297;color:white}.cartoon-notice{font-size:12px;line-height:1.55;opacity:.85;margin:0}
+.cartoon-studio button:focus-visible,.cartoon-studio select:focus-visible,.cartoon-entry:focus-visible{outline:2px solid #9366ca;outline-offset:3px}
+@media(max-width:360px){.cartoon-controls{gap:4px}.cartoon-controls button{min-width:34px;padding:6px}.cartoon-screen-label,.cartoon-scene-label{font-size:10px;padding:5px}.cartoon-heading h1{font-size:20px}}
+@media(prefers-reduced-motion:reduce){.cartoon-moving img{animation:none}.cartoon-progress>span{transition:none}}
