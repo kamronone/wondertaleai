@@ -1212,8 +1212,8 @@ async def upload_photo_reference(request:Request,owner:str=Depends(current_paren
         if not photo_consent_active(owner,c):
             raise HTTPException(403,"Photo-specific parental consent is required")
         digest=hashlib.sha256(clean).hexdigest()
-            sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
-            sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
+        sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
+        sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         sql(c,("INSERT INTO photo_reference_temp(owner_id,jpeg_bytes,sha256,created_at,expires_at) "
                "VALUES(?,?,?,?,?) ON CONFLICT(owner_id) DO UPDATE SET "
                "jpeg_bytes=excluded.jpeg_bytes,sha256=excluded.sha256,"
