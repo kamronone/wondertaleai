@@ -17,3 +17,49 @@
 .cartoon-studio button:focus-visible,.cartoon-studio select:focus-visible,.cartoon-entry:focus-visible{outline:2px solid #9366ca;outline-offset:3px}
 @media(max-width:360px){.cartoon-controls{gap:4px}.cartoon-controls button{min-width:34px;padding:6px}.cartoon-screen-label,.cartoon-scene-label{font-size:10px;padding:5px}.cartoon-heading h1{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.cartoon-moving img{animation:none}.cartoon-progress>span{transition:none}}
+
+.cartoon-view-switch {
+  display: flex;
+  gap: 6px;
+}
+.cartoon-view-switch button,
+.cartoon-film-error button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #d9c5e9;
+  border-radius: 11px;
+  background: #fff;
+  color: #55377d;
+  font-size: 13px;
+  font-weight: 650;
+}
+.cartoon-view-switch button[aria-pressed="true"] {
+  border-color: #684297;
+  background: #684297;
+  color: #fff;
+}
+.cartoon-film {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.cartoon-film video {
+  display: block;
+  width: min(100%, 384px);
+  height: auto;
+  max-height: 65svh;
+  border-radius: 16px;
+  background: #251a3b;
+  object-fit: contain;
+}
+.cartoon-film-error {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  text-align: center;
+  background: #fbf5e9;
+  color: #42364b;
+}
+.cartoon-film-error p {
+  margin: 0 0 8px;
+}

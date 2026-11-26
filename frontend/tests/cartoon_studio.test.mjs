@@ -49,3 +49,21 @@ test("studio is lazy-loaded and local-only; narration stops when leaving or hidi
  assert.doesNotMatch(studio,/fetch\(|localStorage|sessionStorage|Authorization|privateToken/);
  assert.doesNotMatch(storyboard,/createDemoBook\(|saveDemoBooks\(|fetch\(/);
 });
+
+test("Three Little Pigs ships a playable MP4 container with complete localized caption tracks",()=>{
+ const mediaDirectory="../public/cartoons/three-pigs/";
+ const film=readFileSync(new URL(mediaDirectory+"film.mp4",import.meta.url));
+ assert.equal(film.toString("ascii",4,8),"ftyp");
+ assert.ok(film.indexOf("moov")<film.indexOf("mdat")&&film.indexOf("moov")>0);
+ const timestamp=seconds=>`${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(seconds%60).padStart(2,"0")}.000`;
+ for(const lang of ["ru","uz","en"]){
+  const [header,...cues]=read(mediaDirectory+lang+".vtt").trim().split("\n\n");
+  assert.equal(header,"WEBVTT");
+  assert.equal(cues.length,16);
+  for(const [i,cue] of cues.entries()){
+   const [timing,...lines]=cue.split("\n");
+   assert.equal(timing,`${timestamp(i*5)} --> ${timestamp((i+1)*5)}`);
+   assert.ok(lines.length>0&&lines.length<=2&&lines.every(line=>line.trim().length>0));
+  }
+ }
+});
