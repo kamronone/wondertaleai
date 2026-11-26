@@ -23,7 +23,7 @@ test("current page lookup is owner scoped, validates returned job id and PNG",()
 test("reader cancels old page requests and releases object URLs",()=>{
   assert.match(view,/controller\.abort\(\)/);
   assert.match(view,/URL\.revokeObjectURL\(currentUrl\)/);
-  assert.match(view,/\[api,session,bookId,pageNumber,key\]/);
+  assert.match(view,/\[api,session,bookId,pageNumber,key,refresh\]/);
   assert.match(view,/image\?\.key===key/);
 });
 test("only signed-in private active pages load protected images",()=>{
