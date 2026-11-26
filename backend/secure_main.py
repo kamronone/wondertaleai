@@ -100,6 +100,7 @@ def init_schema():
         # is copied into this table. No worker consumes these records.
         sql(c, "CREATE TABLE IF NOT EXISTS photo_illustration_requests (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, hero_mode TEXT NOT NULL, reference_sha256 TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('pending_review','cancelled')), created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, UNIQUE(owner_id,book_id,page_number,style,hero_mode))")
         sql(c, "CREATE INDEX IF NOT EXISTS photo_illustration_requests_owner_idx ON photo_illustration_requests(owner_id,created_at)")
+        sql(c, f"CREATE TABLE IF NOT EXISTS photo_mock_assets (request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, png_bytes {media_type if False else ('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, expires_at INTEGER NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
         sql(c, "INSERT INTO illustration_runtime_control(singleton,paused,updated_at) VALUES(1,0,?) ON CONFLICT(singleton) DO NOTHING",(datetime.now(timezone.utc).isoformat(),))
@@ -1011,6 +1012,7 @@ def update_external_photo_transfer_consent(body:ExternalPhotoTransferConsentRequ
                 (owner,PHOTO_EXTERNAL_TRANSFER_VERSION,now))
             # No previously consented reference may be reused after revocation.
             sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+            sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
             sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         c.commit()
     return {"agreed":body.agreed,"policy_version":PHOTO_EXTERNAL_TRANSFER_VERSION,
@@ -1109,6 +1111,36 @@ def list_photo_illustration_requests(owner:str=Depends(current_parent)):
              "expires_at":r[4],"generation_enabled":False} for r in rows]
 
 
+@app.get("/api/photos/illustration-requests/{request_id}/mock-image")
+def read_photo_mock_image(request_id:str,owner:str=Depends(current_parent)):
+    """Private local-development mock PNG only; never an AI-produced asset."""
+    if not photo_reference_upload_enabled():
+        raise HTTPException(503,"Mock images are disabled")
+    try:
+        request_id=str(uuid.UUID(request_id))
+    except (ValueError,TypeError,AttributeError):
+        raise HTTPException(404,"Mock image not found")
+    with connection() as c:
+        now=int(time.time())
+        row=sql(c,"SELECT a.png_bytes,a.sha256 FROM photo_mock_assets a "
+                  "JOIN photo_illustration_requests r ON r.id=a.request_id "
+                  "JOIN photo_reference_temp p ON p.owner_id=r.owner_id "
+                  "WHERE a.request_id=? AND a.owner_id=? AND r.owner_id=? "
+                  "AND r.status='pending_review' AND r.expires_at>? "
+                  "AND a.expires_at>? AND p.expires_at>? AND p.sha256=r.reference_sha256",
+                  (request_id,owner,owner,now,now,now)).fetchone()
+        if not row or not photo_consent_active(owner,c) or not external_photo_transfer_consent_active(owner,c):
+            raise HTTPException(404,"Mock image not found")
+        png=bytes(row[0])
+        if not hmac.compare_digest(hashlib.sha256(png).hexdigest(),row[1]):
+            raise HTTPException(404,"Mock image not found")
+    return Response(content=png,media_type="image/png",headers={
+        "Cache-Control":"private, no-store",
+        "X-Content-Type-Options":"nosniff",
+        "Content-Security-Policy":"default-src 'none'; sandbox",
+    })
+
+
 @app.delete("/api/photos/illustration-requests/{request_id}",status_code=204)
 def cancel_photo_illustration_request(request_id:str,owner:str=Depends(current_parent)):
     try:
@@ -1180,7 +1212,8 @@ async def upload_photo_reference(request:Request,owner:str=Depends(current_paren
         if not photo_consent_active(owner,c):
             raise HTTPException(403,"Photo-specific parental consent is required")
         digest=hashlib.sha256(clean).hexdigest()
-        sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
+            sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
+            sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         sql(c,("INSERT INTO photo_reference_temp(owner_id,jpeg_bytes,sha256,created_at,expires_at) "
                "VALUES(?,?,?,?,?) ON CONFLICT(owner_id) DO UPDATE SET "
                "jpeg_bytes=excluded.jpeg_bytes,sha256=excluded.sha256,"
@@ -1341,7 +1374,8 @@ def delete_photo_reference(owner:str=Depends(current_parent)):
     # Permit deleting already stored data even after disabling the upload feature.
     with connection() as c:
         sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
-        sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
+            sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
+            sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         c.commit()
     return Response(status_code=204)
 
@@ -1381,6 +1415,7 @@ def update_photo_consent(body:PhotoConsentRequest,owner:str=Depends(current_pare
                    "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
                 (owner,PHOTO_CONSENT_VERSION,now))
             sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+            sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
             sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
             sql(c,("INSERT INTO photo_external_transfer_consent(owner_id,policy_version,granted_at,revoked_at) "
                    "VALUES(?,?,NULL,?) ON CONFLICT(owner_id) DO UPDATE SET "
