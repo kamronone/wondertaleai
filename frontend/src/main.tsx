@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import "./cartoon-studio.css";
 import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronRight, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
@@ -92,6 +93,8 @@ import {canAutoAdvanceAudio,consumeAudioAdvanceTarget,type AudioAdvanceTarget} f
 import {readerParagraphs} from "./reader_paragraphs";
 import {voicesForStoryLanguage,preferredStoryVoice,parseStoredVoiceChoices,STORY_VOICE_STORAGE_KEY,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 
+const CartoonStudio=React.lazy(()=>import("./CartoonStudio"));
+
 type Page={number:number;text:string;image_url:string};
 type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
@@ -116,9 +119,9 @@ function App(){
     const match=window.location.hash.match(/^#legal\/(terms|privacy|copyright|parents)$/);
     return match?match[1] as LegalDocument:null;
   };
-  const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account"|"legal">(()=>readLegalHash()?"legal":"home");
+  const [tab,setTab]=useState<"home"|"create"|"library"|"reader"|"account"|"cartoons"|"legal">(()=>readLegalHash()?"legal":"home");
   const [legalDocument,setLegalDocument]=useState<LegalDocument>(()=>readLegalHash()||"terms");
-  const [legalReturnTab,setLegalReturnTab]=useState<"home"|"create"|"library"|"reader"|"account">("home");
+  const [legalReturnTab,setLegalReturnTab]=useState<"home"|"create"|"library"|"reader"|"account"|"cartoons">("home");
   const openLegal=(document:LegalDocument)=>{
     if(tab!=="legal")setLegalReturnTab(tab);
     setLegalDocument(document);setTab("legal");
@@ -1347,6 +1350,7 @@ function App(){
           <button className="primary-button" onClick={()=>openCreate()}><WandSparkles size={19}/> {t.create} <ArrowRight size={18}/></button>
           </div>
         </div>
+        <button type="button" className="cartoon-entry" onClick={()=>{stopSpeech();setTab("cartoons");}}><span><Film size={23}/></span><div><strong>{({ru:"Студия мультфильмов",uz:"Multfilm studiyasi",en:"Cartoon studio"} as const)[lang]}</strong><small>{({ru:"Смотрите ожившие сказочные сцены",uz:"Jonlangan ertak sahnalarini tomoşa qiling",en:"Watch animated story scenes"} as const)[lang]}</small></div><ChevronRight size={20}/></button>
         {continueBook&&<button type="button" className="continue-story-card" onClick={()=>openBook(continueBook)}>
           <StoryIllustration url={continueBook.pages[0]?.image_url||""} alt={continueBook.title} lazy/>
           <span className="continue-story-copy">
@@ -1749,7 +1753,7 @@ function App(){
           {showInstallGuide&&<div className="install-guide"><p>{t.installIos}</p><p>{t.installAndroid}</p></div>}
         </div>
       </section>}
-      {tab==="home"&&<section className="coming"><span className="coming-icon"><Film size={20}/></span><div><h3>{t.cartoons}</h3><p>{t.cartoonsDesc}</p></div><span className="soon">{t.soon}</span></section>}
+      {tab==="cartoons"&&<React.Suspense fallback={<p role="status">{({ru:"Загрузка студии…",uz:"Studiya yuklanmoqda…",en:"Loading studio…"} as const)[lang]}</p>}><CartoonStudio lang={lang} onBack={()=>setTab("home")}/></React.Suspense>}
       <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></nav>
     </main>
     <footer className="site-legal-footer">
