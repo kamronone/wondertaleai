@@ -1149,3 +1149,128 @@ def test_private_book_photo_preview_rejects_wrong_owner_and_malformed_story(api,
         render_local_story_page(fake_png(),1,8,scene_number=0)
     with pytest.raises(ValueError):
         render_local_story_page(fake_png(),1,8,scene_number=21)
+
+
+def test_photo_illustration_review_requests_are_owner_scoped_and_never_generate(api,monkeypatch):
+    client,module,register,_=api
+    _,owner=register()
+    _,stranger=register()
+    endpoint="/api/photos/illustration-requests"
+    assert client.get(endpoint).status_code==401
+    assert client.post(endpoint,json={}).status_code==401
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    from uuid import uuid4
+    chapters=[{"number":n+1,"text":f"Fictional woodland scene {n+1}."} for n in range(8)]
+    created=client.post("/api/books",headers=owner,json={
+        "title":"Forest journey","child_name":"Fictional child","age":7,
+        "story":json.dumps({"pages":chapters})
+    })
+    assert created.status_code==201,created.text
+    book=created.json()["id"]
+    payload={"book_id":book,"page_number":1,"style":"storybook","hero_mode":"explorer"}
+    assert client.post(endpoint,headers=stranger,json=payload).status_code==404
+    assert client.post(endpoint,headers=owner,json=payload).status_code==403
+    assert client.post("/api/photos/consent",headers=owner,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.post(endpoint,headers=owner,json=payload).status_code==403
+    assert client.post("/api/photos/external-transfer-consent",headers=owner,json={
+        "agreed":True,"policy_version":"photo-external-ai-v1",
+        "acknowledged_provider_transfer":True
+    }).status_code==200
+    assert client.post(endpoint,headers=owner,json=payload).status_code==409
+    assert client.post("/api/photos/reference",headers={**owner,"Content-Type":"image/png"},
+                       content=fake_png()).status_code==201
+    submitted=client.post(endpoint,headers=owner,json=payload)
+    assert submitted.status_code==202,submitted.text
+    assert submitted.json()["status"]=="pending_review"
+    assert submitted.json()["generation_enabled"] is False
+    request_id=submitted.json()["id"]
+    again=client.post(endpoint,headers=owner,json=payload)
+    assert again.status_code==202
+    assert again.json()["id"]==request_id
+    assert client.get(endpoint,headers=stranger).json()==[]
+    rows=client.get(endpoint,headers=owner).json()
+    assert len(rows)==1 and rows[0]["id"]==request_id
+    with module.connection() as c:
+        entry=module.sql(c,"SELECT reference_sha256,status FROM photo_illustration_requests WHERE id=?",
+                          (request_id,)).fetchone()
+        assert entry and entry[1]=="pending_review" and len(entry[0])==64
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_assets").fetchone()[0]==0
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_jobs").fetchone()[0]==0
+    assert client.delete(endpoint+"/"+request_id,headers=stranger).status_code==404
+    assert client.delete(endpoint+"/"+request_id,headers=owner).status_code==204
+    assert client.get(endpoint,headers=owner).json()[0]["status"]=="cancelled"
+
+
+def test_photo_review_requests_are_limited_to_two_pending_and_deleted_on_revoke(api,monkeypatch):
+    client,module,register,_=api
+    _,owner=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.post("/api/photos/consent",headers=owner,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.post("/api/photos/external-transfer-consent",headers=owner,json={
+        "agreed":True,"policy_version":"photo-external-ai-v1",
+        "acknowledged_provider_transfer":True
+    }).status_code==200
+    assert client.post("/api/photos/reference",headers={**owner,"Content-Type":"image/png"},
+                       content=fake_png()).status_code==201
+    chapters=[{"number":n+1,"text":"A friendly little forest."} for n in range(8)]
+    book=client.post("/api/books",headers=owner,json={
+        "title":"Forest friends","child_name":"Fiction","age":6,
+        "story":json.dumps({"pages":chapters})
+    })
+    assert book.status_code==201
+    path="/api/photos/illustration-requests"
+    body={"book_id":book.json()["id"],"style":"storybook","hero_mode":"storybook"}
+    for page in (1,2):
+        assert client.post(path,headers=owner,json={**body,"page_number":page}).status_code==202
+    assert client.post(path,headers=owner,json={**body,"page_number":3}).status_code==429
+    # Revoking external transfer automatically cancels every request.
+    assert client.post("/api/photos/external-transfer-consent",headers=owner,json={
+        "agreed":False,"policy_version":"photo-external-ai-v1"
+    }).status_code==200
+    assert all(item["status"]=="cancelled" for item in client.get(path,headers=owner).json())
+    assert client.post(path,headers=owner,json={**body,"page_number":1}).status_code==403
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","false")
+    assert client.get(path,headers=owner).status_code==503
+    assert client.post(path,headers=owner,json={**body,"page_number":1}).status_code==503
+
+
+def test_photo_review_requests_cancel_on_reference_replacement_expiry_and_account_delete(api,monkeypatch):
+    client,module,register,_=api
+    _,owner=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    assert client.post("/api/photos/consent",headers=owner,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.post("/api/photos/external-transfer-consent",headers=owner,json={
+        "agreed":True,"policy_version":"photo-external-ai-v1",
+        "acknowledged_provider_transfer":True
+    }).status_code==200
+    photo="/api/photos/reference"
+    headers={**owner,"Content-Type":"image/png"}
+    assert client.post(photo,headers=headers,content=fake_png()).status_code==201
+    book=client.post("/api/books",headers=owner,json={
+        "title":"An original book","child_name":"Fiction","age":6,
+        "story":json.dumps({"pages":[{"number":i+1,"text":"Gentle tale."} for i in range(8)]})
+    })
+    assert book.status_code==201
+    endpoint="/api/photos/illustration-requests"
+    payload={"book_id":book.json()["id"],"page_number":1}
+    request=client.post(endpoint,headers=owner,json=payload)
+    assert request.status_code==202
+    assert client.post(photo,headers=headers,content=fake_png()).status_code==201
+    assert client.get(endpoint,headers=owner).json()[0]["status"]=="cancelled"
+    another=client.post(endpoint,headers=owner,json=payload)
+    assert another.status_code==202
+    with module.connection() as c:
+        parent=module.current_parent(owner["Authorization"])
+        module.sql(c,"UPDATE photo_illustration_requests SET expires_at=0 WHERE owner_id=?",(parent,))
+        c.commit()
+    assert all(row["status"]=="cancelled" for row in client.get(endpoint,headers=owner).json())
+    assert client.delete("/api/me",headers=owner).status_code==204
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_illustration_requests WHERE owner_id=?",
+                          (parent,)).fetchone()[0]==0
