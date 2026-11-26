@@ -21,7 +21,7 @@ test("photo consent uses distinct owner-authenticated API routes and policy vers
 });
 
 test("parent cannot opt into external sharing implicitly",()=>{
-  assert.match(panel,/agreed&&!local\.agreed/);
+  assert.match(panel,/kind==="external"&&agreed&&\(!local\.agreed\|\|!checked\)/);
   assert.match(panel,/!local\.agreed\|\|!checked/);
   assert.match(panel,/setChecked\(event\.target\.checked\)/);
   assert.match(panel,/setChecked\(false\)/);
