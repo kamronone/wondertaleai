@@ -1274,3 +1274,127 @@ def test_photo_review_requests_cancel_on_reference_replacement_expiry_and_accoun
     with module.connection() as c:
         assert module.sql(c,"SELECT COUNT(*) FROM photo_illustration_requests WHERE owner_id=?",
                           (parent,)).fetchone()[0]==0
+
+
+def _make_photo_review_request(client, auth):
+    """Create an owner-only offline reference and pending review request."""
+    assert client.post("/api/photos/consent",headers=auth,json={
+        "agreed":True,"policy_version":"photo-reference-v1"
+    }).status_code==200
+    assert client.post("/api/photos/external-transfer-consent",headers=auth,json={
+        "agreed":True,"policy_version":"photo-external-ai-v1",
+        "acknowledged_provider_transfer":True
+    }).status_code==200
+    assert client.post("/api/photos/reference",headers={
+        **auth,"Content-Type":"image/png"
+    },content=fake_png()).status_code==201
+    book=client.post("/api/books",headers=auth,json={
+        "title":"A fictional forest story","child_name":"Fiction","age":6,
+        "story":json.dumps({"pages":[
+            {"number":i+1,"text":"A friendly fox walks through the forest."}
+            for i in range(8)
+        ]})
+    })
+    assert book.status_code==201,book.text
+    request=client.post("/api/photos/illustration-requests",headers=auth,json={
+        "book_id":book.json()["id"],"page_number":1,"style":"storybook",
+        "hero_mode":"explorer"
+    })
+    assert request.status_code==202,request.text
+    return request.json()["id"]
+
+
+def test_photo_dry_run_requires_gate_and_current_consent_without_provider(api,monkeypatch):
+    client,module,register,_=api
+    _,auth=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    request_id=_make_photo_review_request(client,auth)
+    from photo_illustration_review import (
+        review_photo_request_dry_run,PhotoDryRunDenied
+    )
+    calls={"photo":0,"prompt":0}
+    def local_photo_check(blob):
+        calls["photo"]+=1
+        assert blob.startswith(bytes((255,216,255)))
+        return True
+    def local_prompt_check(prompt):
+        calls["prompt"]+=1
+        assert "explorer" in prompt
+        assert "Fiction" not in prompt
+        return True
+    with pytest.raises(PhotoDryRunDenied,match="disabled"):
+        review_photo_request_dry_run(request_id,photo_moderator=local_photo_check,
+                                     prompt_moderator=local_prompt_check)
+    assert calls=={"photo":0,"prompt":0}
+    monkeypatch.setenv("ENABLE_PHOTO_REVIEW_DRY_RUN","true")
+    result=review_photo_request_dry_run(request_id,photo_moderator=local_photo_check,
+                                         prompt_moderator=local_prompt_check)
+    assert result=={"id":request_id,"status":"dry_run_passed",
+                    "image_generated":False,"provider_called":False,"cost_usd":0}
+    assert calls=={"photo":1,"prompt":1}
+    # Reviewing never consumes or completes the pending record.
+    row=client.get("/api/photos/illustration-requests",headers=auth).json()[0]
+    assert row["status"]=="pending_review"
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_assets").fetchone()[0]==0
+
+
+def test_photo_dry_run_refuses_revocation_during_moderation(api,monkeypatch):
+    client,module,register,_=api
+    _,auth=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_REVIEW_DRY_RUN","true")
+    request_id=_make_photo_review_request(client,auth)
+    from photo_illustration_review import (
+        review_photo_request_dry_run,PhotoDryRunDenied
+    )
+    def revoke_during_check(data):
+        assert client.post("/api/photos/external-transfer-consent",headers=auth,json={
+            "agreed":False,"policy_version":"photo-external-ai-v1"
+        }).status_code==200
+        return True
+    with pytest.raises(PhotoDryRunDenied,match="unavailable"):
+        review_photo_request_dry_run(request_id,photo_moderator=revoke_during_check,
+                                     prompt_moderator=lambda text:True)
+    assert client.get("/api/photos/illustration-requests",headers=auth).json()[0]["status"]=="cancelled"
+
+
+def test_photo_dry_run_fails_closed_on_moderation_expiry_and_emergency_stop(api,monkeypatch):
+    client,module,register,_=api
+    _,auth=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_REVIEW_DRY_RUN","true")
+    request_id=_make_photo_review_request(client,auth)
+    from photo_illustration_review import (
+        review_photo_request_dry_run,PhotoDryRunDenied
+    )
+    with pytest.raises(PhotoDryRunDenied,match="Photo moderation"):
+        review_photo_request_dry_run(request_id,photo_moderator=lambda data:False,
+                                     prompt_moderator=lambda text:True)
+    with pytest.raises(PhotoDryRunDenied,match="Prompt moderation"):
+        review_photo_request_dry_run(request_id,photo_moderator=lambda data:True,
+                                     prompt_moderator=lambda text:False)
+    monkeypatch.setenv("ILLUSTRATION_EMERGENCY_STOP","true")
+    with pytest.raises(PhotoDryRunDenied,match="emergency"):
+        review_photo_request_dry_run(request_id,photo_moderator=lambda data:True,
+                                     prompt_moderator=lambda text:True)
+    monkeypatch.setenv("ILLUSTRATION_EMERGENCY_STOP","false")
+    with module.connection() as c:
+        module.sql(c,"UPDATE photo_illustration_requests SET expires_at=0 WHERE id=?",(request_id,))
+        c.commit()
+    with pytest.raises(PhotoDryRunDenied,match="unavailable"):
+        review_photo_request_dry_run(request_id,photo_moderator=lambda data:True,
+                                     prompt_moderator=lambda text:True)
+
+
+def test_photo_dry_run_never_imports_paid_provider_or_exposes_endpoint():
+    from pathlib import Path
+    code=Path(__file__).with_name("photo_illustration_review.py").read_text()
+    api_code=Path(__file__).with_name("secure_main.py").read_text()
+    assert "images.edit(" not in code
+    assert "images.generate(" not in code
+    assert "import openai" not in code.lower()
+    assert "OpenAI(" not in code
+    assert "photo_illustration_review" not in api_code
+    assert "@app." not in code
+    assert "write_bytes(" not in code
