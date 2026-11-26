@@ -96,6 +96,10 @@ def init_schema():
         sql(c, f"CREATE TABLE IF NOT EXISTS photo_reference_temp (owner_id TEXT PRIMARY KEY REFERENCES parents(id) ON DELETE CASCADE, jpeg_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)")
         sql(c, "CREATE INDEX IF NOT EXISTS photo_reference_temp_expiry_idx ON photo_reference_temp(expires_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, storage_key TEXT, UNIQUE(owner_id,book_id,page_number,style))")
+        # Separate photo-personalization request ledger: no raw or rendered image
+        # is copied into this table. No worker consumes these records.
+        sql(c, "CREATE TABLE IF NOT EXISTS photo_illustration_requests (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, page_number INTEGER NOT NULL, style TEXT NOT NULL, hero_mode TEXT NOT NULL, reference_sha256 TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('pending_review','cancelled')), created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, UNIQUE(owner_id,book_id,page_number,style,hero_mode))")
+        sql(c, "CREATE INDEX IF NOT EXISTS photo_illustration_requests_owner_idx ON photo_illustration_requests(owner_id,created_at)")
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
         sql(c, "INSERT INTO illustration_runtime_control(singleton,paused,updated_at) VALUES(1,0,?) ON CONFLICT(singleton) DO NOTHING",(datetime.now(timezone.utc).isoformat(),))
@@ -1007,9 +1011,117 @@ def update_external_photo_transfer_consent(body:ExternalPhotoTransferConsentRequ
                 (owner,PHOTO_EXTERNAL_TRANSFER_VERSION,now))
             # No previously consented reference may be reused after revocation.
             sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+            sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         c.commit()
     return {"agreed":body.agreed,"policy_version":PHOTO_EXTERNAL_TRANSFER_VERSION,
             "external_photo_processing_enabled":False}
+
+
+PHOTO_REQUEST_POLICY_VERSION="photo-request-review-v1"
+
+
+def expire_photo_illustration_requests(c):
+    """Never leave a pending image request behind after portrait expiry."""
+    sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE status='pending_review' AND expires_at<=?",(int(time.time()),))
+
+
+class PhotoIllustrationRequest(BaseModel):
+    book_id: str=Field(min_length=36,max_length=36)
+    page_number: int=Field(ge=1,le=20)
+    style: str=Field(default="storybook",pattern=r"^(watercolor|storybook|pencil)$")
+    hero_mode: str=Field(default="storybook",pattern=r"^(explorer|astronaut|storybook)$")
+
+
+@app.post("/api/photos/illustration-requests",status_code=202)
+def create_photo_illustration_request(body:PhotoIllustrationRequest,owner:str=Depends(current_parent)):
+    """Prepare an internal-only review record; NEVER enqueue a model call.
+
+    This does not initiate paid processing. Existing photo consent, external
+    transfer consent, and a fresh sanitized reference are all mandatory.
+    """
+    if not photo_reference_upload_enabled():
+        raise HTTPException(503,"Private photo illustration requests are disabled")
+    try:
+        book_id=str(uuid.UUID(body.book_id))
+    except (ValueError,TypeError,AttributeError):
+        raise HTTPException(422,"Invalid book ID")
+    now=int(time.time())
+    with connection() as c:
+        if IS_PG:
+            if not sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone():
+                raise HTTPException(404,"Parent not found")
+        else:
+            c.execute("BEGIN IMMEDIATE")
+        expire_photo_references(c)
+        expire_photo_illustration_requests(c)
+        book=sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
+        if not book:
+            raise HTTPException(404,"Private book not found")
+        try:
+            data=json.loads(book[0])
+            pages=data["pages"]
+            if (not isinstance(pages,list) or len(pages) not in (8,12,20)
+                or body.page_number>len(pages)
+                or any(not isinstance(page,dict) or page.get("number")!=i+1
+                       or not isinstance(page.get("text"),str) or not page["text"].strip()
+                       for i,page in enumerate(pages))):
+                raise ValueError("Invalid private story")
+        except (ValueError,TypeError,KeyError):
+            raise HTTPException(422,"Private book is not eligible for personal illustration")
+        if not photo_consent_active(owner,c) or not external_photo_transfer_consent_active(owner,c):
+            raise HTTPException(403,"Both parental photo permissions are required")
+        photo=sql(c,"SELECT sha256,expires_at FROM photo_reference_temp WHERE owner_id=? AND expires_at>?",
+                  (owner,now)).fetchone()
+        if not photo:
+            raise HTTPException(409,"A fresh reference photo is required")
+        # A review request expires with its exact reference and never includes
+        # its bytes, any child name, account email, or chapter text.
+        existing=sql(c,"SELECT id,status,reference_sha256,expires_at FROM photo_illustration_requests "
+                       "WHERE owner_id=? AND book_id=? AND page_number=? AND style=? AND hero_mode=?",
+                     (owner,book_id,body.page_number,body.style,body.hero_mode)).fetchone()
+        if existing and existing[1]=="pending_review" and existing[2]==photo[0] and existing[3]>now:
+            c.commit()
+            return {"id":existing[0],"status":"pending_review","generation_enabled":False,"expires_at":existing[3]}
+        pending=sql(c,"SELECT COUNT(*) FROM photo_illustration_requests WHERE owner_id=? AND status='pending_review' AND expires_at>?",
+                    (owner,now)).fetchone()[0]
+        if pending>=2:
+            raise HTTPException(429,"Too many pending photo review requests")
+        job_id=str(uuid.uuid4())
+        sql(c,("INSERT INTO photo_illustration_requests(id,owner_id,book_id,page_number,style,hero_mode,reference_sha256,status,created_at,expires_at) "
+               "VALUES(?,?,?,?,?,?,?,'pending_review',?,?) ON CONFLICT(owner_id,book_id,page_number,style,hero_mode) DO UPDATE SET "
+               "id=excluded.id,reference_sha256=excluded.reference_sha256,status='pending_review',"
+               "created_at=excluded.created_at,expires_at=excluded.expires_at"),
+            (job_id,owner,book_id,body.page_number,body.style,body.hero_mode,photo[0],now,int(photo[1])))
+        c.commit()
+    return {"id":job_id,"status":"pending_review","generation_enabled":False,"expires_at":int(photo[1])}
+
+
+@app.get("/api/photos/illustration-requests")
+def list_photo_illustration_requests(owner:str=Depends(current_parent)):
+    if not photo_reference_upload_enabled():
+        raise HTTPException(503,"Private photo illustration requests are disabled")
+    with connection() as c:
+        expire_photo_illustration_requests(c)
+        rows=sql(c,"SELECT id,book_id,page_number,status,expires_at FROM photo_illustration_requests "
+                   "WHERE owner_id=? ORDER BY created_at DESC,id DESC LIMIT 20",(owner,)).fetchall()
+        c.commit()
+    return [{"id":r[0],"book_id":r[1],"page_number":r[2],"status":r[3],
+             "expires_at":r[4],"generation_enabled":False} for r in rows]
+
+
+@app.delete("/api/photos/illustration-requests/{request_id}",status_code=204)
+def cancel_photo_illustration_request(request_id:str,owner:str=Depends(current_parent)):
+    try:
+        request_id=str(uuid.UUID(request_id))
+    except (ValueError,TypeError):
+        raise HTTPException(404,"Request not found")
+    with connection() as c:
+        changed=sql(c,"UPDATE photo_illustration_requests SET status='cancelled' "
+                      "WHERE id=? AND owner_id=? AND status='pending_review'",(request_id,owner))
+        if changed.rowcount!=1:
+            raise HTTPException(404,"Pending request not found")
+        c.commit()
+    return Response(status_code=204)
 
 
 PHOTO_REFERENCE_TTL_SECONDS=900
@@ -1068,6 +1180,7 @@ async def upload_photo_reference(request:Request,owner:str=Depends(current_paren
         if not photo_consent_active(owner,c):
             raise HTTPException(403,"Photo-specific parental consent is required")
         digest=hashlib.sha256(clean).hexdigest()
+        sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         sql(c,("INSERT INTO photo_reference_temp(owner_id,jpeg_bytes,sha256,created_at,expires_at) "
                "VALUES(?,?,?,?,?) ON CONFLICT(owner_id) DO UPDATE SET "
                "jpeg_bytes=excluded.jpeg_bytes,sha256=excluded.sha256,"
@@ -1228,6 +1341,7 @@ def delete_photo_reference(owner:str=Depends(current_parent)):
     # Permit deleting already stored data even after disabling the upload feature.
     with connection() as c:
         sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+        sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         c.commit()
     return Response(status_code=204)
 
@@ -1267,6 +1381,7 @@ def update_photo_consent(body:PhotoConsentRequest,owner:str=Depends(current_pare
                    "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
                 (owner,PHOTO_CONSENT_VERSION,now))
             sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
+            sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
             sql(c,("INSERT INTO photo_external_transfer_consent(owner_id,policy_version,granted_at,revoked_at) "
                    "VALUES(?,?,NULL,?) ON CONFLICT(owner_id) DO UPDATE SET "
                    "policy_version=excluded.policy_version,granted_at=NULL,revoked_at=excluded.revoked_at"),
