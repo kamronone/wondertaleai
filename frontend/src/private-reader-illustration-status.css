@@ -1,0 +1,51 @@
+/* Private account reader: never disguise missing generated art as SVG. */
+.story-page-image .private-illustration-placeholder{
+  width:100%;
+  min-height:210px;
+  padding:24px 18px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-align:center;
+  border:1px solid rgba(117,103,131,.22);
+  border-radius:18px;
+  background:linear-gradient(145deg,#fcf6ed,#f1e8f8);
+  color:#574b62;
+  box-sizing:border-box;
+}
+.story-page-image .private-illustration-placeholder-art{
+  font-size:32px;
+  line-height:1.2;
+  color:#9b7cba;
+}
+.story-page-image .private-illustration-placeholder strong{
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+}
+.story-page-image .private-illustration-placeholder span:not(.private-illustration-placeholder-art){
+  font-size:12px;
+  line-height:1.5;
+  max-width:260px;
+}
+.story-page-image .private-illustration-retry{
+  margin-top:6px;
+  min-height:36px;
+  padding:8px 14px;
+  border:1px solid rgba(117,103,131,.35);
+  border-radius:10px;
+  background:#fff;
+  color:#574b62;
+  font-size:13px;
+  font-weight:650;
+  cursor:pointer;
+}
+.story-page-image .private-illustration-retry:focus-visible{
+  outline:2px solid #8155b5;
+  outline-offset:3px;
+}
+@media(max-width:380px){
+  .story-page-image .private-illustration-placeholder{min-height:180px;padding:18px 12px}
+}
