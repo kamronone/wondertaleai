@@ -1374,8 +1374,8 @@ def delete_photo_reference(owner:str=Depends(current_parent)):
     # Permit deleting already stored data even after disabling the upload feature.
     with connection() as c:
         sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
-            sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
-            sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
+        sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
+        sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         c.commit()
     return Response(status_code=204)
 
