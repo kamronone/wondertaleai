@@ -715,7 +715,7 @@ function makeClassicStoryBase(id:ClassicId,name:string,language:Lang):Story{
 }
 
 
-function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
+export function makeClassicStory(id:ClassicId,name:string,language:Lang):Story{
  const story=makeClassicStoryBase(id,name,language);
  return {...story,pages:extendIllustratedClassic(id,language,story.pages)};
 }
