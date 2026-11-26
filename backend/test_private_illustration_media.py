@@ -1497,3 +1497,122 @@ def test_mock_png_worker_disabled_in_prod_and_without_opt_in(api,monkeypatch):
     assert "images.edit(" not in source
     assert "OpenAI(" not in source
     assert "requests.post(" not in source
+
+
+def test_photo_budget_is_off_by_default_and_reserves_exactly_once(api,monkeypatch):
+    client,module,register,_=api
+    _,auth=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    request_id=_make_photo_review_request(client,auth)
+    from photo_illustration_budget import reserve_photo_attempt_budget,PhotoBudgetDenied
+    with pytest.raises(PhotoBudgetDenied,match="not configured"):
+        reserve_photo_attempt_budget(request_id)
+    monkeypatch.setenv("PHOTO_EDIT_ESTIMATE_MICRO_USD","250000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_GLOBAL_MICRO_USD","1000000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_PARENT_MICRO_USD","500000")
+    with pytest.raises(PhotoBudgetDenied,match="disabled"):
+        reserve_photo_attempt_budget(request_id)
+    monkeypatch.setenv("ENABLE_PHOTO_BUDGET_RESERVATIONS","true")
+    first=reserve_photo_attempt_budget(request_id)
+    assert first["state"]=="reserved"
+    assert first["reserved_micro_usd"]==250000
+    assert first["charged_usd"]==0 and first["provider_called"] is False
+    assert reserve_photo_attempt_budget(request_id)==first
+    with module.connection() as c:
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_ai_attempt_reservations").fetchone()[0]==1
+        assert module.sql(c,"SELECT reserved_micro_usd FROM photo_ai_daily_budget").fetchone()[0]==250000
+        assert module.sql(c,"SELECT reserved_micro_usd FROM photo_ai_parent_budget").fetchone()[0]==250000
+        assert module.sql(c,"SELECT COUNT(*) FROM illustration_assets").fetchone()[0]==0
+
+
+def test_photo_budget_blocks_parent_limit_without_double_charging_global(api,monkeypatch):
+    client,module,register,_=api
+    _,auth=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_BUDGET_RESERVATIONS","true")
+    monkeypatch.setenv("PHOTO_EDIT_ESTIMATE_MICRO_USD","300000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_GLOBAL_MICRO_USD","1200000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_PARENT_MICRO_USD","300000")
+    first=_make_photo_review_request(client,auth)
+    from photo_illustration_budget import reserve_photo_attempt_budget,PhotoBudgetDenied
+    assert reserve_photo_attempt_budget(first)["state"]=="reserved"
+    request_data=client.get("/api/photos/illustration-requests",headers=auth).json()[0]
+    with module.connection() as c:
+        book=module.sql(c,"SELECT book_id FROM photo_illustration_requests WHERE id=?",(first,)).fetchone()[0]
+    next_request=client.post("/api/photos/illustration-requests",headers=auth,json={
+        "book_id":book,"page_number":2,"hero_mode":"storybook"
+    })
+    assert next_request.status_code==202,next_request.text
+    with pytest.raises(PhotoBudgetDenied,match="Parent photo budget"):
+        reserve_photo_attempt_budget(next_request.json()["id"])
+    with module.connection() as c:
+        assert module.sql(c,"SELECT reserved_micro_usd FROM photo_ai_daily_budget").fetchone()[0]==300000
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_ai_attempt_reservations").fetchone()[0]==1
+
+
+def test_photo_budget_global_limit_and_deletion_cannot_reset_spend(api,monkeypatch):
+    client,module,register,_=api
+    _,first_parent=register()
+    _,second_parent=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_BUDGET_RESERVATIONS","true")
+    monkeypatch.setenv("PHOTO_EDIT_ESTIMATE_MICRO_USD","200000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_GLOBAL_MICRO_USD","200000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_PARENT_MICRO_USD","200000")
+    req1=_make_photo_review_request(client,first_parent)
+    req2=_make_photo_review_request(client,second_parent)
+    from photo_illustration_budget import reserve_photo_attempt_budget,PhotoBudgetDenied
+    assert reserve_photo_attempt_budget(req1)["state"]=="reserved"
+    assert client.delete("/api/me",headers=first_parent).status_code==204
+    with pytest.raises(PhotoBudgetDenied,match="Global photo budget"):
+        reserve_photo_attempt_budget(req2)
+    with module.connection() as c:
+        assert module.sql(c,"SELECT reserved_micro_usd FROM photo_ai_daily_budget").fetchone()[0]==200000
+        assert module.sql(c,"SELECT COUNT(*) FROM photo_ai_attempt_reservations").fetchone()[0]==0
+
+
+def test_photo_budget_respects_revocation_emergency_pause_and_disabled_environment(api,monkeypatch):
+    client,module,register,_=api
+    _,auth=register()
+    monkeypatch.setenv("ENABLE_DEV_PHOTO_UPLOAD","true")
+    monkeypatch.setenv("ENABLE_PHOTO_BUDGET_RESERVATIONS","true")
+    monkeypatch.setenv("PHOTO_EDIT_ESTIMATE_MICRO_USD","100000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_GLOBAL_MICRO_USD","200000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_PARENT_MICRO_USD","200000")
+    req=_make_photo_review_request(client,auth)
+    from photo_illustration_budget import reserve_photo_attempt_budget,PhotoBudgetDenied
+    monkeypatch.setenv("ILLUSTRATION_EMERGENCY_STOP","true")
+    with pytest.raises(PhotoBudgetDenied,match="emergency"):
+        reserve_photo_attempt_budget(req)
+    monkeypatch.setenv("ILLUSTRATION_EMERGENCY_STOP","false")
+    with module.connection() as c:
+        module.sql(c,"UPDATE illustration_runtime_control SET paused=1 WHERE singleton=1")
+        c.commit()
+    with pytest.raises(PhotoBudgetDenied,match="emergency"):
+        reserve_photo_attempt_budget(req)
+    with module.connection() as c:
+        module.sql(c,"UPDATE illustration_runtime_control SET paused=0 WHERE singleton=1")
+        c.commit()
+    assert client.post("/api/photos/external-transfer-consent",headers=auth,json={
+        "agreed":False,"policy_version":"photo-external-ai-v1"
+    }).status_code==200
+    with pytest.raises(PhotoBudgetDenied):
+        reserve_photo_attempt_budget(req)
+    monkeypatch.setattr(module,"APP_ENV","production")
+    with pytest.raises(PhotoBudgetDenied,match="local-development"):
+        reserve_photo_attempt_budget(req)
+
+
+def test_photo_budget_rejects_noninteger_or_unbounded_config(api,monkeypatch):
+    from photo_illustration_budget import reserve_photo_attempt_budget,PhotoBudgetDenied
+    for invalid in ("0","-1","1.5","nan","99999999999","١٠٠",""):
+        monkeypatch.setenv("PHOTO_EDIT_ESTIMATE_MICRO_USD",invalid)
+        with pytest.raises(PhotoBudgetDenied):
+            reserve_photo_attempt_budget(str(uuid.uuid4()))
+    from pathlib import Path
+    source=Path(__file__).with_name("photo_illustration_budget.py").read_text()
+    backend=Path(__file__).with_name("secure_main.py").read_text()
+    assert "OpenAI(" not in source
+    assert "images.edit(" not in source
+    assert "requests.post(" not in source
+    assert "photo_illustration_budget" not in backend
