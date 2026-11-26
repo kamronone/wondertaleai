@@ -8,6 +8,7 @@ import "./bedtime-games.css";
 import "./profile-concept-three.css";
 import "./ai-jobs.css";
 import "./illustration-consent.css";
+import "./photo-permissions.css";
 import "./library-concept-two.css";
 import "./library-mobile-fixes.css";
 import "./library-final-polish.css";
@@ -57,6 +58,7 @@ import { checkAiStoryAccess } from "./ai_preflight";
 import {enqueueAiJob,AiQueueError} from "./ai_jobs";
 import {AiJobsPanel} from "./AiJobsPanel";
 import {IllustrationConsentPanel} from "./IllustrationConsentPanel";
+import {PhotoPermissionsPanel} from "./PhotoPermissionsPanel";
 import {PrivateReaderIllustration} from "./PrivateReaderIllustration";
 import {classicReaderImage,classicPngFallback,classicAnimatedPage} from "./classic_page_art";
 import {readerStoryParts,readerStoryPartForPage} from "./reader_story_parts";
@@ -1444,6 +1446,7 @@ function App(){
         {import.meta.env.VITE_ENABLE_AI_ILLUSTRATION_CONSENT==="true"&&privateToken&&API&&
           <IllustrationConsentPanel key={privateToken} api={API} session={privateToken} lang={lang}
             onOpenPrivacy={()=>openLegal("privacy")} onOpenParents={()=>openLegal("parents")}/>}
+        {privateToken&&API&&<PhotoPermissionsPanel key={privateToken} api={API} session={privateToken} lang={lang}/>}
         <ProfileLegalMenu lang={lang} onOpen={openLegal}/>
         {syncMessage&&<p className="parent-account-result" role="status">{syncMessage}</p>}
         <details className="account-plans-disclosure">
