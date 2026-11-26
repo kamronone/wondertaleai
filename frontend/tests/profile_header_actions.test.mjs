@@ -16,7 +16,9 @@ test("profile uses reference topbar and retains original header elsewhere",()=>{
 test("profile header keeps brand and tools without redundant back button",()=>{
   assert.doesNotMatch(header,/className="profile-mockup-back"/);
   assert.doesNotMatch(header,/<ArrowLeft/);
-  assert.doesNotMatch(app,/onBack=\{\(\)=>setTab\("home"\)\}/);
+  const profileHeader=app.match(/<ProfileHeader\b[^\n]*\/>/)?.[0]||"";
+  assert.ok(profileHeader);
+  assert.doesNotMatch(profileHeader,/onBack=/);
   assert.match(header,/className="profile-mockup-brand"/);
   assert.match(header,/className="profile-mockup-tools"/);
 });
