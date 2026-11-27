@@ -142,25 +142,37 @@ async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,
   }
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1200000,...(music!=="off"?{audioBitsPerSecond:96000}:{})});
   const active=recorder;const chunks:Blob[]=[];
+  let recordingError:Error|null=null;
   const output=new Promise<Blob>((resolve,reject)=>{
    active.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-   active.onerror=()=>reject(new Error("Recording failed"));
+   active.onerror=()=>{recordingError=new Error("Recording failed");reject(recordingError);};
    active.onstop=()=>{const blob=new Blob(chunks,{type:active.mimeType||mime});if(blob.size)resolve(blob);else reject(new Error("Empty video"));};
   });
   void output.catch(()=>{});
+  // Decode all frames before recording so network delays do not extend the video.
+  const frames:HTMLCanvasElement[]=[];
+  for(const scene of scenes){
+   if(signal.aborted||document.hidden)throw new Error("Cancelled");
+   let image:HTMLImageElement;
+   try{image=await localVideoImage(scene.image,signal);}catch{if(signal.aborted)throw new Error("Cancelled");image=await localVideoImage("/images/wondertale-hero.webp",signal);}
+   if(!image.naturalWidth||!image.naturalHeight)throw new Error("Invalid image");
+   const frame=document.createElement("canvas");frame.width=640;frame.height=480;
+   const frameCtx=frame.getContext("2d");if(!frameCtx)throw new Error("Canvas unavailable");
+   const scale=Math.min(640/image.naturalWidth,480/image.naturalHeight);
+   const w=image.naturalWidth*scale,h=image.naturalHeight*scale;
+   frameCtx.fillStyle="#201849";frameCtx.fillRect(0,0,640,480);
+   frameCtx.drawImage(image,(640-w)/2,(480-h)/2,w,h);
+   frames.push(frame);
+  }
   for(let i=0;i<scenes.length;i++){
    if(signal.aborted||document.hidden)throw new Error("Cancelled");
-   const scene=scenes[i];let image:HTMLImageElement|null=null;
-   try{image=await localVideoImage(scene.image,signal);}catch{if(signal.aborted)throw new Error("Cancelled");image=await localVideoImage("/images/wondertale-hero.webp",signal);}
-   if(signal.aborted)throw new Error("Cancelled");
-   const frame=image;
-   const scale=Math.min(640/frame.naturalWidth,480/frame.naturalHeight);
-   const w=frame.naturalWidth*scale,h=frame.naturalHeight*scale;
+   if(recordingError)throw recordingError;
+   const scene=scenes[i],frame=frames[i];
    const seconds=exportSceneSeconds(scene,duration);
    const pages=captions?captionPages(ctx,scene.text):[];
    const started=performance.now();
    const draw=()=>{
-    ctx.fillStyle="#201849";ctx.fillRect(0,0,640,480);ctx.drawImage(frame,(640-w)/2,(480-h)/2,w,h);
+    ctx.drawImage(frame,0,0);
     if(pages.length){
      const fraction=Math.min(.999,Math.max(0,(performance.now()-started)/(seconds*1000)));
      const lines=pages[Math.floor(fraction*pages.length)];
@@ -172,18 +184,26 @@ async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,
    draw();
    if(i===0){
     active.start(1000);
-    if(audio&&destination&&music!=="off")scheduleStoryMusic(audio,destination,music,scenes.reduce((sum,item)=>sum+exportSceneSeconds(item,duration),0)+scenes.length*20+2);
+    if(audio&&destination&&music!=="off")scheduleStoryMusic(audio,destination,music,scenes.reduce((sum,item)=>sum+exportSceneSeconds(item,duration),0)+2);
    }
    const refresh=window.setInterval(draw,100);
    try{await waitFrame(seconds*1000,signal);}finally{window.clearInterval(refresh);}
-   onProgress(Math.round((i+1)/scenes.length*100));
+   if(recordingError)throw recordingError;
+   onProgress(Math.min(99,Math.round((i+1)/scenes.length*100)));
   }
   if(active.state!=="inactive")active.stop();
-  const blob=await output;
-  if(signal.aborted)throw new Error("Cancelled");
-  return blob;
+  const finalize=new AbortController();
+  const stopFinalize=()=>finalize.abort();
+  signal.addEventListener("abort",stopFinalize,{once:true});
+  try{
+   if(signal.aborted)throw new Error("Cancelled");
+   const blob=await Promise.race([output,waitFrame(15000,finalize.signal).then(()=>{throw new Error("Recording finalization timeout");})]);
+   if(signal.aborted)throw new Error("Cancelled");
+   onProgress(100);
+   return blob;
+  }finally{signal.removeEventListener("abort",stopFinalize);finalize.abort();}
  }finally{
-  if(recorder&&recorder.state!=="inactive")recorder.stop();
+  try{if(recorder&&recorder.state!=="inactive")recorder.stop();}catch{/* Already stopped by the browser. */}
   stream.getTracks().forEach(track=>track.stop());
   if(audio)await audio.close().catch(()=>{});
  }
