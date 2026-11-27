@@ -35,7 +35,7 @@ export function PrivateSequel({api,session,book,lang,attempts,onCreated,onOpen,p
    const old=attempts.get(book.id);
    if(checkOnly&&!old)return;
    if(!checkOnly&&(old||!consent||idea.trim().length<12||idea.trim().length>1200))return;
-   const current=old??{key:crypto.randomUUID(),idea:idea.trim(),count,state:"pending" as const};
+   const current:SequelAttempt=old??{key:crypto.randomUUID(),idea:idea.trim(),count,state:"pending"};
    const c=new AbortController();controller.current=c;setBusy(true);setNotice(null);
    if(!old)remember(current);
    const request=(path:string,init?:RequestInit)=>fetch(api+path,{...init,cache:"no-store",headers:{Authorization:"Bearer "+session,"Content-Type":"application/json",...init?.headers},signal:AbortSignal.any([c.signal,AbortSignal.timeout(checkOnly?15000:120000)])});
@@ -87,9 +87,10 @@ export function PrivateSequel({api,session,book,lang,attempts,onCreated,onOpen,p
       typeof value.title!=="string"||!value.title.trim()||value.title.length>120||!Array.isArray(value.pages)||
       value.pages.length!==current.count||!value.pages.every((p,i)=>p&&p.number===i+1&&typeof p.text==="string"&&p.text.trim().length>=70&&p.text.length<=1200))
       throw Error("Invalid sequel response");
+   const validatedPages=value.pages as {text:string}[];
    const created:RemoteBook={id:value.id,title:value.title,created_at:typeof value.created_at==="string"?value.created_at:new Date().toISOString(),
      name:book.name,age:book.age,theme:"",prompt:current.idea,style:book.style,language:book.language,
-     mode:"private-account",pages:value.pages.map((p:{text:string},i:number)=>({number:i+1,text:p.text,image_url:""})),
+     mode:"private-account",pages:validatedPages.map((p,i)=>({number:i+1,text:p.text,image_url:""})),
      continuationOf:book.id,lastPage:0,favorite:false};
    remember(undefined);onCreated(created);
  }
