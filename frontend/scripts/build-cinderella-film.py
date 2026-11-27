@@ -29,7 +29,7 @@ def stamp(seconds):
 
 async def main():
     parser = argparse.ArgumentParser(description="Render a classic picture film")
-    parser.add_argument("--story", choices=["cinderella", "snow-white"], default="cinderella")
+    parser.add_argument("--story", choices=["cinderella", "snow-white", "rapunzel"], default="cinderella")
     args = parser.parse_args()
     source_path = ROOT / "scripts/film-sources" / f"{args.story}.json"
     for tool in ("ffmpeg", "ffprobe"):
