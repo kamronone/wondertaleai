@@ -36,3 +36,37 @@ def list_refunds(conn,owner_id: str,order_id: UUID):
         JOIN payment_orders o ON o.id=r.order_id
         WHERE o.owner_id=%s AND o.id=%s ORDER BY r.id""",(owner_id,order_id)).fetchall()
     return [{"id":str(r[0]),"amount_minor":r[1],"state":r[2]} for r in rows]
+
+
+def reconcile_refund(conn, refund_id: UUID, *, succeeded: bool):
+    """Trusted internal reconciliation only, after independent provider verification.
+    Caller must own transaction. No provider request is sent here.
+    Subscription revocation requires a separate verified order linkage.
+    """
+    if type(succeeded) is not bool:
+        raise ValueError("Invalid outcome")
+    link=conn.execute("SELECT order_id FROM refunds WHERE id=%s",(refund_id,)).fetchone()
+    if not link:
+        raise LookupError("Refund not found")
+    oid=link[0]
+    order=conn.execute("SELECT amount_minor,state FROM payment_orders WHERE id=%s FOR UPDATE",(oid,)).fetchone()
+    refund=conn.execute("SELECT state FROM refunds WHERE id=%s AND order_id=%s FOR UPDATE",(refund_id,oid)).fetchone()
+    if not order or not refund:
+        raise LookupError("Refund not found")
+    target="completed" if succeeded else "failed"
+    if refund[0]==target:
+        return {"state":target,"changed":False,"order_state":order[1]}
+    if refund[0]!="pending":
+        raise ValueError("Conflicting terminal refund outcome")
+    if order[1] not in ("paid","partially_refunded"):
+        raise ValueError("Order requires manual reconciliation")
+    conn.execute("UPDATE refunds SET state=%s WHERE id=%s",(target,refund_id))
+    state=order[1]
+    if succeeded:
+        total=conn.execute("SELECT COALESCE(SUM(amount_minor),0) FROM refunds WHERE order_id=%s AND state='completed'",(oid,)).fetchone()[0]
+        if total>order[0]:
+            raise RuntimeError("Refund ledger exceeds payment; rollback required")
+        state="refunded" if total==order[0] else "partially_refunded"
+        conn.execute("UPDATE payment_orders SET state=%s WHERE id=%s",(state,oid))
+    return {"state":target,"changed":True,"order_state":state,
+            "entitlement_review_required":state=="refunded"}
