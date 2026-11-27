@@ -6,6 +6,8 @@ Run only from secure_main.py after authenticated parental access.
 import json
 import os
 from typing import Literal
+import re
+import unicodedata
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 Language=Literal["ru","uz","en"]
@@ -61,15 +63,19 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
         # A full-length book must contain distinct chapters, not the same
         # paragraph repeated twenty times to satisfy the requested count.
         # This is structural validation, not a claim of literary quality.
-        if pages_expected==20:
-            normalized=[" ".join(page.casefold().split()) for page in parsed.pages]
-            if len(set(normalized))!=len(normalized):
-                raise ValueError("Repeated chapters in full-length story")
+        normalized=[" ".join(unicodedata.normalize("NFKC",page).casefold().split()) for page in parsed.pages]
+        if len(set(normalized))!=len(normalized):
+            raise ValueError("Repeated chapters in story")
+        # Ignore conventional leading page/chapter labels when checking duplicates.
+        without_labels=[re.sub(r"^(?:chapter|page|глава|страница|sahifa|bob)\s*\d+\s*[:.\-–—]\s*", "", page) for page in normalized]
+        if len(set(without_labels))!=len(without_labels):
+            raise ValueError("Repeated chapter text")
         title=parsed.title.strip()
         if len(title)<3 or len(title)>120 or any(len(text.strip())<70 or len(text)>1200 for text in parsed.pages):
             raise ValueError("Story title or page length out of bounds")
         # Validate the normalized value, not just the padded provider response.
         parsed.title=title
+        parsed.pages=[page.strip() for page in parsed.pages]
         return parsed
     except (ValueError,ValidationError,IndexError,KeyError) as exc:
         raise ValueError("Model did not return a valid story") from exc
@@ -125,6 +131,9 @@ def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
         "Keep recognizable public-domain fairy-tale plot beats when a classic is provided, "
         "but do not imitate modern film adaptations, dialogue, character designs or protected translations. "
         f"Exactly {data.pages_count} pages, 80 to 150 words per page, age-appropriate and gentle. "
+        f"Target a reader aged {data.age}: use short concrete sentences for ages 2–5, "
+        "simple causal events and vocabulary for ages 6–8, and richer plot and dialogue for ages 9–14. "
+        "Keep the same reading level throughout. "
         "Plan one continuous plot before writing the pages: establish the setting and protagonist in the opening, "
         "introduce one clear problem early, let meaningful choices and consequences build across the middle, "
         "reach a turning point and climax in the final quarter, then resolve the central problem on the final page. "
@@ -147,5 +156,8 @@ def generate_story(data:GenerateStoryInput,client=None)->GeneratedStory:
         text=story_output_format(data.language),
         store=False,
     )
+    status=getattr(response,"status",None)
+    if status is not None and status!="completed":
+        raise ValueError("Model did not return a completed story")
     output=getattr(response,"output_text","")
     return validate_generated_story(output,data.language,data.pages_count)
