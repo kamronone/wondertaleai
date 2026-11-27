@@ -638,7 +638,7 @@ def delete_book(book_id:str,owner:str=Depends(current_parent)):
 
 # Text-only AI generation is opt-in. This API is NOT deployed to the public PWA.
 # A persistent per-user daily quota prevents unbounded model calls in local testing.
-from ai_generation import GenerateStoryInput, generate_story
+from ai_generation import GenerateStoryInput, StoryContinuation, generate_story
 
 with connection() as c:
     sql(c, "CREATE TABLE IF NOT EXISTS generation_quota (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, day TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner_id,day))")
@@ -646,6 +646,10 @@ with connection() as c:
 
 @app.post("/api/books/generate",status_code=201)
 def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current_parent),idempotency_key:str|None=Header(default=None,alias="Idempotency-Key")):
+    return _generate_personalized_book(body,owner,idempotency_key)
+
+
+def _generate_personalized_book(body:GenerateStoryInput,owner:str,idempotency_key:str|None,*,preceding=None):
     if os.getenv("ENABLE_TEXT_AI","false").lower()!="true":
         raise HTTPException(503,"AI generation is not enabled")
     if not os.getenv("OPENAI_API_KEY"):
@@ -670,7 +674,12 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         if not re.fullmatch(r"[A-Za-z0-9_-]{16,128}",idempotency_key):
             raise HTTPException(422,"Invalid Idempotency-Key")
         request_key=idempotency_key
-    payload_digest=hashlib.sha256(body.model_dump_json().encode("utf-8")).hexdigest()
+    payload=body.model_dump_json()
+    if preceding is not None:
+        if billing_preview:
+            raise HTTPException(503,"Sequels are unavailable in billing preview")
+        payload=json.dumps({"request":payload,"preceding_id":preceding[0],"preceding_digest":preceding[1]},separators=(",",":"))
+    payload_digest=hashlib.sha256(payload.encode("utf-8")).hexdigest()
     if request_key:
         with connection() as c:
             inserted=sql(c,"INSERT INTO ai_idempotency(owner_id,request_key,payload_digest,book_id,created_at) VALUES(?,?,?,NULL,?) ON CONFLICT(owner_id,request_key) DO NOTHING RETURNING request_key",(owner,request_key,payload_digest,datetime.now(timezone.utc).isoformat())).fetchone()
@@ -698,7 +707,10 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                 if not old:
                     raise HTTPException(409,"Generated book is unavailable")
                 stored=json.loads(old[2])
-                return {"id":old[0],"title":old[1],"language":stored["language"],"pages":stored["pages"],"created_at":old[3]}
+                result={"id":old[0],"title":old[1],"language":stored["language"],"pages":stored["pages"],"created_at":old[3]}
+                if preceding is not None:
+                    result["continuation_of"]=preceding[0]
+                return result
 
     def release_claim():
         if billing_preview:
@@ -774,7 +786,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             title, page = samples[language]
             generated = SimpleNamespace(title=title, language=language, pages=[page])
         else:
-            generated=generate_story(body)
+            generated=generate_story(body) if preceding is None else generate_story(body,continuation=preceding[2])
     except Exception:
         # A failed provider call must not exhaust the parent's daily allowance.
         # Keep the quota reservation transactionally consistent for concurrent calls.
@@ -798,17 +810,27 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         "theme": body.classic_title,
         "style": body.style,
         "prompt": body.idea,
+        "other_heroes": body.other_heroes,
         "pages": [
             {"number": index + 1, "text": text, "image_url": ""}
             for index, text in enumerate(generated.pages)
         ],
     }
+    if preceding is not None:
+        story_document["continuation_of"]=preceding[0]
     try:
         with connection() as c:
             if IS_PG:
                 sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
             else:
                 c.execute("BEGIN IMMEDIATE")
+            if preceding is not None:
+                source_query="SELECT title,child_name,age,story FROM books WHERE id=? AND owner_id=?"
+                if IS_PG:
+                    source_query+=" FOR UPDATE"
+                source=sql(c,source_query,(preceding[0],owner)).fetchone()
+                if not source or _sequel_source_digest(source)!=preceding[1]:
+                    raise HTTPException(409,"Preceding story changed or was deleted")
             current_count=sql(c,"SELECT COUNT(*) FROM books WHERE owner_id=?",(owner,)).fetchone()[0]
             if current_count>=MAX_BOOKS_PER_PARENT:
                 raise HTTPException(409,"Library limit reached")
@@ -836,7 +858,60 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         if isinstance(exc,HTTPException) and exc.status_code==409:
             raise exc
         raise HTTPException(503,"Unable to save this story. Please try later.")
-    return {"id":bid,"title":generated.title,"language":generated.language,"pages":story_document["pages"],"created_at":now}
+    result={"id":bid,"title":generated.title,"language":generated.language,"pages":story_document["pages"],"created_at":now}
+    if preceding is not None:
+        result["continuation_of"]=preceding[0]
+    return result
+
+
+class StorySequelInput(BaseModel):
+    idea: str=Field(min_length=12,max_length=1200)
+    pages_count: int=Field(default=8)
+    acknowledged_story_transfer: bool=False
+
+
+def _sequel_source_digest(row):
+    return hashlib.sha256(json.dumps(list(row),ensure_ascii=False,separators=(",",":")).encode("utf-8")).hexdigest()
+
+
+@app.post("/api/books/{book_id}/continue",status_code=201)
+def continue_private_story(book_id:str,body:StorySequelInput,owner:str=Depends(current_parent),
+                           idempotency_key:str|None=Header(default=None,alias="Idempotency-Key")):
+    """Create a separate sequel. No image or account identifier is sent to AI."""
+    if os.getenv("ENABLE_AI_CONTINUATIONS","false").lower()!="true":
+        raise HTTPException(503,"AI sequels are disabled")
+    if not idempotency_key or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}",idempotency_key):
+        raise HTTPException(422,"Valid Idempotency-Key is required")
+    if body.acknowledged_story_transfer is not True:
+        raise HTTPException(422,"Explicit permission to send preceding story text is required")
+    try:
+        book_id=str(uuid.UUID(book_id))
+    except (ValueError,TypeError,AttributeError):
+        raise HTTPException(404,"Book not found")
+    with connection() as c:
+        source=sql(c,"SELECT title,child_name,age,story FROM books WHERE id=? AND owner_id=?",(book_id,owner)).fetchone()
+    if not source:
+        raise HTTPException(404,"Book not found")
+    try:
+        doc=json.loads(source[3])
+        pages=doc["pages"]
+        if not isinstance(pages,list) or len(pages) not in (8,12,20):
+            raise ValueError
+        if any(not isinstance(p,dict) or p.get("number")!=i+1 or not isinstance(p.get("text"),str)
+               or not p["text"].strip() or len(p["text"])>1200 for i,p in enumerate(pages)):
+            raise ValueError
+        title=source[0]
+        if not isinstance(title,str) or not 3<=len(title.strip())<=120:
+            raise ValueError
+        data=GenerateStoryInput(name=source[1],age=source[2],language=doc["language"],
+            idea=body.idea,style=doc.get("style") or "Watercolor",classic_title="",
+            pages_count=body.pages_count,other_heroes=doc.get("other_heroes",[]))
+        context=StoryContinuation(title,tuple(p["text"] for p in pages))
+    except (ValueError,TypeError,KeyError,IndexError,AttributeError):
+        raise HTTPException(422,"Preceding story is not suitable for continuation")
+    return _generate_personalized_book(data,owner,idempotency_key,
+        preceding=(book_id,_sequel_source_digest(source),context))
+
 
 @app.get("/api/books/generation-requests/{request_key}")
 def generation_request_status(request_key:str,owner:str=Depends(current_parent)):
