@@ -27,6 +27,12 @@ def create_sandbox_order(conn, owner_id, plan_id, idempotency_key):
     return str(order_id)
 
 def confirm_sandbox_order(conn, owner_id, order_id, event_id, transaction_id, amount_minor, now):
+    """Atomic confirmation, including rollback of failed event claims."""
+    with conn.transaction():
+        return _confirm_sandbox_order(conn, owner_id, order_id, event_id, transaction_id, amount_minor, now)
+
+
+def _confirm_sandbox_order(conn, owner_id, order_id, event_id, transaction_id, amount_minor, now):
     """Trusted test harness only; never expose as a browser or provider callback."""
     now = utc(now)
     if type(amount_minor) is not int or amount_minor <= 0 or not all(
