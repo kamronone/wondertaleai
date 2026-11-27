@@ -100,3 +100,23 @@
 .admin-shell .admin-period-buttons button{display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:34px!important;max-height:34px!important;height:34px!important;margin:0!important;padding:4px!important;border-radius:7px!important;font-size:12px!important;line-height:1.2!important;white-space:nowrap!important}
 @media(min-width:1100px){.admin-shell .billing-filters.admin-date-panel{grid-template-columns:minmax(0,1fr) minmax(230px,auto)!important;align-items:end!important}.admin-shell .admin-period-buttons{align-self:end}.admin-shell .admin-period-buttons button{height:38px!important;min-height:38px!important;max-height:38px!important}}
 @media(max-width:350px){.admin-shell .admin-date-control{font-size:12px!important;padding-inline:6px!important;gap:4px!important}.admin-shell .admin-date-control svg{width:12px;height:12px}}
+
+/* Final compact admin polish. */
+.admin-shell .admin-role-settings,.admin-shell .admin-chart-details{min-width:0;border:1px solid var(--admin-border);border-radius:10px;background:white;padding:10px 12px}
+.admin-shell details>summary{cursor:pointer;font-size:12px;font-weight:650;color:var(--admin-ink);line-height:1.5}
+.admin-shell details[open]>summary{margin-bottom:10px}
+.admin-shell .admin-role-settings .billing-muted{margin-top:8px}
+.admin-shell .admin-list-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}
+.admin-shell .admin-list-heading small,.admin-pagination small{font-size:12px;color:var(--admin-muted)}
+.admin-shell .admin-pagination{display:flex;justify-content:center;align-items:center;gap:12px}
+.admin-shell .admin-pagination button{min-width:68px}
+.admin-shell .admin-empty{padding:16px 12px;border:1px dashed var(--admin-border);border-radius:10px;text-align:center;color:var(--admin-muted);font-size:12px}
+.admin-shell .admin-visual-chart{min-width:0;display:grid;grid-template-columns:minmax(50px,auto) minmax(0,1fr);grid-template-rows:140px auto;gap:8px;padding:14px 12px;border:1px solid var(--admin-border);border-radius:12px;background:white}
+.admin-chart-scale{display:flex;flex-direction:column;justify-content:space-between;color:var(--admin-muted);font-size:10px;max-width:95px}
+.admin-chart-bars{min-width:0;display:flex;align-items:end;gap:clamp(1px,.4vw,5px);border-bottom:1px solid #dce5ea;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#eef1f5 calc(25% - 1px),#eef1f5 25%);}
+.admin-chart-bars>span{flex:1 1 0;min-width:0;background:#168c80;border-radius:3px 3px 0 0}
+.admin-chart-dates{grid-column:2;display:flex;justify-content:space-between;gap:4px;font-size:10px;color:var(--admin-muted)}
+.admin-shell .admin-record-list article>button{width:100%;min-width:0;min-height:36px;height:auto}
+.admin-shell .admin-record-list article>label select{min-width:0;width:100%}
+.admin-shell .admin-chart-details .admin-chart-panel{padding:8px 0;border:0;border-radius:0}
+@media(max-width:700px){.admin-shell .admin-visual-chart{grid-template-rows:110px auto;padding:10px;gap:6px}.admin-shell .admin-record-list article{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.admin-shell .admin-record-list article button{font-size:12px;padding:5px 6px}.admin-shell .admin-event-list article>*{min-width:0;overflow-wrap:anywhere}}
