@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build narrated Cinderella picture films locally with FFmpeg and edge-tts."""
+import argparse
 import asyncio
 import json
 import subprocess
@@ -14,7 +15,6 @@ except ImportError:
     sys.exit('Install narration dependency: python -m pip install edge-tts==7.2.7')
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "scripts/film-sources/cinderella.json"
 VOICES = {"ru": "ru-RU-SvetlanaNeural", "uz": "uz-UZ-MadinaNeural", "en": "en-US-JennyNeural"}
 
 def run(*args):
@@ -28,16 +28,20 @@ def stamp(seconds):
     return f"{h:02}:{m:02}:{s:02}.{ms:03}"
 
 async def main():
+    parser = argparse.ArgumentParser(description="Render a classic picture film")
+    parser.add_argument("--story", choices=["cinderella", "snow-white"], default="cinderella")
+    args = parser.parse_args()
+    source_path = ROOT / "scripts/film-sources" / f"{args.story}.json"
     for tool in ("ffmpeg", "ffprobe"):
         if shutil.which(tool) is None:
             raise RuntimeError(f"Required executable missing: {tool}")
-    source = json.loads(SOURCE.read_text(encoding="utf-8"))
+    source = json.loads(source_path.read_text(encoding="utf-8"))
     scenes = source["scenes"]
     for scene in scenes:
         image = ROOT / "public" / scene["image"].lstrip("/")
         if not image.is_file():
             raise FileNotFoundError(image)
-    out = ROOT / "cartoon-build/cinderella"
+    out = ROOT / "cartoon-build" / args.story
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
         work = Path(temp)
