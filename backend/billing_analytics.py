@@ -59,7 +59,21 @@ def billing_summary(conn, start: datetime, end: datetime, now: datetime):
         WHERE o.provider='sandbox' AND o.created_at >= %s AND o.created_at < %s
         GROUP BY r.code ORDER BY count(*) FILTER (WHERE r.state='used') DESC,r.code LIMIT 100
     """,(start,end)).fetchall()
+    gifts = conn.execute("""
+        SELECT c.plan_id, count(*),
+          count(*) FILTER (WHERE o.state IN ('paid','partially_refunded','refunded')),
+          count(*) FILTER (WHERE c.state='redeemed'),
+          count(*) FILTER (WHERE c.state='available' AND c.expires_at > %s),
+          count(*) FILTER (WHERE c.state='expired' OR (c.state='available' AND c.expires_at <= %s)),
+          count(*) FILTER (WHERE o.state='refunded'),
+          COALESCE(sum(o.amount_minor) FILTER (WHERE o.state IN ('paid','partially_refunded','refunded')),0)
+        FROM billing_gift_orders g JOIN billing_gift_codes c ON c.id=g.gift_id
+        JOIN payment_orders o ON o.id=g.order_id
+        WHERE o.provider='sandbox' AND o.created_at >= %s AND o.created_at < %s
+        GROUP BY c.plan_id ORDER BY c.plan_id
+    """,(now,now,start,end)).fetchall()
     return {
+        "gifts":[{"plan":p,"orders":int(n),"paid":int(a),"redeemed":int(r),"available":int(v),"expired":int(e),"refunded":int(f),"gross_minor":int(g)} for p,n,a,r,v,e,f,g in gifts],
         "promotions":[{"code":code,"orders":int(n),"used":int(u),"reserved":int(p),"released":int(l),"discount_minor":int(d),"gross_minor":int(g)} for code,n,u,p,l,d,g in promotions],
         "promotion_limit":100,
         "daily":[{"day":d.isoformat(),"orders":int(n),"paid_orders":int(p),"gross_minor":int(g),"refund_minor":int(r),"net_minor":int(g)-int(r)} for d,n,p,g,r in daily],
