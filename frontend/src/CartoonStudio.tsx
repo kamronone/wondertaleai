@@ -31,11 +31,38 @@ const personalCopy={
 const safeLocalArt=(url:string)=>/^\/images\/[a-z0-9/_-]+\.(?:webp|png|jpe?g)$/i.test(url)&&!url.includes("..")?url:"/images/wondertale-hero.webp";
 
 const exportCopy={
- ru:{save:"Сохранить видеоряд",cancel:"Отменить экспорт",note:"Короткий видеоряд без звука: 3 секунды на сцену. Формат зависит от браузера.",error:"Не удалось создать видео.",unsupported:"Экспорт видео не поддерживается этим браузером.",ready:"Видео готово",download:"Скачать видео"},
- uz:{save:"Videoni saqlaş",cancel:"Bekor qiliş",note:"Ovozsiz qisqa video: har sahna 3 soniya. Format brauzerga boğliq.",error:"Video yaratib bölmadi.",unsupported:"Brauzer video eksportini qöllamaydi.",ready:"Video tayyor",download:"Videoni yuklaş"},
- en:{save:"Create video",cancel:"Cancel export",note:"Short silent montage: 3 seconds per scene. Format depends on the browser.",error:"Could not create video.",unsupported:"Video export is not supported by this browser.",ready:"Video ready",download:"Download video"}
+ ru:{save:"Сохранить видеоряд",cancel:"Отменить экспорт",note:"Видеоряд без звука. Формат зависит от браузера.",error:"Не удалось создать видео.",unsupported:"Экспорт видео не поддерживается этим браузером.",ready:"Видео готово",download:"Скачать видео"},
+ uz:{save:"Videoni saqlaş",cancel:"Bekor qiliş",note:"Ovozsiz video. Format brauzerga boğliq.",error:"Video yaratib bölmadi.",unsupported:"Brauzer video eksportini qöllamaydi.",ready:"Video tayyor",download:"Videoni yuklaş"},
+ en:{save:"Create video",cancel:"Cancel export",note:"Silent montage. Format depends on the browser.",error:"Could not create video.",unsupported:"Video export is not supported by this browser.",ready:"Video ready",download:"Download video"}
 } as const;
 
+const exportSettings={
+ ru:{duration:"Длительность сцены",seconds:"сек.",auto:"По тексту",captions:"Субтитры",estimated:"Примерная длительность",preview:"Предпросмотр",on:"Включены",off:"Выключены"},
+ uz:{duration:"Sahna davomiyligi",seconds:"son.",auto:"Matn böyiça",captions:"Subtitrlar",estimated:"Tahminiy davomiylik",preview:"Oldindan köriş",on:"Yoqilgan",off:"Öçirilgan"},
+ en:{duration:"Scene duration",seconds:"sec.",auto:"Reading time",captions:"Captions",estimated:"Estimated duration",preview:"Preview",on:"On",off:"Off"}
+} as const;
+type ExportDuration=3|6|10|"auto";
+function exportSceneSeconds(scene:CartoonScene,duration:ExportDuration):number{
+ return duration==="auto"?Math.min(30,Math.max(8,scene.seconds)):duration;
+}
+function captionPages(ctx:CanvasRenderingContext2D,text:string):string[][]{
+ ctx.font="bold 21px sans-serif";
+ const words=text.replace(/\s+/gu," ").trim().split(" ").filter(Boolean);
+ const lines:string[]=[];let line="";
+ for(const word of words){
+  const candidate=line?line+" "+word:word;
+  if(ctx.measureText(candidate).width<=580){line=candidate;continue;}
+  if(line){lines.push(line);line="";}
+  for(const char of Array.from(word)){
+   if(ctx.measureText(line+char).width>580&&line){lines.push(line);line="";}
+   line+=char;
+  }
+ }
+ if(line)lines.push(line);
+ const pages:string[][]=[];
+ for(let i=0;i<lines.length;i+=3)pages.push(lines.slice(i,i+3));
+ return pages;
+}
 function localVideoFormat(){
  if(typeof MediaRecorder==="undefined"||typeof HTMLCanvasElement==="undefined"||typeof HTMLCanvasElement.prototype.captureStream!=="function")return null;
  return ["video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(type=>MediaRecorder.isTypeSupported(type))??null;
@@ -59,7 +86,7 @@ function waitFrame(ms:number,signal:AbortSignal):Promise<void>{
   signal.addEventListener("abort",abort,{once:true});
  });
 }
-async function recordLocalMontage(scenes:CartoonScene[],signal:AbortSignal,onProgress:(n:number)=>void):Promise<Blob>{
+async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,captions:boolean,signal:AbortSignal,onProgress:(n:number)=>void):Promise<Blob>{
  const mime=localVideoFormat();
  if(!mime||!scenes.length||scenes.length>20||signal.aborted)throw new Error("Unavailable");
  const canvas=document.createElement("canvas");canvas.width=640;canvas.height=480;
@@ -83,11 +110,23 @@ async function recordLocalMontage(scenes:CartoonScene[],signal:AbortSignal,onPro
    const frame=image;
    const scale=Math.min(640/frame.naturalWidth,480/frame.naturalHeight);
    const w=frame.naturalWidth*scale,h=frame.naturalHeight*scale;
-   const draw=()=>{ctx.fillStyle="#201849";ctx.fillRect(0,0,640,480);ctx.drawImage(frame,(640-w)/2,(480-h)/2,w,h);};
+   const seconds=exportSceneSeconds(scene,duration);
+   const pages=captions?captionPages(ctx,scene.text):[];
+   const started=performance.now();
+   const draw=()=>{
+    ctx.fillStyle="#201849";ctx.fillRect(0,0,640,480);ctx.drawImage(frame,(640-w)/2,(480-h)/2,w,h);
+    if(pages.length){
+     const fraction=Math.min(.999,Math.max(0,(performance.now()-started)/(seconds*1000)));
+     const lines=pages[Math.floor(fraction*pages.length)];
+     ctx.fillStyle="rgba(20,16,34,.9)";ctx.fillRect(0,480-lines.length*28-22,640,lines.length*28+22);
+     ctx.font="bold 21px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";
+     lines.forEach((line,i)=>ctx.fillText(line,320,480-lines.length*28-8+i*28,580));
+    }
+   };
    draw();
    if(i===0)active.start(1000);
    const refresh=window.setInterval(draw,100);
-   try{await waitFrame(3000,signal);}finally{window.clearInterval(refresh);}
+   try{await waitFrame(seconds*1000,signal);}finally{window.clearInterval(refresh);}
    onProgress(Math.round((i+1)/scenes.length*100));
   }
   if(active.state!=="inactive")active.stop();
@@ -108,6 +147,11 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const [error,setError]=useState(false);
  const [result,setResult]=useState<{url:string;ext:string}|null>(null);
  const supported=Boolean(localVideoFormat());
+ const settings=exportSettings[lang];
+ const [duration,setDuration]=useState<ExportDuration>(6);
+ const [captions,setCaptions]=useState(true);
+ const total=scenes.reduce((sum,scene)=>sum+exportSceneSeconds(scene,duration),0);
+ const totalLabel=Math.floor(total/60)+":"+String(total%60).padStart(2,"0");
  useEffect(()=>{
   const hide=()=>{if(document.hidden)controller.current?.abort();};
   document.addEventListener("visibilitychange",hide);
@@ -119,7 +163,7 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
   if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
   const job=new AbortController();controller.current=job;
   try{
-   const blob=await recordLocalMontage(scenes,job.signal,n=>{if(controller.current===job)setProgress(n);});
+   const blob=await recordLocalMontage(scenes,duration,captions,job.signal,n=>{if(controller.current===job)setProgress(n);});
    if(controller.current!==job||job.signal.aborted)return;
    const url=URL.createObjectURL(blob);objectUrl.current=url;setResult({url,ext:blob.type.startsWith("video/mp4")?"mp4":"webm"});
   }catch{if(controller.current===job&&!job.signal.aborted)setError(true);}
@@ -127,10 +171,22 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  }
  return <div className="form-card" style={{display:"grid",gap:8,padding:10,margin:0}}>
   <p className="cartoon-notice">{supported?t.note:t.unsupported}</p>
+  {supported&&<div style={{display:"grid",gap:8}}>
+   <label className="cartoon-select">{settings.duration}
+    <select disabled={busy} value={duration} onChange={e=>setDuration(e.target.value==="auto"?"auto":Number(e.target.value) as ExportDuration)}>
+     {[3,6,10].map(value=><option key={value} value={value}>{value} {settings.seconds}</option>)}
+     <option value="auto">{settings.auto}</option>
+    </select>
+   </label>
+   <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
+    <input type="checkbox" checked={captions} disabled={busy} onChange={e=>setCaptions(e.target.checked)}/>{settings.captions}
+   </label>
+   <p className="cartoon-notice">{settings.estimated}: {totalLabel}</p>
+  </div>}
   {supported&&<button type="button" className="secondary-button cartoon-offline-button" onClick={()=>busy?controller.current?.abort():void save()}>{busy?t.cancel:t.save}</button>}
   {busy&&<progress max={100} value={progress} aria-label={t.save}/>}
   {error&&<p className="cartoon-notice" role="alert">{t.error}</p>}
-  {result&&<><p className="cartoon-notice" role="status">{t.ready}</p><a className="secondary-button cartoon-offline-button" href={result.url} download={"ertakcha-story."+result.ext}>{t.download}</a></>}
+  {result&&<><p className="cartoon-notice" role="status">{t.ready}</p><video aria-label={settings.preview} src={result.url} controls playsInline preload="metadata" style={{width:"100%",maxHeight:320,borderRadius:12}}/><a className="secondary-button cartoon-offline-button" href={result.url} download={"ertakcha-story."+result.ext}>{t.download}</a></>}
  </div>;
 }
 
