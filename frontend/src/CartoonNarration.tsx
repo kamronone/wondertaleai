@@ -10,10 +10,12 @@ const copy={
  en:{title:"Parent narration",note:"Recording stays in this page's memory. Read from the first scene in export order. Up to 120 seconds.",record:"Record voice",stop:"Stop",remove:"Delete recording",preview:"Listen to recording",consent:"I allow microphone access for this recording.",error:"Could not record audio. Check microphone permission.",unsupported:"Voice recording is unavailable in this browser.",waiting:"Waiting for microphone permission",ready:"Recording ready"}
 } as const;
 
-export default function CartoonNarration({lang,disabled,blob,onChange,onStart,onActivity}:{
- lang:Lang;disabled:boolean;blob:Blob|null;onChange:(blob:Blob|null)=>void;onStart:()=>void;onActivity:(active:boolean)=>void
+export default function CartoonNarration({lang,disabled,blob,onChange,onStart,onActivity,maxSeconds=MAX_NARRATION_SECONDS,sceneText}:{
+ lang:Lang;disabled:boolean;blob:Blob|null;onChange:(blob:Blob|null)=>void;onStart:()=>void;onActivity:(active:boolean)=>void;maxSeconds?:number;sceneText?:string
 }){
  const t=copy[lang],format=narrationFormat();
+ const limit=Math.max(1,Math.min(MAX_NARRATION_SECONDS,maxSeconds));
+ const sceneNote={ru:"Озвучьте выбранную сцену. Запись остаётся только в памяти страницы. Лимит: ",uz:"Tanlangan sahnani ovozli öqing. Yozuv faqat sahifa xotirasida qoladi. Limit: ",en:"Narrate the selected scene. The recording stays in page memory only. Limit: "}[lang]+limit+" "+{ru:"сек.",uz:"son.",en:"sec."}[lang];
  const supported=Boolean(format&&navigator.mediaDevices?.getUserMedia&&typeof AudioContext!=="undefined");
  const [consent,setConsent]=useState(false);
  const [phase,setPhase]=useState<"idle"|"waiting"|"recording">("idle");
@@ -72,9 +74,9 @@ export default function CartoonNarration({lang,disabled,blob,onChange,onStart,on
    recorder.start(250);
    const started=performance.now();setPhase("recording");
    job.timer=window.setInterval(()=>{
-    const elapsed=Math.min(MAX_NARRATION_SECONDS,Math.floor((performance.now()-started)/1000));
+    const elapsed=Math.min(limit,Math.floor((performance.now()-started)/1000));
     setSeconds(elapsed);
-    if(elapsed>=MAX_NARRATION_SECONDS)stop();
+    if(elapsed>=limit)stop();
    },200);
   }catch{
    stopNarrationTracks(job.stream);if(active.current!==job)return;
@@ -83,7 +85,8 @@ export default function CartoonNarration({lang,disabled,blob,onChange,onStart,on
  }
  return <details className="wt-narration">
   <summary>{t.title}</summary>
-  <p className="cartoon-notice">{supported?t.note:t.unsupported}</p>
+  <p className="cartoon-notice">{supported?(sceneText!==undefined?sceneNote:t.note):t.unsupported}</p>
+  {supported&&sceneText!==undefined&&<p className="wt-narration-scene-text">{sceneText}</p>}
   {supported&&<>
    <label className="wt-narration-consent"><input type="checkbox" checked={consent} disabled={disabled||phase!=="idle"} onChange={e=>setConsent(e.target.checked)}/><span>{t.consent}</span></label>
    <div className="wt-narration-actions">
