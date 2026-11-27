@@ -201,3 +201,23 @@ def test_provider_lifecycle(db,provider):
     assert db.execute("SELECT state FROM payment_orders WHERE id=%s",(oid,)).fetchone()[0]=="paid"
     assert db.execute("SELECT count(*) FROM subscriptions WHERE owner_id='alice'").fetchone()[0]==1
     assert db.execute("SELECT count(*) FROM billing_order_entitlements WHERE order_id=%s",(oid,)).fetchone()[0]==1
+
+
+def test_cross_account_billing_isolation(db):
+    from billing_history import get_order,list_orders
+    from billing_refunds import request_refund,list_refunds
+    from billing_orders import create_sandbox_order,confirm_sandbox_order
+    from uuid import UUID
+    now=datetime.now(timezone.utc)
+    order=UUID(create_sandbox_order(db,"alice","plus","isolation-order"))
+    assert confirm_sandbox_order(db,"alice",order,"isolation-event","isolation-tx",3900000,now)
+    assert get_order(db,"alice",order)["id"]==str(order)
+    assert get_order(db,"bob",order) is None
+    assert list_orders(db,"bob")["items"]==[]
+    with pytest.raises(LookupError):
+        request_refund(db,"bob",order,3900000,"foreign-refund")
+    refund=request_refund(db,"alice",order,3900000,"own-refund")
+    assert refund["created"]
+    assert len(list_refunds(db,"alice",order))==1
+    assert list_refunds(db,"bob",order)==[]
+    assert db.execute("SELECT count(*) FROM refunds WHERE order_id=%s",(order,)).fetchone()[0]==1
