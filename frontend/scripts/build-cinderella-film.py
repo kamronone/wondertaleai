@@ -34,7 +34,13 @@ async def main():
     parser.add_argument("--story", choices=["cinderella", "snow-white", "rapunzel"], default="cinderella")
     parser.add_argument("--music", type=Path, help="Local background audio with cleared usage rights")
     parser.add_argument("--music-volume", type=float, default=0.10)
+    parser.add_argument("--effects-dir", type=Path, help="Directory containing licensed scene effects named page-N.wav")
+    parser.add_argument("--effects-volume", type=float, default=0.12)
     args = parser.parse_args()
+    if not 0 <= args.effects_volume <= 0.25:
+        parser.error("--effects-volume must be between 0 and 0.25")
+    if args.effects_dir and not args.effects_dir.is_dir():
+        parser.error("--effects-dir must be an existing directory")
     if not 0 <= args.music_volume <= 0.25:
         parser.error("--music-volume must be between 0 and 0.25")
     if args.music and not args.music.is_file():
@@ -77,7 +83,14 @@ async def main():
                     camera = base + f",zoompan=z='{zoom}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=384x512:fps=25"
                     fade_start = max(0, duration + 0.8 - 0.25)
                     camera += f",fade=t=in:st=0:d=0.25,fade=t=out:st={fade_start}:d=0.25"
-                run("ffmpeg", "-y", "-v", "error", "-loop", "1", "-framerate", "25", "-i", str(image), "-i", str(audio), "-vf", camera, "-af", "apad=pad_dur=0.8", "-t", str(duration+0.8), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
+                effect = args.effects_dir / f"page-{i}.wav" if args.effects_dir else None
+                audio_args = ["-map", "0:v:0", "-map", "1:a:0", "-af", "apad=pad_dur=0.8"]
+                if effect and effect.is_file():
+                    mix = (f"[1:a]aresample=48000,aformat=channel_layouts=mono,apad=pad_dur=0.8[voice];"
+                           f"[2:a]aresample=48000,aformat=channel_layouts=mono,volume={args.effects_volume},adelay=250:all=1[fx];"
+                           "[voice][fx]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95:latency=1[mix]")
+                    audio_args = ["-i", str(effect), "-filter_complex", mix, "-map", "0:v:0", "-map", "[mix]"]
+                run("ffmpeg", "-y", "-v", "error", "-loop", "1", "-framerate", "25", "-i", str(image), "-i", str(audio), *audio_args, "-vf", camera, "-t", str(duration+0.8), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
                 actual = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(segment)))
                 cues.extend([f"{stamp(offset)} --> {stamp(offset+min(duration,actual))}", narration, ""])
                 offset += actual
