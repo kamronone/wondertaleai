@@ -16,7 +16,7 @@ def create_sandbox_order(conn, owner_id, plan_id, idempotency_key):
         FROM payment_orders WHERE owner_id=%s AND idempotency_key=%s""",
         (owner_id,idempotency_key)).fetchone()
     if row:
-        if tuple(row[1:]) != (plan.id,plan.version,plan.price_minor,"sandbox"):
+        if tuple(row[1:]) != (plan.id,plan.version,plan.price_minor,"sandbox") or conn.execute("SELECT 1 FROM billing_gift_orders WHERE order_id=%s",(row[0],)).fetchone():
             raise ValueError("Idempotency conflict")
         return str(row[0])
     order_id = uuid4()
@@ -54,6 +54,16 @@ def confirm_sandbox_order(conn, owner_id, order_id, event_id, transaction_id, am
         return False
     if row[3] != "pending":
         raise ValueError("Invalid order state")
+    gift = conn.execute("""SELECT g.id,g.state,g.expires_at,g.purchaser_id,g.plan_id,g.plan_version
+        FROM billing_gift_orders go JOIN billing_gift_codes g ON g.id=go.gift_id
+        WHERE go.order_id=%s FOR UPDATE OF g""",(order_id,)).fetchone()
+    if gift:
+        if gift[1]!="pending" or now>=gift[2] or tuple(gift[3:])!=(owner_id,row[0],row[1]):
+            raise ValueError("Invalid gift order")
+        conn.execute("UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s",(transaction_id,order_id))
+        conn.execute("UPDATE billing_gift_codes SET state='available' WHERE id=%s",(gift[0],))
+        conn.execute("UPDATE payment_events SET processed_at=%s WHERE provider='sandbox' AND event_id=%s",(now,event_id))
+        return True
     expire_subscription(conn,owner_id,now)
     active = conn.execute("""SELECT id,plan_id,plan_version,period_end,cancel_at_period_end
         FROM subscriptions WHERE owner_id=%s AND status='active' FOR UPDATE""",
