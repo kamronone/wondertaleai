@@ -29,6 +29,13 @@ export default function BillingDashboard({api,token}:{api:string;token:string}){
    .catch(()=>{if(!controller.signal.aborted)setState("error");});
   return ()=>controller.abort();
  },[api,token,start,end]);
+ function exportCsv(){
+  if(!data)return;
+  const rows=[["Mode","Basis","UTC date","Orders","Paid orders","Gross UZS","Refund UZS","Net UZS"],...data.daily.map(d=>["sandbox","order_creation_cohort_current_state",d.day,d.orders,d.paid_orders,(d.gross_minor/100).toFixed(2),(d.refund_minor/100).toFixed(2),(d.net_minor/100).toFixed(2)])];
+  const escapeCell=(value:string|number)=>{let s=String(value);if(typeof value==="string"&&/^[=+@\-\t\r]/.test(s))s="\'"+s;return "\""+s.replace(/"/g,"\"\"")+"\"";};
+  const blob=new Blob(["\uFEFF"+rows.map(row=>row.map(escapeCell).join(";")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="ertakcha-sandbox-"+start+"-"+end+".csv";document.body.appendChild(a);a.click();a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }
  const buckets=new Map<string,{gross:number;refund:number;net:number}>();
  for(const d of data?.daily??[]){const key=group==="month"?d.day.slice(0,7):d.day;const b=buckets.get(key)??{gross:0,refund:0,net:0};b.gross+=d.gross_minor;b.refund+=d.refund_minor;b.net+=d.net_minor;buckets.set(key,b);}
  const points=Array.from(buckets.entries()).sort(([a],[b])=>a.localeCompare(b));
@@ -45,6 +52,7 @@ export default function BillingDashboard({api,token}:{api:string;token:string}){
   {state==="loading"&&<p role="status">Загрузка…</p>}
   {state==="error"&&<p role="alert">Статистика недоступна. Проверьте доступ и период.</p>}
   {data&&<>
+   <div className="billing-filters"><button type="button" onClick={exportCsv}>Экспорт CSV (Excel)</button></div>
    <div className="billing-metrics">{[
     ["Общий объём",money(data.gross_minor)],["После возвратов",money(data.net_minor)],
     ["Возвраты",money(data.refund_minor)],["Заказы",String(data.orders)],
