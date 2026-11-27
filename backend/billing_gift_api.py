@@ -30,11 +30,20 @@ class PrivateGiftRoute(APIRoute):
                                     headers={"Cache-Control":"no-store"})
         return private_handler
 
-def build_gift_router(owner_dependency, connection_factory):
+def build_gift_router(owner_dependency, connection_factory, *, distributed_limiter=None):
     router = APIRouter(prefix="/api/billing/gifts",route_class=PrivateGiftRoute)
     attempts={}
     lock=Lock()
     def throttle(owner):
+        if distributed_limiter is not None:
+            from billing_rate_limit import RateLimitUnavailable
+            try:
+                retry=distributed_limiter.retry_after('gift-mutation',owner,limit=10)
+            except RateLimitUnavailable:
+                raise HTTPException(503,'Rate limiter unavailable',headers={'Cache-Control':'no-store'}) from None
+            if retry:
+                raise HTTPException(429,'Too many requests',headers={'Retry-After':str(retry),'Cache-Control':'no-store'})
+            return
         now=monotonic()
         with lock:
             for key in list(attempts):
