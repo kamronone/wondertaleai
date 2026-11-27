@@ -1,6 +1,6 @@
 /** Owner-scoped image transport. Never put bearer tokens in img src URLs. */
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export type PrivateIllustrationResult={blobUrl:string}|null;
+export type PrivateIllustrationResult={blobUrl:string;expiresAt?:number}|{status:"pending_review"|"needs_review"}|null;
 
 export async function loadPrivatePageIllustration(
   api:string,token:string,bookId:string,pageNumber:number,signal:AbortSignal,
@@ -15,10 +15,22 @@ export async function loadPrivatePageIllustration(
   if(metadata.status===404)return null;
   if(!metadata.ok)throw new Error("Illustration lookup unavailable");
   const raw:unknown=await metadata.json();
-  if(!raw||typeof raw!=="object"||!("job_id" in raw)||
-      typeof raw.job_id!=="string"||!UUID.test(raw.job_id))
+  if(!raw||typeof raw!=="object")throw new Error("Invalid private illustration metadata");
+  if("status" in raw&&(raw.status==="pending_review"||raw.status==="needs_review")&&!("job_id" in raw))
+    return {status:raw.status};
+  if(!("job_id" in raw)||typeof raw.job_id!=="string"||!UUID.test(raw.job_id))
     throw new Error("Invalid private illustration metadata");
-  const response=await fetcher(api+"/api/illustrations/media/"+raw.job_id,options);
+  const personal="kind" in raw&&raw.kind==="personal";
+  if("kind" in raw&&!personal)throw new Error("Unknown illustration kind");
+  let expiresAt:number|undefined;
+  if(personal){
+    if(!("expires_at" in raw)||typeof raw.expires_at!=="number"||!Number.isSafeInteger(raw.expires_at))
+      throw new Error("Invalid personal illustration expiry");
+    expiresAt=raw.expires_at*1000;
+    if(expiresAt<=Date.now())return null;
+    if(expiresAt>Date.now()+900_000)throw new Error("Invalid personal illustration lifetime");
+  }
+  const response=await fetcher(api+(personal?"/api/photos/character-pages/":"/api/illustrations/media/")+raw.job_id,options);
   if(response.status===404)return null;
   if(!response.ok)throw new Error("Private illustration unavailable");
   if(!response.headers.get("content-type")?.toLowerCase().startsWith("image/png"))
@@ -38,7 +50,8 @@ export async function loadPrivatePageIllustration(
   if(width<1||height<1||width>2048||height>2048)
     throw new Error("Invalid illustration dimensions");
   if(signal.aborted)throw new DOMException("Aborted","AbortError");
+  if(expiresAt!==undefined&&expiresAt<=Date.now())return null;
   const url=URL.createObjectURL(file);
   if(signal.aborted){URL.revokeObjectURL(url);throw new DOMException("Aborted","AbortError");}
-  return {blobUrl:url};
+  return expiresAt===undefined?{blobUrl:url}:{blobUrl:url,expiresAt};
 }
