@@ -64,9 +64,12 @@ def confirm_sandbox_order(conn, owner_id, order_id, event_id, transaction_id, am
         raise ValueError("Renewal available after current period ends; no early charges")
     conn.execute("""UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s""",
         (transaction_id,order_id))
+    sid = uuid4()
     conn.execute("""INSERT INTO subscriptions
         (id,owner_id,plan_id,plan_version,status,period_start,period_end)
         VALUES (%s,%s,%s,%s,'active',%s,%s)""",
-        (uuid4(),owner_id,row[0],row[1],now,period_end(now)))
+        (sid,owner_id,row[0],row[1],now,period_end(now)))
+    from billing_entitlements import link_entitlement
+    link_entitlement(conn,order_id,sid)
     conn.execute("UPDATE payment_events SET processed_at=%s WHERE provider='sandbox' AND event_id=%s",(now,event_id))
     return True
