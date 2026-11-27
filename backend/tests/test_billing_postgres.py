@@ -118,3 +118,42 @@ def test_financial_summary(db):
     assert sum(d["net_minor"] for d in report["daily"])==report["net_minor"]
     assert report["gifts"][0]["refunded"]==1
     assert report["promotions"]==[]
+
+
+def test_promotion_lifecycle(db):
+    from datetime import timedelta
+    from billing_promotion_admin import create_promotion, set_promotion_enabled
+    from billing_promotions import quote_promotion, create_promotional_order, cancel_promotional_order
+    now=datetime.now(timezone.utc)
+    create_promotion(db,code="TEST20",kind="percent",value=20,plan_id="plus",
+                     starts_at=now-timedelta(days=1),ends_at=now+timedelta(days=1),max_uses=1)
+    with pytest.raises(ValueError):
+        quote_promotion(db,"alice","plus","TEST20",now)
+    set_promotion_enabled(db,"TEST20",True,now)
+    assert quote_promotion(db,"alice","plus","test20",now)["total_minor"]==3120000
+    with pytest.raises(ValueError):
+        quote_promotion(db,"alice","family","TEST20",now)
+    first=create_promotional_order(db,"alice","plus","TEST20","promo-one",now)
+    assert not create_promotional_order(db,"alice","plus","TEST20","promo-one",now)["created"]
+    with pytest.raises(ValueError):
+        quote_promotion(db,"bob","plus","TEST20",now)
+    assert cancel_promotional_order(db,"alice",first["order_id"])=="released"
+    second=create_promotional_order(db,"alice","plus","TEST20","promo-two",now)
+    assert confirm_sandbox_order(db,"alice",second["order_id"],"promo-event","promo-tx",3120000,now)
+    assert not confirm_sandbox_order(db,"alice",second["order_id"],"promo-event","promo-tx",3120000,now)
+    assert db.execute("SELECT state FROM billing_promotion_redemptions WHERE order_id=%s",(second["order_id"],)).fetchone()[0]=="used"
+    with pytest.raises(ValueError):
+        quote_promotion(db,"bob","plus","TEST20",now)
+
+
+def test_quota_exhaustion(db):
+    now=datetime.now(timezone.utc)
+    order=create_sandbox_order(db,"alice","plus","quota-order")
+    assert confirm_sandbox_order(db,"alice",order,"quota-event","quota-tx",3900000,now)
+    for i in range(20):
+        key=f"quota_request_{i:04}"
+        assert reserve_generation(db,"alice",key,now)["remaining"]==19-i
+        assert settle_generation(db,"alice",key,"saved")
+    with pytest.raises(PermissionError):
+        reserve_generation(db,"alice","quota_request_extra",now)
+    assert not reserve_generation(db,"alice","quota_request_0000",now)["may_start"]
