@@ -48,14 +48,15 @@ def preview_period(conn, owner_id: str, plan_id: str, now: datetime) -> dict:
         raise ValueError("Paid plan required")
     now = utc(now)
     current = subscription_status(conn, owner_id, now)
-    if current["subscription_status"] == "active":
+    eligible = current["subscription_status"] != "active"
+    if not eligible:
         if current["plan"] != plan_id:
             raise ValueError("Plan changes require a separate proration policy")
         start = current["period_end"]
     else:
         start = now
     return {"plan":plan.id,"price_minor":plan.price_minor,"currency":plan.currency,
-            "period_start":start,"period_end":period_end(start),"payments_enabled":False}
+            "period_start":start,"period_end":period_end(start),"renewal_eligible_now":eligible,"payments_enabled":False}
 
 # Activation is intentionally absent until verified payment events and
 # an atomic order-to-entitlement ledger are implemented.
