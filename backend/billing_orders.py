@@ -71,5 +71,7 @@ def confirm_sandbox_order(conn, owner_id, order_id, event_id, transaction_id, am
         (sid,owner_id,row[0],row[1],now,period_end(now)))
     from billing_entitlements import link_entitlement
     link_entitlement(conn,order_id,sid)
+    from billing_promotions import settle_promotion
+    settle_promotion(conn,order_id)
     conn.execute("UPDATE payment_events SET processed_at=%s WHERE provider='sandbox' AND event_id=%s",(now,event_id))
     return True
