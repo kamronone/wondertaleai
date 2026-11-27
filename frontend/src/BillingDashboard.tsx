@@ -13,7 +13,7 @@ type Summary={
 };
 const day=(offset:number)=>new Date(Date.now()+offset*86400000).toISOString().slice(0,10);
 const money=(n:number)=>new Intl.NumberFormat("ru-RU",{maximumFractionDigits:2}).format(n/100)+" сум";
-export default function BillingDashboard({api,token}:{api:string;token:string}){
+export default function BillingDashboard({api,token,demo=false}:{api:string;token:string;demo?:boolean}){
  const [group,setGroup]=useState<"day"|"month">("day");
  const [start,setStart]=useState(()=>day(-29));
  const [end,setEnd]=useState(()=>day(0));
@@ -24,6 +24,11 @@ export default function BillingDashboard({api,token}:{api:string;token:string}){
   setData(null);setState("loading");
   const from=new Date(start+"T00:00:00Z"),to=new Date(end+"T00:00:00Z");
   to.setUTCDate(to.getUTCDate()+1);
+  if(demo){
+   const daily=Array.from({length:7},(_,i)=>({day:day(i-6),orders:4,paid_orders:3,gross_minor:15700000,refund_minor:i===0?3900000:0,net_minor:15700000-(i===0?3900000:0)})).filter(d=>d.day>=start&&d.day<=end);
+   const gross=daily.reduce((a,d)=>a+d.gross_minor,0),refund=daily.reduce((a,d)=>a+d.refund_minor,0);
+   setData({mode:"sandbox",currency:"UZS",amount_unit:"tiyin",orders:daily.length*4,paid_orders:daily.length*3,gross_minor:gross,refund_minor:refund,net_minor:gross-refund,order_conversion:daily.length?0.75:null,active_subscriptions:20,monthly_list_value_minor:98000000,active_plans:[{plan:"plus",count:15,monthly_list_value_minor:58500000},{plan:"family",count:5,monthly_list_value_minor:39500000}],daily,promotions:[],promotion_limit:100,gifts:[]});setState("ready");return;
+  }
   if(!token||!api||!Number.isFinite(+from)||!Number.isFinite(+to)||+to<=+from||+to-+from>366*86400000){setState("error");return;}
   const query=new URLSearchParams({start:from.toISOString(),end:to.toISOString()});
   fetch(api.replace(/\/$/,"")+"/api/billing/admin/analytics/summary?"+query,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller.signal})
@@ -31,7 +36,7 @@ export default function BillingDashboard({api,token}:{api:string;token:string}){
    .then(v=>{if(controller.signal.aborted)return;if(v.mode!=="sandbox"||v.currency!=="UZS"||v.amount_unit!=="tiyin"||!Array.isArray(v.active_plans)||!Array.isArray(v.daily)||!Array.isArray(v.promotions)||!Array.isArray(v.gifts))throw Error("Invalid summary");setData(v);setState("ready");})
    .catch(()=>{if(!controller.signal.aborted)setState("error");});
   return ()=>controller.abort();
- },[api,token,start,end]);
+ },[api,token,start,end,demo]);
  function exportCsv(){
   if(!data)return;
   const rows=[["Mode","Basis","UTC date","Orders","Paid orders","Gross UZS","Refund UZS","Net UZS"],...data.daily.map(d=>["sandbox","order_creation_cohort_current_state",d.day,d.orders,d.paid_orders,(d.gross_minor/100).toFixed(2),(d.refund_minor/100).toFixed(2),(d.net_minor/100).toFixed(2)])];
@@ -44,7 +49,7 @@ export default function BillingDashboard({api,token}:{api:string;token:string}){
  const points=Array.from(buckets.entries()).sort(([a],[b])=>a.localeCompare(b));
  const max=Math.max(1,...points.flatMap(([,p])=>[p.gross,p.refund,Math.abs(p.net)]));
  return <section className="billing-dashboard">
-  <h2>Финансовая аналитика</h2>
+  <h2>Финансовая аналитика</h2>{demo&&<p role="status">ДЕМО · вымышленные данные · без подключения к серверу</p>}
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
   <div className="billing-filters">
    <label>С<input type="date" value={start} max={end} onChange={e=>setStart(e.target.value)}/></label>
