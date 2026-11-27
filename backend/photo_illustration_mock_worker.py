@@ -18,6 +18,7 @@ from photo_illustration_review import (
 )
 from private_photo_preview import render_local_story_page
 from private_illustration_media import normalize_private_illustration
+from private_reference_image_edits import build_reference_edit_prompt
 
 
 def save_mock_photo_page(
@@ -52,13 +53,17 @@ def save_mock_photo_page(
     import json
     with db.connection() as c:
         story_row=db.sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(book,owner)).fetchone()
-    if not story_row:
+        request_row=db.sql(c,"SELECT style,hero_mode FROM photo_illustration_requests WHERE id=? AND owner_id=? AND status='pending_review'",(rid,owner)).fetchone()
+    if not story_row or not request_row:
         raise PhotoDryRunDenied("Private book is unavailable")
     try:
         story=json.loads(story_row[0])
         pages=story["pages"]
-        scene=plan_story_illustrations(book,[item["text"] for item in pages],"storybook")[page-1].scene
+        style,hero_mode=request_row
+        scene=plan_story_illustrations(book,[item["text"] for item in pages],style)[page-1].scene
         scene_number=SCENES.index(scene)+1
+        if build_reference_edit_prompt(scene_number,style,hero_mode)!=prompt:
+            raise ValueError("Approved scene changed")
         png=normalize_private_illustration(render_local_story_page(photo,page,len(pages),scene_number=scene_number))
     except (ValueError,TypeError,KeyError,IndexError):
         raise PhotoDryRunDenied("Mock illustration failed validation")
@@ -66,29 +71,31 @@ def save_mock_photo_page(
         raise PhotoDryRunDenied("Mock image moderation rejected the output")
     _require_local_review_gate()
     fresh=_current_snapshot(rid)
-    if fresh[0]!=owner or fresh[1]!=digest or fresh[2]!=book or fresh[3]!=page or fresh[6]!=expires:
+    if fresh[0]!=owner or fresh[1]!=digest or fresh[2]!=book or fresh[3]!=page or fresh[5]!=prompt or fresh[6]!=expires:
         raise PhotoDryRunDenied("Reference or request changed during mock processing")
     now=int(time.time())
     sha=hashlib.sha256(png).hexdigest()
     with db.connection() as c:
         if db.IS_PG:
-            locked=db.sql(c,"SELECT owner_id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+            locked=db.sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
             if not locked:
                 raise PhotoDryRunDenied("Parent no longer exists")
         else:
             c.execute("BEGIN IMMEDIATE")
         _require_local_review_gate()
-        row=db.sql(c,"SELECT status,reference_sha256,expires_at FROM photo_illustration_requests "
+        row=db.sql(c,"SELECT status,reference_sha256,expires_at,style,hero_mode FROM photo_illustration_requests "
                        "WHERE id=? AND owner_id=? AND book_id=? AND page_number=?",
                    (rid,owner,book,page)).fetchone()
         ref=db.sql(c,"SELECT sha256,jpeg_bytes,expires_at FROM photo_reference_temp "
                        "WHERE owner_id=? AND expires_at>?",(owner,now)).fetchone()
+        current_book=db.sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(book,owner)).fetchone()
         if (not row or row[0]!="pending_review" or row[1]!=digest
-            or row[2]<=now or not ref or ref[0]!=digest or ref[2]<row[2]
+            or row[2]!=expires or row[2]<=now or row[3]!=style or row[4]!=hero_mode
+            or not current_book or current_book[0]!=story_row[0]
+            or not ref or ref[0]!=digest or ref[2]<row[2]
             or not hmac.compare_digest(hashlib.sha256(bytes(ref[1])).hexdigest(),digest)
             or not db.photo_consent_active(owner,c)
-            or not db.external_photo_transfer_consent_active(owner,c)
-            or not db.sql(c,"SELECT id FROM books WHERE id=? AND owner_id=?",(book,owner)).fetchone()):
+            or not db.external_photo_transfer_consent_active(owner,c)):
             raise PhotoDryRunDenied("Private reference permission expired")
         existing=db.sql(c,"SELECT sha256 FROM photo_mock_assets WHERE request_id=? AND owner_id=?",
                         (rid,owner)).fetchone()
