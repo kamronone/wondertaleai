@@ -14,7 +14,12 @@ type Summary={
 const day=(offset:number)=>new Date(Date.now()+offset*86400000).toISOString().slice(0,10);
 const money=(n:number)=>new Intl.NumberFormat("ru-RU",{maximumFractionDigits:2}).format(n/100)+" сум";
 
-type AdminSection="finance"|"users"|"content"|"ai";
+type AdminSection="finance"|"users"|"content"|"ai"|"audit"|"system";
+type DemoRole="admin"|"moderator"|"viewer";
+type DemoAudit={id:number;time:string;role:DemoRole;action:string;target:string};
+const roleLabels:Record<DemoRole,string>={admin:"Администратор",moderator:"Модератор",viewer:"Наблюдатель"};
+const canManageUsers=(role:DemoRole)=>role==="admin";
+const canModerate=(role:DemoRole)=>role==="admin"||role==="moderator";
 type DemoUser={id:string;plan:"free"|"plus"|"family";status:"active"|"paused";books:number};
 type DemoContent={id:string;title:string;kind:"story"|"film";status:"review"|"approved"|"hidden"};
 const demoUsers=():DemoUser[]=>Array.from({length:24},(_,i)=>({id:"DEMO-"+String(i+1).padStart(3,"0"),plan:i%5===0?"family":i%3===0?"plus":"free",status:i%7===0?"paused":"active",books:(i*3)%17}));
@@ -25,37 +30,51 @@ const demoContent=():DemoContent[]=>[
  {id:"C-04",title:"Лесное приключение",kind:"film",status:"review"},
  {id:"C-05",title:"Звёздный корабль",kind:"story",status:"hidden"}
 ];
-const sectionNames:Record<AdminSection,string>={finance:"Финансы",users:"Пользователи",content:"Контент",ai:"AI и расходы"};
+const sectionNames:Record<AdminSection,string>={finance:"Финансы",users:"Пользователи",content:"Контент",ai:"AI и расходы",audit:"Журнал",system:"Система"};
 const planNames={free:"Free",plus:"Plus",family:"Family"};
 const contentStatus={review:"На проверке",approved:"Одобрено",hidden:"Скрыто"};
 const metricCards=(items:[string,string|number][])=> <div className="billing-metrics">{items.map(([label,value])=><article key={label}><small>{label}</small><strong>{value}</strong></article>)}</div>;
-function AdminDemoSections({section}:{section:Exclude<AdminSection,"finance">}){
+function AdminDemoSections({section}:{section:AdminSection}){
+ const [role,setRole]=useState<DemoRole>("admin");
+ const [audit,setAudit]=useState<DemoAudit[]>([]);
+ const [sequence,setSequence]=useState(0);
+ const [auditFilter,setAuditFilter]=useState<"all"|DemoRole>("all");
+ const [errorFilter,setErrorFilter]=useState<"all"|"warning"|"error">("all");
+ function log(action:string,target:string,actor:DemoRole=role){
+  const event={id:sequence+1,time:new Date().toISOString(),role:actor,action,target};
+  setSequence(n=>n+1);setAudit(rows=>[event,...rows].slice(0,100));
+ }
+ function changeRole(next:DemoRole){if(next!==role){log("Смена демонстрационной роли",roleLabels[next]);setRole(next);}}
+ const errors=[{id:"SIM-101",level:"error",component:"AI worker",message:"Превышено время обработки иллюстрации"},{id:"SIM-102",level:"warning",component:"Video export",message:"Браузер не поддерживает выбранный формат"},{id:"SIM-103",level:"error",component:"Billing sandbox",message:"Отклонён тестовый платёж"},{id:"SIM-104",level:"warning",component:"Offline cache",message:"Мало свободного места"}] as const;
  const [users,setUsers]=useState(demoUsers);
  const [content,setContent]=useState(demoContent);
  const [query,setQuery]=useState("");
  const [plan,setPlan]=useState<"all"|DemoUser["plan"]>("all");
  const [contentFilter,setContentFilter]=useState<"all"|DemoContent["status"]>("all");
  const [budget,setBudget]=useState(10);
+ useEffect(()=>setQuery(""),[section]);
  const jobs=[{name:"Текст сказок",done:120,failed:4,cost:240},{name:"Иллюстрации",done:80,failed:7,cost:360},{name:"Видео",done:12,failed:2,cost:180}];
  const spent=jobs.reduce((n,j)=>n+j.cost,0);
  const usd=(cents:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(cents/100);
  const visibleUsers=users.filter(user=>(plan==="all"||user.plan===plan)&&user.id.toLowerCase().includes(query.trim().toLowerCase()));
  const visibleContent=content.filter(item=>(contentFilter==="all"||item.status===contentFilter)&&item.title.toLowerCase().includes(query.trim().toLowerCase()));
- return <div className="billing-dashboard">
-  <p className="billing-muted" role="status">Синтетические данные. Изменения действуют только в этой вкладке до её перезагрузки или смены раздела. Сервер не вызывается.</p>
+ return <div className="billing-dashboard" hidden={section==="finance"} style={section==="finance"?{display:"none"}:undefined}>
+  <p className="billing-muted" role="status">Синтетические данные. Изменения сохраняются только в памяти до перезагрузки страницы. Сервер не вызывается.</p>
+  <div className="billing-filters"><label>Проверить интерфейс роли<select value={role} onChange={e=>changeRole(e.target.value as DemoRole)}>{Object.entries(roleLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label></div>
+  <p className="billing-muted">Роли демонстрационные: это не серверная авторизация. Наблюдатель только читает; модератор изменяет контент; администратор также управляет аккаунтами и бюджетом.</p>
   {section==="users"&&<>
    <h2>Пользователи</h2>
    {metricCards([["Демо-аккаунты",users.length],["Активные",users.filter(u=>u.status==="active").length],["Приостановленные",users.filter(u=>u.status==="paused").length],["Сказки",users.reduce((n,u)=>n+u.books,0)]])}
    <div className="billing-filters">
     <label>Поиск по ID<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="DEMO-001"/></label>
     <label>Тариф<select value={plan} onChange={e=>setPlan(e.target.value as typeof plan)}><option value="all">Все тарифы</option>{Object.entries(planNames).map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
-    <button type="button" onClick={()=>{setUsers(demoUsers());setQuery("");setPlan("all");}}>Сбросить демо</button>
+    <button type="button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;setUsers(demoUsers());setQuery("");setPlan("all");log("Сброс пользователей","Демо");}}>Сбросить демо</button>
    </div>
    {!visibleUsers.length&&<p>Ничего не найдено.</p>}
    <div className="billing-metrics">{visibleUsers.map(user=><article key={user.id}>
     <strong>{user.id}</strong><small>{planNames[user.plan]} · {user.books} сказок</small>
     <small>{user.status==="active"?"Активен":"Приостановлен"}</small>
-    <button type="button" className="secondary-button" onClick={()=>setUsers(items=>items.map(item=>item.id===user.id?{...item,status:item.status==="active"?"paused":"active"}:item))}>{user.status==="active"?"Приостановить (демо)":"Активировать (демо)"}</button>
+    <button type="button" className="secondary-button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;const status=user.status==="active"?"paused":"active";setUsers(items=>items.map(item=>item.id===user.id?{...item,status}:item));log(status==="paused"?"Приостановка":"Активация",user.id);}}>{user.status==="active"?"Приостановить (демо)":"Активировать (демо)"}</button>
    </article>)}</div>
   </>}
   {section==="content"&&<>
@@ -64,21 +83,35 @@ function AdminDemoSections({section}:{section:Exclude<AdminSection,"finance">}){
    <div className="billing-filters">
     <label>Поиск<input value={query} onChange={e=>setQuery(e.target.value)}/></label>
     <label>Статус<select value={contentFilter} onChange={e=>setContentFilter(e.target.value as typeof contentFilter)}><option value="all">Все статусы</option>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
-    <button type="button" onClick={()=>{setContent(demoContent());setQuery("");setContentFilter("all");}}>Сбросить демо</button>
+    <button type="button" disabled={!canModerate(role)} onClick={()=>{if(!canModerate(role))return;setContent(demoContent());setQuery("");setContentFilter("all");log("Сброс контента","Демо");}}>Сбросить демо</button>
    </div>
    {!visibleContent.length&&<p>Ничего не найдено.</p>}
    <div className="billing-metrics">{visibleContent.map(item=><article key={item.id}><strong>{item.title}</strong><small>{item.kind==="story"?"Сказка":"Мультфильм"} · {contentStatus[item.status]}</small>
-    <label>Изменить статус<select value={item.status} onChange={e=>{const status=e.target.value as DemoContent["status"];setContent(rows=>rows.map(row=>row.id===item.id?{...row,status}:row));}}>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
+    <label>Изменить статус<select disabled={!canModerate(role)} value={item.status} onChange={e=>{if(!canModerate(role))return;const status=e.target.value as DemoContent["status"];setContent(rows=>rows.map(row=>row.id===item.id?{...row,status}:row));log("Модерация: "+contentStatus[status],item.id);}}>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
    </article>)}</div>
   </>}
   {section==="ai"&&<>
    <h2>AI и расходы</h2>
    <p className="billing-muted">Пример расчёта в USD за условный день. Не реальные цены провайдера, не счёт и не активный лимит.</p>
    {metricCards([["Успешные задачи",jobs.reduce((n,j)=>n+j.done,0)],["Ошибки",jobs.reduce((n,j)=>n+j.failed,0)],["Условные расходы",usd(spent)],["Остаток условного лимита",usd(Math.max(0,budget*100-spent))]])}
-   <div className="billing-filters"><label>Демо-лимит<select value={budget} onChange={e=>setBudget(Number(e.target.value))}>{[5,10,20,50].map(value=><option key={value} value={value}>{usd(value*100)}</option>)}</select></label></div>
+   <div className="billing-filters"><label>Демо-лимит<select disabled={!canManageUsers(role)} value={budget} onChange={e=>{if(!canManageUsers(role))return;const next=Number(e.target.value);setBudget(next);log("Изменение условного бюджета",usd(next*100));}}>{[5,10,20,50].map(value=><option key={value} value={value}>{usd(value*100)}</option>)}</select></label></div>
    <progress aria-label="Использование условного лимита" max={budget*100} value={Math.min(spent,budget*100)}/>
    <p role="status">{spent>=budget*100?"Условный лимит исчерпан":"Условный лимит не превышен"}</p>
    <div className="billing-metrics">{jobs.map(job=><article key={job.name}><strong>{job.name}</strong><small>Успешно: {job.done} · Ошибки: {job.failed}</small><small>Условная стоимость: {usd(job.cost)}</small></article>)}</div>
+  </>}
+  {section==="audit"&&<>
+   <h2>Журнал административных действий</h2>
+   <p className="billing-muted">До 100 последних действий текущей страницы. Время UTC. Журнал не сохраняется на сервере.</p>
+   <div className="billing-filters"><label>Роль<select value={auditFilter} onChange={e=>setAuditFilter(e.target.value as typeof auditFilter)}><option value="all">Все роли</option>{Object.entries(roleLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label></div>
+   {!audit.filter(item=>auditFilter==="all"||item.role===auditFilter).length&&<p>Нет действий по выбранному фильтру.</p>}
+   <div className="billing-metrics">{audit.filter(item=>auditFilter==="all"||item.role===auditFilter).map(item=><article key={item.id}><strong>{item.action}</strong><small>{item.target} · {roleLabels[item.role]}</small><small><time dateTime={item.time}>{item.time.replace("T"," ").slice(0,19)} UTC</time></small></article>)}</div>
+  </>}
+  {section==="system"&&<>
+   <h2>Мониторинг системы</h2>
+   <p className="billing-muted">Сценарии ошибок для проверки интерфейса. Не результаты диагностики реального сервера.</p>
+   {metricCards([["Тестовые события",errors.length],["Ошибки",errors.filter(e=>e.level==="error").length],["Предупреждения",errors.filter(e=>e.level==="warning").length],["Реальные проверки","Не подключены"]])}
+   <div className="billing-filters"><label>Уровень<select value={errorFilter} onChange={e=>setErrorFilter(e.target.value as typeof errorFilter)}><option value="all">Все события</option><option value="error">Ошибки</option><option value="warning">Предупреждения</option></select></label></div>
+   <div className="billing-metrics">{errors.filter(e=>errorFilter==="all"||e.level===errorFilter).map(event=><article key={event.id}><strong>{event.component}</strong><small>{event.id} · {event.level==="error"?"Ошибка":"Предупреждение"}</small><small>{event.message}</small></article>)}</div>
   </>}
  </div>;
 }
@@ -146,7 +179,8 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
  const max=Math.max(1,...points.flatMap(([,p])=>[p.gross,p.refund,Math.abs(p.net)]));
  return <section className="billing-dashboard">
   {demo&&<nav className="billing-filters" aria-label="Разделы демо-админки">{(Object.keys(sectionNames) as AdminSection[]).map(key=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{sectionNames[key]}</button>)}</nav>}
-  {demo&&section!=="finance"?<AdminDemoSections key={section} section={section}/>:<>
+  {demo&&<AdminDemoSections section={section}/>}
+  {(!demo||section==="finance")&&<>
   <h2>Финансовая аналитика</h2>{demo&&<p role="status">ДЕМО · вымышленные данные · без подключения к серверу · операции за последние 90 дней</p>}
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
   <div className="billing-filters">
