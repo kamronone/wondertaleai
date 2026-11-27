@@ -4,7 +4,7 @@ import BillingDashboard from "./BillingDashboard";
 export default function BillingSandboxPanel(){
  const [draft,setDraft]=useState("");
  const [token,setToken]=useState("");
- if(!import.meta.env.DEV||import.meta.env.VITE_ENABLE_ANALYTICS_LOCAL_SANDBOX!=="true")return null;
+ if(!["localhost","127.0.0.1","[::1]"].includes(window.location.hostname)||!import.meta.env.DEV||import.meta.env.VITE_ENABLE_ANALYTICS_LOCAL_SANDBOX!=="true")return null;
  return <section className="billing-dashboard">
   <h2>Финансы: локальная тестовая среда</h2>
   {!token?<form onSubmit={e=>{e.preventDefault();if(draft.length>=32){setToken(draft);setDraft("");}}}>
@@ -12,7 +12,7 @@ export default function BillingSandboxPanel(){
    <button type="submit">Открыть отчёт</button>
   </form>:<>
    <button type="button" onClick={()=>setToken("")}>Закрыть отчёт</button>
-   <BillingDashboard api="" token={token}/>
+   <BillingDashboard api={window.location.origin} token={token}/>
   </>}
  </section>;
 }
