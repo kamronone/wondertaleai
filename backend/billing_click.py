@@ -122,4 +122,6 @@ def complete(conn, params, service_id, secret, now):
         VALUES (%s,%s,%s,%s,'active',%s,%s)""",(sid,owner[0],row[0],row[1],now,period_end(now)))
     conn.execute("UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s",(params["click_trans_id"],oid))
     conn.execute("UPDATE click_transactions SET state='completed',completed_at=%s,subscription_id=%s WHERE prepare_id=%s",(now,sid,prepare_id))
+    from billing_entitlements import link_entitlement
+    link_entitlement(conn,oid,sid)
     return reply(0,"Success",prepare_id)
