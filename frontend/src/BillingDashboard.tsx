@@ -1,5 +1,5 @@
 import {useEffect,useState} from "react";
-import {LayoutDashboard,Users,BookOpen,BrainCircuit,ClipboardList,Activity,ArrowUpRight,Download,ShieldCheck,ChevronRight} from "lucide-react";
+import {LayoutDashboard,Users,BookOpen,BrainCircuit,ClipboardList,Activity,ArrowUpRight,Download,ShieldCheck,ChevronRight,CalendarDays} from "lucide-react";
 import "./billing-dashboard.css";
 
 type Summary={
@@ -193,8 +193,8 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
   <div className="billing-filters admin-date-panel">
    <div className="admin-date-fields">
-    <label>С<input type="date" aria-label="Начало периода" value={start} max={end} onChange={e=>setStart(e.target.value)}/></label>
-    <label>По<input type="date" aria-label="Конец периода" value={end} min={start} onChange={e=>setEnd(e.target.value)}/></label>
+    <label className="admin-date-label"><span>С</span><span className="admin-date-control"><CalendarDays size={15} aria-hidden="true"/><span aria-hidden="true">{start?start.split("-").reverse().join("."):"ДД.ММ.ГГГГ"}</span><input type="date" aria-label="Начало периода" value={start} max={end} onChange={e=>setStart(e.target.value)} onClick={e=>{try{e.currentTarget.showPicker?.();}catch{/* Native picker remains available. */}}}/></span></label>
+    <label className="admin-date-label"><span>По</span><span className="admin-date-control"><CalendarDays size={15} aria-hidden="true"/><span aria-hidden="true">{end?end.split("-").reverse().join("."):"ДД.ММ.ГГГГ"}</span><input type="date" aria-label="Конец периода" value={end} min={start} onChange={e=>setEnd(e.target.value)} onClick={e=>{try{e.currentTarget.showPicker?.();}catch{/* Native picker remains available. */}}}/></span></label>
    </div>
    <div className="admin-period-buttons" role="group" aria-label="Быстрый выбор периода">
     <button type="button" onClick={()=>{setStart(day(-6));setEnd(day(0));}} aria-pressed={start===day(-6)&&end===day(0)}>7 дней</button>
