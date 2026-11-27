@@ -28,7 +28,7 @@ def quote_promotion(conn, owner_id, plan_id, code, now):
         FROM billing_promotions WHERE code=%s""",(code,)).fetchone()
     if not row or not row[6] or not row[3]<=now<row[4] or row[2] not in (None,plan_id):
         raise ValueError("Promotion unavailable")
-    if conn.execute("SELECT 1 FROM billing_promotion_redemptions WHERE code=%s AND owner_id=%s",(code,owner_id)).fetchone():
+    if conn.execute("SELECT 1 FROM billing_promotion_redemptions WHERE code=%s AND owner_id=%s AND state IN ('reserved','used')",(code,owner_id)).fetchone():
         raise ValueError("Promotion already claimed")
     count=conn.execute("SELECT COUNT(*) FROM billing_promotion_redemptions WHERE code=%s AND state IN ('reserved','used')",(code,)).fetchone()[0]
     if count>=row[5]:
@@ -98,3 +98,25 @@ def cancel_promotional_order(conn, owner_id, order_id):
     elif row[0] not in ("failed","expired"):
         raise ValueError("Order cannot be canceled")
     return settle_promotion(conn,order_id)
+
+
+def expire_promotional_order(conn, owner_id, order_id, now):
+    """Expire local sandbox orders after 30 minutes; caller owns transaction."""
+    from datetime import timedelta
+    from billing_subscriptions import _lock_owner
+    now=utc(now)
+    _lock_owner(conn,owner_id)
+    row=conn.execute("""SELECT o.state,o.created_at FROM payment_orders o
+        JOIN billing_promotion_redemptions r ON r.order_id=o.id
+        WHERE o.id=%s AND o.owner_id=%s AND o.provider='sandbox' FOR UPDATE OF o""",
+        (order_id,owner_id)).fetchone()
+    if not row:
+        raise LookupError("Promotional order not found")
+    if row[0]=="expired":
+        settle_promotion(conn,order_id)
+        return True
+    if row[0]!="pending" or now<row[1]+timedelta(minutes=30):
+        return False
+    conn.execute("UPDATE payment_orders SET state='expired' WHERE id=%s",(order_id,))
+    settle_promotion(conn,order_id)
+    return True
