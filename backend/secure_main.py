@@ -20,6 +20,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import Response
+from billing_domain import public_plans
 from private_illustration_media import normalize_private_illustration
 from private_photo_reference import MAX_UPLOAD_BYTES, normalize_private_reference_photo
 from fastapi.middleware.cors import CORSMiddleware
@@ -421,6 +422,10 @@ def change_password(body:ChangePassword,owner:str=Depends(current_parent)):
 @app.get("/api/me")
 def me(owner: str=Depends(current_parent)):
     return {"id":owner}
+
+@app.get("/api/billing/plans")
+def billing_plans():
+    return public_plans()
 
 @app.get("/api/billing/status")
 def billing_status(owner:str=Depends(current_parent)):
