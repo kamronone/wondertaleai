@@ -88,6 +88,7 @@ def init_schema():
         sql(c, "CREATE INDEX IF NOT EXISTS sessions_owner_idx ON sessions(owner_id)")
         sql(c, "CREATE TABLE IF NOT EXISTS login_attempts (email_key TEXT PRIMARY KEY, window_started INTEGER NOT NULL, failures INTEGER NOT NULL DEFAULT 0)")
         sql(c, "CREATE TABLE IF NOT EXISTS generation_global_quota (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0)")
+        sql(c, "CREATE TABLE IF NOT EXISTS generation_provider_attempts (day TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0 CHECK(used>=0))")
         sql(c, "CREATE TABLE IF NOT EXISTS ai_idempotency (owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, created_at TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending', PRIMARY KEY(owner_id,request_key))")
         sql(c, "CREATE TABLE IF NOT EXISTS ai_jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, request_key TEXT NOT NULL, payload_digest TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', created_at TEXT NOT NULL, started_at TEXT, completed_at TEXT, book_id TEXT REFERENCES books(id) ON DELETE SET NULL, UNIQUE(owner_id,request_key))")
         sql(c, "CREATE INDEX IF NOT EXISTS ai_jobs_status_created_idx ON ai_jobs(status,created_at)")
@@ -689,6 +690,8 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                     raise HTTPException(409,"Idempotency key was used for another request")
                 if existing[2]=="completed" and not existing[1]:
                     raise HTTPException(409,"Previously generated book was deleted")
+                if existing[2]=="needs_review":
+                    raise HTTPException(409,"Previous generation requires review")
                 if not existing[1]:
                     raise HTTPException(409,"Story generation is already processing")
                 old=sql(c,"SELECT id,title,story,created_at FROM books WHERE id=? AND owner_id=?",(existing[1],owner)).fetchone()
@@ -706,6 +709,13 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                 sql(c,"DELETE FROM ai_idempotency WHERE owner_id=? AND request_key=? AND book_id IS NULL",(owner,request_key))
                 c.commit()
 
+    def retain_uncertain_claim():
+        # Provider cost may have occurred even when no book was saved.
+        if request_key:
+            with connection() as c:
+                sql(c,"UPDATE ai_idempotency SET state='needs_review' WHERE owner_id=? AND request_key=? AND book_id IS NULL",(owner,request_key))
+                c.commit()
+
     # Replays of already saved books must work even when the library is full.
     # Reject a new generation before spending tokens on an AI provider request.
     # Recheck under the insert lock below to handle concurrent requests.
@@ -717,8 +727,12 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
     today=datetime.now(timezone.utc).date().isoformat()
     # Global spending ceiling is separate from the per-parent quota.
     # The value is deliberately conservative until usage and billing are monitored.
-    daily_cap=max(0,min(200,int(os.getenv("MAX_AI_STORIES_PER_DAY","10"))))
-    if daily_cap==0:
+    try:
+        daily_cap=max(0,min(200,int(os.getenv("MAX_AI_STORIES_PER_DAY","10"))))
+        attempt_cap=max(0,min(200,int(os.getenv("MAX_AI_PROVIDER_ATTEMPTS_PER_DAY",str(daily_cap)))))
+    except ValueError:
+        daily_cap=attempt_cap=0
+    if daily_cap==0 or (not billing_preview and attempt_cap==0):
         release_claim()
         raise HTTPException(503,"AI generation is temporarily unavailable")
     try:
@@ -735,6 +749,11 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                 # a successful global increment even though this parent is at quota.
                 c.rollback()
                 raise HTTPException(429,"Daily AI story limit reached")
+            if not billing_preview:
+                attempt=sql(c,"INSERT INTO generation_provider_attempts(day,used) VALUES(?,1) ON CONFLICT(day) DO UPDATE SET used=generation_provider_attempts.used+1 WHERE generation_provider_attempts.used<? RETURNING used",(today,attempt_cap)).fetchone()
+                if attempt is None:
+                    c.rollback()
+                    raise HTTPException(429,"Daily AI provider attempt limit reached")
             c.commit()
     except HTTPException:
         # Finish the failed transaction before releasing a pending request key.
@@ -765,7 +784,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             sql(c,"UPDATE generation_quota SET used=used-1 WHERE owner_id=? AND day=? AND used>0",(owner,today))
             sql(c,"UPDATE generation_global_quota SET used=used-1 WHERE day=? AND used>0",(today,))
             c.commit()
-        release_claim()
+        retain_uncertain_claim()
         # Never return internal API errors or provider details to a parent.
         raise HTTPException(502,"Unable to generate this story. Please try later.")
     bid=str(uuid.uuid4())
@@ -810,7 +829,7 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             sql(c,"UPDATE generation_quota SET used=used-1 WHERE owner_id=? AND day=? AND used>0",(owner,today))
             sql(c,"UPDATE generation_global_quota SET used=used-1 WHERE day=? AND used>0",(today,))
             c.commit()
-        release_claim()
+        retain_uncertain_claim()
         # Do not expose database errors or internal tracebacks to the parent.
         # The 409 conflict is safe and actionable; other persistence failures
         # are reported as a generic service error after quota refund.
@@ -834,6 +853,8 @@ def generation_request_status(request_key:str,owner:str=Depends(current_parent))
         if not row:
             raise HTTPException(404,"Generation request not found")
         book_id,created_at,state=row
+        if state=="needs_review":
+            return {"status":"needs_review","book_id":None}
         if state=="completed" and not book_id:
             return {"status":"unavailable","book_id":None}
         if book_id:
@@ -972,7 +993,7 @@ def process_one_queued_ai_job():
         return job_id
     except HTTPException as exc:
         # A 409 may mean an uncertain already-running upstream call.
-        final="needs_review" if exc.status_code==409 else "failed"
+        final="needs_review" if exc.status_code in (409,502,503) else "failed"
         with connection() as c:
             sql(c,"UPDATE ai_jobs SET status=?,completed_at=?,payload='' WHERE id=? AND status='processing'",(final,datetime.now(timezone.utc).isoformat(),job_id))
             c.commit()
