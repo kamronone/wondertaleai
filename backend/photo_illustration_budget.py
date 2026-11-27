@@ -44,7 +44,7 @@ def _gate(c) -> None:
         raise PhotoBudgetDenied("Illustration runtime state unavailable") from exc
 
 
-def reserve_photo_attempt_budget(request_id: str) -> dict:
+def reserve_photo_attempt_budget(request_id: str, *, require_fresh: bool = False) -> dict:
     """Atomically reserve at most one conservative attempt per request.
 
     All amounts are whole micro-USD and supplied by trusted operator config,
@@ -82,6 +82,13 @@ def reserve_photo_attempt_budget(request_id: str) -> dict:
         if not db.sql(c, parent_sql, (owner,)).fetchone():
             raise PhotoBudgetDenied("Parent unavailable")
         _gate(c)
+        # Re-read after acquiring the parent lock: cancellation, replacement or
+        # consent changes may have happened before the lock was acquired.
+        current = db.sql(c, "SELECT owner_id,book_id,reference_sha256,expires_at,status "
+            "FROM photo_illustration_requests WHERE id=?", (request_id,)).fetchone()
+        now = int(time.time())
+        if not current or tuple(current) != (owner, book, digest, expires, status):
+            raise PhotoBudgetDenied("Photo request changed")
         if status != "pending_review" or expires <= now:
             raise PhotoBudgetDenied("Photo request is no longer valid")
         if not db.photo_consent_active(owner, c) or not db.external_photo_transfer_consent_active(owner, c):
@@ -100,6 +107,8 @@ def reserve_photo_attempt_budget(request_id: str) -> dict:
             "SELECT reserved_micro_usd,state,day FROM photo_ai_attempt_reservations "
             "WHERE request_id=? AND owner_id=?", (request_id, owner)).fetchone()
         if existing:
+            if require_fresh:
+                raise PhotoBudgetDenied("A photo attempt was already reserved")
             c.commit()
             return {"request_id": request_id, "state": existing[1], "day": existing[2],
                     "reserved_micro_usd": existing[0], "provider_called": False,
