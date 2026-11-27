@@ -9,7 +9,7 @@
   margin: 0 auto;
   padding: 17px 0 10px;
   display: grid;
-  gap: 12px;
+  gap: 9px;
   color: var(--studio-ink);
 }
 .cartoon-heading {
@@ -17,20 +17,21 @@
   align-items: center;
   gap: 10px;
 }
-.cartoon-heading h1 { margin: 0; }
-.cartoon-heading p { color: var(--studio-muted); }
+.cartoon-heading h1 { margin: 0; font-size: 24px; }
+.cartoon-heading p { color: var(--studio-muted); font-size: 11px; }
 .cartoon-view-switch {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 .cartoon-view-switch .chip {
-  min-height: 44px;
-  padding: 7px 9px;
+  min-height: 37px;
+  padding: 6px 8px;
+  border-radius: 12px;
   border-color: var(--studio-border);
   background: var(--studio-card);
   color: var(--studio-ink);
-  font-size: 13px;
+  font-size: 11px;
 }
 .cartoon-view-switch .chip[aria-pressed="true"] {
   background: var(--wt-site-soft, #eaddfa);
@@ -47,38 +48,40 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
-  min-height: 64px;
-  padding: 5px;
+  min-height: 48px;
+  padding: 5px 7px;
+  border-radius: 12px;
   border-color: var(--studio-border);
   background: var(--studio-card);
   color: var(--studio-ink);
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.25;
 }
 .cartoon-catalog .cartoon-tile[aria-pressed="true"] { border-color: var(--studio-accent); }
 .cartoon-catalog .cartoon-tile:hover { transform: none; }
 .cartoon-catalog .cartoon-tile img {
-  width: 40px;
-  height: 49px;
-  flex: 0 0 40px;
-  border-radius: 9px;
+  width: 28px;
+  height: 36px;
+  flex: 0 0 28px;
+  border-radius: 7px;
 }
 .cartoon-tile strong { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .cartoon-tile > svg { flex-shrink: 0; color: var(--studio-accent); }
 .cartoon-player.form-card {
   display: grid;
   min-width: 0;
-  gap: 12px;
-  padding: 12px;
+  gap: 9px;
+  padding: 10px;
   border-color: var(--studio-border);
   background: var(--studio-card);
 }
 .cartoon-player .cartoon-select { margin: 0; color: var(--studio-ink); }
 .cartoon-player .cartoon-select select {
   min-width: 0;
-  min-height: 44px;
+  min-height: 36px;
   margin-top: 5px;
-  padding: 8px 9px;
+  padding: 5px 7px;
+  border-radius: 10px;
   font-size: 16px;
 }
 .cartoon-film-toolbar {
@@ -108,7 +111,7 @@
 }
 .cartoon-film-error { padding: 12px; text-align: center; }
 .cartoon-film-error p { margin: 0 0 8px; }
-.cartoon-notice { margin: 0; color: var(--studio-muted); font-size: 12px; line-height: 1.5; }
+.cartoon-notice { margin: 0; color: var(--studio-muted); font-size: 11px; line-height: 1.5; }
 .cartoon-screen {
   position: relative;
   aspect-ratio: 4/3;
@@ -144,9 +147,9 @@
 .cartoon-progress > span { display: block; height: 100%; background: var(--studio-accent); transition: width .2s linear; }
 .cartoon-controls { display: flex; align-items: center; gap: 5px; }
 .cartoon-studio .icon-button {
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
+  width: 37px;
+  min-width: 37px;
+  height: 37px;
   border-color: var(--studio-border);
   background: var(--studio-card);
   color: var(--studio-ink);
@@ -154,7 +157,7 @@
 .cartoon-controls .cartoon-play {
   flex: 1;
   min-width: 0;
-  min-height: 44px;
+  min-height: 37px;
   padding: 5px;
   gap: 5px;
   font-size: 13px;
@@ -163,7 +166,7 @@
 .cartoon-controls .cartoon-play svg { flex-shrink: 0; }
 .cartoon-caption { margin: 0; font-size: 15px; line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
 .cartoon-strip { display: flex; gap: 5px; overflow: auto; padding: 4px; margin: -4px; }
-.cartoon-strip button { flex: 0 0 44px; }
+.cartoon-strip button { flex: 0 0 37px; }
 .cartoon-strip button[aria-current="step"] { border-color: var(--studio-accent); background: var(--wt-site-soft, #eaddfa); }
 .shell[data-site-theme="forest"] > main:has(> .cartoon-studio) { background: #f1f9ec !important; }
 .shell[data-site-theme="forest"] .cartoon-studio { --studio-border: #c7ddc7; --studio-muted: #456652; }
@@ -173,7 +176,7 @@
   .cartoon-studio { padding-inline: 13px; }
 }
 @media (max-width: 360px) {
-  .cartoon-catalog .cartoon-tile { font-size: 12px; }
+  .cartoon-catalog .cartoon-tile { font-size: 10px; }
   .cartoon-tile > svg { display: none; }
   .cartoon-controls .cartoon-play svg { display: none; }
 }
