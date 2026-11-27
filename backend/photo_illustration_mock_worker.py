@@ -18,7 +18,7 @@ from photo_illustration_review import (
 )
 from private_photo_preview import render_local_story_page
 from private_illustration_media import normalize_private_illustration
-from private_reference_image_edits import build_reference_edit_prompt
+from private_character_continuity import plan_reference_book
 
 
 def save_mock_photo_page(
@@ -49,7 +49,6 @@ def save_mock_photo_page(
         raise PhotoDryRunDenied("Prompt moderation rejected the page")
     # Rendering is deterministic for the same photo and requested page.
     # The selected scene comes from the request page; never child text.
-    from illustration_planning import SCENES, plan_story_illustrations
     import json
     with db.connection() as c:
         story_row=db.sql(c,"SELECT story FROM books WHERE id=? AND owner_id=?",(book,owner)).fetchone()
@@ -60,9 +59,10 @@ def save_mock_photo_page(
         story=json.loads(story_row[0])
         pages=story["pages"]
         style,hero_mode=request_row
-        scene=plan_story_illustrations(book,[item["text"] for item in pages],style)[page-1].scene
-        scene_number=SCENES.index(scene)+1
-        if build_reference_edit_prompt(scene_number,style,hero_mode)!=prompt:
+        plan=plan_reference_book(book,[item["text"] for item in pages],style,hero_mode)
+        planned_page=plan.pages[page-1]
+        scene_number=planned_page.scene_number
+        if planned_page.reference_prompt!=prompt:
             raise ValueError("Approved scene changed")
         png=normalize_private_illustration(render_local_story_page(photo,page,len(pages),scene_number=scene_number))
     except (ValueError,TypeError,KeyError,IndexError):
