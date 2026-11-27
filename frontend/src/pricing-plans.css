@@ -18,3 +18,5 @@
   .pricing-status{padding:9px;border-radius:10px;font-size:12px}
   .pricing-note{font-size:11px;line-height:1.5}
 }
+
+.pricing-compare{box-sizing:border-box;min-height:40px;margin-top:8px;padding:7px 10px;border:1px solid #d8c8eb;border-radius:12px;background:transparent;color:inherit;font-size:12px;line-height:1.3;cursor:pointer}.pricing-compare[aria-pressed=true]{border-color:#8e64d8;background:#eee8f8;color:#50327c}.pricing-compare:focus-visible{outline:2px solid #8e64d8;outline-offset:2px}.pricing-estimate{margin-top:12px;padding:14px;border:1px solid #d8c8eb;border-radius:15px;color:inherit}.pricing-estimate h3{margin:0 0 8px;font-size:16px}.pricing-estimate p{margin:6px 0;font-size:13px;line-height:1.5}.pricing-estimate .pricing-compare{width:auto}
