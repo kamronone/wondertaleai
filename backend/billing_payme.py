@@ -164,3 +164,34 @@ def cancel_transaction(conn, params, now_ms):
         raise PaymeError(-31007,"Transaction cannot be canceled")
     conn.execute("UPDATE payme_transactions SET state=%s,cancel_time=%s,reason=%s WHERE provider_id=%s",(target,now_ms,reason,pid))
     return {"transaction":str(oid),"cancel_time":now_ms,"state":target}
+
+
+def check_transaction(conn, params):
+    """Authenticated read-only transaction lookup."""
+    pid = params.get("id")
+    if not isinstance(pid,str) or len(pid)!=24:
+        raise PaymeError(-31003,"Transaction not found")
+    row = conn.execute("""SELECT t.order_id,t.create_time,t.perform_time,t.cancel_time,t.state,t.reason
+        FROM payme_transactions t JOIN payment_orders o ON o.id=t.order_id
+        WHERE t.provider_id=%s AND o.provider='payme'""",(pid,)).fetchone()
+    if not row:
+        raise PaymeError(-31003,"Transaction not found")
+    return dict(zip(("transaction","create_time","perform_time","cancel_time","state","reason"),
+                    (str(row[0]),*row[1:])))
+
+def get_statement(conn, params):
+    """Authenticated reconciliation by provider timestamp, inclusive bounds."""
+    start,end = params.get("from"),params.get("to")
+    if type(start) is not int or type(end) is not int or not 0<=start<=end<=253402300799999:
+        raise PaymeError(-32602,"Invalid statement interval")
+    rows = conn.execute("""SELECT t.provider_id,t.provider_time,t.amount_minor,t.order_id,
+        t.create_time,t.perform_time,t.cancel_time,t.state,t.reason
+        FROM payme_transactions t JOIN payment_orders o ON o.id=t.order_id
+        WHERE o.provider='payme' AND t.provider_time BETWEEN %s AND %s
+        ORDER BY t.provider_time,t.provider_id LIMIT 10001""",(start,end)).fetchall()
+    if len(rows)>10000:
+        raise PaymeError(-32400,"Statement too large; request a shorter interval")
+    return {"transactions":[{"id":r[0],"time":r[1],"amount":r[2],
+        "account":{"order_id":str(r[3])},"transaction":str(r[3]),
+        "create_time":r[4],"perform_time":r[5],"cancel_time":r[6],
+        "state":r[7],"reason":r[8]} for r in rows]}
