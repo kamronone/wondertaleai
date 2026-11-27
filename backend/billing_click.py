@@ -35,3 +35,39 @@ def verify_callback(params: dict, service_id: str, secret: str, action: int) -> 
     parts.extend([params["amount"],params["action"],params["sign_time"]])
     expected = hashlib.md5("".join(parts).encode("utf-8")).hexdigest()
     return hmac.compare_digest(expected,params["sign_string"].lower())
+
+
+def prepare(conn, params, service_id, secret):
+    """Internal sandbox handler; caller owns transaction."""
+    from uuid import UUID
+    def reply(error, note, prepare_id=None):
+        return {"click_trans_id":params.get("click_trans_id"),
+                "merchant_trans_id":params.get("merchant_trans_id"),
+                "merchant_prepare_id":prepare_id,"error":error,"error_note":note}
+    if not verify_callback(params,service_id,secret,0):
+        return reply(-1,"Invalid signature")
+    try:
+        oid=UUID(params["merchant_trans_id"])
+        amount=amount_minor(params["amount"])
+    except ValueError:
+        return reply(-5,"Invalid order")
+    row=conn.execute("SELECT amount_minor,state FROM payment_orders WHERE id=%s AND provider='click' FOR UPDATE",(oid,)).fetchone()
+    if not row:
+        return reply(-5,"Order not found")
+    if row[0]!=amount:
+        return reply(-2,"Invalid amount")
+    if row[1]=="paid":
+        return reply(-4,"Already paid")
+    if row[1]!="pending":
+        return reply(-9,"Order unavailable")
+    existing=conn.execute("SELECT prepare_id,click_trans_id,state FROM click_transactions WHERE order_id=%s",(oid,)).fetchone()
+    if existing:
+        if existing[1]==params["click_trans_id"] and existing[2]=="prepared":
+            return reply(0,"Success",existing[0])
+        return reply(-9,"Conflicting transaction")
+    inserted=conn.execute("""INSERT INTO click_transactions(click_trans_id,order_id,amount_minor)
+        VALUES (%s,%s,%s) ON CONFLICT DO NOTHING RETURNING prepare_id""",
+        (params["click_trans_id"],oid,amount)).fetchone()
+    if not inserted:
+        return reply(-9,"Conflicting transaction")
+    return reply(0,"Success",inserted[0])
