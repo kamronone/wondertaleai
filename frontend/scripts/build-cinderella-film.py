@@ -32,7 +32,13 @@ async def main():
     parser = argparse.ArgumentParser(description="Render a classic picture film")
     parser.add_argument("--static", action="store_true", help="Disable camera motion and fades")
     parser.add_argument("--story", choices=["cinderella", "snow-white", "rapunzel"], default="cinderella")
+    parser.add_argument("--music", type=Path, help="Local background audio with cleared usage rights")
+    parser.add_argument("--music-volume", type=float, default=0.10)
     args = parser.parse_args()
+    if not 0 <= args.music_volume <= 0.25:
+        parser.error("--music-volume must be between 0 and 0.25")
+    if args.music and not args.music.is_file():
+        parser.error("--music must point to an existing audio file")
     source_path = ROOT / "scripts/film-sources" / f"{args.story}.json"
     for tool in ("ffmpeg", "ffprobe"):
         if shutil.which(tool) is None:
@@ -78,7 +84,21 @@ async def main():
                 segments.append(segment)
             manifest = work / f"{lang}.txt"
             manifest.write_text("".join(f"file '{p.name}'\n" for p in segments), encoding="utf-8")
-            run("ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", str(manifest), "-c", "copy", "-movflags", "+faststart", str(out / f"film-{lang}.mp4"))
+            target = out / f"film-{lang}.mp4"
+            joined = work / f"joined-{lang}.mp4"
+            run("ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", str(manifest), "-c", "copy", "-movflags", "+faststart", str(joined))
+            if args.music:
+                length = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(joined)))
+                fade = min(1.0, length / 2)
+                mix = (
+                    f"[1:a]aresample=48000,aformat=channel_layouts=mono,volume={args.music_volume},"
+                    f"atrim=duration={length},afade=t=in:d={fade},"
+                    f"afade=t=out:st={length-fade}:d={fade}[bg];"
+                    "[0:a][bg]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95:latency=1[mix]"
+                )
+                run("ffmpeg", "-y", "-v", "error", "-i", str(joined), "-stream_loop", "-1", "-i", str(args.music.resolve()), "-filter_complex", mix, "-map", "0:v:0", "-map", "[mix]", "-c:v", "copy", "-c:a", "aac", "-ar", "48000", "-movflags", "+faststart", str(target))
+            else:
+                shutil.copyfile(joined, target)
             (out / f"{lang}.vtt").write_text("\n".join(cues), encoding="utf-8")
     print(f"Review generated films before publishing: {out}")
 
