@@ -645,6 +645,11 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
     # Optional client request identifier prevents duplicate paid calls after a
     # lost HTTP response. The key never contains child data and is scoped to owner.
     # A crash leaves a pending marker instead of silently charging twice.
+    billing_preview=os.getenv("ENABLE_BILLING_AI_PREVIEW","false").lower()=="true"
+    if billing_preview and (APP_ENV!="billing-test" or not IS_PG):
+        raise HTTPException(503,"Billing AI requires isolated test environment")
+    if billing_preview and not idempotency_key:
+        raise HTTPException(422,"Idempotency-Key required for billing preview")
     request_key=None
     if idempotency_key is not None:
         if not re.fullmatch(r"[A-Za-z0-9_-]{16,128}",idempotency_key):
@@ -655,6 +660,14 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         with connection() as c:
             inserted=sql(c,"INSERT INTO ai_idempotency(owner_id,request_key,payload_digest,book_id,created_at) VALUES(?,?,?,NULL,?) ON CONFLICT(owner_id,request_key) DO NOTHING RETURNING request_key",(owner,request_key,payload_digest,datetime.now(timezone.utc).isoformat())).fetchone()
             if inserted:
+                if billing_preview:
+                    from billing_ai import reserve_generation
+                    try:
+                        reservation=reserve_generation(c,owner,request_key,datetime.now(timezone.utc))
+                    except PermissionError as exc:
+                        raise HTTPException(429,"Subscription quota unavailable") from exc
+                    if not reservation["may_start"]:
+                        raise HTTPException(409,"Billing reservation already exists")
                 c.commit()
             else:
                 existing=sql(c,"SELECT payload_digest,book_id,state FROM ai_idempotency WHERE owner_id=? AND request_key=?",(owner,request_key)).fetchone()
@@ -671,6 +684,9 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
                 return {"id":old[0],"title":old[1],"language":stored["language"],"pages":stored["pages"],"created_at":old[3]}
 
     def release_claim():
+        if billing_preview:
+            # Retain uncertain reservations for manual reconciliation.
+            return
         if request_key:
             with connection() as c:
                 sql(c,"DELETE FROM ai_idempotency WHERE owner_id=? AND request_key=? AND book_id IS NULL",(owner,request_key))
@@ -711,6 +727,9 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         release_claim()
         raise
     try:
+        if billing_preview:
+            # No external model calls in billing test mode.
+            raise RuntimeError("Billing preview provider disabled")
         generated=generate_story(body)
     except Exception:
         # A failed provider call must not exhaust the parent's daily allowance.
@@ -752,6 +771,9 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
             sql(c,"INSERT INTO books(id,owner_id,title,child_name,age,story,created_at) VALUES(?,?,?,?,?,?,?)",(bid,owner,generated.title,body.name,body.age,json.dumps(story_document,ensure_ascii=False),now))
             if request_key:
                 sql(c,"UPDATE ai_idempotency SET book_id=?,state='completed' WHERE owner_id=? AND request_key=? AND payload_digest=?",(bid,owner,request_key,payload_digest))
+            if billing_preview:
+                from billing_ai import settle_generation
+                settle_generation(c,owner,request_key,"saved")
             c.commit()
     except Exception as exc:
         # A successfully generated story can still fail to save, for example
