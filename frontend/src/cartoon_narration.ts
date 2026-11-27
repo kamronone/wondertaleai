@@ -28,3 +28,33 @@ export function playNarration(audio:AudioContext,destination:MediaStreamAudioDes
  source.onended=()=>{source.disconnect();gain.disconnect();};
  source.start(audio.currentTime,0,duration);
 }
+
+
+export const MAX_SCENE_NARRATION_SECONDS=30;
+export const MAX_SCENE_NARRATION_BYTES=24*1024*1024;
+export const MAX_DECODED_NARRATION_BYTES=96*1024*1024;
+
+/** Bind clips to original scene numbers, not their current export positions. */
+export async function prepareSceneNarrations(audio:AudioContext,clips:ReadonlyMap<number,Blob>,
+  sceneNumbers:readonly number[],signal:AbortSignal):Promise<Map<number,AudioBuffer>>{
+ if(sceneNumbers.length>20||new Set(sceneNumbers).size!==sceneNumbers.length)
+  throw Error("Invalid narration scene list");
+ const selected=sceneNumbers.flatMap(number=>{
+  const blob=clips.get(number);return blob?[[number,blob] as const]:[];
+ });
+ if(selected.reduce((sum,[,blob])=>sum+blob.size,0)>MAX_SCENE_NARRATION_BYTES)
+  throw Error("Scene narration limit");
+ const buffers=new Map<number,AudioBuffer>();
+ let decodedBytes=0;
+ for(const [number,blob] of selected){
+  if(signal.aborted)throw Error("Cancelled");
+  const decoded=await prepareNarration(audio,blob);
+  if(signal.aborted)throw Error("Cancelled");
+  if(decoded.duration>MAX_SCENE_NARRATION_SECONDS+2)throw Error("Scene narration duration limit");
+  decodedBytes+=decoded.length*decoded.numberOfChannels*4;
+  if(!Number.isSafeInteger(decodedBytes)||decodedBytes>MAX_DECODED_NARRATION_BYTES)
+   throw Error("Decoded scene narration limit");
+  buffers.set(number,decoded);
+ }
+ return buffers;
+}
