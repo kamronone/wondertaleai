@@ -29,6 +29,109 @@ const personalCopy={
  en:{personal:"My stories",classic:"Classic stories",note:"Personal storyboard with illustrations and local narration. Not AI-generated video.",empty:"Create a story to watch its scenes."}
 } as const;
 const safeLocalArt=(url:string)=>/^\/images\/[a-z0-9/_-]+\.(?:webp|png|jpe?g)$/i.test(url)&&!url.includes("..")?url:"/images/wondertale-hero.webp";
+
+const exportCopy={
+ ru:{save:"Сохранить видеоряд",cancel:"Отменить экспорт",note:"Короткий видеоряд без звука: 3 секунды на сцену. Формат зависит от браузера.",error:"Не удалось создать видео.",unsupported:"Экспорт видео не поддерживается этим браузером.",ready:"Видео готово",download:"Скачать видео"},
+ uz:{save:"Videoni saqlaş",cancel:"Bekor qiliş",note:"Ovozsiz qisqa video: har sahna 3 soniya. Format brauzerga boğliq.",error:"Video yaratib bölmadi.",unsupported:"Brauzer video eksportini qöllamaydi.",ready:"Video tayyor",download:"Videoni yuklaş"},
+ en:{save:"Create video",cancel:"Cancel export",note:"Short silent montage: 3 seconds per scene. Format depends on the browser.",error:"Could not create video.",unsupported:"Video export is not supported by this browser.",ready:"Video ready",download:"Download video"}
+} as const;
+
+function localVideoFormat(){
+ if(typeof MediaRecorder==="undefined"||typeof HTMLCanvasElement==="undefined"||typeof HTMLCanvasElement.prototype.captureStream!=="function")return null;
+ return ["video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(type=>MediaRecorder.isTypeSupported(type))??null;
+}
+function localVideoImage(url:string,signal:AbortSignal):Promise<HTMLImageElement>{
+ return new Promise((resolve,reject)=>{
+  if(signal.aborted){reject(new Error("Cancelled"));return;}
+  const img=new Image();
+  const finish=(error?:Error)=>{window.clearTimeout(timeout);signal.removeEventListener("abort",abort);img.onload=null;img.onerror=null;if(error){img.src="";reject(error);}else resolve(img);};
+  const abort=()=>finish(new Error("Cancelled"));
+  const timeout=window.setTimeout(()=>finish(new Error("Image timeout")),10000);
+  signal.addEventListener("abort",abort,{once:true});
+  img.onload=()=>finish();img.onerror=()=>finish(new Error("Image unavailable"));img.src=safeLocalArt(url);
+ });
+}
+function waitFrame(ms:number,signal:AbortSignal):Promise<void>{
+ return new Promise((resolve,reject)=>{
+  if(signal.aborted){reject(new Error("Cancelled"));return;}
+  const abort=()=>{window.clearTimeout(timer);reject(new Error("Cancelled"));};
+  const timer=window.setTimeout(()=>{signal.removeEventListener("abort",abort);resolve();},ms);
+  signal.addEventListener("abort",abort,{once:true});
+ });
+}
+async function recordLocalMontage(scenes:CartoonScene[],signal:AbortSignal,onProgress:(n:number)=>void):Promise<Blob>{
+ const mime=localVideoFormat();
+ if(!mime||!scenes.length||scenes.length>20||signal.aborted)throw new Error("Unavailable");
+ const canvas=document.createElement("canvas");canvas.width=640;canvas.height=480;
+ const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable");
+ const stream=canvas.captureStream(24);
+ let recorder:MediaRecorder|null=null;
+ try{
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1200000});
+  const active=recorder;const chunks:Blob[]=[];
+  const output=new Promise<Blob>((resolve,reject)=>{
+   active.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+   active.onerror=()=>reject(new Error("Recording failed"));
+   active.onstop=()=>{const blob=new Blob(chunks,{type:active.mimeType||mime});if(blob.size)resolve(blob);else reject(new Error("Empty video"));};
+  });
+  void output.catch(()=>{});
+  for(let i=0;i<scenes.length;i++){
+   if(signal.aborted||document.hidden)throw new Error("Cancelled");
+   const scene=scenes[i];let image:HTMLImageElement|null=null;
+   try{image=await localVideoImage(scene.image,signal);}catch{if(signal.aborted)throw new Error("Cancelled");image=await localVideoImage("/images/wondertale-hero.webp",signal);}
+   if(signal.aborted)throw new Error("Cancelled");
+   ctx.fillStyle="#201849";ctx.fillRect(0,0,640,480);
+   const scale=Math.min(640/image.naturalWidth,480/image.naturalHeight);
+   const w=image.naturalWidth*scale,h=image.naturalHeight*scale;
+   ctx.drawImage(image,(640-w)/2,(480-h)/2,w,h);
+   if(i===0)active.start(1000);
+   await waitFrame(3000,signal);
+   onProgress(Math.round((i+1)/scenes.length*100));
+  }
+  if(active.state!=="inactive")active.stop();
+  const blob=await output;
+  if(signal.aborted)throw new Error("Cancelled");
+  return blob;
+ }finally{
+  if(recorder&&recorder.state!=="inactive")recorder.stop();
+  stream.getTracks().forEach(track=>track.stop());
+ }
+}
+function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang:Lang;onStart:()=>void}){
+ const t=exportCopy[lang];
+ const controller=useRef<AbortController|null>(null);
+ const objectUrl=useRef<string|null>(null);
+ const [busy,setBusy]=useState(false);
+ const [progress,setProgress]=useState(0);
+ const [error,setError]=useState(false);
+ const [result,setResult]=useState<{url:string;ext:string}|null>(null);
+ const supported=Boolean(localVideoFormat());
+ useEffect(()=>{
+  const hide=()=>{if(document.hidden)controller.current?.abort();};
+  document.addEventListener("visibilitychange",hide);
+  return ()=>{document.removeEventListener("visibilitychange",hide);controller.current?.abort();controller.current=null;if(objectUrl.current)URL.revokeObjectURL(objectUrl.current);};
+ },[]);
+ async function save(){
+  if(controller.current||!supported||!scenes.length)return;
+  onStart();setBusy(true);setProgress(0);setError(false);setResult(null);
+  if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
+  const job=new AbortController();controller.current=job;
+  try{
+   const blob=await recordLocalMontage(scenes,job.signal,n=>{if(controller.current===job)setProgress(n);});
+   if(controller.current!==job||job.signal.aborted)return;
+   const url=URL.createObjectURL(blob);objectUrl.current=url;setResult({url,ext:blob.type.startsWith("video/mp4")?"mp4":"webm"});
+  }catch{if(controller.current===job&&!job.signal.aborted)setError(true);}
+  finally{if(controller.current===job){controller.current=null;setBusy(false);}}
+ }
+ return <div className="form-card" style={{display:"grid",gap:8,padding:10,margin:0}}>
+  <p className="cartoon-notice">{supported?t.note:t.unsupported}</p>
+  {supported&&<button type="button" className="secondary-button cartoon-offline-button" onClick={()=>busy?controller.current?.abort():void save()}>{busy?t.cancel:t.save}</button>}
+  {busy&&<progress max={100} value={progress} aria-label={t.save}/>}
+  {error&&<p className="cartoon-notice" role="alert">{t.error}</p>}
+  {result&&<><p className="cartoon-notice" role="status">{t.ready}</p><a className="secondary-button cartoon-offline-button" href={result.url} download={"ertakcha-story."+result.ext}>{t.download}</a></>}
+ </div>;
+}
+
 export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks?:readonly LocalCartoonBook[]}){
  const t=copy[lang];
  const [id,setId]=useState("three-pigs");
@@ -185,6 +288,7 @@ export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks
    <p className="cartoon-caption" aria-live="polite">{current.text}</p>
    <div className="cartoon-strip" role="group" aria-label={t.scene}>{scenes.map((scene,i)=><button key={scene.number} type="button" className="icon-button" aria-label={t.scene+" "+scene.number} aria-current={i===index?"step":undefined} onClick={()=>jump(i)}>{scene.number}</button>)}</div>
    <p className="cartoon-notice">{personal?personalCopy[lang].note:t.note}</p>
+   <StoryboardVideoExport key={id+":"+lang} scenes={scenes} lang={lang} onStart={()=>{cancel();setPlaying(false);}}/>
    {!localBooks.length&&<p className="cartoon-notice">{personalCopy[lang].empty}</p>}
   </div>}
  </section>;
