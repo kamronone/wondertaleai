@@ -22,6 +22,15 @@ def reserve_story(conn, owner_id: str, request_id: UUID, now):
     if not row:
         raise PermissionError("Active subscription required")
     subscription_id, start, limit = row
+    refund_pending = conn.execute("""SELECT 1 FROM billing_order_entitlements e
+        JOIN payment_orders o ON o.id=e.order_id
+        JOIN refunds r ON r.order_id=o.id
+        WHERE e.subscription_id=%s AND r.state IN ('pending','completed')
+        GROUP BY o.id,o.amount_minor
+        HAVING SUM(r.amount_minor)>=o.amount_minor
+        AND COUNT(*) FILTER (WHERE r.state='pending')>0""",(subscription_id,)).fetchone()
+    if refund_pending:
+        raise PermissionError("Full refund pending")
     used = conn.execute("""SELECT count(*) FROM quota_reservations
         WHERE subscription_id=%s AND period_start=%s
         AND state IN ('reserved','committed')""",(subscription_id,start)).fetchone()[0]
