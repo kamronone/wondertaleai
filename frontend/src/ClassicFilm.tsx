@@ -9,9 +9,9 @@ export function hasClassicFilm(id:string){
 const trackLabels={ru:"Русский",uz:"Özbekça",en:"English"} as const;
 const languages=["ru","uz","en"] as const;
 const copy={
- ru:{info:"1 мин 20 с",audio:"Озвучка",error:"Видео не загрузилось.",fallback:"Открыть сцены сказки"},
- uz:{info:"1 daqiqa 20 soniya",audio:"Ovoz tili",error:"Video yuklanmadi.",fallback:"Ertak sahnalarini oçiş"},
- en:{info:"1 min 20 sec",audio:"Narration",error:"The video could not load.",fallback:"Open story scenes"}
+ ru:{audio:"Озвучка",error:"Видео не загрузилось.",fallback:"Открыть сцены сказки"},
+ uz:{audio:"Ovoz tili",error:"Video yuklanmadi.",fallback:"Ertak sahnalarini oçiş"},
+ en:{audio:"Narration",error:"The video could not load.",fallback:"Open story scenes"}
 } as const;
 
 type FilmPosition={
@@ -29,6 +29,8 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
  const position=useRef<FilmPosition|null>(null);
  const [audioLanguage,setAudioLanguage]=useState(lang);
  const [failed,setFailed]=useState(false);
+ const [duration,setDuration]=useState<number|null>(null);
+ const durationLabel=duration===null?null:new Intl.NumberFormat(lang,{minimumIntegerDigits:2,useGrouping:false}).format(Math.floor(duration/60))+":"+new Intl.NumberFormat(lang,{minimumIntegerDigits:2,useGrouping:false}).format(Math.floor(duration%60));
  const t=copy[lang];
  const offlineCopy={
   ru:{save:"Сохранить офлайн",remove:"Удалить загрузку",busy:"Подождите…",error:"Не удалось обновить загрузку."},
@@ -106,6 +108,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
    };
   }
   setFailed(false);
+  setDuration(null);
   setAudioLanguage(next);
  }
 
@@ -127,7 +130,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
   const previous=position.current;
   if(!previous||video.currentSrc!==video.src)return;
   position.current=null;
-  video.currentTime=Math.min(previous.time,video.duration);
+  video.currentTime=Number.isFinite(video.duration)?Math.min(previous.time,video.duration):previous.time;
   video.playbackRate=previous.rate;
   for(const [i,track] of Array.from(video.textTracks).entries()){
    track.mode=previous.captions[i]??track.mode;
@@ -146,7 +149,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
    </select>
    </span>
    </label>
-   <span className="cartoon-notice">{t.info}</span>
+   {durationLabel!==null&&<span className="cartoon-notice">{durationLabel}</span>}
   </div>
   {failed?<div className="cartoon-film-error">
    <p role="status">{t.error}</p>
@@ -161,7 +164,15 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
    controls
    playsInline
    preload="metadata"
-   onLoadedMetadata={event=>restorePosition(event.currentTarget)}
+   onLoadedMetadata={event=>{
+    const video=event.currentTarget;
+    setDuration(Number.isFinite(video.duration)&&video.duration>0?video.duration:null);
+    restorePosition(video);
+   }}
+   onDurationChange={event=>{
+    const value=event.currentTarget.duration;
+    setDuration(Number.isFinite(value)&&value>0?value:null);
+   }}
    onError={event=>void handleVideoError(event.currentTarget)}
   >
    {languages.map(language=><track
