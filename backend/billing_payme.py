@@ -52,3 +52,35 @@ def dispatch_check(conn, payload, header, login, secret):
         return {"id":rid,"result":result}
     except PaymeError as exc:
         return {"id":rid,"error":{"code":exc.code,"message":exc.message,"data":exc.data}}
+
+
+def create_transaction(conn, params, now_ms):
+    """Internal handler; caller owns transaction and must authenticate first."""
+    from uuid import UUID
+    pid, stamp, amount = params.get("id"), params.get("time"), params.get("amount")
+    if not isinstance(pid,str) or len(pid)!=24 or type(stamp) is not int or not 10**12<=stamp<10**13:
+        raise PaymeError(-32600,"Invalid transaction parameters")
+    if type(amount) is not int or amount<=0:
+        raise PaymeError(-31001,"Invalid amount")
+    try:
+        order = UUID(str(params["account"]["order_id"]))
+    except (ValueError,KeyError,TypeError):
+        raise PaymeError(-31050,{"ru":"Заказ не найден","uz":"Buyurtma topilmadi","en":"Order not found"},"order_id") from None
+    row = conn.execute("SELECT amount_minor,state FROM payment_orders WHERE id=%s AND provider='payme' FOR UPDATE",(order,)).fetchone()
+    if not row:
+        raise PaymeError(-31050,{"ru":"Заказ не найден","uz":"Buyurtma topilmadi","en":"Order not found"},"order_id")
+    if row[0]!=amount:
+        raise PaymeError(-31001,"Invalid amount")
+    existing = conn.execute("SELECT provider_id,provider_time,create_time,state FROM payme_transactions WHERE order_id=%s FOR UPDATE",(order,)).fetchone()
+    if existing:
+        if existing[0]!=pid or existing[1]!=stamp or existing[3]!=1 or now_ms-stamp>=43200000:
+            raise PaymeError(-31008,"Transaction unavailable")
+        return {"transaction":str(order),"create_time":existing[2],"state":1}
+    if row[1]!="pending" or now_ms-stamp>=43200000 or stamp>now_ms+60000:
+        raise PaymeError(-31008,"Transaction unavailable")
+    inserted = conn.execute("""INSERT INTO payme_transactions(provider_id,order_id,amount_minor,provider_time,create_time)
+        VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING RETURNING provider_id""",
+        (pid,order,amount,stamp,now_ms)).fetchone()
+    if not inserted:
+        raise PaymeError(-31008,"Transaction already reserved")
+    return {"transaction":str(order),"create_time":now_ms,"state":1}
