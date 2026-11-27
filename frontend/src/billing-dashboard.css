@@ -14,7 +14,7 @@
 .billing-plan-row progress{width:100%;height:10px;accent-color:#0d9488}
 @media(min-width:760px){.billing-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
-.billing-dashboard nav.billing-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:stretch}
+.billing-dashboard nav.billing-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-items:stretch}
 .billing-dashboard nav button{font-size:.82rem;min-height:40px;overflow-wrap:anywhere;cursor:pointer}
 .billing-dashboard nav button[aria-pressed="true"]{background:#0f766e;color:#fff;border-color:#0f766e;font-weight:650}
 .billing-dashboard select{width:100%;min-width:0;box-sizing:border-box;border:1px solid color-mix(in srgb,currentColor 25%,transparent);border-radius:8px;padding:7px;font-size:16px;background:var(--studio-card,#fff);color:#29253a}
@@ -23,3 +23,5 @@
 .billing-dashboard > div > progress{width:100%;accent-color:#0d9488}
 .billing-dashboard button:focus-visible,.billing-dashboard select:focus-visible,.billing-dashboard input:focus-visible{outline:2px solid #0d9488;outline-offset:2px}
 @media(max-width:420px){.billing-dashboard nav.billing-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.billing-dashboard .billing-metrics article{padding:9px}}
+
+@media(min-width:760px){.billing-dashboard nav.billing-filters{grid-template-columns:repeat(6,minmax(0,1fr))}}
