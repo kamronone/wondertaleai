@@ -1,5 +1,8 @@
 """Unmounted admin router for isolated billing tests only."""
 from datetime import datetime, timezone
+from collections import deque
+from threading import Lock
+from time import monotonic
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field, StrictBool, conint
@@ -22,9 +25,18 @@ def build_promotion_admin_router(admin_dependency, connection_factory):
     Connection factory must target isolated test PostgreSQL and rollback on errors.
     """
     router=APIRouter(prefix="/api/billing/admin/promotions")
+    attempts=deque()
+    lock=Lock()
     def authorize(admin=Depends(admin_dependency)):
         if admin is not True:
             raise HTTPException(403,"Administrator required")
+        with lock:
+            now=monotonic()
+            while attempts and attempts[0]<=now-60:
+                attempts.popleft()
+            if len(attempts)>=30:
+                raise HTTPException(429,"Too many requests",headers={"Retry-After":"60","Cache-Control":"no-store"})
+            attempts.append(now)
     @router.get("",dependencies=[Depends(authorize)])
     def listing(response: Response, limit: int=50, after_code: Optional[str]=None):
         response.headers["Cache-Control"]="no-store"
