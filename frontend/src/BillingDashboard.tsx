@@ -52,32 +52,39 @@ function AdminDemoSections({section}:{section:AdminSection}){
  const [content,setContent]=useState(demoContent);
  const [query,setQuery]=useState("");
  const [plan,setPlan]=useState<"all"|DemoUser["plan"]>("all");
+ const [userPage,setUserPage]=useState(0);
  const [contentFilter,setContentFilter]=useState<"all"|DemoContent["status"]>("all");
  const [budget,setBudget]=useState(10);
  useEffect(()=>setQuery(""),[section]);
+ useEffect(()=>setUserPage(0),[query,plan,section]);
  const jobs=[{name:"Текст сказок",done:120,failed:4,cost:240},{name:"Иллюстрации",done:80,failed:7,cost:360},{name:"Видео",done:12,failed:2,cost:180}];
  const spent=jobs.reduce((n,j)=>n+j.cost,0);
  const usd=(cents:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(cents/100);
  const visibleUsers=users.filter(user=>(plan==="all"||user.plan===plan)&&user.id.toLowerCase().includes(query.trim().toLowerCase()));
+ const pageSize=8;
+ const pageCount=Math.max(1,Math.ceil(visibleUsers.length/pageSize));
+ const safePage=Math.min(userPage,pageCount-1);
  const visibleContent=content.filter(item=>(contentFilter==="all"||item.status===contentFilter)&&item.title.toLowerCase().includes(query.trim().toLowerCase()));
  return <div className="billing-dashboard" hidden={section==="finance"} style={section==="finance"?{display:"none"}:undefined}>
   <p className="billing-muted" role="status">Синтетические данные. Изменения сохраняются только в памяти до перезагрузки страницы. Сервер не вызывается.</p>
-  <div className="billing-filters"><label>Проверить интерфейс роли<select value={role} onChange={e=>changeRole(e.target.value as DemoRole)}>{Object.entries(roleLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label></div>
-  <p className="billing-muted">Роли демонстрационные: это не серверная авторизация. Наблюдатель только читает; модератор изменяет контент; администратор также управляет аккаунтами и бюджетом.</p>
+  <details className="admin-role-settings"><summary>Демонстрационные права · {roleLabels[role]}</summary><div className="billing-filters"><label>Проверить интерфейс роли<select value={role} onChange={e=>changeRole(e.target.value as DemoRole)}>{Object.entries(roleLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label></div>
+  <p className="billing-muted">Роли демонстрационные: это не серверная авторизация. Наблюдатель только читает; модератор изменяет контент; администратор также управляет аккаунтами и бюджетом.</p></details>
   {section==="users"&&<>
-   <h2>Пользователи</h2>
+   <h2 className="admin-section-description">Обзор аккаунтов</h2>
    {metricCards([["Демо-аккаунты",users.length],["Активные",users.filter(u=>u.status==="active").length],["Приостановленные",users.filter(u=>u.status==="paused").length],["Сказки",users.reduce((n,u)=>n+u.books,0)]])}
    <div className="billing-filters">
     <label>Поиск по ID<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="DEMO-001"/></label>
     <label>Тариф<select value={plan} onChange={e=>setPlan(e.target.value as typeof plan)}><option value="all">Все тарифы</option>{Object.entries(planNames).map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
     <button type="button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;setUsers(demoUsers());setQuery("");setPlan("all");log("Сброс пользователей","Демо");}}>Сбросить демо</button>
    </div>
-   {!visibleUsers.length&&<p>Ничего не найдено.</p>}
-   <div className="admin-record-list">{visibleUsers.map(user=><article key={user.id}>
+   <div className="admin-list-heading"><strong>Аккаунты</strong><small>Найдено: {visibleUsers.length}</small></div>
+   {!visibleUsers.length&&<p className="admin-empty" role="status">Ничего не найдено. Измените поиск или тариф.</p>}
+   <div className="admin-record-list">{visibleUsers.slice(safePage*pageSize,(safePage+1)*pageSize).map(user=><article key={user.id}>
     <strong>{user.id}</strong><small>{planNames[user.plan]} · {user.books} сказок</small>
     <span className="admin-status" data-tone={user.status==="active"?"good":"warning"}>{user.status==="active"?"Активен":"Приостановлен"}</span>
     <button type="button" className="secondary-button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;const status=user.status==="active"?"paused":"active";setUsers(items=>items.map(item=>item.id===user.id?{...item,status}:item));log(status==="paused"?"Приостановка":"Активация",user.id);}}>{user.status==="active"?"Приостановить (демо)":"Активировать (демо)"}</button>
    </article>)}</div>
+   {pageCount>1&&<div className="billing-filters admin-pagination"><button type="button" disabled={safePage===0} onClick={()=>setUserPage(safePage-1)}>Назад</button><small aria-live="polite">{safePage+1} / {pageCount}</small><button type="button" disabled={safePage===pageCount-1} onClick={()=>setUserPage(safePage+1)}>Далее</button></div>}
   </>}
   {section==="content"&&<>
    <h2>Модерация контента</h2>
@@ -87,7 +94,8 @@ function AdminDemoSections({section}:{section:AdminSection}){
     <label>Статус<select value={contentFilter} onChange={e=>setContentFilter(e.target.value as typeof contentFilter)}><option value="all">Все статусы</option>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
     <button type="button" disabled={!canModerate(role)} onClick={()=>{if(!canModerate(role))return;setContent(demoContent());setQuery("");setContentFilter("all");log("Сброс контента","Демо");}}>Сбросить демо</button>
    </div>
-   {!visibleContent.length&&<p>Ничего не найдено.</p>}
+   <div className="admin-list-heading"><strong>Материалы</strong><small>Найдено: {visibleContent.length}</small></div>
+   {!visibleContent.length&&<p className="admin-empty" role="status">Ничего не найдено. Измените фильтр или поиск.</p>}
    <div className="admin-record-list">{visibleContent.map(item=><article key={item.id}><strong>{item.title}</strong><small>{item.kind==="story"?"Сказка":"Мультфильм"}</small><span className="admin-status" data-tone={item.status==="approved"?"good":item.status==="review"?"warning":"neutral"}>{contentStatus[item.status]}</span>
     <label>Изменить статус<select disabled={!canModerate(role)} value={item.status} onChange={e=>{if(!canModerate(role))return;const status=e.target.value as DemoContent["status"];setContent(rows=>rows.map(row=>row.id===item.id?{...row,status}:row));log("Модерация: "+contentStatus[status],item.id);}}>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
    </article>)}</div>
@@ -105,7 +113,7 @@ function AdminDemoSections({section}:{section:AdminSection}){
    <h2>Журнал административных действий</h2>
    <p className="billing-muted">До 100 последних действий текущей страницы. Время UTC. Журнал не сохраняется на сервере.</p>
    <div className="billing-filters"><label>Роль<select value={auditFilter} onChange={e=>setAuditFilter(e.target.value as typeof auditFilter)}><option value="all">Все роли</option>{Object.entries(roleLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label></div>
-   {!audit.filter(item=>auditFilter==="all"||item.role===auditFilter).length&&<p>Нет действий по выбранному фильтру.</p>}
+   {!audit.filter(item=>auditFilter==="all"||item.role===auditFilter).length&&<p className="admin-empty" role="status">Нет действий по выбранному фильтру.</p>}
    <div className="admin-event-list">{audit.filter(item=>auditFilter==="all"||item.role===auditFilter).map(item=><article key={item.id}><strong>{item.action}</strong><small>{item.target} · {roleLabels[item.role]}</small><small><time dateTime={item.time}>{item.time.replace("T"," ").slice(0,19)} UTC</time></small></article>)}</div>
   </>}
   {section==="system"&&<>
@@ -179,6 +187,7 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
  for(const d of data?.daily??[]){const key=group==="month"?d.day.slice(0,7):d.day;const b=buckets.get(key)??{gross:0,refund:0,net:0};b.gross+=d.gross_minor;b.refund+=d.refund_minor;b.net+=d.net_minor;buckets.set(key,b);}
  const points=Array.from(buckets.entries()).sort(([a],[b])=>a.localeCompare(b));
  const max=Math.max(1,...points.flatMap(([,p])=>[p.gross,p.refund,Math.abs(p.net)]));
+ const chartMax=Math.max(1,...points.map(([,p])=>p.gross));
  return <section className={demo?"billing-dashboard admin-shell":"billing-dashboard"}>
   {demo&&<aside className="admin-sidebar">
    <div className="admin-brand"><span className="admin-brand-icon"><BookOpen size={21}/></span><div><strong>Ertakcha</strong><small>ADMIN WORKSPACE</small></div></div>
@@ -221,8 +230,9 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
    <h3>Динамика заказов</h3>
    <div className="billing-filters"><button type="button" aria-pressed={group==="day"} onClick={()=>setGroup("day")}>По дням</button><button type="button" aria-pressed={group==="month"} onClick={()=>setGroup("month")}>По месяцам</button></div>
    <p className="billing-muted">По дате создания заказа, с учётом текущего состояния. Не денежный поток.</p>
-   <div className="admin-chart-panel">{points.map(([date,p])=><div key={date}><small>{date}</small>{([["Объём",p.gross],["Возвраты",p.refund],["Чистый объём",p.net]] as const).map(([label,value])=><div key={label} className="billing-plan-row"><small>{label}</small><progress max={max} value={Math.abs(value)} aria-label={label}/><small>{money(value)}</small></div>)}</div>)}</div>
-   {!points.length&&<p>Нет операций за период</p>}
+   {points.length>0&&<div className="admin-visual-chart" role="img" aria-label="Объём заказов по выбранным датам. Точные значения приведены ниже."><div className="admin-chart-scale"><span>{money(chartMax)}</span><span>0 сум</span></div><div className="admin-chart-bars">{points.map(([date,p])=><span key={date} title={date+": "+money(p.gross)} style={{height:Math.max(1,p.gross/chartMax*100)+"%"}}/>)}</div><div className="admin-chart-dates"><span>{points[0][0]}</span><span>{points[points.length-1][0]}</span></div></div>}
+   <details className="admin-chart-details"><summary>Точные значения по датам</summary><div className="admin-chart-panel">{points.map(([date,p])=><div key={date}><small>{date}</small>{([["Объём",p.gross],["Возвраты",p.refund],["Чистый объём",p.net]] as const).map(([label,value])=><div key={label} className="billing-plan-row"><small>{label}</small><progress max={max} value={Math.abs(value)} aria-label={label}/><small>{money(value)}</small></div>)}</div>)}</div></details>
+   {!points.length&&<p className="admin-empty" role="status">Нет операций за выбранный период.</p>}
    <h3>Эффективность промокодов</h3>
    <p className="billing-muted">До {data.promotion_limit} кодов по числу использований. Тестовые заказы за выбранный период.</p>
    {!data.promotions.length&&<p>Нет использований промокодов</p>}
