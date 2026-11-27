@@ -28,13 +28,13 @@ def _deny(message: str) -> None:
     raise PhotoDryRunDenied(message)
 
 
-def _require_local_review_gate() -> None:
+def _require_local_review_gate(connection=None) -> None:
     if not db.photo_reference_upload_enabled():
         _deny("Photo review is not enabled in local development")
     if os.getenv("ENABLE_PHOTO_REVIEW_DRY_RUN", "false").lower() != "true":
         _deny("Photo review dry-run is disabled")
     from illustration_worker import illustration_emergency_paused
-    if illustration_emergency_paused():
+    if illustration_emergency_paused(connection):
         _deny("Illustration emergency stop is active")
 
 
