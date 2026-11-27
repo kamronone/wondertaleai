@@ -91,3 +91,23 @@ def activate_paid_gift(conn,order_id,owner_id,plan_id,plan_version,now):
         raise ValueError("Invalid gift order")
     conn.execute("UPDATE billing_gift_codes SET state='available' WHERE id=%s",(row[0],))
     return True
+
+
+def rotate_gift_code(conn,purchaser_id,gift_id,now):
+    """Replace a lost code for a paid, unredeemed gift; caller owns transaction."""
+    now=utc(now)
+    _lock_owner(conn,purchaser_id)
+    row=conn.execute("""SELECT o.id FROM payment_orders o
+        JOIN billing_gift_orders go ON go.order_id=o.id
+        WHERE go.gift_id=%s AND o.owner_id=%s AND o.state='paid'
+        FOR UPDATE OF o""",(gift_id,purchaser_id)).fetchone()
+    if not row:
+        raise ValueError("Gift unavailable")
+    gift=conn.execute("""SELECT state,expires_at FROM billing_gift_codes
+        WHERE id=%s AND purchaser_id=%s FOR UPDATE""",(gift_id,purchaser_id)).fetchone()
+    if not gift or gift[0]!="available" or now>=gift[1]:
+        raise ValueError("Gift unavailable")
+    code=secrets.token_urlsafe(32)
+    conn.execute("UPDATE billing_gift_codes SET code_digest=%s WHERE id=%s",
+        (digest_code(code),gift_id))
+    return {"gift_id":str(gift_id),"code":code,"expires_at":gift[1]}
