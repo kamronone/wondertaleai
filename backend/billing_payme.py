@@ -124,3 +124,43 @@ def perform_transaction(conn, params, now_ms):
     conn.execute("UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s",(pid,row[0]))
     conn.execute("UPDATE payme_transactions SET state=2,perform_time=%s,subscription_id=%s WHERE provider_id=%s",(now_ms,sid,pid))
     return {"transaction":str(row[0]),"perform_time":now_ms,"state":2}
+
+
+def cancel_transaction(conn, params, now_ms):
+    """Authenticated internal handler; caller must roll back on exceptions."""
+    from billing_subscriptions import _lock_owner
+    pid, reason = params.get("id"), params.get("reason")
+    if not isinstance(pid,str) or len(pid)!=24:
+        raise PaymeError(-31003,"Transaction not found")
+    if type(reason) is not int or reason not in (1,2,3,4,5,10):
+        raise PaymeError(-32600,"Invalid cancellation reason")
+    owner = conn.execute("""SELECT o.owner_id FROM payme_transactions t
+        JOIN payment_orders o ON o.id=t.order_id
+        WHERE t.provider_id=%s AND o.provider='payme'""",(pid,)).fetchone()
+    if not owner:
+        raise PaymeError(-31003,"Transaction not found")
+    _lock_owner(conn,owner[0])
+    row = conn.execute("""SELECT o.id,o.state,t.state,t.cancel_time,t.subscription_id
+        FROM payment_orders o JOIN payme_transactions t ON t.order_id=o.id
+        WHERE t.provider_id=%s AND o.owner_id=%s AND o.provider='payme'
+        FOR UPDATE OF o,t""",(pid,owner[0])).fetchone()
+    if not row:
+        raise PaymeError(-31003,"Transaction not found")
+    oid, order_state, state, canceled, sid = row
+    if state in (-1,-2):
+        return {"transaction":str(oid),"cancel_time":canceled,"state":state}
+    if state==1 and order_state=="pending":
+        target=-1
+        conn.execute("UPDATE payment_orders SET state='failed' WHERE id=%s",(oid,))
+    elif state==2 and order_state=="paid" and sid:
+        used=conn.execute("""SELECT 1 FROM quota_reservations
+            WHERE subscription_id=%s AND state IN ('reserved','committed') LIMIT 1""",(sid,)).fetchone()
+        if used:
+            raise PaymeError(-31007,"Service already used or reserved")
+        conn.execute("UPDATE subscriptions SET status='canceled' WHERE id=%s AND owner_id=%s",(sid,owner[0]))
+        conn.execute("UPDATE payment_orders SET state='refunded' WHERE id=%s",(oid,))
+        target=-2
+    else:
+        raise PaymeError(-31007,"Transaction cannot be canceled")
+    conn.execute("UPDATE payme_transactions SET state=%s,cancel_time=%s,reason=%s WHERE provider_id=%s",(target,now_ms,reason,pid))
+    return {"transaction":str(oid),"cancel_time":now_ms,"state":target}
