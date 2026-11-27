@@ -4,7 +4,8 @@ import {classics} from "./classics";
 import ClassicFilm,{hasClassicFilm} from "./ClassicFilm";
 import {listOfflineFilmIds} from "./cartoon_offline";
 import type {Lang} from "./i18n";
-import {buildClassicCartoon,nextCartoonScene} from "./cartoon_storyboard";
+import {buildClassicCartoon,nextCartoonScene,sceneDuration} from "./cartoon_storyboard";
+import type {CartoonScene} from "./cartoon_storyboard";
 import {preferredStoryVoice,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 
 const filmModeLabels={
@@ -21,7 +22,14 @@ const copy={
  en:{title:"Cartoon studio",intro:"Films and scenes from your favorite stories",note:"Illustrated scenes with on-device narration.",choose:"Choose a story",play:"Watch",pause:"Pause",next:"Next",restart:"Restart",scene:"Scene",voice:"Narration",silent:"Muted",noVoice:"No matching on-device voice is available. Captions remain available.",finished:"The end",previous:"Previous scene",nextScene:"Next scene",transcript:"Scene text"}
 } as const;
 
-export default function CartoonStudio({lang}:{lang:Lang}){
+type LocalCartoonBook={id:string;title:string;pages:{number:number;text:string;image_url:string}[];language?:Lang};
+const personalCopy={
+ ru:{personal:"Мои сказки",classic:"Классические сказки",note:"Персональная раскадровка: иллюстрации и локальная озвучка. Это не AI-видео.",empty:"Создайте сказку в конструкторе, чтобы посмотреть её сцены."},
+ uz:{personal:"Mening ertaklarim",classic:"Klassik ertaklar",note:"Şaxsiy sahnalar: rasmlar va mahalliy ovoz. Bu AI video emas.",empty:"Sahnalarni tomoşa qiliş uçun ertak yarating."},
+ en:{personal:"My stories",classic:"Classic stories",note:"Personal storyboard with illustrations and local narration. Not AI-generated video.",empty:"Create a story to watch its scenes."}
+} as const;
+const safeLocalArt=(url:string)=>/^\/images\/[a-z0-9/_-]+\.(?:webp|png|jpe?g)$/i.test(url)&&!url.includes("..")?url:"/images/wondertale-hero.webp";
+export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks?:readonly LocalCartoonBook[]}){
  const t=copy[lang];
  const [id,setId]=useState("three-pigs");
  const [downloads,setDownloads]=useState<Set<string>>(()=>new Set());
@@ -30,8 +38,12 @@ export default function CartoonStudio({lang}:{lang:Lang}){
  const [view,setView]=useState<"film"|"storyboard">("film");
  const modeLabels=filmModeLabels[lang];
  const downloadedLabel={ru:"Скачано",uz:"Yuklangan",en:"Downloaded"}[lang];
- const selectedTitle=classics.find(classic=>classic.id===id)?.title[lang]??t.scene;
- const scenes=useMemo(()=>buildClassicCartoon(id,lang),[id,lang]);
+ const personal=localBooks.find(book=>id==="book:"+book.id);
+ const narrationLang=personal?.language??lang;
+ const selectedTitle=personal?.title??classics.find(classic=>classic.id===id)?.title[lang]??t.scene;
+ const scenes=useMemo<CartoonScene[]>(()=>personal?personal.pages.slice(0,20).map((page,i)=>({
+  number:i+1,text:page.text,image:safeLocalArt(page.image_url),animation:null,fallback:"/images/wondertale-hero.webp",seconds:sceneDuration(page.text)
+ })):buildClassicCartoon(id,lang),[personal,id,lang]);
  const [index,setIndex]=useState(0);
  const [playing,setPlaying]=useState(false);
  const [muted,setMuted]=useState(false);
@@ -52,6 +64,7 @@ export default function CartoonStudio({lang}:{lang:Lang}){
  };
  const reset=()=>{cancel();setPlaying(false);setEnded(false);setIndex(0);setElapsed(0);setFailed(0);setVoiceMissing(false);};
  useEffect(()=>{reset();return cancel;},[id,lang]);
+ useEffect(()=>{if(id.startsWith("book:")&&!personal){reset();setId("three-pigs");}},[id,personal]);
  useEffect(()=>{setFailed(0);},[index]);
  useEffect(()=>{
   const hide=()=>{if(document.visibilityState==="hidden"){cancel();setPlaying(false);}};
@@ -107,11 +120,11 @@ export default function CartoonStudio({lang}:{lang:Lang}){
   if(!muted&&"speechSynthesis" in window&&"SpeechSynthesisUtterance" in window){
    // Only a device-local matching voice. No cloud narration or user data upload.
    const engine=window.speechSynthesis;
-   const voice=preferredStoryVoice(engine.getVoices().filter(v=>v.localService===true),lang,null);
+   const voice=preferredStoryVoice(engine.getVoices().filter(v=>v.localService===true),narrationLang,null);
    if(voice){
     try{
      const speech=new SpeechSynthesisUtterance(scene.text);
-     speech.lang=STORY_SPEECH_LOCALE[lang];speech.voice=voice;speech.rate=.9;
+     speech.lang=STORY_SPEECH_LOCALE[narrationLang];speech.voice=voice;speech.rate=.9;
      speech.onend=advance;
      speech.onerror=()=>{if(run.current===token){narration=false;setVoiceMissing(true);}};
      utterance.current=speech;engine.speak(speech);narration=true;
@@ -148,7 +161,10 @@ export default function CartoonStudio({lang}:{lang:Lang}){
   </>}
   {view==="storyboard"&&current&&<div className="form-card cartoon-player">
    <label className="cartoon-select">{t.choose}
-    <select value={id} onChange={e=>setId(e.target.value)}>{classics.map(story=><option key={story.id} value={story.id}>{story.title[lang]}</option>)}</select>
+    <select value={id} onChange={e=>{cancel();setPlaying(false);setIndex(0);setId(e.target.value);}}>
+     <optgroup label={personalCopy[lang].classic}>{classics.map(story=><option key={story.id} value={story.id}>{story.title[lang]}</option>)}</optgroup>
+     {localBooks.length>0&&<optgroup label={personalCopy[lang].personal}>{localBooks.filter(book=>book.pages.length>0).map(book=><option key={book.id} value={"book:"+book.id}>{book.title}</option>)}</optgroup>}
+    </select>
    </label>
    <div className="cartoon-screen">
     <div className={"cartoon-picture"+(playing?" cartoon-moving":"")} key={id+":"+index}>
@@ -168,7 +184,8 @@ export default function CartoonStudio({lang}:{lang:Lang}){
    {voiceMissing&&!muted&&<p className="cartoon-notice" role="status">{t.noVoice}</p>}
    <p className="cartoon-caption" aria-live="polite">{current.text}</p>
    <div className="cartoon-strip" role="group" aria-label={t.scene}>{scenes.map((scene,i)=><button key={scene.number} type="button" className="icon-button" aria-label={t.scene+" "+scene.number} aria-current={i===index?"step":undefined} onClick={()=>jump(i)}>{scene.number}</button>)}</div>
-   <p className="cartoon-notice">{t.note}</p>
+   <p className="cartoon-notice">{personal?personalCopy[lang].note:t.note}</p>
+   {!localBooks.length&&<p className="cartoon-notice">{personalCopy[lang].empty}</p>}
   </div>}
  </section>;
 }
