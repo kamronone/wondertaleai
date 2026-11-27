@@ -67,3 +67,34 @@ def create_promotional_order(conn, owner_id, plan_id, code, request_key, now):
         (order_id,code,owner_id,discount_minor,state) VALUES (%s,%s,%s,%s,'reserved')""",
         (oid,code,owner_id,quote["discount_minor"]))
     return {"order_id":str(oid),"total_minor":quote["total_minor"],"created":True}
+
+
+def settle_promotion(conn, order_id):
+    """Caller owns transaction; settle only from persisted order state."""
+    order=conn.execute("SELECT state FROM payment_orders WHERE id=%s AND provider='sandbox' FOR UPDATE",(order_id,)).fetchone()
+    if not order:
+        raise LookupError("Sandbox order not found")
+    row=conn.execute("SELECT state FROM billing_promotion_redemptions WHERE order_id=%s FOR UPDATE",(order_id,)).fetchone()
+    if not row:
+        return None
+    target={"paid":"used","failed":"released","expired":"released"}.get(order[0])
+    if target is None or row[0]==target:
+        return row[0]
+    if row[0]!="reserved":
+        raise ValueError("Conflicting promotion settlement")
+    conn.execute("UPDATE billing_promotion_redemptions SET state=%s WHERE order_id=%s",(target,order_id))
+    return target
+
+def cancel_promotional_order(conn, owner_id, order_id):
+    from billing_subscriptions import _lock_owner
+    _lock_owner(conn,owner_id)
+    row=conn.execute("""SELECT o.state FROM payment_orders o
+        JOIN billing_promotion_redemptions r ON r.order_id=o.id
+        WHERE o.id=%s AND o.owner_id=%s AND o.provider='sandbox' FOR UPDATE OF o""",(order_id,owner_id)).fetchone()
+    if not row:
+        raise LookupError("Promotional order not found")
+    if row[0]=="pending":
+        conn.execute("UPDATE payment_orders SET state='failed' WHERE id=%s",(order_id,))
+    elif row[0] not in ("failed","expired"):
+        raise ValueError("Order cannot be canceled")
+    return settle_promotion(conn,order_id)
