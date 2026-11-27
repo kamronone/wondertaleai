@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import "./cartoon-studio.css";
-import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, Film, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronRight, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
+import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronRight, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
 import "./style.css";
 import "./storybook-theme.css";
 import "./reader-polish.css";
@@ -41,6 +40,7 @@ import {StorySceneInteraction} from "./StorySceneInteraction";
 import {readFamilyReadingPreferences,saveFamilyReadingPreferences} from "./reader_family_preferences";
 import {readSiteTheme,saveSiteTheme,type SiteTheme} from "./site_theme";
 import "./site-appearance.css";
+import "./cartoon-studio.css";
 import {CharacterHotspot,characterHotspotForPage} from "./CharacterHotspot";
 import {BrickPassInteraction} from "./BrickPassInteraction";
 import {StoryGiftInteraction} from "./StoryGiftInteraction";
@@ -1350,7 +1350,11 @@ function App(){
           <button className="primary-button" onClick={()=>openCreate()}><WandSparkles size={19}/> {t.create} <ArrowRight size={18}/></button>
           </div>
         </div>
-        <button type="button" className="cartoon-entry" onClick={()=>{stopSpeech();setTab("cartoons");}}><span><Film size={23}/></span><div><strong>{({ru:"Студия мультфильмов",uz:"Multfilm studiyasi",en:"Cartoon studio"} as const)[lang]}</strong><small>{({ru:"Смотрите ожившие сказочные сцены",uz:"Jonlangan ertak sahnalarini tomoşa qiling",en:"Watch animated story scenes"} as const)[lang]}</small></div><ChevronRight size={20}/></button>
+        <button type="button" className="continue-story-card cartoon-entry" onClick={()=>{stopSpeech();setTab("cartoons");}}>
+          <img src="/images/classics/red-hood/pages/page-1.png" alt="" loading="lazy" width={60} height={62}/>
+          <span className="continue-story-copy"><strong>{({ru:"Студия мультфильмов",uz:"Multfilm studiyasi",en:"Cartoon studio"} as const)[lang]}</strong><small>{({ru:"Мультфильмы по любимым сказкам",uz:"Sevimli ertaklaringiz asosidagi multfilmlar",en:"Films based on favorite stories"} as const)[lang]}</small></span>
+          <ArrowRight size={19} aria-hidden="true"/>
+        </button>
         {continueBook&&<button type="button" className="continue-story-card" onClick={()=>openBook(continueBook)}>
           <StoryIllustration url={continueBook.pages[0]?.image_url||""} alt={continueBook.title} lazy/>
           <span className="continue-story-copy">
@@ -1754,7 +1758,7 @@ function App(){
         </div>
       </section>}
       {tab==="cartoons"&&<React.Suspense fallback={<p role="status">{({ru:"Загрузка студии…",uz:"Studiya yuklanmoqda…",en:"Loading studio…"} as const)[lang]}</p>}><CartoonStudio lang={lang} onBack={()=>setTab("home")}/></React.Suspense>}
-      <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></nav>
+      <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"||tab==="cartoons"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></nav>
     </main>
     <footer className="site-legal-footer">
       <span>© {new Date().getFullYear()} WonderTale AI · Komron Giyosov</span>

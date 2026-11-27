@@ -1,31 +1,31 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {ArrowLeft,ChevronLeft,ChevronRight,Film,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
+import {ArrowLeft,ChevronLeft,ChevronRight,Check,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
 import {classics} from "./classics";
 import ClassicFilm,{hasClassicFilm} from "./ClassicFilm";
 import type {Lang} from "./i18n";
 import {buildClassicCartoon,nextCartoonScene} from "./cartoon_storyboard";
 import {preferredStoryVoice,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
-import "./cartoon-studio.css";
 
 const filmModeLabels={
- ru:{film:"Мультфильм",storyboard:"Раскадровка",label:"Режим просмотра"},
- uz:{film:"Multfilm",storyboard:"Sahnalar",label:"Tomoşa rejimi"},
- en:{film:"Film",storyboard:"Storyboard",label:"Viewing mode"}
+ ru:{film:"Мультфильмы",storyboard:"Сцены сказок",label:"Режим просмотра",catalog:"Готовые мультфильмы"},
+ uz:{film:"Multfilmlar",storyboard:"Ertak sahnalari",label:"Tomoşa rejimi",catalog:"Tayyor multfilmlar"},
+ en:{film:"Films",storyboard:"Story scenes",label:"Viewing mode",catalog:"Available films"}
 } as const;
 
+const filmedStories=classics.filter(story=>hasClassicFilm(story.id));
+
 const copy={
- ru:{title:"Студия мультфильмов",intro:"Сказка оживает на экране",demo:"Анимированная раскадровка",note:"Это локальный просмотр сцен с иллюстрациями и движением камеры, а не сгенерированное ИИ-видео.",choose:"Выберите сказку",play:"Смотреть",pause:"Пауза",back:"Назад",next:"Далее",restart:"Сначала",scene:"Сцена",voice:"Озвучивание",silent:"Без звука",noVoice:"На устройстве нет подходящего локального голоса. Доступны субтитры.",finished:"Конец сказки",previous:"Предыдущая сцена",nextScene:"Следующая сцена",transcript:"Текст сцены"},
- uz:{title:"Multfilm studiyasi",intro:"Ertak ekranda jonlanadi",demo:"Animatsiyali sahnalar",note:"Bu rasmlar va kamera harakati bilan mahalliy namoyiş, AI yaratgan video emas.",choose:"Ertakni tanlang",play:"Tomoşa qiliş",pause:"Pauza",back:"Orqaga",next:"Keyingi",restart:"Boşidan",scene:"Sahna",voice:"Ovozli öqiş",silent:"Ovozsiz",noVoice:"Qurilmada mos mahalliy ovoz yöq. Subtitrlar mavjud.",finished:"Ertak tugadi",previous:"Oldingi sahna",nextScene:"Keyingi sahna",transcript:"Sahna matni"},
- en:{title:"Cartoon studio",intro:"Bring a story to life",demo:"Animated storyboard",note:"This is a local scene preview with illustrated camera motion, not AI-generated video.",choose:"Choose a story",play:"Watch",pause:"Pause",back:"Back",next:"Next",restart:"Restart",scene:"Scene",voice:"Narration",silent:"Muted",noVoice:"No matching on-device voice is available. Captions remain available.",finished:"The end",previous:"Previous scene",nextScene:"Next scene",transcript:"Scene text"}
+ ru:{title:"Студия мультфильмов",intro:"Мультфильмы и сцены любимых сказок",note:"Сцены с иллюстрациями и озвучкой устройства.",choose:"Выберите сказку",play:"Смотреть",pause:"Пауза",back:"Назад",next:"Далее",restart:"Сначала",scene:"Сцена",voice:"Озвучивание",silent:"Без звука",noVoice:"На устройстве нет подходящего локального голоса. Доступны субтитры.",finished:"Конец сказки",previous:"Предыдущая сцена",nextScene:"Следующая сцена",transcript:"Текст сцены"},
+ uz:{title:"Multfilm studiyasi",intro:"Sevimli ertaklaringizni tomoşa qiling",note:"Rasmli sahnalarni qurilma ovozi bilan tinglang.",choose:"Ertakni tanlang",play:"Tomoşa qiliş",pause:"Pauza",back:"Orqaga",next:"Keyingi",restart:"Boşidan",scene:"Sahna",voice:"Ovozli öqiş",silent:"Ovozsiz",noVoice:"Qurilmada mos mahalliy ovoz yöq. Subtitrlar mavjud.",finished:"Ertak tugadi",previous:"Oldingi sahna",nextScene:"Keyingi sahna",transcript:"Sahna matni"},
+ en:{title:"Cartoon studio",intro:"Films and scenes from your favorite stories",note:"Illustrated scenes with on-device narration.",choose:"Choose a story",play:"Watch",pause:"Pause",back:"Back",next:"Next",restart:"Restart",scene:"Scene",voice:"Narration",silent:"Muted",noVoice:"No matching on-device voice is available. Captions remain available.",finished:"The end",previous:"Previous scene",nextScene:"Next scene",transcript:"Scene text"}
 } as const;
 
 export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void}){
  const t=copy[lang];
  const [id,setId]=useState("three-pigs");
- const [view,setView]=useState<"film"|"storyboard">("storyboard");
+ const [view,setView]=useState<"film"|"storyboard">("film");
  const modeLabels=filmModeLabels[lang];
  const selectedTitle=classics.find(classic=>classic.id===id)?.title[lang]??t.scene;
- const filmAvailable=hasClassicFilm(id);
  const scenes=useMemo(()=>buildClassicCartoon(id,lang),[id,lang]);
  const [index,setIndex]=useState(0);
  const [playing,setPlaying]=useState(false);
@@ -34,6 +34,7 @@ export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void})
  const [voiceMissing,setVoiceMissing]=useState(false);
  const [failed,setFailed]=useState(0);
  const [elapsed,setElapsed]=useState(0);
+ const lastFilm=useRef(id);
  const run=useRef(0);
  const timer=useRef<number|null>(null);
  const utterance=useRef<SpeechSynthesisUtterance|null>(null);
@@ -44,7 +45,7 @@ export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void})
   if(utterance.current&&"speechSynthesis" in window){utterance.current.onend=null;utterance.current.onerror=null;window.speechSynthesis.cancel();}
   utterance.current=null;
  };
- const reset=()=>{cancel();setPlaying(false);setEnded(false);setIndex(0);setElapsed(0);setFailed(0);};
+ const reset=()=>{cancel();setPlaying(false);setEnded(false);setIndex(0);setElapsed(0);setFailed(0);setVoiceMissing(false);};
  useEffect(()=>{reset();return cancel;},[id,lang]);
  useEffect(()=>{setFailed(0);},[index]);
  useEffect(()=>{
@@ -56,6 +57,10 @@ export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void})
   if(next===view)return;
   cancel();
   setPlaying(false);
+  if(next==="film"){
+   if(hasClassicFilm(id))lastFilm.current=id;
+   else setId(lastFilm.current);
+  }
   setView(next);
  }
  function jump(next:number){
@@ -99,35 +104,47 @@ export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void})
  }
  const image=current?(failed===0&&current.animation?current.animation:failed<=(current.animation?1:0)?current.image:current.fallback||"/images/wondertale-hero.webp"):"";
  return <section className="cartoon-studio">
-  <button className="cartoon-back" type="button" onClick={()=>{cancel();onBack();}}><ArrowLeft size={17}/>{t.back}</button>
-  <div className="cartoon-heading"><span><Film size={23}/></span><div><h1>{t.title}</h1><p>{t.intro}</p></div></div>
-  <label className="cartoon-select">{t.choose}<select value={id} onChange={e=>{reset();if(!hasClassicFilm(e.target.value))setView("storyboard");setId(e.target.value);}}>{classics.map(c=><option key={c.id} value={c.id}>{c.title[lang]}</option>)}</select></label>
-  {filmAvailable&&<div className="cartoon-view-switch" role="group" aria-label={modeLabels.label}>
-   <button type="button" aria-pressed={view==="storyboard"} onClick={()=>selectView("storyboard")}>{modeLabels.storyboard}</button>
-   <button type="button" aria-pressed={view==="film"} onClick={()=>selectView("film")}>{modeLabels.film}</button>
-  </div>}
-  {view==="film"&&filmAvailable&&<ClassicFilm key={id+":"+lang} storyId={id} title={selectedTitle} lang={lang} onStoryboard={()=>selectView("storyboard")}/>}
-  {view==="storyboard"&&current&&<>
+  <div className="cartoon-heading">
+   <button className="icon-button cartoon-back" type="button" aria-label={t.back} title={t.back} onClick={()=>{cancel();onBack();}}><ArrowLeft size={19} aria-hidden="true"/></button>
+   <div><h1>{t.title}</h1><p>{t.intro}</p></div>
+  </div>
+  <div className="cartoon-view-switch" role="group" aria-label={modeLabels.label}>
+   <button type="button" className="chip" aria-pressed={view==="film"} onClick={()=>selectView("film")}>{modeLabels.film}</button>
+   <button type="button" className="chip" aria-pressed={view==="storyboard"} onClick={()=>selectView("storyboard")}>{modeLabels.storyboard}</button>
+  </div>
+  {view==="film"&&<>
+   <div className="cartoon-catalog" role="group" aria-label={modeLabels.catalog}>
+    {filmedStories.map(story=><button key={story.id} type="button" className="book-tile cartoon-tile" aria-pressed={id===story.id} onClick={()=>{lastFilm.current=story.id;setId(story.id);}}>
+     <img src={"/images/classics/"+story.id+"/pages/page-1.png"} width={48} height={50} alt=""/>
+     <strong>{story.title[lang]}</strong>
+     {id===story.id&&<Check size={15} aria-hidden="true"/>}
+    </button>)}
+   </div>
+   <ClassicFilm key={id+":"+lang} storyId={id} title={selectedTitle} lang={lang} onStoryboard={()=>selectView("storyboard")}/>
+  </>}
+  {view==="storyboard"&&current&&<div className="form-card cartoon-player">
+   <label className="cartoon-select">{t.choose}
+    <select value={id} onChange={e=>setId(e.target.value)}>{classics.map(story=><option key={story.id} value={story.id}>{story.title[lang]}</option>)}</select>
+   </label>
    <div className="cartoon-screen">
     <div className={"cartoon-picture"+(playing?" cartoon-moving":"")} key={id+":"+index}>
      <img src={image} alt={selectedTitle} onError={()=>setFailed(f=>Math.min(2+(current.animation?1:0),f+1))}/>
     </div>
-    <span className="cartoon-screen-label">{t.demo}</span>
     <span className="cartoon-scene-label">{t.scene} {index+1}/{scenes.length}</span>
     {ended&&<div className="cartoon-end">{t.finished}</div>}
    </div>
    <div className="cartoon-progress" role="progressbar" aria-label={t.scene} aria-valuenow={index+1} aria-valuemin={1} aria-valuemax={scenes.length}><span style={{width:((index+Math.min(1,elapsed/current.seconds))/scenes.length*100)+"%"}}/></div>
    <div className="cartoon-controls">
-    <button type="button" aria-label={t.previous} disabled={index===0} onClick={()=>jump(index-1)}><ChevronLeft size={21}/></button>
-    <button type="button" className="cartoon-play" onClick={()=>{if(playing){cancel();setPlaying(false);}else start(ended?0:index);}}>{playing?<Pause size={19}/>:<Play size={19}/>} {playing?t.pause:t.play}</button>
-    <button type="button" aria-label={t.nextScene} disabled={index>=scenes.length-1} onClick={()=>jump(index+1)}><ChevronRight size={21}/></button>
-    <button type="button" aria-label={muted?t.silent:t.voice} aria-pressed={!muted} onClick={()=>{cancel();setPlaying(false);setMuted(v=>!v);}}>{muted?<VolumeX size={20}/>:<Volume2 size={20}/>}</button>
-    <button type="button" aria-label={t.restart} onClick={reset}><RotateCcw size={19}/></button>
+    <button type="button" className="icon-button" aria-label={t.previous} disabled={index===0} onClick={()=>jump(index-1)}><ChevronLeft size={21}/></button>
+    <button type="button" className="primary-button cartoon-play" onClick={()=>{if(playing){cancel();setPlaying(false);}else start(ended?0:index);}}>{playing?<Pause size={19}/>:<Play size={19}/>} {playing?t.pause:t.play}</button>
+    <button type="button" className="icon-button" aria-label={t.nextScene} disabled={index>=scenes.length-1} onClick={()=>jump(index+1)}><ChevronRight size={21}/></button>
+    <button type="button" className="icon-button" aria-label={muted?t.silent:t.voice} aria-pressed={!muted} onClick={()=>{cancel();setPlaying(false);setMuted(v=>!v);}}>{muted?<VolumeX size={20}/>:<Volume2 size={20}/>}</button>
+    <button type="button" className="icon-button" aria-label={t.restart} onClick={reset}><RotateCcw size={19}/></button>
    </div>
    {voiceMissing&&!muted&&<p className="cartoon-notice" role="status">{t.noVoice}</p>}
    <p className="cartoon-caption" aria-live="polite">{current.text}</p>
-   <div className="cartoon-strip" aria-label={t.scene}>{scenes.map((scene,i)=><button key={scene.number} type="button" aria-label={t.scene+" "+scene.number} aria-current={i===index?"step":undefined} onClick={()=>jump(i)}>{scene.number}</button>)}</div>
+   <div className="cartoon-strip" role="group" aria-label={t.scene}>{scenes.map((scene,i)=><button key={scene.number} type="button" className="icon-button" aria-label={t.scene+" "+scene.number} aria-current={i===index?"step":undefined} onClick={()=>jump(i)}>{scene.number}</button>)}</div>
    <p className="cartoon-notice">{t.note}</p>
-  </>}
+  </div>}
  </section>;
 }

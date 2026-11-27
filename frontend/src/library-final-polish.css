@@ -15,15 +15,17 @@
   margin:0;
   gap:0;
 }
-.library-page.library-concept-two .library-concept-heading h2{
+.library-page.library-concept-two .library-concept-heading h2,
+.cartoon-heading h1{
   font-family:inherit;
   font-size:clamp(24px,4.5vw,31px);
   font-weight:800;
   letter-spacing:-.035em;
   line-height:1.18;
-  color:var(--lib-ink);
+  color:var(--lib-ink,var(--wt-site-ink,#3b2459));
 }
-.library-page.library-concept-two .library-concept-heading p{
+.library-page.library-concept-two .library-concept-heading p,
+.cartoon-heading p{
   margin:5px 0 0;
   font-size:13px;
   line-height:1.45;

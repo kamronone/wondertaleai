@@ -9,9 +9,9 @@ export function hasClassicFilm(id:string){
 const trackLabels={ru:"Русский",uz:"Özbekça",en:"English"} as const;
 const languages=["ru","uz","en"] as const;
 const copy={
- ru:{info:"1 мин 20 с",audio:"Озвучка",error:"Видео не загрузилось.",fallback:"Открыть раскадровку"},
- uz:{info:"1 daqiqa 20 soniya",audio:"Ovoz tili",error:"Video yuklanmadi.",fallback:"Sahnalarni oçiş"},
- en:{info:"1 min 20 sec",audio:"Narration",error:"The video could not load.",fallback:"Open storyboard"}
+ ru:{info:"1 мин 20 с",audio:"Озвучка",error:"Видео не загрузилось.",fallback:"Открыть сцены сказки"},
+ uz:{info:"1 daqiqa 20 soniya",audio:"Ovoz tili",error:"Video yuklanmadi.",fallback:"Ertak sahnalarini oçiş"},
+ en:{info:"1 min 20 sec",audio:"Narration",error:"The video could not load.",fallback:"Open story scenes"}
 } as const;
 
 type FilmPosition={
@@ -71,16 +71,19 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
   if(previous.playing&&!document.hidden)void video.play().catch(()=>{});
  }
 
- return <div className="cartoon-film">
-  <label className="cartoon-select cartoon-film-audio">
+ return <div className="form-card cartoon-player cartoon-film">
+  <div className="cartoon-film-toolbar">
+   <label className="cartoon-select cartoon-film-audio">
    {t.audio}
    <select value={audioLanguage} onChange={event=>changeAudio(event.target.value as Lang)}>
     {languages.map(language=><option key={language} value={language} lang={language}>{trackLabels[language]}</option>)}
    </select>
-  </label>
+   </label>
+   <span className="cartoon-notice">{t.info}</span>
+  </div>
   {failed?<div className="cartoon-film-error">
    <p role="status">{t.error}</p>
-   <button type="button" onClick={onStoryboard}>{t.fallback}</button>
+   <button type="button" className="secondary-button" onClick={onStoryboard}>{t.fallback}</button>
   </div>:<video
    ref={videoRef}
    aria-label={title}
@@ -103,6 +106,5 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
     default={language===lang}
    />)}
   </video>}
-  <p className="cartoon-notice">{t.info}</p>
  </div>;
 }

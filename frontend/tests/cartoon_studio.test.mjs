@@ -45,7 +45,7 @@ test("studio is lazy-loaded and local-only; narration stops when leaving or hidi
  assert.match(studio,/visibilitychange/);
  assert.match(studio,/clearInterval/);
  assert.match(studio,/speechSynthesis\.cancel/);
- assert.match(studio,/not AI-generated video/);
+ assert.match(studio,/on-device narration/);
  assert.doesNotMatch(studio,/fetch\(|localStorage|sessionStorage|Authorization|privateToken/);
  assert.doesNotMatch(storyboard,/createDemoBook\(|saveDemoBooks\(|fetch\(/);
 });
