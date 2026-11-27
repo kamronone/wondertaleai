@@ -54,8 +54,10 @@ def redeem_gift(conn,owner_id,code,now):
     return {"subscription_id":str(sid),"created":True}
 
 
-def create_gift_order(conn,purchaser_id,plan_id,request_key,now):
-    """Create a sandbox gift order. Plaintext code is returned only on creation."""
+def create_gift_order(conn,purchaser_id,plan_id,request_key,now,provider='sandbox'):
+    """Create a test gift order. Plaintext code is returned only on creation."""
+    if provider not in ("sandbox","payme","click"):
+        raise ValueError("Invalid test provider")
     now=utc(now)
     plan=get_plan(plan_id)
     if plan_id not in ("plus","family") or not isinstance(request_key,str) or not 1<=len(request_key)<=128:
@@ -65,14 +67,27 @@ def create_gift_order(conn,purchaser_id,plan_id,request_key,now):
         FROM payment_orders o LEFT JOIN billing_gift_orders g ON g.order_id=o.id
         WHERE o.owner_id=%s AND o.idempotency_key=%s""",(purchaser_id,request_key)).fetchone()
     if existing:
-        if existing[1]!=plan_id or existing[2]!="sandbox" or existing[3] is None:
+        if existing[1]!=plan_id or existing[2]!=provider or existing[3] is None:
             raise ValueError("Idempotency conflict")
         return {"order_id":str(existing[0]),"gift_id":str(existing[3]),"code":None,"created":False}
     gift=create_pending_gift(conn,purchaser_id,plan_id,now)
     oid=uuid4()
     conn.execute("""INSERT INTO payment_orders
         (id,owner_id,plan_id,plan_version,amount_minor,currency,provider,state,idempotency_key)
-        VALUES (%s,%s,%s,%s,%s,%s,'sandbox','pending',%s)""",
-        (oid,purchaser_id,plan.id,plan.version,plan.price_minor,plan.currency,request_key))
+        VALUES (%s,%s,%s,%s,%s,%s,%s,'pending',%s)""",
+        (oid,purchaser_id,plan.id,plan.version,plan.price_minor,plan.currency,provider,request_key))
     conn.execute("INSERT INTO billing_gift_orders(order_id,gift_id) VALUES (%s,%s)",(oid,gift["gift_id"]))
     return {"order_id":str(oid),"gift_id":gift["gift_id"],"code":gift["code"],"created":True}
+
+
+def activate_paid_gift(conn,order_id,owner_id,plan_id,plan_version,now):
+    """Called under owner/order locks in the same payment transaction."""
+    row=conn.execute("""SELECT g.id,g.state,g.expires_at,g.purchaser_id,g.plan_id,g.plan_version
+        FROM billing_gift_orders go JOIN billing_gift_codes g ON g.id=go.gift_id
+        WHERE go.order_id=%s FOR UPDATE OF g""",(order_id,)).fetchone()
+    if not row:
+        return False
+    if row[1]!="pending" or utc(now)>=row[2] or tuple(row[3:])!=(owner_id,plan_id,plan_version):
+        raise ValueError("Invalid gift order")
+    conn.execute("UPDATE billing_gift_codes SET state='available' WHERE id=%s",(row[0],))
+    return True
