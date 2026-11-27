@@ -1,6 +1,7 @@
 import {useEffect,useState} from "react";
 import type {Lang} from "./i18n";
 import "./pricing-plans.css";
+import PromotionQuote from "./PromotionQuote";
 
 type Plan={id:"free"|"plus"|"family";price:number;stories:number;description:Record<Lang,string>;features:Record<Lang,string[]>};
 const plans:Plan[]=[
@@ -44,6 +45,7 @@ export function PricingPlans({lang,api,session}:{lang:Lang;api:string;session:st
    <button type="button" className="pricing-compare" aria-pressed={selected===plan.id} onClick={()=>setSelected(plan.id)}>{selected===plan.id?previewCopy.selected:previewCopy.choose}</button>
   </article>)}</div>
   <div className="pricing-estimate" aria-live="polite"><h3>{previewCopy.summary}: {t.names[selected]}</h3><p>{previewCopy.year}: <strong>{(chosen.price*12).toLocaleString("ru-RU")} {lang==="en"?"UZS":lang==="uz"?"söm":"сум"}</strong></p>{chosen.stories>0&&<p>{previewCopy.perStory}: <strong>{Math.round(chosen.price/chosen.stories).toLocaleString("ru-RU")} {lang==="en"?"UZS":lang==="uz"?"söm":"сум"}</strong></p>}<button type="button" className="pricing-compare" aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}>{previewCopy.details}</button>{expanded&&<p>{previewCopy.terms}</p>}</div>
+  {import.meta.env.VITE_ENABLE_BILLING_PROMO_PREVIEW==="true" && session && api && selected!=="free" && <div className="pricing-estimate"><PromotionQuote key={selected+":"+session+":"+api} language={lang} planId={selected} requestQuote={async (planId,code)=>{const response=await fetch(api+"/api/billing/promotions/quote",{method:"POST",headers:{Authorization:"Bearer "+session,"Content-Type":"application/json"},body:JSON.stringify({plan_id:planId,code}),cache:"no-store"});if(!response.ok)throw new Error("Promotion unavailable");return response.json();}}/></div>}
   {status&&<p className="pricing-note" role="status">{billingSummary+": "+activePlan} · {status.ai_pilot_access?({ru:"Пилотный AI-доступ",uz:"Sinov AI ruxsati",en:"Pilot AI access"} as const)[lang]+": "+status.ai_used_today+"/"+status.ai_daily_limit+" · "+({ru:"Осталось сегодня",uz:"Bugun qolgan",en:"Remaining today"} as const)[lang]+": "+Math.max(0,status.ai_remaining_today)+" (UTC)":({ru:"AI-доступ пока не активирован",uz:"AI ruxsati hali faol emas",en:"AI access is not active yet"} as const)[lang]}</p>}
   <p className="pricing-note">{t.note}</p><p className="pricing-note pricing-disclaimer">{({ru:"Цены и лимиты показаны для ознакомления. Кнопок оплаты нет: это не предложение действующей подписки.",uz:"Narxlar va limitlar faqat tanişuv uçun. Tölov tugmalari yöq: obuna hali işlamaydi.",en:"Prices and limits are illustrative. There are no payment buttons and subscriptions are not yet offered."} as const)[lang]}</p>
  </section>;
