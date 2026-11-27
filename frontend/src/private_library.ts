@@ -1,6 +1,6 @@
 import type { DemoBook } from "./demo";
 
-export type RemoteBook=DemoBook & {mode:"private-account"};
+export type RemoteBook=DemoBook & {mode:"private-account";continuationOf?:string};
 
 /** A missing book must not block synchronizing unrelated offline edits. */
 export class PrivateBookNotFoundError extends Error {
@@ -11,7 +11,7 @@ export type TransferReport={uploaded:number;existing:number;failed:number;metada
 
 type ServerRow={id:string;title:string;child_name:string;age:number;story:string;created_at:string};
 type StoredStory={
- version:number; source_id:string;language?:string;theme?:string;style?:string;prompt?:string;
+ version:number; source_id:string;language?:string;theme?:string;style?:string;prompt?:string;continuation_of?:unknown;
  pages:Array<{number:number;text:string;image_url?:string}>;
 };
 const fetchWithToken=(api:string,path:string,token:string,init?:RequestInit)=>fetch(api+path,{
@@ -54,6 +54,7 @@ function normalizeServerBook(book:ServerRow):RemoteBook|null{
    prompt:typeof stored.prompt==="string"?stored.prompt:"",
    style:typeof stored.style==="string"?stored.style:"",
    language:stored.language==="uz"||stored.language==="en"?stored.language:"ru",
+   continuationOf:typeof stored.continuation_of==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stored.continuation_of)&&stored.continuation_of!==book.id?stored.continuation_of:undefined,
    pages,mode:"private-account"};
  }catch{return null;}
 }
