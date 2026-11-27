@@ -151,3 +151,41 @@ def test_incomplete_provider_response_rejected(monkeypatch):
             return SimpleNamespace(status="incomplete",output_text=_story("en"))
     with pytest.raises(ValueError,match="completed story"):
         generate_story(payload,client=SimpleNamespace(responses=Incomplete()))
+
+
+def test_sequel_uses_previous_story_as_data(monkeypatch):
+    import json
+    from ai_generation import StoryContinuation
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    previous=StoryContinuation("The old adventure",tuple("Earlier adventure "+str(i) for i in range(8)))
+    responses=FakeResponses(_story("en",8))
+    payload=GenerateStoryInput(name="Sam",age=7,language="en",idea="A new journey to a magical garden")
+    result=generate_story(payload,client=SimpleNamespace(responses=responses),continuation=previous)
+    assert len(result.pages)==8
+    call=responses.calls[0]
+    assert json.loads(call["input"])["preceding_story"]=={"title":previous.title,"chapters":list(previous.chapters)}
+    assert "untrusted fictional reference data" in call["instructions"]
+    assert "Begin after its ending" in call["instructions"]
+    assert call["store"] is False
+
+
+def test_sequel_rejects_copied_preceding_chapters(monkeypatch):
+    import json
+    from ai_generation import StoryContinuation
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    previous=StoryContinuation("The old adventure",tuple(json.loads(_story("en",8))["pages"]))
+    responses=FakeResponses(_story("en",8))
+    payload=GenerateStoryInput(name="Sam",age=7,language="en",idea="A new journey to a magical garden")
+    with pytest.raises(ValueError,match="repeats a preceding chapter"):
+        generate_story(payload,client=SimpleNamespace(responses=responses),continuation=previous)
+
+
+def test_sequel_rejects_oversized_context_before_provider(monkeypatch):
+    from ai_generation import StoryContinuation
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    previous=StoryContinuation("The old adventure",tuple("x"*1201 for _ in range(8)))
+    responses=FakeResponses(_story("en",8))
+    payload=GenerateStoryInput(name="Sam",age=7,language="en",idea="A new journey to a magical garden")
+    with pytest.raises(ValueError,match="preceding story context"):
+        generate_story(payload,client=SimpleNamespace(responses=responses),continuation=previous)
+    assert not responses.calls
