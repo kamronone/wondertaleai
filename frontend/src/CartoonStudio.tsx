@@ -80,12 +80,14 @@ async function recordLocalMontage(scenes:CartoonScene[],signal:AbortSignal,onPro
    const scene=scenes[i];let image:HTMLImageElement|null=null;
    try{image=await localVideoImage(scene.image,signal);}catch{if(signal.aborted)throw new Error("Cancelled");image=await localVideoImage("/images/wondertale-hero.webp",signal);}
    if(signal.aborted)throw new Error("Cancelled");
-   ctx.fillStyle="#201849";ctx.fillRect(0,0,640,480);
-   const scale=Math.min(640/image.naturalWidth,480/image.naturalHeight);
-   const w=image.naturalWidth*scale,h=image.naturalHeight*scale;
-   ctx.drawImage(image,(640-w)/2,(480-h)/2,w,h);
+   const frame=image;
+   const scale=Math.min(640/frame.naturalWidth,480/frame.naturalHeight);
+   const w=frame.naturalWidth*scale,h=frame.naturalHeight*scale;
+   const draw=()=>{ctx.fillStyle="#201849";ctx.fillRect(0,0,640,480);ctx.drawImage(frame,(640-w)/2,(480-h)/2,w,h);};
+   draw();
    if(i===0)active.start(1000);
-   await waitFrame(3000,signal);
+   const refresh=window.setInterval(draw,100);
+   try{await waitFrame(3000,signal);}finally{window.clearInterval(refresh);}
    onProgress(Math.round((i+1)/scenes.length*100));
   }
   if(active.state!=="inactive")active.stop();
