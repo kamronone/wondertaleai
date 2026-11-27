@@ -1,4 +1,5 @@
 import {useEffect,useState} from "react";
+import {LayoutDashboard,Users,BookOpen,BrainCircuit,ClipboardList,Activity,ArrowUpRight,Download,ShieldCheck,ChevronRight} from "lucide-react";
 import "./billing-dashboard.css";
 
 type Summary={
@@ -31,6 +32,7 @@ const demoContent=():DemoContent[]=>[
  {id:"C-05",title:"Звёздный корабль",kind:"story",status:"hidden"}
 ];
 const sectionNames:Record<AdminSection,string>={finance:"Финансы",users:"Пользователи",content:"Контент",ai:"AI и расходы",audit:"Журнал",system:"Система"};
+const sectionIcons={finance:LayoutDashboard,users:Users,content:BookOpen,ai:BrainCircuit,audit:ClipboardList,system:Activity};
 const planNames={free:"Free",plus:"Plus",family:"Family"};
 const contentStatus={review:"На проверке",approved:"Одобрено",hidden:"Скрыто"};
 const metricCards=(items:[string,string|number][])=> <div className="billing-metrics">{items.map(([label,value])=><article key={label}><small>{label}</small><strong>{value}</strong></article>)}</div>;
@@ -71,9 +73,9 @@ function AdminDemoSections({section}:{section:AdminSection}){
     <button type="button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;setUsers(demoUsers());setQuery("");setPlan("all");log("Сброс пользователей","Демо");}}>Сбросить демо</button>
    </div>
    {!visibleUsers.length&&<p>Ничего не найдено.</p>}
-   <div className="billing-metrics">{visibleUsers.map(user=><article key={user.id}>
+   <div className="admin-record-list">{visibleUsers.map(user=><article key={user.id}>
     <strong>{user.id}</strong><small>{planNames[user.plan]} · {user.books} сказок</small>
-    <small>{user.status==="active"?"Активен":"Приостановлен"}</small>
+    <span className="admin-status" data-tone={user.status==="active"?"good":"warning"}>{user.status==="active"?"Активен":"Приостановлен"}</span>
     <button type="button" className="secondary-button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;const status=user.status==="active"?"paused":"active";setUsers(items=>items.map(item=>item.id===user.id?{...item,status}:item));log(status==="paused"?"Приостановка":"Активация",user.id);}}>{user.status==="active"?"Приостановить (демо)":"Активировать (демо)"}</button>
    </article>)}</div>
   </>}
@@ -86,7 +88,7 @@ function AdminDemoSections({section}:{section:AdminSection}){
     <button type="button" disabled={!canModerate(role)} onClick={()=>{if(!canModerate(role))return;setContent(demoContent());setQuery("");setContentFilter("all");log("Сброс контента","Демо");}}>Сбросить демо</button>
    </div>
    {!visibleContent.length&&<p>Ничего не найдено.</p>}
-   <div className="billing-metrics">{visibleContent.map(item=><article key={item.id}><strong>{item.title}</strong><small>{item.kind==="story"?"Сказка":"Мультфильм"} · {contentStatus[item.status]}</small>
+   <div className="admin-record-list">{visibleContent.map(item=><article key={item.id}><strong>{item.title}</strong><small>{item.kind==="story"?"Сказка":"Мультфильм"}</small><span className="admin-status" data-tone={item.status==="approved"?"good":item.status==="review"?"warning":"neutral"}>{contentStatus[item.status]}</span>
     <label>Изменить статус<select disabled={!canModerate(role)} value={item.status} onChange={e=>{if(!canModerate(role))return;const status=e.target.value as DemoContent["status"];setContent(rows=>rows.map(row=>row.id===item.id?{...row,status}:row));log("Модерация: "+contentStatus[status],item.id);}}>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
    </article>)}</div>
   </>}
@@ -104,14 +106,14 @@ function AdminDemoSections({section}:{section:AdminSection}){
    <p className="billing-muted">До 100 последних действий текущей страницы. Время UTC. Журнал не сохраняется на сервере.</p>
    <div className="billing-filters"><label>Роль<select value={auditFilter} onChange={e=>setAuditFilter(e.target.value as typeof auditFilter)}><option value="all">Все роли</option>{Object.entries(roleLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label></div>
    {!audit.filter(item=>auditFilter==="all"||item.role===auditFilter).length&&<p>Нет действий по выбранному фильтру.</p>}
-   <div className="billing-metrics">{audit.filter(item=>auditFilter==="all"||item.role===auditFilter).map(item=><article key={item.id}><strong>{item.action}</strong><small>{item.target} · {roleLabels[item.role]}</small><small><time dateTime={item.time}>{item.time.replace("T"," ").slice(0,19)} UTC</time></small></article>)}</div>
+   <div className="admin-event-list">{audit.filter(item=>auditFilter==="all"||item.role===auditFilter).map(item=><article key={item.id}><strong>{item.action}</strong><small>{item.target} · {roleLabels[item.role]}</small><small><time dateTime={item.time}>{item.time.replace("T"," ").slice(0,19)} UTC</time></small></article>)}</div>
   </>}
   {section==="system"&&<>
    <h2>Мониторинг системы</h2>
    <p className="billing-muted">Сценарии ошибок для проверки интерфейса. Не результаты диагностики реального сервера.</p>
    {metricCards([["Тестовые события",errors.length],["Ошибки",errors.filter(e=>e.level==="error").length],["Предупреждения",errors.filter(e=>e.level==="warning").length],["Реальные проверки","Не подключены"]])}
    <div className="billing-filters"><label>Уровень<select value={errorFilter} onChange={e=>setErrorFilter(e.target.value as typeof errorFilter)}><option value="all">Все события</option><option value="error">Ошибки</option><option value="warning">Предупреждения</option></select></label></div>
-   <div className="billing-metrics">{errors.filter(e=>errorFilter==="all"||e.level===errorFilter).map(event=><article key={event.id}><strong>{event.component}</strong><small>{event.id} · {event.level==="error"?"Ошибка":"Предупреждение"}</small><small>{event.message}</small></article>)}</div>
+   <div className="admin-event-list">{errors.filter(e=>errorFilter==="all"||e.level===errorFilter).map(event=><article key={event.id}><strong>{event.component}</strong><small>{event.id}</small><span className="admin-status" data-tone={event.level==="error"?"danger":"warning"}>{event.level==="error"?"Ошибка":"Предупреждение"}</span><small>{event.message}</small></article>)}</div>
   </>}
  </div>;
 }
@@ -177,24 +179,30 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
  for(const d of data?.daily??[]){const key=group==="month"?d.day.slice(0,7):d.day;const b=buckets.get(key)??{gross:0,refund:0,net:0};b.gross+=d.gross_minor;b.refund+=d.refund_minor;b.net+=d.net_minor;buckets.set(key,b);}
  const points=Array.from(buckets.entries()).sort(([a],[b])=>a.localeCompare(b));
  const max=Math.max(1,...points.flatMap(([,p])=>[p.gross,p.refund,Math.abs(p.net)]));
- return <section className="billing-dashboard">
-  {demo&&<nav className="billing-filters" aria-label="Разделы демо-админки">{(Object.keys(sectionNames) as AdminSection[]).map(key=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{sectionNames[key]}</button>)}</nav>}
+ return <section className={demo?"billing-dashboard admin-shell":"billing-dashboard"}>
+  {demo&&<aside className="admin-sidebar">
+   <div className="admin-brand"><span className="admin-brand-icon"><BookOpen size={21}/></span><div><strong>Ertakcha</strong><small>ADMIN WORKSPACE</small></div></div>
+   <nav className="admin-navigation" aria-label="Разделы админки">{(Object.keys(sectionNames) as AdminSection[]).map(key=>{const Icon=sectionIcons[key];return <button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}><Icon size={18}/><span>{sectionNames[key]}</span></button>;})}</nav>
+   <a className="admin-exit" href="/"><ArrowUpRight size={16}/> Открыть Ertakcha</a>
+  </aside>}
+  <div className={demo?"admin-main":"billing-dashboard"}>
+  {demo&&<header className="admin-header"><div><small className="admin-breadcrumb">Рабочее пространство <ChevronRight size={12}/> {sectionNames[section]}</small><h1>{section==="finance"?"Обзор финансов":sectionNames[section]}</h1></div><span className="admin-demo-label"><ShieldCheck size={15}/> Демо</span></header>}
   {demo&&<AdminDemoSections section={section}/>}
   {(!demo||section==="finance")&&<>
-  <h2>Финансовая аналитика</h2>{demo&&<p role="status">ДЕМО · вымышленные данные · без подключения к серверу · операции за последние 90 дней</p>}
+  {!demo&&<h2>Финансовая аналитика</h2>}{demo&&<p className="admin-demo-notice" role="status">Демонстрационные данные · без подключения к серверу</p>}
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
-  <div className="billing-filters">
+  <div className="billing-filters admin-date-panel">
    <label>С<input type="date" value={start} max={end} onChange={e=>setStart(e.target.value)}/></label>
    <label>По<input type="date" value={end} min={start} onChange={e=>setEnd(e.target.value)}/></label>
-   <button type="button" onClick={()=>{setStart(day(-6));setEnd(day(0));}}>7 дней</button>
-   <button type="button" onClick={()=>{setStart(day(-29));setEnd(day(0));}}>30 дней</button>
-   <button type="button" onClick={()=>{setStart(day(-89));setEnd(day(0));}}>90 дней</button>
+   <button type="button" onClick={()=>{setStart(day(-6));setEnd(day(0));}} aria-pressed={start===day(-6)&&end===day(0)}>7 дней</button>
+   <button type="button" onClick={()=>{setStart(day(-29));setEnd(day(0));}} aria-pressed={start===day(-29)&&end===day(0)}>30 дней</button>
+   <button type="button" onClick={()=>{setStart(day(-89));setEnd(day(0));}} aria-pressed={start===day(-89)&&end===day(0)}>90 дней</button>
   </div>
   {state==="loading"&&<p role="status">Загрузка…</p>}
   {state==="error"&&<p role="alert">Статистика недоступна. Проверьте доступ и период (не более 366 дней).</p>}
   {data&&<>
-   <div className="billing-filters"><button type="button" onClick={exportCsv}>Экспорт CSV (Excel)</button></div>
-   <div className="billing-metrics">{[
+   <div className="billing-filters"><button className="admin-export" type="button" onClick={exportCsv}><Download size={16}/> Экспорт CSV</button></div>
+   <div className="billing-metrics admin-kpis">{[
     ["Общий объём",money(data.gross_minor)],["После возвратов",money(data.net_minor)],
     ["Возвраты",money(data.refund_minor)],["Заказы",String(data.orders)],
     ["Оплаченные",String(data.paid_orders)],["Конверсия",data.order_conversion===null?"—":(data.order_conversion*100).toFixed(1)+"%"],
@@ -203,7 +211,7 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
    <h3>Динамика заказов</h3>
    <div className="billing-filters"><button type="button" aria-pressed={group==="day"} onClick={()=>setGroup("day")}>По дням</button><button type="button" aria-pressed={group==="month"} onClick={()=>setGroup("month")}>По месяцам</button></div>
    <p className="billing-muted">По дате создания заказа, с учётом текущего состояния. Не денежный поток.</p>
-   <div style={{maxHeight:320,overflowY:"auto",display:"grid",gap:10}}>{points.map(([date,p])=><div key={date}><small>{date}</small>{([["Объём",p.gross],["Возвраты",p.refund],["Чистый объём",p.net]] as const).map(([label,value])=><div key={label} className="billing-plan-row"><small>{label}</small><progress max={max} value={Math.abs(value)} aria-label={label}/><small>{money(value)}</small></div>)}</div>)}</div>
+   <div className="admin-chart-panel">{points.map(([date,p])=><div key={date}><small>{date}</small>{([["Объём",p.gross],["Возвраты",p.refund],["Чистый объём",p.net]] as const).map(([label,value])=><div key={label} className="billing-plan-row"><small>{label}</small><progress max={max} value={Math.abs(value)} aria-label={label}/><small>{money(value)}</small></div>)}</div>)}</div>
    {!points.length&&<p>Нет операций за период</p>}
    <h3>Эффективность промокодов</h3>
    <p className="billing-muted">До {data.promotion_limit} кодов по числу использований. Тестовые заказы за выбранный период.</p>
@@ -218,5 +226,6 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
    <p className="billing-muted">Стоимость активных тарифов не является MRR: автопродление отключено.</p>
   </>}
   </>}
+  </div>
  </section>;
 }
