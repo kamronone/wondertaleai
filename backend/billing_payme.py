@@ -149,13 +149,13 @@ def cancel_transaction(conn, params, now_ms):
     if not owner:
         raise PaymeError(-31003,"Transaction not found")
     _lock_owner(conn,owner[0])
-    row = conn.execute("""SELECT o.id,o.state,t.state,t.cancel_time,t.subscription_id
+    row = conn.execute("""SELECT o.id,o.state,t.state,t.cancel_time,t.subscription_id,o.amount_minor
         FROM payment_orders o JOIN payme_transactions t ON t.order_id=o.id
         WHERE t.provider_id=%s AND o.owner_id=%s AND o.provider='payme'
         FOR UPDATE OF o,t""",(pid,owner[0])).fetchone()
     if not row:
         raise PaymeError(-31003,"Transaction not found")
-    oid, order_state, state, canceled, sid = row
+    oid, order_state, state, canceled, sid, amount = row
     if state in (-1,-2):
         return {"transaction":str(oid),"cancel_time":canceled,"state":state}
     if state==1 and order_state=="pending":
@@ -168,6 +168,11 @@ def cancel_transaction(conn, params, now_ms):
             WHERE subscription_id=%s AND state IN ('reserved','committed') LIMIT 1""",(sid,)).fetchone()
         if used:
             raise PaymeError(-31007,"Service already used or reserved")
+        if conn.execute("SELECT 1 FROM refunds WHERE order_id=%s AND state IN ('pending','completed')",(oid,)).fetchone():
+            raise PaymeError(-31007,"Existing refund requires reconciliation")
+        from uuid import uuid4
+        conn.execute("""INSERT INTO refunds(id,order_id,amount_minor,provider_ref,state)
+            VALUES (%s,%s,%s,%s,'completed')""",(uuid4(),oid,amount,"payme-cancel:"+pid))
         conn.execute("UPDATE subscriptions SET status='canceled' WHERE id=%s AND owner_id=%s",(sid,owner[0]))
         conn.execute("UPDATE payment_orders SET state='refunded' WHERE id=%s",(oid,))
         target=-2
