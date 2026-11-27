@@ -231,3 +231,18 @@
   padding: 6px 10px;
   font-size: 12px;
 }
+
+.cartoon-catalog .cartoon-tile { position: relative; }
+.cartoon-downloaded {
+  position: absolute;
+  left: 23px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--studio-accent);
+  border-radius: 50%;
+  background: var(--studio-card);
+  color: var(--studio-ink);
+}

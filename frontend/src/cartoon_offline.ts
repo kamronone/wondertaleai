@@ -22,6 +22,15 @@ export async function findOfflineFilmLanguage(storyId: string, unavailable: Lang
   return null;
 }
 
+export async function listOfflineFilmIds() {
+  const cache = await caches.open(filmCache);
+  const candidates = await Promise.all([...classicFilmIds].map(async id => {
+    const tracks = await Promise.all(captions.map(language => cache.match(classicFilmUrl(id, language))));
+    return tracks.some(Boolean) ? id : null;
+  }));
+  return new Set(candidates.filter(id => id !== null));
+}
+
 export async function hasOfflineFilm(storyId: string, language: Lang) {
   const cache = await caches.open(filmCache);
   return Boolean(await cache.match(classicFilmUrl(storyId, language)));

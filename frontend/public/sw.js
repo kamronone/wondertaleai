@@ -1,5 +1,5 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v18";
+const CACHE = "wondertale-public-v19";
 const STORY_OFFLINE_CACHE = "wondertale-offline-stories-v1";
 const FILM_OFFLINE_CACHE = "wondertale-offline-films-v1";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];

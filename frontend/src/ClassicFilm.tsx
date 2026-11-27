@@ -21,7 +21,7 @@ type FilmPosition={
  captions:TextTrackMode[];
 };
 
-export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:string;title:string;lang:Lang;onStoryboard:()=>void}){
+export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloadsChanged}:{storyId:string;title:string;lang:Lang;onStoryboard:()=>void;onDownloadsChanged:()=>void}){
  const filmDirectory="/cartoons/"+storyId;
  const poster=classicFilmPoster(storyId);
  const videoRef=useRef<HTMLVideoElement>(null);
@@ -74,6 +74,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
     await saveOfflineFilm(storyId,audioLanguage);
     setSavedUrl(filmUrl);
    }
+   onDownloadsChanged();
   }catch{setOfflineError(true);}
   finally{setBusy(false);}
  }

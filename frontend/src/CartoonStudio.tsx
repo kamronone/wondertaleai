@@ -1,7 +1,8 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {ChevronLeft,ChevronRight,Check,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
+import {ChevronLeft,ChevronRight,Check,Download,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
 import {classics} from "./classics";
 import ClassicFilm,{hasClassicFilm} from "./ClassicFilm";
+import {listOfflineFilmIds} from "./cartoon_offline";
 import type {Lang} from "./i18n";
 import {buildClassicCartoon,nextCartoonScene} from "./cartoon_storyboard";
 import {preferredStoryVoice,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
@@ -23,8 +24,12 @@ const copy={
 export default function CartoonStudio({lang}:{lang:Lang}){
  const t=copy[lang];
  const [id,setId]=useState("three-pigs");
+ const [downloads,setDownloads]=useState<Set<string>>(()=>new Set());
+ const [downloadRevision,setDownloadRevision]=useState(0);
+ const canChooseInitialFilm=useRef(true);
  const [view,setView]=useState<"film"|"storyboard">("film");
  const modeLabels=filmModeLabels[lang];
+ const downloadedLabel={ru:"Скачано",uz:"Yuklangan",en:"Downloaded"}[lang];
  const selectedTitle=classics.find(classic=>classic.id===id)?.title[lang]??t.scene;
  const scenes=useMemo(()=>buildClassicCartoon(id,lang),[id,lang]);
  const [index,setIndex]=useState(0);
@@ -53,7 +58,26 @@ export default function CartoonStudio({lang}:{lang:Lang}){
   document.addEventListener("visibilitychange",hide);
   return ()=>{document.removeEventListener("visibilitychange",hide);cancel();};
  },[]);
+ useEffect(()=>{
+  if(!("caches" in window))return;
+  let active=true;
+  void listOfflineFilmIds().then(saved=>{
+   if(!active)return;
+   setDownloads(saved);
+   if(canChooseInitialFilm.current&&!navigator.onLine&&!saved.has(lastFilm.current)){
+    const first=filmedStories.find(story=>saved.has(story.id));
+    if(first){
+     lastFilm.current=first.id;
+     setId(first.id);
+    }
+   }
+   canChooseInitialFilm.current=false;
+  }).catch(()=>{});
+  return ()=>{active=false;};
+ },[downloadRevision]);
+
  function selectView(next:"film"|"storyboard"){
+  canChooseInitialFilm.current=false;
   if(next===view)return;
   cancel();
   setPlaying(false);
@@ -113,13 +137,14 @@ export default function CartoonStudio({lang}:{lang:Lang}){
   </div>
   {view==="film"&&<>
    <div className="cartoon-catalog" role="group" aria-label={modeLabels.catalog}>
-    {filmedStories.map(story=><button key={story.id} type="button" className="book-tile cartoon-tile" aria-pressed={id===story.id} onClick={()=>{lastFilm.current=story.id;setId(story.id);}}>
+    {filmedStories.map(story=><button key={story.id} type="button" className="book-tile cartoon-tile" aria-pressed={id===story.id} aria-description={downloads.has(story.id)?downloadedLabel:undefined} onClick={()=>{canChooseInitialFilm.current=false;lastFilm.current=story.id;setId(story.id);}}>
      <img src={"/images/classics/"+story.id+"/pages/page-1.png"} width={48} height={50} alt=""/>
      <strong>{story.title[lang]}</strong>
+     {downloads.has(story.id)&&<span className="cartoon-downloaded" title={downloadedLabel} aria-hidden="true"><Download size={10}/></span>}
      {id===story.id&&<Check size={15} aria-hidden="true"/>}
     </button>)}
    </div>
-   <ClassicFilm key={id+":"+lang} storyId={id} title={selectedTitle} lang={lang} onStoryboard={()=>selectView("storyboard")}/>
+   <ClassicFilm key={id+":"+lang} storyId={id} title={selectedTitle} lang={lang} onStoryboard={()=>selectView("storyboard")} onDownloadsChanged={()=>setDownloadRevision(previous=>previous+1)}/>
   </>}
   {view==="storyboard"&&current&&<div className="form-card cartoon-player">
    <label className="cartoon-select">{t.choose}
