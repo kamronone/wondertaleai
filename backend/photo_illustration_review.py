@@ -33,7 +33,8 @@ def _require_local_review_gate() -> None:
         _deny("Photo review is not enabled in local development")
     if os.getenv("ENABLE_PHOTO_REVIEW_DRY_RUN", "false").lower() != "true":
         _deny("Photo review dry-run is disabled")
-    if os.getenv("ILLUSTRATION_EMERGENCY_STOP", "false").lower() == "true":
+    from illustration_worker import illustration_emergency_paused
+    if illustration_emergency_paused():
         _deny("Illustration emergency stop is active")
 
 
@@ -111,7 +112,7 @@ def review_photo_request_dry_run(
     _require_local_review_gate()
     fresh = _current_snapshot(canonical)
     if (fresh[0] != owner or fresh[1] != digest or fresh[2] != book
-            or fresh[3] != page or fresh[6] != expires):
+            or fresh[3] != page or fresh[5] != prompt or fresh[6] != expires):
         _deny("Review request changed during moderation")
     # A safety-only result: not a claim of provider approval or billable quota.
     return {"id": canonical, "status": "dry_run_passed",
