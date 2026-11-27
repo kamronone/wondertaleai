@@ -14,7 +14,7 @@ def amount_minor(value: str) -> int:
 
 def verify_callback(params: dict, service_id: str, secret: str, action: int) -> bool:
     """Preserve original form strings for provider-defined MD5 signature."""
-    if not secret or not service_id or action not in (0,1):
+    if not isinstance(params,dict) or not isinstance(secret,str) or not isinstance(service_id,str) or not secret or not service_id or type(action) is not int or action not in (0,1):
         return False
     keys = ["click_trans_id","service_id","merchant_trans_id","amount","action","sign_time","sign_string"]
     if action == 1:
@@ -115,6 +115,8 @@ def complete(conn, params, service_id, secret, now):
         conn.execute("UPDATE payment_orders SET state='failed' WHERE id=%s",(oid,))
         from billing_promotions import settle_promotion
         settle_promotion(conn,oid)
+        conn.execute("""UPDATE billing_gift_codes SET state='revoked' WHERE state='pending'
+            AND id IN (SELECT gift_id FROM billing_gift_orders WHERE order_id=%s)""",(oid,))
         return reply(-9,"Transaction canceled")
     from billing_gifts import activate_paid_gift
     if activate_paid_gift(conn,oid,owner[0],row[0],row[1],now):
