@@ -27,6 +27,10 @@ export function PricingPlans({lang,api,session}:{lang:Lang;api:string;session:st
   return ()=>controller.abort();
  },[api,session]);
  const t=copy[lang];
+ const [selected,setSelected]=useState<Plan["id"]>("plus");
+ const [expanded,setExpanded]=useState(false);
+ const chosen=plans.find(plan=>plan.id===selected)!;
+ const previewCopy={ru:{choose:"Выбрать для сравнения",selected:"Выбран для сравнения",summary:"Предварительный расчёт",year:"За 12 месяцев без скидки",details:"Условия подписки",terms:"Оплата не подключена. Автопродления и списаний нет. AI-иллюстрации и видео не включены в расчёт.",perStory:"Цена за сказку при полном использовании лимита"},uz:{choose:"Taqqoslaş uçun tanlaş",selected:"Taqqoslaş uçun tanlandi",summary:"Dastlabki hisob",year:"12 oy uçun chegirmasiz",details:"Obuna şartlari",terms:"Tölov ulanmagan. Avtomatik uzaytiriş va pul yeçiş yöq. AI rasmlari va video hisobga kiritilmagan.",perStory:"Limit töliq ishlatilganda bitta ertak narxi"},en:{choose:"Select to compare",selected:"Selected for comparison",summary:"Estimated cost",year:"12 months without discount",details:"Subscription terms",terms:"Payments are disabled. No automatic renewal or charges. AI images and video are not included in this estimate.",perStory:"Cost per story at full quota usage"}}[lang];
  const activePlan=status?(typeof status.plan==="string"&&["free","plus","family"].includes(status.plan.toLowerCase())?status.plan.toUpperCase():({ru:"Неизвестен",uz:"Nomaʼlum",en:"Unknown"} as const)[lang]):null;
  const billingSummary=({ru:"Текущий план",uz:"Joriy tarif",en:"Current plan"} as const)[lang];
  const pendingLabel=({ru:"Планируемая функция",uz:"Rejalashtirilgan imkoniyat",en:"Planned feature"} as const)[lang];
@@ -37,7 +41,9 @@ export function PricingPlans({lang,api,session}:{lang:Lang;api:string;session:st
    <div className="pricing-price">{plan.price?plan.price.toLocaleString("ru-RU"):t.free}{plan.price>0&&<small> {t.month}</small>}</div>
    <ul>{plan.features[lang].map(feature=><li key={feature}>{feature}</li>)}</ul>
    <span className="pricing-status" aria-label={plan.id==="free"?t.free:pendingLabel}>{plan.id==="free"?t.free:t.planned}</span>
+   <button type="button" className="pricing-compare" aria-pressed={selected===plan.id} onClick={()=>setSelected(plan.id)}>{selected===plan.id?previewCopy.selected:previewCopy.choose}</button>
   </article>)}</div>
+  <div className="pricing-estimate" aria-live="polite"><h3>{previewCopy.summary}: {t.names[selected]}</h3><p>{previewCopy.year}: <strong>{(chosen.price*12).toLocaleString("ru-RU")} {lang==="en"?"UZS":lang==="uz"?"söm":"сум"}</strong></p>{chosen.stories>0&&<p>{previewCopy.perStory}: <strong>{Math.round(chosen.price/chosen.stories).toLocaleString("ru-RU")} {lang==="en"?"UZS":lang==="uz"?"söm":"сум"}</strong></p>}<button type="button" className="pricing-compare" aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}>{previewCopy.details}</button>{expanded&&<p>{previewCopy.terms}</p>}</div>
   {status&&<p className="pricing-note" role="status">{billingSummary+": "+activePlan} · {status.ai_pilot_access?({ru:"Пилотный AI-доступ",uz:"Sinov AI ruxsati",en:"Pilot AI access"} as const)[lang]+": "+status.ai_used_today+"/"+status.ai_daily_limit+" · "+({ru:"Осталось сегодня",uz:"Bugun qolgan",en:"Remaining today"} as const)[lang]+": "+Math.max(0,status.ai_remaining_today)+" (UTC)":({ru:"AI-доступ пока не активирован",uz:"AI ruxsati hali faol emas",en:"AI access is not active yet"} as const)[lang]}</p>}
   <p className="pricing-note">{t.note}</p><p className="pricing-note pricing-disclaimer">{({ru:"Цены и лимиты показаны для ознакомления. Кнопок оплаты нет: это не предложение действующей подписки.",uz:"Narxlar va limitlar faqat tanişuv uçun. Tölov tugmalari yöq: obuna hali işlamaydi.",en:"Prices and limits are illustrative. There are no payment buttons and subscriptions are not yet offered."} as const)[lang]}</p>
  </section>;
