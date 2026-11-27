@@ -108,6 +108,11 @@ def init_schema():
         sql(c, "CREATE TABLE IF NOT EXISTS photo_ai_attempt_reservations (request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, day TEXT NOT NULL, reserved_micro_usd INTEGER NOT NULL CHECK(reserved_micro_usd>0), state TEXT NOT NULL CHECK(state IN ('reserved','needs_review')), created_at INTEGER NOT NULL)")
 
         sql(c, f"CREATE TABLE IF NOT EXISTS photo_mock_assets (request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, png_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, expires_at INTEGER NOT NULL)")
+        # Local-only derived character sheets. Removing the temporary portrait
+        # or its source review request cascades to the derived asset.
+        sql(c, f"CREATE TABLE IF NOT EXISTS photo_character_sheets (source_request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES photo_reference_temp(owner_id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, style TEXT NOT NULL, hero_mode TEXT NOT NULL, reference_sha256 TEXT NOT NULL, plan_fingerprint TEXT NOT NULL, png_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, expires_at INTEGER NOT NULL, UNIQUE(owner_id,book_id,style,hero_mode))")
+        sql(c, "CREATE INDEX IF NOT EXISTS photo_character_sheets_expiry_idx ON photo_character_sheets(expires_at)")
+
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
         sql(c, "INSERT INTO illustration_runtime_control(singleton,paused,updated_at) VALUES(1,0,?) ON CONFLICT(singleton) DO NOTHING",(datetime.now(timezone.utc).isoformat(),))
@@ -1069,6 +1074,7 @@ PHOTO_REQUEST_POLICY_VERSION="photo-request-review-v1"
 def expire_photo_illustration_requests(c):
     """Never leave a pending image request behind after portrait expiry."""
     sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE status='pending_review' AND expires_at<=?",(int(time.time()),))
+    sql(c,"DELETE FROM photo_character_sheets WHERE expires_at<=?",(int(time.time()),))
 
 
 class PhotoIllustrationRequest(BaseModel):
@@ -1196,6 +1202,8 @@ def cancel_photo_illustration_request(request_id:str,owner:str=Depends(current_p
                       "WHERE id=? AND owner_id=? AND status='pending_review'",(request_id,owner))
         if changed.rowcount!=1:
             raise HTTPException(404,"Pending request not found")
+        sql(c,"DELETE FROM photo_character_sheets WHERE source_request_id=? AND owner_id=?",(request_id,owner))
+        sql(c,"DELETE FROM photo_mock_assets WHERE request_id=? AND owner_id=?",(request_id,owner))
         c.commit()
     return Response(status_code=204)
 
@@ -1212,6 +1220,7 @@ def photo_reference_upload_enabled()->bool:
 def expire_photo_references(c):
     """Delete expired portraits whenever the preview-only route is accessed."""
     sql(c,"DELETE FROM photo_reference_temp WHERE expires_at<=?",(int(time.time()),))
+    expire_photo_illustration_requests(c)
 
 
 @app.post("/api/photos/reference",status_code=201)
@@ -1256,6 +1265,7 @@ async def upload_photo_reference(request:Request,owner:str=Depends(current_paren
         if not photo_consent_active(owner,c):
             raise HTTPException(403,"Photo-specific parental consent is required")
         digest=hashlib.sha256(clean).hexdigest()
+        sql(c,"DELETE FROM photo_character_sheets WHERE owner_id=?",(owner,))
         sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
         sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
         sql(c,("INSERT INTO photo_reference_temp(owner_id,jpeg_bytes,sha256,created_at,expires_at) "
@@ -1417,6 +1427,10 @@ def private_book_photo_page_preview(book_id:str,page_number:int,
 def delete_photo_reference(owner:str=Depends(current_parent)):
     # Permit deleting already stored data even after disabling the upload feature.
     with connection() as c:
+        if IS_PG:
+            sql(c,"SELECT id FROM parents WHERE id=? FOR UPDATE",(owner,)).fetchone()
+        else:
+            c.execute("BEGIN IMMEDIATE")
         sql(c,"DELETE FROM photo_reference_temp WHERE owner_id=?",(owner,))
         sql(c,"DELETE FROM photo_mock_assets WHERE owner_id=?",(owner,))
         sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE owner_id=? AND status='pending_review'",(owner,))
