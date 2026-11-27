@@ -142,3 +142,43 @@ def reconcile_gift_refund(conn,purchaser_id,order_id,amount_minor,now):
     conn.execute("UPDATE billing_gift_codes SET state='revoked' WHERE id=%s",(order[2],))
     conn.execute("UPDATE payment_orders SET state='refunded' WHERE id=%s",(order_id,))
     return True
+
+
+def list_gifts(conn,owner_id,now,*,direction="purchased",limit=20,before_time=None,before_id=None):
+    """Owner-scoped history without plaintext codes, digests or other users' IDs."""
+    from uuid import UUID
+    now=utc(now)
+    if direction not in ("purchased","received") or type(limit) is not int or not 1<=limit<=100:
+        raise ValueError("Invalid history parameters")
+    if (before_time is None)!=(before_id is None):
+        raise ValueError("Incomplete cursor")
+    column="g.purchaser_id" if direction=="purchased" else "g.redeemed_by"
+    stamp="g.created_at" if direction=="purchased" else "g.redeemed_at"
+    args=[owner_id]
+    cursor=""
+    if before_time is not None:
+        cursor=f" AND ({stamp},g.id)<(%s,%s)"
+        args.extend([utc(before_time),UUID(str(before_id))])
+    args.append(limit+1)
+    rows=conn.execute(f"""SELECT g.id,g.plan_id,g.state,g.created_at,g.expires_at,
+        g.redeemed_at,{stamp},o.state,o.amount_minor
+        FROM billing_gift_codes g
+        JOIN billing_gift_orders go ON go.gift_id=g.id
+        JOIN payment_orders o ON o.id=go.order_id
+        WHERE {column}=%s {cursor}
+        ORDER BY {stamp} DESC,g.id DESC LIMIT %s""",tuple(args)).fetchall()
+    items=[]
+    for row in rows[:limit]:
+        state="expired" if row[2] in ("pending","available") and now>=row[4] else row[2]
+        item={"gift_id":str(row[0]),"plan_id":row[1],"state":state,
+              "created_at":row[3].isoformat(),"expires_at":row[4].isoformat(),
+              "redeemed_at":row[5].isoformat() if row[5] else None}
+        if direction=="purchased":
+            item.update(payment_state=row[7],amount_minor=row[8],currency="UZS",
+                        can_rotate=state=="available" and row[7]=="paid")
+        items.append(item)
+    next_cursor=None
+    if len(rows)>limit:
+        last=rows[limit-1]
+        next_cursor={"before_time":last[6].isoformat(),"before_id":str(last[0])}
+    return {"items":items,"next_cursor":next_cursor}
