@@ -10,6 +10,8 @@ import {preferredStoryVoice,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 import {montageFrame,type MontageMotion} from "./montage_motion";
 import {initialSceneEdits,moveScene,setSceneDuration,applySceneEdits,editedSceneSeconds,type ExportScene} from "./cartoon_scene_editor";
 import "./cartoon-scene-editor.css";
+import CartoonNarration from "./CartoonNarration";
+import {prepareNarration,playNarration} from "./cartoon_narration";
 
 const filmModeLabels={
  ru:{film:"Мультфильмы",storyboard:"Сцены сказок",label:"Режим просмотра",catalog:"Готовые мультфильмы"},
@@ -34,9 +36,9 @@ const personalCopy={
 const safeLocalArt=(url:string)=>/^\/images\/[a-z0-9/_-]+\.(?:webp|png|jpe?g)$/i.test(url)&&!url.includes("..")?url:"/images/wondertale-hero.webp";
 
 const exportCopy={
- ru:{save:"Сохранить видеоряд",cancel:"Отменить экспорт",note:"Видеоряд с необязательной музыкой. Голос диктора не записывается.",error:"Не удалось создать видео.",unsupported:"Экспорт видео не поддерживается этим браузером.",ready:"Видео готово",download:"Скачать видео"},
- uz:{save:"Videoni saqlaş",cancel:"Bekor qiliş",note:"Musiqali yoki ovozsiz video. Hikoya ovozi yozilmaydi.",error:"Video yaratib bölmadi.",unsupported:"Brauzer video eksportini qöllamaydi.",ready:"Video tayyor",download:"Videoni yuklaş"},
- en:{save:"Create video",cancel:"Cancel export",note:"Montage with optional music. Narration is not recorded.",error:"Could not create video.",unsupported:"Video export is not supported by this browser.",ready:"Video ready",download:"Download video"}
+ ru:{save:"Сохранить видеоряд",cancel:"Отменить экспорт",note:"Видеоряд с музыкой и записью голоса по желанию. Системная озвучка не записывается.",error:"Не удалось создать видео.",unsupported:"Экспорт видео не поддерживается этим браузером.",ready:"Видео готово",download:"Скачать видео"},
+ uz:{save:"Videoni saqlaş",cancel:"Bekor qiliş",note:"Musiqa va ovoz yozuvi ixtiyoriy. Tizim ovozi yozilmaydi.",error:"Video yaratib bölmadi.",unsupported:"Brauzer video eksportini qöllamaydi.",ready:"Video tayyor",download:"Videoni yuklaş"},
+ en:{save:"Create video",cancel:"Cancel export",note:"Montage with optional music and voice recording. System narration is not recorded.",error:"Could not create video.",unsupported:"Video export is not supported by this browser.",ready:"Video ready",download:"Download video"}
 } as const;
 
 const exportSettings={
@@ -127,8 +129,9 @@ function waitFrame(ms:number,signal:AbortSignal):Promise<void>{
   signal.addEventListener("abort",abort,{once:true});
  });
 }
-async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void,motion:MontageMotion="still"):Promise<Blob>{
- const mime=localVideoFormat(music!=="off");
+async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void,motion:MontageMotion="still",narration:Blob|null=null):Promise<Blob>{
+ const withAudio=music!=="off"||Boolean(narration);
+ const mime=localVideoFormat(withAudio);
  if(!mime||!scenes.length||scenes.length>20||signal.aborted)throw new Error("Unavailable");
  const canvas=document.createElement("canvas");canvas.width=640;canvas.height=480;
  const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable");
@@ -136,15 +139,19 @@ async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,c
  let recorder:MediaRecorder|null=null;
  let audio:AudioContext|null=null;
  let destination:MediaStreamAudioDestinationNode|null=null;
+ let narrationBuffer:AudioBuffer|null=null;
+ const totalSeconds=scenes.reduce((sum,item)=>sum+exportSceneSeconds(item,duration),0);
  try{
-  if(music!=="off"){
+  if(withAudio){
    audio=new AudioContext();
    destination=audio.createMediaStreamDestination();
    await Promise.race([audio.resume(),waitFrame(5000,signal).then(()=>{throw new Error("Audio unavailable");})]);
    if(signal.aborted||audio.state!=="running")throw new Error("Audio unavailable");
    destination.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
+   if(narration)narrationBuffer=await prepareNarration(audio,narration);
+   if(signal.aborted||document.hidden)throw new Error("Cancelled");
   }
-  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1200000,...(music!=="off"?{audioBitsPerSecond:96000}:{})});
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1200000,...(withAudio?{audioBitsPerSecond:96000}:{})});
   const active=recorder;const chunks:Blob[]=[];
   let recordingError:Error|null=null;
   const output=new Promise<Blob>((resolve,reject)=>{
@@ -195,7 +202,8 @@ async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,c
    draw();
    if(i===0){
     active.start(1000);
-    if(audio&&destination&&music!=="off")scheduleStoryMusic(audio,destination,music,scenes.reduce((sum,item)=>sum+exportSceneSeconds(item,duration),0)+2);
+    if(audio&&destination&&music!=="off")scheduleStoryMusic(audio,destination,music,totalSeconds+2);
+    if(audio&&destination&&narrationBuffer)playNarration(audio,destination,narrationBuffer,totalSeconds);
    }
    const refresh=window.setInterval(draw,motion==="cinematic"?42:100);
    try{await waitFrame(seconds*1000,signal);}finally{window.clearInterval(refresh);}
@@ -238,6 +246,8 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const [captions,setCaptions]=useState(true);
  const [music,setMusic]=useState<MusicLevel>("off");
  const [motion,setMotion]=useState<MontageMotion>("still");
+ const [narration,setNarration]=useState<Blob|null>(null);
+ const [recording,setRecording]=useState(false);
  const motionLabels=motionCopy[lang];
  const supportsMusic=Boolean(localVideoFormat(true));
  const audioLabels=musicCopy[lang];
@@ -252,12 +262,12 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
   return ()=>{document.removeEventListener("visibilitychange",hide);controller.current?.abort();controller.current=null;if(objectUrl.current)URL.revokeObjectURL(objectUrl.current);};
  },[]);
  async function save(){
-  if(controller.current||!supported||!scenes.length)return;
+  if(controller.current||!supported||!scenes.length||recording||(narration&&!supportsMusic))return;
   onStart();setBusy(true);setProgress(0);setError(false);setResult(null);
   if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
   const job=new AbortController();controller.current=job;
   try{
-   const blob=await recordLocalMontage(edited,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);},motion);
+   const blob=await recordLocalMontage(edited,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);},motion,narration);
    if(controller.current!==job||job.signal.aborted)return;
    const url=URL.createObjectURL(blob);objectUrl.current=url;setResult({url,ext:blob.type.startsWith("video/mp4")?"mp4":"webm"});
   }catch{if(controller.current===job&&!job.signal.aborted)setError(true);}
@@ -307,9 +317,11 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
     </div>
     <button type="button" className="secondary-button wt-scene-reset" disabled={busy} onClick={()=>setEdits(initialSceneEdits(scenes))}>{editor.reset}</button>
    </details>
+   {supportsMusic&&<CartoonNarration lang={lang} disabled={busy} blob={narration} onChange={setNarration} onStart={onStart} onActivity={setRecording}/>}
+   {narration&&<p className="cartoon-notice">{({ru:"Голос звучит с начала видео. Если запись длиннее видео, конец обрезается.",uz:"Ovoz video boşidan ešitiladi. Yozuv videodan uzun bölsa, oxiri kesiladi.",en:"Voice starts at the beginning. Audio longer than the video is trimmed."} as const)[lang]}</p>}
    <p className="cartoon-notice">{settings.estimated}: {totalLabel}</p>
   </div>}
-  {supported&&<button type="button" className="secondary-button cartoon-offline-button" onClick={()=>busy?controller.current?.abort():void save()}>{busy?t.cancel:t.save}</button>}
+  {supported&&<button type="button" className="secondary-button cartoon-offline-button" disabled={recording} onClick={()=>busy?controller.current?.abort():void save()}>{busy?t.cancel:t.save}</button>}
   {busy&&<progress max={100} value={progress} aria-label={t.save}/>}
   {error&&<p className="cartoon-notice" role="alert">{t.error}</p>}
   {result&&<><p className="cartoon-notice" role="status">{t.ready}</p><video aria-label={settings.preview} src={result.url} controls playsInline preload="metadata" style={{width:"100%",maxHeight:320,borderRadius:12}}/><a className="secondary-button cartoon-offline-button" href={result.url} download={"ertakcha-story."+result.ext}>{t.download}</a></>}
