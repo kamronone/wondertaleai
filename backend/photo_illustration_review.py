@@ -15,8 +15,7 @@ import time
 import uuid
 from typing import Callable
 
-from illustration_planning import plan_story_illustrations, SCENES
-from private_reference_image_edits import build_reference_edit_prompt
+from private_character_continuity import plan_reference_book
 import secure_main as db
 
 
@@ -73,9 +72,8 @@ def _current_snapshot(request_id: str):
             raise ValueError
         # This mapping runs on the server; no chapter text is given to any
         # external model or to the injected moderation callbacks.
-        briefs = plan_story_illustrations(book_id, [p["text"] for p in pages], style)
-        scene_number = SCENES.index(briefs[page - 1].scene) + 1
-        prompt = build_reference_edit_prompt(scene_number, style, hero)
+        plan = plan_reference_book(book_id, [p["text"] for p in pages], style, hero)
+        prompt = plan.pages[page - 1].reference_prompt
     except (ValueError, KeyError, TypeError, IndexError):
         _deny("Invalid private story")
     return owner, digest, book_id, page, raw, prompt, expires
