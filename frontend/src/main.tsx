@@ -1757,7 +1757,7 @@ function App(){
           {showInstallGuide&&<div className="install-guide"><p>{t.installIos}</p><p>{t.installAndroid}</p></div>}
         </div>
       </section>}
-      {tab==="cartoons"&&<React.Suspense fallback={<p role="status">{({ru:"Загрузка студии…",uz:"Studiya yuklanmoqda…",en:"Loading studio…"} as const)[lang]}</p>}><CartoonStudio lang={lang} onBack={()=>setTab("home")}/></React.Suspense>}
+      {tab==="cartoons"&&<React.Suspense fallback={<p role="status">{({ru:"Загрузка студии…",uz:"Studiya yuklanmoqda…",en:"Loading studio…"} as const)[lang]}</p>}><CartoonStudio lang={lang}/></React.Suspense>}
       <nav className="mobile-tabbar" aria-label="WonderTale"><button type="button" aria-current={tab==="home"?"page":undefined} className={tab==="home"||tab==="cartoons"?"active":""} onClick={()=>setTab("home")}><Home size={20}/><span>{t.backHome}</span></button><button type="button" aria-current={tab==="library"||tab==="reader"?"page":undefined} className={tab==="library"||tab==="reader"?"active":""} onClick={()=>setTab("library")}><Library size={20}/><span>{t.library}</span></button><button type="button" aria-current={tab==="create"?"page":undefined} className={tab==="create"?"active":""} onClick={()=>openCreate()}><Plus size={21}/><span>{t.create}</span></button><button type="button" aria-current={tab==="account"?"page":undefined} className={tab==="account"?"active":""} onClick={()=>setTab("account")}><UserRound size={20}/><span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></nav>
     </main>
     <footer className="site-legal-footer">

@@ -19,7 +19,6 @@
 }
 .cartoon-heading h1 { margin: 0; }
 .cartoon-heading p { color: var(--studio-muted); }
-.cartoon-heading .cartoon-back { flex: 0 0 44px; }
 .cartoon-view-switch {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {ArrowLeft,ChevronLeft,ChevronRight,Check,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
+import {ChevronLeft,ChevronRight,Check,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
 import {classics} from "./classics";
 import ClassicFilm,{hasClassicFilm} from "./ClassicFilm";
 import type {Lang} from "./i18n";
@@ -15,12 +15,12 @@ const filmModeLabels={
 const filmedStories=classics.filter(story=>hasClassicFilm(story.id));
 
 const copy={
- ru:{title:"Студия мультфильмов",intro:"Мультфильмы и сцены любимых сказок",note:"Сцены с иллюстрациями и озвучкой устройства.",choose:"Выберите сказку",play:"Смотреть",pause:"Пауза",back:"Назад",next:"Далее",restart:"Сначала",scene:"Сцена",voice:"Озвучивание",silent:"Без звука",noVoice:"На устройстве нет подходящего локального голоса. Доступны субтитры.",finished:"Конец сказки",previous:"Предыдущая сцена",nextScene:"Следующая сцена",transcript:"Текст сцены"},
- uz:{title:"Multfilm studiyasi",intro:"Sevimli ertaklaringizni tomoşa qiling",note:"Rasmli sahnalarni qurilma ovozi bilan tinglang.",choose:"Ertakni tanlang",play:"Tomoşa qiliş",pause:"Pauza",back:"Orqaga",next:"Keyingi",restart:"Boşidan",scene:"Sahna",voice:"Ovozli öqiş",silent:"Ovozsiz",noVoice:"Qurilmada mos mahalliy ovoz yöq. Subtitrlar mavjud.",finished:"Ertak tugadi",previous:"Oldingi sahna",nextScene:"Keyingi sahna",transcript:"Sahna matni"},
- en:{title:"Cartoon studio",intro:"Films and scenes from your favorite stories",note:"Illustrated scenes with on-device narration.",choose:"Choose a story",play:"Watch",pause:"Pause",back:"Back",next:"Next",restart:"Restart",scene:"Scene",voice:"Narration",silent:"Muted",noVoice:"No matching on-device voice is available. Captions remain available.",finished:"The end",previous:"Previous scene",nextScene:"Next scene",transcript:"Scene text"}
+ ru:{title:"Студия мультфильмов",intro:"Мультфильмы и сцены любимых сказок",note:"Сцены с иллюстрациями и озвучкой устройства.",choose:"Выберите сказку",play:"Смотреть",pause:"Пауза",next:"Далее",restart:"Сначала",scene:"Сцена",voice:"Озвучивание",silent:"Без звука",noVoice:"На устройстве нет подходящего локального голоса. Доступны субтитры.",finished:"Конец сказки",previous:"Предыдущая сцена",nextScene:"Следующая сцена",transcript:"Текст сцены"},
+ uz:{title:"Multfilm studiyasi",intro:"Sevimli ertaklaringizni tomoşa qiling",note:"Rasmli sahnalarni qurilma ovozi bilan tinglang.",choose:"Ertakni tanlang",play:"Tomoşa qiliş",pause:"Pauza",next:"Keyingi",restart:"Boşidan",scene:"Sahna",voice:"Ovozli öqiş",silent:"Ovozsiz",noVoice:"Qurilmada mos mahalliy ovoz yöq. Subtitrlar mavjud.",finished:"Ertak tugadi",previous:"Oldingi sahna",nextScene:"Keyingi sahna",transcript:"Sahna matni"},
+ en:{title:"Cartoon studio",intro:"Films and scenes from your favorite stories",note:"Illustrated scenes with on-device narration.",choose:"Choose a story",play:"Watch",pause:"Pause",next:"Next",restart:"Restart",scene:"Scene",voice:"Narration",silent:"Muted",noVoice:"No matching on-device voice is available. Captions remain available.",finished:"The end",previous:"Previous scene",nextScene:"Next scene",transcript:"Scene text"}
 } as const;
 
-export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void}){
+export default function CartoonStudio({lang}:{lang:Lang}){
  const t=copy[lang];
  const [id,setId]=useState("three-pigs");
  const [view,setView]=useState<"film"|"storyboard">("film");
@@ -105,7 +105,6 @@ export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void})
  const image=current?(failed===0&&current.animation?current.animation:failed<=(current.animation?1:0)?current.image:current.fallback||"/images/wondertale-hero.webp"):"";
  return <section className="cartoon-studio">
   <div className="cartoon-heading">
-   <button className="icon-button cartoon-back" type="button" aria-label={t.back} title={t.back} onClick={()=>{cancel();onBack();}}><ArrowLeft size={19} aria-hidden="true"/></button>
    <div><h1>{t.title}</h1><p>{t.intro}</p></div>
   </div>
   <div className="cartoon-view-switch" role="group" aria-label={modeLabels.label}>
