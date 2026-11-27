@@ -1,3 +1,4 @@
+import BillingDashboardDemo from "./BillingDashboard";
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BookOpen, Sparkles, ArrowLeft, ArrowRight, Plus, Download, Trash2, ImagePlus, Heart, Library, WandSparkles, Home, UserRound, PlayCircle, MoonStar, Crown, CheckCircle2, Trees, Castle, House, Apple, Bird, Music2, Search, SlidersHorizontal, ChevronDown, ChevronRight, ChevronUp, Volume2, PauseCircle, Square, Play, Star } from "lucide-react";
@@ -1812,6 +1813,6 @@ function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
     </span>
   </button>;
 }
-createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
+createRoot(document.getElementById("root")!).render(<React.StrictMode>{window.location.pathname.replace(/\/$/,"")==="/admin" && window.location.hostname.startsWith("wondertaleai-preview-") && window.location.hostname.endsWith(".vercel.app") ? <main style={{maxWidth:1000,margin:"0 auto",padding:16}}><a href="/">← Ertakcha</a><h1>Админка · демонстрация</h1><BillingDashboardDemo api="" token="" demo/></main> : <App/>}</React.StrictMode>);
 
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").catch(()=>{/* PWA remains usable online */});});}
