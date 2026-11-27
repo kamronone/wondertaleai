@@ -75,9 +75,12 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
   <div className="cartoon-film-toolbar">
    <label className="cartoon-select cartoon-film-audio">
    {t.audio}
+   <span className="cartoon-audio-field">
+    <span className="cartoon-audio-value" aria-hidden="true">{trackLabels[audioLanguage]}</span>
    <select value={audioLanguage} onChange={event=>changeAudio(event.target.value as Lang)}>
     {languages.map(language=><option key={language} value={language} lang={language}>{trackLabels[language]}</option>)}
    </select>
+   </span>
    </label>
    <span className="cartoon-notice">{t.info}</span>
   </div>
