@@ -17,7 +17,7 @@ const snowWhitePngComplete=Array.from({length:8},(_,i)=>
 const branch=/^[A-Za-z0-9._/-]{1,100}$/.test(source)?source:"local";
 
 export default defineConfig({
-  server:{port:5173,host:true},
+  server:{port:5173,host:process.env.VITE_ENABLE_ANALYTICS_LOCAL_SANDBOX==="true"?"127.0.0.1":true,proxy:process.env.VITE_ENABLE_ANALYTICS_LOCAL_SANDBOX==="true"?{"/api/billing/admin/analytics":{target:"http://127.0.0.1:8765",changeOrigin:false}}:undefined},
   define:{
     __WONDERTALE_BUILD_SHA__:JSON.stringify(sha),
     __WONDERTALE_BUILD_BRANCH__:JSON.stringify(branch),
