@@ -13,7 +13,78 @@ type Summary={
 };
 const day=(offset:number)=>new Date(Date.now()+offset*86400000).toISOString().slice(0,10);
 const money=(n:number)=>new Intl.NumberFormat("ru-RU",{maximumFractionDigits:2}).format(n/100)+" сум";
+
+type AdminSection="finance"|"users"|"content"|"ai";
+type DemoUser={id:string;plan:"free"|"plus"|"family";status:"active"|"paused";books:number};
+type DemoContent={id:string;title:string;kind:"story"|"film";status:"review"|"approved"|"hidden"};
+const demoUsers=():DemoUser[]=>Array.from({length:24},(_,i)=>({id:"DEMO-"+String(i+1).padStart(3,"0"),plan:i%5===0?"family":i%3===0?"plus":"free",status:i%7===0?"paused":"active",books:(i*3)%17}));
+const demoContent=():DemoContent[]=>[
+ {id:"C-01",title:"Три поросёнка",kind:"story",status:"approved"},
+ {id:"C-02",title:"Красная Шапочка",kind:"film",status:"approved"},
+ {id:"C-03",title:"Волшебный сад",kind:"story",status:"review"},
+ {id:"C-04",title:"Лесное приключение",kind:"film",status:"review"},
+ {id:"C-05",title:"Звёздный корабль",kind:"story",status:"hidden"}
+];
+const sectionNames:Record<AdminSection,string>={finance:"Финансы",users:"Пользователи",content:"Контент",ai:"AI и расходы"};
+const planNames={free:"Free",plus:"Plus",family:"Family"};
+const contentStatus={review:"На проверке",approved:"Одобрено",hidden:"Скрыто"};
+const metricCards=(items:[string,string|number][])=> <div className="billing-metrics">{items.map(([label,value])=><article key={label}><small>{label}</small><strong>{value}</strong></article>)}</div>;
+function AdminDemoSections({section}:{section:Exclude<AdminSection,"finance">}){
+ const [users,setUsers]=useState(demoUsers);
+ const [content,setContent]=useState(demoContent);
+ const [query,setQuery]=useState("");
+ const [plan,setPlan]=useState<"all"|DemoUser["plan"]>("all");
+ const [contentFilter,setContentFilter]=useState<"all"|DemoContent["status"]>("all");
+ const [budget,setBudget]=useState(10);
+ const jobs=[{name:"Текст сказок",done:120,failed:4,cost:240},{name:"Иллюстрации",done:80,failed:7,cost:360},{name:"Видео",done:12,failed:2,cost:180}];
+ const spent=jobs.reduce((n,j)=>n+j.cost,0);
+ const usd=(cents:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(cents/100);
+ const visibleUsers=users.filter(user=>(plan==="all"||user.plan===plan)&&user.id.toLowerCase().includes(query.trim().toLowerCase()));
+ const visibleContent=content.filter(item=>(contentFilter==="all"||item.status===contentFilter)&&item.title.toLowerCase().includes(query.trim().toLowerCase()));
+ return <div className="billing-dashboard">
+  <p className="billing-muted" role="status">Синтетические данные. Изменения действуют только в этой вкладке до её перезагрузки или смены раздела. Сервер не вызывается.</p>
+  {section==="users"&&<>
+   <h2>Пользователи</h2>
+   {metricCards([["Демо-аккаунты",users.length],["Активные",users.filter(u=>u.status==="active").length],["Приостановленные",users.filter(u=>u.status==="paused").length],["Сказки",users.reduce((n,u)=>n+u.books,0)]])}
+   <div className="billing-filters">
+    <label>Поиск по ID<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="DEMO-001"/></label>
+    <label>Тариф<select value={plan} onChange={e=>setPlan(e.target.value as typeof plan)}><option value="all">Все тарифы</option>{Object.entries(planNames).map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
+    <button type="button" onClick={()=>{setUsers(demoUsers());setQuery("");setPlan("all");}}>Сбросить демо</button>
+   </div>
+   {!visibleUsers.length&&<p>Ничего не найдено.</p>}
+   <div className="billing-metrics">{visibleUsers.map(user=><article key={user.id}>
+    <strong>{user.id}</strong><small>{planNames[user.plan]} · {user.books} сказок</small>
+    <small>{user.status==="active"?"Активен":"Приостановлен"}</small>
+    <button type="button" className="secondary-button" onClick={()=>setUsers(items=>items.map(item=>item.id===user.id?{...item,status:item.status==="active"?"paused":"active"}:item))}>{user.status==="active"?"Приостановить (демо)":"Активировать (демо)"}</button>
+   </article>)}</div>
+  </>}
+  {section==="content"&&<>
+   <h2>Модерация контента</h2>
+   {metricCards([["Всего",content.length],["На проверке",content.filter(c=>c.status==="review").length],["Одобрено",content.filter(c=>c.status==="approved").length],["Скрыто",content.filter(c=>c.status==="hidden").length]])}
+   <div className="billing-filters">
+    <label>Поиск<input value={query} onChange={e=>setQuery(e.target.value)}/></label>
+    <label>Статус<select value={contentFilter} onChange={e=>setContentFilter(e.target.value as typeof contentFilter)}><option value="all">Все статусы</option>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
+    <button type="button" onClick={()=>{setContent(demoContent());setQuery("");setContentFilter("all");}}>Сбросить демо</button>
+   </div>
+   {!visibleContent.length&&<p>Ничего не найдено.</p>}
+   <div className="billing-metrics">{visibleContent.map(item=><article key={item.id}><strong>{item.title}</strong><small>{item.kind==="story"?"Сказка":"Мультфильм"} · {contentStatus[item.status]}</small>
+    <label>Изменить статус<select value={item.status} onChange={e=>{const status=e.target.value as DemoContent["status"];setContent(rows=>rows.map(row=>row.id===item.id?{...row,status}:row));}}>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
+   </article>)}</div>
+  </>}
+  {section==="ai"&&<>
+   <h2>AI и расходы</h2>
+   <p className="billing-muted">Пример расчёта в USD за условный день. Не реальные цены провайдера, не счёт и не активный лимит.</p>
+   {metricCards([["Успешные задачи",jobs.reduce((n,j)=>n+j.done,0)],["Ошибки",jobs.reduce((n,j)=>n+j.failed,0)],["Условные расходы",usd(spent)],["Остаток условного лимита",usd(Math.max(0,budget*100-spent))]])}
+   <div className="billing-filters"><label>Демо-лимит<select value={budget} onChange={e=>setBudget(Number(e.target.value))}>{[5,10,20,50].map(value=><option key={value} value={value}>{usd(value*100)}</option>)}</select></label></div>
+   <progress aria-label="Использование условного лимита" max={budget*100} value={Math.min(spent,budget*100)}/>
+   <p role="status">{spent>=budget*100?"Условный лимит исчерпан":"Условный лимит не превышен"}</p>
+   <div className="billing-metrics">{jobs.map(job=><article key={job.name}><strong>{job.name}</strong><small>Успешно: {job.done} · Ошибки: {job.failed}</small><small>Условная стоимость: {usd(job.cost)}</small></article>)}</div>
+  </>}
+ </div>;
+}
+
 export default function BillingDashboard({api,token,demo=false}:{api:string;token:string;demo?:boolean}){
+ const [section,setSection]=useState<AdminSection>("finance");
  const [group,setGroup]=useState<"day"|"month">("day");
  const [start,setStart]=useState(()=>day(-29));
  const [end,setEnd]=useState(()=>day(0));
@@ -74,6 +145,8 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
  const points=Array.from(buckets.entries()).sort(([a],[b])=>a.localeCompare(b));
  const max=Math.max(1,...points.flatMap(([,p])=>[p.gross,p.refund,Math.abs(p.net)]));
  return <section className="billing-dashboard">
+  {demo&&<nav className="billing-filters" aria-label="Разделы демо-админки">{(Object.keys(sectionNames) as AdminSection[]).map(key=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{sectionNames[key]}</button>)}</nav>}
+  {demo&&section!=="finance"?<AdminDemoSections key={section} section={section}/>:<>
   <h2>Финансовая аналитика</h2>{demo&&<p role="status">ДЕМО · вымышленные данные · без подключения к серверу · операции за последние 90 дней</p>}
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
   <div className="billing-filters">
@@ -109,6 +182,7 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
    {data.active_plans.length===0&&<p>Нет активных подписок</p>}
    {data.active_plans.map(p=><div className="billing-plan-row" key={p.plan}><span>{p.plan}</span><progress max={Math.max(1,data.active_subscriptions)} value={p.count} aria-label={p.plan}/><strong>{p.count}</strong></div>)}
    <p className="billing-muted">Стоимость активных тарифов не является MRR: автопродление отключено.</p>
+  </>}
   </>}
  </section>;
 }
