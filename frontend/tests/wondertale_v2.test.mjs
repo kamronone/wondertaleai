@@ -84,7 +84,7 @@ test("Honest illustrations copy does not promise unavailable photo-based generat
 });
 
 test("PWA installs essential imagery only and keeps secondary art lazy",()=>{
-  assert.match(worker,/const CACHE = "wondertale-public-v17"/);
+  assert.match(worker,/const CACHE = "wondertale-public-v18"/);
   const optional=worker.match(/const OPTIONAL_ART = \[([\s\S]*?)\];/)?.[1]||"";
   assert.match(optional,/\/images\/wondertale-hero\.webp/);
   assert.match(optional,/\/images\/wondertale-welcome\.png/);

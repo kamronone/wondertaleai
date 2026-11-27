@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import type {Lang} from "./i18n";
 
-import {classicFilmIds,classicFilmUrl,hasOfflineFilm,saveOfflineFilm,removeOfflineFilm} from "./cartoon_offline";
+import {classicFilmIds,classicFilmUrl,classicFilmPoster,findOfflineFilmLanguage,hasOfflineFilm,saveOfflineFilm,removeOfflineFilm} from "./cartoon_offline";
 
 export function hasClassicFilm(id:string){
  return classicFilmIds.has(id);
@@ -23,8 +23,9 @@ type FilmPosition={
 
 export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:string;title:string;lang:Lang;onStoryboard:()=>void}){
  const filmDirectory="/cartoons/"+storyId;
- const poster="/images/classics/"+storyId+"/pages/page-1.png";
+ const poster=classicFilmPoster(storyId);
  const videoRef=useRef<HTMLVideoElement>(null);
+ const triedOfflineFallback=useRef(false);
  const position=useRef<FilmPosition|null>(null);
  const [audioLanguage,setAudioLanguage]=useState(lang);
  const [failed,setFailed]=useState(false);
@@ -47,6 +48,20 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
    .catch(()=>{if(active)setSavedUrl(null);});
   return ()=>{active=false;};
  },[storyId,audioLanguage,filmUrl]);
+
+ useEffect(()=>{
+  if(navigator.onLine||!("caches" in window))return;
+  let active=true;
+  void (async()=>{
+   if(await hasOfflineFilm(storyId,lang))return;
+   const savedLanguage=await findOfflineFilmLanguage(storyId,lang);
+   if(active&&savedLanguage){
+    setAudioLanguage(current=>current===lang?savedLanguage:current);
+    setFailed(false);
+   }
+  })().catch(()=>{});
+  return ()=>{active=false;};
+ },[storyId,lang]);
 
  async function toggleOffline(){
   setBusy(true);
@@ -78,6 +93,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
  },[failed]);
 
  function changeAudio(next:Lang){
+  triedOfflineFallback.current=false;
   const video=videoRef.current;
   if(next===audioLanguage)return;
   if(!position.current&&video&&video.readyState>=HTMLMediaElement.HAVE_METADATA){
@@ -90,6 +106,20 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
   }
   setFailed(false);
   setAudioLanguage(next);
+ }
+
+ async function handleVideoError(video:HTMLVideoElement){
+  const source=video.src;
+  if(!triedOfflineFallback.current&&"caches" in window){
+   const savedLanguage=await findOfflineFilmLanguage(storyId,audioLanguage).catch(()=>null);
+   if(videoRef.current!==video||video.src!==source)return;
+   if(savedLanguage){
+    changeAudio(savedLanguage);
+    triedOfflineFallback.current=true;
+    return;
+   }
+  }
+  setFailed(true);
  }
 
  function restorePosition(video:HTMLVideoElement){
@@ -131,7 +161,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
    playsInline
    preload="metadata"
    onLoadedMetadata={event=>restorePosition(event.currentTarget)}
-   onError={()=>setFailed(true)}
+   onError={event=>void handleVideoError(event.currentTarget)}
   >
    {languages.map(language=><track
     key={language}

@@ -6,7 +6,7 @@ const sw=readFileSync(new URL("../public/sw.js",import.meta.url),"utf8");
 const props=["/images/story-brick.svg","/images/interactions/wooden-latch.svg","/images/interactions/story-clock.svg","/images/interactions/forest-map.svg"];
 
 test("PWA caches four public SVG scene props on demand",()=>{
- assert.match(sw,/const CACHE = "wondertale-public-v17"/);
+ assert.match(sw,/const CACHE = "wondertale-public-v18"/);
  for(const path of props){
    assert.ok(sw.includes(path.split("/").pop().replace(".svg","")),path);
    assert.match(readFileSync(new URL("../public"+path,import.meta.url),"utf8"),/<svg/);

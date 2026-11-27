@@ -45,7 +45,7 @@ function serviceWorker(fakeFetch) {
 }
 
 test("original reaction GIFs are cached lazily, not during PWA installation",()=>{
-  assert.match(source,/wondertale-public-v17/);
+  assert.match(source,/wondertale-public-v18/);
   assert.match(source,/images\\\/interactions\\\/reactions/);
   for(const path of reactions)assert.doesNotMatch(source,new RegExp('"' + path + '"'));
   assert.doesNotMatch(source,/OPTIONAL_ART\s*=\s*\[[^\]]*\/api\//s);

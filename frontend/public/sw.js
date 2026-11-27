@@ -1,5 +1,5 @@
 // Public application shell only. Never cache accounts, generated stories or API data.
-const CACHE = "wondertale-public-v17";
+const CACHE = "wondertale-public-v18";
 const STORY_OFFLINE_CACHE = "wondertale-offline-stories-v1";
 const FILM_OFFLINE_CACHE = "wondertale-offline-films-v1";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
@@ -83,6 +83,24 @@ async function serveSavedFilm(request) {
   });
 }
 
+async function serveClassicPage(request, pathname) {
+  const cache = await caches.open(CACHE);
+  const response = await fetch(request).catch(() => Response.error());
+  const type = response.headers?.get("content-type") || "";
+  if (response.ok && response.type === "basic" && /image\/png/i.test(type)) {
+    await cache.put(request, response.clone()).catch(() => {});
+    return response;
+  }
+  // Keep saved illustrations when the server is offline or returns an HTML rewrite.
+  const saved = await cache.match(request) || await (await caches.open(STORY_OFFLINE_CACHE)).match(request);
+  if (saved) return saved;
+  if (/^\/images\/classics\/(three-pigs|red-hood)\/pages\/page-1\.png$/.test(pathname)) {
+    const cover = await (await caches.open(FILM_OFFLINE_CACHE)).match(request, {ignoreVary: true});
+    if (cover) return cover;
+  }
+  return response;
+}
+
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET" || request.headers.has("Authorization")) return;
@@ -111,7 +129,7 @@ self.addEventListener("fetch", event => {
       const cache = await caches.open(CACHE);
       try {
         const response = await fetch(request);
-        const type = response.headers.get("content-type") || "";
+        const type = response.headers?.get("content-type") || "";
         if (response.ok && response.type === "basic" && /image\/gif/i.test(type)) {
           await cache.put(request, response.clone()).catch(() => {});
           return response;
@@ -128,21 +146,7 @@ self.addEventListener("fetch", event => {
   // Prefer current server bytes. Keep only successful PNGs offline and never
   // cache missing-image responses (404/HTML SPA rewrites) as illustrations.
   if (/^\/images\/classics\/[a-z0-9-]+\/pages\/page-[1-8]\.png$/.test(url.pathname)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE);
-      try {
-        const response = await fetch(request);
-        const type = response.headers.get("content-type") || "";
-        if (response.ok && response.type === "basic" && /image\/png/i.test(type)) {
-          await cache.put(request, response.clone()).catch(() => {});
-          return response;
-        }
-        // HTML SPA rewrites or failed requests must not replace a saved PNG.
-        return (await cache.match(request)) || (await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || response;
-      } catch {
-        return (await cache.match(request)) || (await (await caches.open(STORY_OFFLINE_CACHE)).match(request)) || Response.error();
-      }
-    })());
+    event.respondWith(serveClassicPage(request, url.pathname));
     return;
   }
 

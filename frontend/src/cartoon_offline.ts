@@ -8,6 +8,20 @@ export function classicFilmUrl(storyId: string, language: Lang) {
   return `/cartoons/${storyId}/film-${language}.mp4`;
 }
 
+export function classicFilmPoster(storyId: string) {
+  return `/images/classics/${storyId}/pages/page-1.png`;
+}
+
+export async function findOfflineFilmLanguage(storyId: string, unavailable: Lang) {
+  const cache = await caches.open(filmCache);
+  for (const language of captions) {
+    if (language !== unavailable && await cache.match(classicFilmUrl(storyId, language))) {
+      return language;
+    }
+  }
+  return null;
+}
+
 export async function hasOfflineFilm(storyId: string, language: Lang) {
   const cache = await caches.open(filmCache);
   return Boolean(await cache.match(classicFilmUrl(storyId, language)));
@@ -17,6 +31,7 @@ export async function saveOfflineFilm(storyId: string, language: Lang) {
   if (!classicFilmIds.has(storyId)) throw new Error("Unknown film");
   const assets = [
     [classicFilmUrl(storyId, language), "video/mp4"],
+    [classicFilmPoster(storyId), "image/png"],
     ...captions.map(lang => [`/cartoons/${storyId}/${lang}.vtt`, "text/vtt"])
   ];
   const downloads = await Promise.all(assets.map(async ([url, mime]) => {
