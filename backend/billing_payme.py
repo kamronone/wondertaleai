@@ -113,6 +113,11 @@ def perform_transaction(conn, params, now_ms):
     if row[6]!=1 or row[4]!="pending" or row[3]!=row[5] or now_ms-row[7]>=43200000:
         raise PaymeError(-31008,"Transaction unavailable")
     now = datetime.fromtimestamp(now_ms/1000,timezone.utc)
+    from billing_gifts import activate_paid_gift
+    if activate_paid_gift(conn,row[0],owner[0],row[1],row[2],now):
+        conn.execute("UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s",(pid,row[0]))
+        conn.execute("UPDATE payme_transactions SET state=2,perform_time=%s WHERE provider_id=%s",(now_ms,pid))
+        return {"transaction":str(row[0]),"perform_time":now_ms,"state":2}
     expire_subscription(conn,owner[0],now)
     if conn.execute("SELECT id FROM subscriptions WHERE owner_id=%s AND status='active' FOR UPDATE",(owner[0],)).fetchone():
         raise PaymeError(-31008,"Active subscription exists")
