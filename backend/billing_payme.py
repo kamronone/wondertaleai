@@ -163,6 +163,22 @@ def cancel_transaction(conn, params, now_ms):
         conn.execute("UPDATE payment_orders SET state='failed' WHERE id=%s",(oid,))
         from billing_promotions import settle_promotion
         settle_promotion(conn,oid)
+        conn.execute("""UPDATE billing_gift_codes SET state='revoked' WHERE state='pending'
+            AND id IN (SELECT gift_id FROM billing_gift_orders WHERE order_id=%s)""",(oid,))
+    elif state==2 and order_state=="paid" and sid is None:
+        gift=conn.execute("""SELECT g.id,g.state FROM billing_gift_orders go
+            JOIN billing_gift_codes g ON g.id=go.gift_id
+            WHERE go.order_id=%s AND g.purchaser_id=%s FOR UPDATE OF g""",(oid,owner[0])).fetchone()
+        if not gift or gift[1] not in ("available","expired"):
+            raise PaymeError(-31007,"Gift cannot be canceled")
+        if conn.execute("SELECT 1 FROM refunds WHERE order_id=%s AND state IN ('pending','completed')",(oid,)).fetchone():
+            raise PaymeError(-31007,"Existing refund requires reconciliation")
+        from uuid import uuid4
+        conn.execute("""INSERT INTO refunds(id,order_id,amount_minor,provider_ref,state)
+            VALUES (%s,%s,%s,%s,'completed')""",(uuid4(),oid,amount,"payme-cancel:"+pid))
+        conn.execute("UPDATE billing_gift_codes SET state='revoked' WHERE id=%s",(gift[0],))
+        conn.execute("UPDATE payment_orders SET state='refunded' WHERE id=%s",(oid,))
+        target=-2
     elif state==2 and order_state=="paid" and sid:
         used=conn.execute("""SELECT 1 FROM quota_reservations
             WHERE subscription_id=%s AND state IN ('reserved','committed') LIMIT 1""",(sid,)).fetchone()
