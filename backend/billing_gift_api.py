@@ -2,7 +2,10 @@
 from datetime import datetime, timezone
 from uuid import UUID
 from typing import Literal
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from fastapi.routing import APIRoute
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from billing_gifts import create_gift_order, redeem_gift, rotate_gift_code, list_gifts
 
@@ -13,8 +16,19 @@ class GiftOrder(BaseModel):
 class GiftRedeem(BaseModel):
     code: str = Field(min_length=43, max_length=43)
 
+class PrivateGiftRoute(APIRoute):
+    def get_route_handler(self):
+        handler=super().get_route_handler()
+        async def private_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(status_code=422,content={"detail":"Invalid gift request"},
+                                    headers={"Cache-Control":"no-store"})
+        return private_handler
+
 def build_gift_router(owner_dependency, connection_factory):
-    router = APIRouter(prefix="/api/billing/gifts")
+    router = APIRouter(prefix="/api/billing/gifts",route_class=PrivateGiftRoute)
     def run(owner, response, operation):
         response.headers["Cache-Control"] = "no-store"
         if not isinstance(owner,str) or not owner:
@@ -23,7 +37,7 @@ def build_gift_router(owner_dependency, connection_factory):
             with connection_factory() as conn:
                 with conn.transaction():
                     return operation(conn,datetime.now(timezone.utc))
-        except ValueError:
+        except (ValueError, LookupError):
             raise HTTPException(400,"Gift operation unavailable",headers={"Cache-Control":"no-store"}) from None
 
     @router.post("/orders")
