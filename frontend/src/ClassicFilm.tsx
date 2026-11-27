@@ -1,10 +1,10 @@
 import {useEffect,useRef,useState} from "react";
 import type {Lang} from "./i18n";
 
-const filmIds=new Set(["three-pigs","red-hood"]);
+import {classicFilmIds,classicFilmUrl,hasOfflineFilm,saveOfflineFilm,removeOfflineFilm} from "./cartoon_offline";
 
 export function hasClassicFilm(id:string){
- return filmIds.has(id);
+ return classicFilmIds.has(id);
 }
 const trackLabels={ru:"Русский",uz:"Özbekça",en:"English"} as const;
 const languages=["ru","uz","en"] as const;
@@ -29,6 +29,39 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
  const [audioLanguage,setAudioLanguage]=useState(lang);
  const [failed,setFailed]=useState(false);
  const t=copy[lang];
+ const offlineCopy={
+  ru:{save:"Сохранить офлайн",remove:"Удалить загрузку",busy:"Подождите…",error:"Не удалось обновить загрузку."},
+  uz:{save:"Oflayn saqlaş",remove:"Yuklamani öçiriş",busy:"Biroz kuting…",error:"Yuklamani yangilab bölmadi."},
+  en:{save:"Save offline",remove:"Remove download",busy:"Please wait…",error:"Could not update the download."}
+ }[lang];
+ const filmUrl=classicFilmUrl(storyId,audioLanguage);
+ const [savedUrl,setSavedUrl]=useState<string|null>(null);
+ const [busy,setBusy]=useState(false);
+ const [offlineError,setOfflineError]=useState(false);
+
+ useEffect(()=>{
+  let active=true;
+  setOfflineError(false);
+  if("caches" in window)void hasOfflineFilm(storyId,audioLanguage)
+   .then(saved=>{if(active)setSavedUrl(saved?filmUrl:null);})
+   .catch(()=>{if(active)setSavedUrl(null);});
+  return ()=>{active=false;};
+ },[storyId,audioLanguage,filmUrl]);
+
+ async function toggleOffline(){
+  setBusy(true);
+  setOfflineError(false);
+  try{
+   if(savedUrl===filmUrl){
+    await removeOfflineFilm(storyId,audioLanguage);
+    setSavedUrl(null);
+   }else{
+    await saveOfflineFilm(storyId,audioLanguage);
+    setSavedUrl(filmUrl);
+   }
+  }catch{setOfflineError(true);}
+  finally{setBusy(false);}
+ }
 
  useEffect(()=>{
   const video=videoRef.current;
@@ -77,7 +110,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
    {t.audio}
    <span className="cartoon-audio-field">
     <span className="cartoon-audio-value" aria-hidden="true">{trackLabels[audioLanguage]}</span>
-   <select value={audioLanguage} onChange={event=>changeAudio(event.target.value as Lang)}>
+   <select disabled={busy} value={audioLanguage} onChange={event=>changeAudio(event.target.value as Lang)}>
     {languages.map(language=><option key={language} value={language} lang={language}>{trackLabels[language]}</option>)}
    </select>
    </span>
@@ -90,7 +123,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
   </div>:<video
    ref={videoRef}
    aria-label={title}
-   src={filmDirectory+"/film-"+audioLanguage+".mp4"}
+   src={filmUrl}
    poster={poster}
    width={384}
    height={512}
@@ -109,5 +142,9 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:s
     default={language===lang}
    />)}
   </video>}
+  {"caches" in window&&<button type="button" className="secondary-button cartoon-offline-button" disabled={busy} onClick={()=>void toggleOffline()}>
+   {busy?offlineCopy.busy:savedUrl===filmUrl?offlineCopy.remove:offlineCopy.save}
+  </button>}
+  {offlineError&&<p className="cartoon-notice" role="status">{offlineCopy.error}</p>}
  </div>;
 }

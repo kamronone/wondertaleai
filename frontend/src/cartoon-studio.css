@@ -224,3 +224,10 @@
   .cartoon-moving img { animation: none; }
   .cartoon-progress > span { transition: none; }
 }
+
+.cartoon-player .cartoon-offline-button {
+  justify-self: center;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
