@@ -78,7 +78,8 @@ def _snapshot(c, owner, request_id):
 
 
 def store_character_sheet(owner: str, source_request_id: str, sheet: ApprovedCharacterSheet,
-                          *, image_moderator: Callable[[bytes], bool]) -> None:
+                          *, image_moderator: Callable[[bytes], bool],
+                          expected_snapshot: tuple | None = None) -> None:
     """Save one reviewed PNG, never overwrite a different approved reference.
 
     The caller is trusted and must have independently validated provenance.
@@ -91,6 +92,8 @@ def store_character_sheet(owner: str, source_request_id: str, sheet: ApprovedCha
         raise ValueError("Character sheet integrity mismatch")
     with _transaction(owner) as c:
         before = _snapshot(c, owner, request_id)
+    if expected_snapshot is not None and before != expected_snapshot:
+        raise CharacterSheetUnavailable("Private request changed since generation")
     if (sheet.style, sheet.hero_mode) != before[1:3]:
         raise CharacterSheetUnavailable("Character sheet style mismatch")
     png = normalize_private_illustration(sheet.png)
