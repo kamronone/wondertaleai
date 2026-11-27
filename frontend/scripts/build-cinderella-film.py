@@ -16,6 +16,7 @@ except ImportError:
     sys.exit('Install narration dependency: python -m pip install edge-tts==7.2.7')
 
 ROOT = Path(__file__).resolve().parents[1]
+ANIMATIONS = {"cinderella": {5: "cinderella-walking"}, "red-hood": {1: "red-hood-walk-wave"}, "three-pigs": {4: "three-pigs-building", 7: "three-pigs-wolf"}}
 VOICES = {"ru": "ru-RU-SvetlanaNeural", "uz": "uz-UZ-MadinaNeural", "en": "en-US-JennyNeural"}
 
 def run(*args):
@@ -83,6 +84,12 @@ async def main():
                     camera = base + f",zoompan=z='{zoom}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=384x512:fps=25"
                     fade_start = max(0, duration + 0.8 - 0.25)
                     camera += f",fade=t=in:st=0:d=0.25,fade=t=out:st={fade_start}:d=0.25"
+                animation_name = ANIMATIONS.get(args.story, {}).get(i)
+                animation = ROOT / "public/images/classics" / args.story / "animations" / f"{animation_name}.gif" if animation_name else None
+                visual_args = ["-loop", "1", "-framerate", "25", "-i", str(image)]
+                if not args.static and animation and animation.is_file():
+                    visual_args = ["-stream_loop", "-1", "-ignore_loop", "1", "-i", str(animation)]
+                    camera = "fps=25," + base + ",scale=384:512" + f",fade=t=in:st=0:d=0.25,fade=t=out:st={fade_start}:d=0.25"
                 effect = args.effects_dir / f"page-{i}.wav" if args.effects_dir else None
                 audio_args = ["-map", "0:v:0", "-map", "1:a:0", "-af", "apad=pad_dur=0.8"]
                 if effect and effect.is_file():
@@ -90,7 +97,7 @@ async def main():
                            f"[2:a]aresample=48000,aformat=channel_layouts=mono,volume={args.effects_volume},adelay=250:all=1[fx];"
                            "[voice][fx]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95:latency=1[mix]")
                     audio_args = ["-i", str(effect), "-filter_complex", mix, "-map", "0:v:0", "-map", "[mix]"]
-                run("ffmpeg", "-y", "-v", "error", "-loop", "1", "-framerate", "25", "-i", str(image), "-i", str(audio), *audio_args, "-vf", camera, "-t", str(duration+0.8), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
+                run("ffmpeg", "-y", "-v", "error", *visual_args, "-i", str(audio), *audio_args, "-vf", camera, "-t", str(duration+0.8), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
                 actual = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(segment)))
                 cues.extend([f"{stamp(offset)} --> {stamp(offset+min(duration,actual))}", narration, ""])
                 offset += actual
