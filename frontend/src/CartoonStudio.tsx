@@ -31,9 +31,9 @@ const personalCopy={
 const safeLocalArt=(url:string)=>/^\/images\/[a-z0-9/_-]+\.(?:webp|png|jpe?g)$/i.test(url)&&!url.includes("..")?url:"/images/wondertale-hero.webp";
 
 const exportCopy={
- ru:{save:"Сохранить видеоряд",cancel:"Отменить экспорт",note:"Видеоряд без звука. Формат зависит от браузера.",error:"Не удалось создать видео.",unsupported:"Экспорт видео не поддерживается этим браузером.",ready:"Видео готово",download:"Скачать видео"},
- uz:{save:"Videoni saqlaş",cancel:"Bekor qiliş",note:"Ovozsiz video. Format brauzerga boğliq.",error:"Video yaratib bölmadi.",unsupported:"Brauzer video eksportini qöllamaydi.",ready:"Video tayyor",download:"Videoni yuklaş"},
- en:{save:"Create video",cancel:"Cancel export",note:"Silent montage. Format depends on the browser.",error:"Could not create video.",unsupported:"Video export is not supported by this browser.",ready:"Video ready",download:"Download video"}
+ ru:{save:"Сохранить видеоряд",cancel:"Отменить экспорт",note:"Видеоряд с необязательной музыкой. Голос диктора не записывается.",error:"Не удалось создать видео.",unsupported:"Экспорт видео не поддерживается этим браузером.",ready:"Видео готово",download:"Скачать видео"},
+ uz:{save:"Videoni saqlaş",cancel:"Bekor qiliş",note:"Musiqali yoki ovozsiz video. Hikoya ovozi yozilmaydi.",error:"Video yaratib bölmadi.",unsupported:"Brauzer video eksportini qöllamaydi.",ready:"Video tayyor",download:"Videoni yuklaş"},
+ en:{save:"Create video",cancel:"Cancel export",note:"Montage with optional music. Narration is not recorded.",error:"Could not create video.",unsupported:"Video export is not supported by this browser.",ready:"Video ready",download:"Download video"}
 } as const;
 
 const exportSettings={
@@ -63,9 +63,46 @@ function captionPages(ctx:CanvasRenderingContext2D,text:string):string[][]{
  for(let i=0;i<lines.length;i+=3)pages.push(lines.slice(i,i+3));
  return pages;
 }
-function localVideoFormat(){
+const musicCopy={
+ ru:{label:"Фоновая музыка",quiet:"Тихая",normal:"Обычная",volume:"Громкость музыки",unsupported:"Запись музыки недоступна в этом браузере.",off:"Без музыки"},
+ uz:{label:"Fon musiqasi",quiet:"Past",normal:"Odatiy",volume:"Musiqa balandligi",unsupported:"Brauzer musiqa yozişni qöllamaydi.",off:"Musiqasiz"},
+ en:{label:"Background music",quiet:"Quiet",normal:"Normal",volume:"Music volume",unsupported:"Music recording is unavailable in this browser.",off:"No music"}
+} as const;
+type MusicLevel="off"|"quiet"|"normal";
+function localVideoFormat(withMusic=false){
  if(typeof MediaRecorder==="undefined"||typeof HTMLCanvasElement==="undefined"||typeof HTMLCanvasElement.prototype.captureStream!=="function")return null;
- return ["video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(type=>MediaRecorder.isTypeSupported(type))??null;
+ if(withMusic&&typeof AudioContext==="undefined")return null;
+ const formats=withMusic?["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/mp4","video/webm"]:["video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];
+ return formats.find(type=>MediaRecorder.isTypeSupported(type))??null;
+}
+/** Original, locally synthesized instrumental loop. No microphone, network or speaker output. */
+function scheduleStoryMusic(audio:AudioContext,destination:MediaStreamAudioDestinationNode,level:Exclude<MusicLevel,"off">,seconds:number){
+ const melody=audio.createOscillator(),bass=audio.createOscillator();
+ const lead=audio.createGain(),low=audio.createGain(),mix=audio.createGain();
+ melody.type="sine";bass.type="triangle";
+ melody.connect(lead).connect(mix);bass.connect(low).connect(mix);mix.connect(destination);
+ mix.gain.value=level==="quiet"?.08:.16;
+ lead.gain.value=0;low.gain.value=0;
+ const notes=[72,76,79,76,74,77,81,77,76,79,84,79,71,74,79,74];
+ const roots=[48,50,52,43];
+ const hz=(note:number)=>440*Math.pow(2,(note-69)/12);
+ const start=audio.currentTime+.03,step=.5;
+ const length=Math.min(900,Math.max(1,seconds));
+ for(let i=0;i<Math.ceil(length/step);i++){
+  const at=start+i*step;
+  melody.frequency.setValueAtTime(hz(notes[i%notes.length]),at);
+  lead.gain.setValueAtTime(0,at);
+  lead.gain.linearRampToValueAtTime(.5,at+.045);
+  lead.gain.linearRampToValueAtTime(0,at+.46);
+  if(i%4===0){
+   bass.frequency.setValueAtTime(hz(roots[Math.floor(i/4)%roots.length]),at);
+   low.gain.setValueAtTime(0,at);
+   low.gain.linearRampToValueAtTime(.22,at+.12);
+   low.gain.linearRampToValueAtTime(0,at+1.85);
+  }
+ }
+ melody.start(start);bass.start(start);
+ melody.stop(start+length+.1);bass.stop(start+length+.1);
 }
 function localVideoImage(url:string,signal:AbortSignal):Promise<HTMLImageElement>{
  return new Promise((resolve,reject)=>{
@@ -86,15 +123,24 @@ function waitFrame(ms:number,signal:AbortSignal):Promise<void>{
   signal.addEventListener("abort",abort,{once:true});
  });
 }
-async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,captions:boolean,signal:AbortSignal,onProgress:(n:number)=>void):Promise<Blob>{
- const mime=localVideoFormat();
+async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void):Promise<Blob>{
+ const mime=localVideoFormat(music!=="off");
  if(!mime||!scenes.length||scenes.length>20||signal.aborted)throw new Error("Unavailable");
  const canvas=document.createElement("canvas");canvas.width=640;canvas.height=480;
  const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable");
  const stream=canvas.captureStream(24);
  let recorder:MediaRecorder|null=null;
+ let audio:AudioContext|null=null;
+ let destination:MediaStreamAudioDestinationNode|null=null;
  try{
-  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1200000});
+  if(music!=="off"){
+   audio=new AudioContext();
+   destination=audio.createMediaStreamDestination();
+   await Promise.race([audio.resume(),waitFrame(5000,signal).then(()=>{throw new Error("Audio unavailable");})]);
+   if(signal.aborted||audio.state!=="running")throw new Error("Audio unavailable");
+   destination.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
+  }
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1200000,...(music!=="off"?{audioBitsPerSecond:96000}:{})});
   const active=recorder;const chunks:Blob[]=[];
   const output=new Promise<Blob>((resolve,reject)=>{
    active.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
@@ -124,7 +170,10 @@ async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,
     }
    };
    draw();
-   if(i===0)active.start(1000);
+   if(i===0){
+    active.start(1000);
+    if(audio&&destination&&music!=="off")scheduleStoryMusic(audio,destination,music,scenes.reduce((sum,item)=>sum+exportSceneSeconds(item,duration),0)+scenes.length*20+2);
+   }
    const refresh=window.setInterval(draw,100);
    try{await waitFrame(seconds*1000,signal);}finally{window.clearInterval(refresh);}
    onProgress(Math.round((i+1)/scenes.length*100));
@@ -136,6 +185,7 @@ async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,
  }finally{
   if(recorder&&recorder.state!=="inactive")recorder.stop();
   stream.getTracks().forEach(track=>track.stop());
+  if(audio)await audio.close().catch(()=>{});
  }
 }
 function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang:Lang;onStart:()=>void}){
@@ -150,6 +200,9 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const settings=exportSettings[lang];
  const [duration,setDuration]=useState<ExportDuration>(6);
  const [captions,setCaptions]=useState(true);
+ const [music,setMusic]=useState<MusicLevel>("off");
+ const supportsMusic=Boolean(localVideoFormat(true));
+ const audioLabels=musicCopy[lang];
  const total=scenes.reduce((sum,scene)=>sum+exportSceneSeconds(scene,duration),0);
  const totalLabel=Math.floor(total/60)+":"+String(total%60).padStart(2,"0");
  useEffect(()=>{
@@ -163,7 +216,7 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
   if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
   const job=new AbortController();controller.current=job;
   try{
-   const blob=await recordLocalMontage(scenes,duration,captions,job.signal,n=>{if(controller.current===job)setProgress(n);});
+   const blob=await recordLocalMontage(scenes,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);});
    if(controller.current!==job||job.signal.aborted)return;
    const url=URL.createObjectURL(blob);objectUrl.current=url;setResult({url,ext:blob.type.startsWith("video/mp4")?"mp4":"webm"});
   }catch{if(controller.current===job&&!job.signal.aborted)setError(true);}
@@ -181,6 +234,14 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
    <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
     <input type="checkbox" checked={captions} disabled={busy} onChange={e=>setCaptions(e.target.checked)}/>{settings.captions}
    </label>
+   <label className="cartoon-select">{audioLabels.label}
+    <select disabled={busy||!supportsMusic} value={music} onChange={e=>setMusic(e.target.value as MusicLevel)}>
+     <option value="off">{audioLabels.off}</option>
+     <option value="quiet">{audioLabels.quiet}</option>
+     <option value="normal">{audioLabels.normal}</option>
+    </select>
+   </label>
+   {!supportsMusic&&<p className="cartoon-notice">{audioLabels.unsupported}</p>}
    <p className="cartoon-notice">{settings.estimated}: {totalLabel}</p>
   </div>}
   {supported&&<button type="button" className="secondary-button cartoon-offline-button" onClick={()=>busy?controller.current?.abort():void save()}>{busy?t.cancel:t.save}</button>}
