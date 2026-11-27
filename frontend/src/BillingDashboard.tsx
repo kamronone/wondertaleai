@@ -5,6 +5,7 @@ type Summary={
  mode:"sandbox";currency:"UZS";amount_unit:"tiyin";
  orders:number;paid_orders:number;gross_minor:number;refund_minor:number;net_minor:number;
  order_conversion:number|null;active_subscriptions:number;monthly_list_value_minor:number;
+ gifts:{plan:string;orders:number;paid:number;redeemed:number;available:number;expired:number;refunded:number;gross_minor:number}[];
  promotions:{code:string;orders:number;used:number;reserved:number;released:number;discount_minor:number;gross_minor:number}[];
  promotion_limit:number;
  daily:{day:string;gross_minor:number;refund_minor:number;net_minor:number;orders:number;paid_orders:number}[];
@@ -27,7 +28,7 @@ export default function BillingDashboard({api,token}:{api:string;token:string}){
   const query=new URLSearchParams({start:from.toISOString(),end:to.toISOString()});
   fetch(api.replace(/\/$/,"")+"/api/billing/admin/analytics/summary?"+query,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:controller.signal})
    .then(async r=>{if(!r.ok)throw Error("Unavailable");return r.json() as Promise<Summary>;})
-   .then(v=>{if(controller.signal.aborted)return;if(v.mode!=="sandbox"||v.currency!=="UZS"||v.amount_unit!=="tiyin"||!Array.isArray(v.active_plans)||!Array.isArray(v.daily)||!Array.isArray(v.promotions))throw Error("Invalid summary");setData(v);setState("ready");})
+   .then(v=>{if(controller.signal.aborted)return;if(v.mode!=="sandbox"||v.currency!=="UZS"||v.amount_unit!=="tiyin"||!Array.isArray(v.active_plans)||!Array.isArray(v.daily)||!Array.isArray(v.promotions)||!Array.isArray(v.gifts))throw Error("Invalid summary");setData(v);setState("ready");})
    .catch(()=>{if(!controller.signal.aborted)setState("error");});
   return ()=>controller.abort();
  },[api,token,start,end]);
@@ -70,6 +71,9 @@ export default function BillingDashboard({api,token}:{api:string;token:string}){
    <p className="billing-muted">До {data.promotion_limit} кодов по числу использований. Тестовые заказы за выбранный период.</p>
    {!data.promotions.length&&<p>Нет использований промокодов</p>}
    <div className="billing-metrics">{data.promotions.map(p=><article key={p.code}><strong>{p.code}</strong><small>Заказы: {p.orders} · Использовано: {p.used}</small><small>Резерв: {p.reserved} · Освобождено: {p.released}</small><small>Скидки: {money(p.discount_minor)}</small><small>Оплаченный объём: {money(p.gross_minor)}</small><small>Доля использований: {p.orders?(p.used/p.orders*100).toFixed(1)+"%":"—"}</small></article>)}</div>
+   <h3>Подарочные подписки</h3>
+   {!data.gifts.length&&<p>Нет подарочных заказов</p>}
+   <div className="billing-metrics">{data.gifts.map(g=><article key={g.plan}><strong>{g.plan}</strong><small>Заказы: {g.orders} · Оплачено: {g.paid}</small><small>Активировано: {g.redeemed}</small><small>Доступно: {g.available} · Просрочено: {g.expired}</small><small>Возвращено: {g.refunded}</small><small>Общий объём: {money(g.gross_minor)}</small><small>Доля активаций: {g.paid?(g.redeemed/g.paid*100).toFixed(1)+"%":"—"}</small></article>)}</div>
    <h3>Активные тарифы на текущий момент</h3>
    {data.active_plans.length===0&&<p>Нет активных подписок</p>}
    {data.active_plans.map(p=><div className="billing-plan-row" key={p.plan}><span>{p.plan}</span><progress max={Math.max(1,data.active_subscriptions)} value={p.count} aria-label={p.plan}/><strong>{p.count}</strong></div>)}
