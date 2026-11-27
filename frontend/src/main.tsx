@@ -1813,6 +1813,6 @@ function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
     </span>
   </button>;
 }
-createRoot(document.getElementById("root")!).render(<React.StrictMode>{window.location.pathname.replace(/\/$/,"")==="/admin" && ((window.location.hostname.startsWith("wondertaleai-preview-") && window.location.hostname.endsWith(".vercel.app")) || window.location.hostname === "deploy-preview-1--wondertal.netlify.app" || /^[a-f0-9]{24}--wondertal\.netlify\.app$/.test(window.location.hostname)) ? <main style={{maxWidth:1000,margin:"0 auto",padding:16}}><a href="/">← Ertakcha</a><h1>Админка · демонстрация</h1><BillingDashboardDemo api="" token="" demo/></main> : <App/>}</React.StrictMode>);
+createRoot(document.getElementById("root")!).render(<React.StrictMode>{window.location.pathname.replace(/\/$/,"")==="/admin" && ((window.location.hostname.startsWith("wondertaleai-preview-") && window.location.hostname.endsWith(".vercel.app")) || window.location.hostname === "deploy-preview-1--wondertal.netlify.app" || /^[a-f0-9]{24}--wondertal\.netlify\.app$/.test(window.location.hostname)) ? <main className="admin-page"><BillingDashboardDemo api="" token="" demo/></main> : <App/>}</React.StrictMode>);
 
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").catch(()=>{/* PWA remains usable online */});});}
