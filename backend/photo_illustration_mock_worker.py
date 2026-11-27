@@ -82,7 +82,7 @@ def save_mock_photo_page(
                 raise PhotoDryRunDenied("Parent no longer exists")
         else:
             c.execute("BEGIN IMMEDIATE")
-        _require_local_review_gate()
+        _require_local_review_gate(c)
         row=db.sql(c,"SELECT status,reference_sha256,expires_at,style,hero_mode FROM photo_illustration_requests "
                        "WHERE id=? AND owner_id=? AND book_id=? AND page_number=?",
                    (rid,owner,book,page)).fetchone()
