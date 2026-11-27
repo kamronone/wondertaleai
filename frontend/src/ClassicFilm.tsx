@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from "react";
+import {Download,Trash2,Maximize,LoaderCircle} from "lucide-react";
 import type {Lang} from "./i18n";
 
 import {classicFilmIds,classicFilmUrl,classicFilmPoster,findOfflineFilmLanguage,hasOfflineFilm,saveOfflineFilm,removeOfflineFilm} from "./cartoon_offline";
@@ -32,6 +33,18 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
  const [duration,setDuration]=useState<number|null>(null);
  const durationLabel=duration===null?null:new Intl.NumberFormat(lang,{minimumIntegerDigits:2,useGrouping:false}).format(Math.floor(duration/60))+":"+new Intl.NumberFormat(lang,{minimumIntegerDigits:2,useGrouping:false}).format(Math.floor(duration%60));
  const t=copy[lang];
+ const fullscreenLabel={ru:"На весь экран",uz:"Töliq ekran",en:"Fullscreen"}[lang];
+ const [fullscreenError,setFullscreenError]=useState(false);
+ async function openFullscreen(){
+  const video=videoRef.current as (HTMLVideoElement & {webkitEnterFullscreen?:()=>void})|null;
+  if(!video)return;
+  setFullscreenError(false);
+  try{
+   if(typeof video.webkitEnterFullscreen==="function")video.webkitEnterFullscreen();
+   else if(typeof video.requestFullscreen==="function")await video.requestFullscreen();
+   else setFullscreenError(true);
+  }catch{setFullscreenError(true);}
+ }
  const offlineCopy={
   ru:{save:"Сохранить офлайн",remove:"Удалить загрузку",busy:"Подождите…",error:"Не удалось обновить загрузку."},
   uz:{save:"Oflayn saqlaş",remove:"Yuklamani öçiriş",busy:"Biroz kuting…",error:"Yuklamani yangilab bölmadi."},
@@ -117,7 +130,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
   if(!triedOfflineFallback.current&&"caches" in window){
    const savedLanguage=await findOfflineFilmLanguage(storyId,audioLanguage).catch(()=>null);
    if(videoRef.current!==video||video.src!==source)return;
-   if(savedLanguage){
+   if(savedLanguage&&savedLanguage!==audioLanguage){
     changeAudio(savedLanguage);
     triedOfflineFallback.current=true;
     return;
@@ -150,6 +163,7 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
    </span>
    </label>
    {durationLabel!==null&&<span className="cartoon-notice">{durationLabel}</span>}
+   {!failed&&<button type="button" className="icon-button" aria-label={fullscreenLabel} title={fullscreenLabel} onClick={()=>void openFullscreen()}><Maximize size={18}/></button>}
   </div>
   {failed?<div className="cartoon-film-error">
    <p role="status">{t.error}</p>
@@ -184,8 +198,9 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
     default={language===lang}
    />)}
   </video>}
+  {fullscreenError&&<p className="cartoon-notice" role="status">{{ru:"Полноэкранный режим недоступен. Используйте управление видео.",uz:"Töliq ekran mavjud emas. Video boşqaruvidan foydalaning.",en:"Fullscreen is unavailable. Use the video controls."}[lang]}</p>}
   {"caches" in window&&<button type="button" className="secondary-button cartoon-offline-button" disabled={busy} onClick={()=>void toggleOffline()}>
-   {busy?offlineCopy.busy:savedUrl===filmUrl?offlineCopy.remove:offlineCopy.save}
+   {busy?<LoaderCircle size={16}/>:savedUrl===filmUrl?<Trash2 size={16}/>:<Download size={16}/>} {busy?offlineCopy.busy:savedUrl===filmUrl?offlineCopy.remove:offlineCopy.save}
   </button>}
   {offlineError&&<p className="cartoon-notice" role="status">{offlineCopy.error}</p>}
  </div>;
