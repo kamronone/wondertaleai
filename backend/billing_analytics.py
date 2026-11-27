@@ -50,7 +50,18 @@ def billing_summary(conn, start: datetime, end: datetime, now: datetime):
           COALESCE(sum(r.amount),0)
         FROM orders o LEFT JOIN refund_totals r ON r.order_id=o.id GROUP BY o.day ORDER BY o.day
     """,(start,end)).fetchall()
+    promotions = conn.execute("""
+        SELECT r.code, count(*), count(*) FILTER (WHERE r.state='used'),
+          count(*) FILTER (WHERE r.state='reserved'), count(*) FILTER (WHERE r.state='released'),
+          COALESCE(sum(r.discount_minor) FILTER (WHERE r.state='used'),0),
+          COALESCE(sum(o.amount_minor) FILTER (WHERE r.state='used' AND o.state IN ('paid','partially_refunded','refunded')),0)
+        FROM billing_promotion_redemptions r JOIN payment_orders o ON o.id=r.order_id
+        WHERE o.provider='sandbox' AND o.created_at >= %s AND o.created_at < %s
+        GROUP BY r.code ORDER BY count(*) FILTER (WHERE r.state='used') DESC,r.code LIMIT 100
+    """,(start,end)).fetchall()
     return {
+        "promotions":[{"code":code,"orders":int(n),"used":int(u),"reserved":int(p),"released":int(l),"discount_minor":int(d),"gross_minor":int(g)} for code,n,u,p,l,d,g in promotions],
+        "promotion_limit":100,
         "daily":[{"day":d.isoformat(),"orders":int(n),"paid_orders":int(p),"gross_minor":int(g),"refund_minor":int(r),"net_minor":int(g)-int(r)} for d,n,p,g,r in daily],
         "mode":"sandbox","currency":"UZS","amount_unit":"tiyin",
         "basis":"order_creation_cohort_current_state",
