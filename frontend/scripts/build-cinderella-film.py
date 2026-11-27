@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import json
+import math
 import subprocess
 import tempfile
 from pathlib import Path
@@ -29,6 +30,7 @@ def stamp(seconds):
 
 async def main():
     parser = argparse.ArgumentParser(description="Render a classic picture film")
+    parser.add_argument("--static", action="store_true", help="Disable camera motion and fades")
     parser.add_argument("--story", choices=["cinderella", "snow-white", "rapunzel"], default="cinderella")
     args = parser.parse_args()
     source_path = ROOT / "scripts/film-sources" / f"{args.story}.json"
@@ -60,7 +62,16 @@ async def main():
                 await edge_tts.Communicate(spoken, voice, rate="-10%").save(str(audio))
                 duration = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(audio)))
                 image = ROOT / "public" / scene["image"].lstrip("/")
-                run("ffmpeg", "-y", "-v", "error", "-loop", "1", "-framerate", "25", "-i", str(image), "-i", str(audio), "-vf", "scale=384:512:force_original_aspect_ratio=decrease,pad=384:512:(ow-iw)/2:(oh-ih)/2,setsar=1", "-af", "apad=pad_dur=0.8", "-t", str(duration+0.8), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
+                frames = max(1, math.ceil((duration + 0.8) * 25))
+                base = "scale=768:1024:force_original_aspect_ratio=decrease,pad=768:1024:(ow-iw)/2:(oh-ih)/2,setsar=1"
+                if args.static:
+                    camera = base + ",scale=384:512"
+                else:
+                    zoom = f"1+0.035*on/{frames}" if i % 2 else f"1.035-0.035*on/{frames}"
+                    camera = base + f",zoompan=z='{zoom}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=384x512:fps=25"
+                    fade_start = max(0, duration + 0.8 - 0.25)
+                    camera += f",fade=t=in:st=0:d=0.25,fade=t=out:st={fade_start}:d=0.25"
+                run("ffmpeg", "-y", "-v", "error", "-loop", "1", "-framerate", "25", "-i", str(image), "-i", str(audio), "-vf", camera, "-af", "apad=pad_dur=0.8", "-t", str(duration+0.8), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
                 actual = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(segment)))
                 cues.extend([f"{stamp(offset)} --> {stamp(offset+min(duration,actual))}", narration, ""])
                 offset += actual
