@@ -192,11 +192,15 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
   {!demo&&<h2>Финансовая аналитика</h2>}{demo&&<p className="admin-demo-notice" role="status">Демонстрационные данные · без подключения к серверу</p>}
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
   <div className="billing-filters admin-date-panel">
-   <label>С<input type="date" value={start} max={end} onChange={e=>setStart(e.target.value)}/></label>
-   <label>По<input type="date" value={end} min={start} onChange={e=>setEnd(e.target.value)}/></label>
-   <button type="button" onClick={()=>{setStart(day(-6));setEnd(day(0));}} aria-pressed={start===day(-6)&&end===day(0)}>7 дней</button>
-   <button type="button" onClick={()=>{setStart(day(-29));setEnd(day(0));}} aria-pressed={start===day(-29)&&end===day(0)}>30 дней</button>
-   <button type="button" onClick={()=>{setStart(day(-89));setEnd(day(0));}} aria-pressed={start===day(-89)&&end===day(0)}>90 дней</button>
+   <div className="admin-date-fields">
+    <label>С<input type="date" aria-label="Начало периода" value={start} max={end} onChange={e=>setStart(e.target.value)}/></label>
+    <label>По<input type="date" aria-label="Конец периода" value={end} min={start} onChange={e=>setEnd(e.target.value)}/></label>
+   </div>
+   <div className="admin-period-buttons" role="group" aria-label="Быстрый выбор периода">
+    <button type="button" onClick={()=>{setStart(day(-6));setEnd(day(0));}} aria-pressed={start===day(-6)&&end===day(0)}>7 дней</button>
+    <button type="button" onClick={()=>{setStart(day(-29));setEnd(day(0));}} aria-pressed={start===day(-29)&&end===day(0)}>30 дней</button>
+    <button type="button" onClick={()=>{setStart(day(-89));setEnd(day(0));}} aria-pressed={start===day(-89)&&end===day(0)}>90 дней</button>
+   </div>
   </div>
   {state==="loading"&&<p role="status">Загрузка…</p>}
   {state==="error"&&<p role="alert">Статистика недоступна. Проверьте доступ и период (не более 366 дней).</p>}
