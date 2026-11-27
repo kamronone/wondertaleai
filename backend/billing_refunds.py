@@ -41,7 +41,7 @@ def list_refunds(conn,owner_id: str,order_id: UUID):
 def reconcile_refund(conn, refund_id: UUID, *, succeeded: bool):
     """Trusted internal reconciliation only, after independent provider verification.
     Caller must own transaction. No provider request is sent here.
-    Subscription revocation requires a separate verified order linkage.
+    Full refunds require an explicit order linkage.
     """
     if type(succeeded) is not bool:
         raise ValueError("Invalid outcome")
@@ -49,6 +49,12 @@ def reconcile_refund(conn, refund_id: UUID, *, succeeded: bool):
     if not link:
         raise LookupError("Refund not found")
     oid=link[0]
+    from billing_subscriptions import _lock_owner
+    from billing_entitlements import revoke_refunded_entitlement
+    owner=conn.execute("SELECT owner_id FROM payment_orders WHERE id=%s",(oid,)).fetchone()
+    if not owner:
+        raise LookupError("Order not found")
+    _lock_owner(conn,owner[0])
     order=conn.execute("SELECT amount_minor,state FROM payment_orders WHERE id=%s FOR UPDATE",(oid,)).fetchone()
     refund=conn.execute("SELECT state FROM refunds WHERE id=%s AND order_id=%s FOR UPDATE",(refund_id,oid)).fetchone()
     if not order or not refund:
@@ -68,5 +74,7 @@ def reconcile_refund(conn, refund_id: UUID, *, succeeded: bool):
             raise RuntimeError("Refund ledger exceeds payment; rollback required")
         state="refunded" if total==order[0] else "partially_refunded"
         conn.execute("UPDATE payment_orders SET state=%s WHERE id=%s",(state,oid))
+    if state=="refunded":
+        revoke_refunded_entitlement(conn,oid)
     return {"state":target,"changed":True,"order_state":state,
-            "entitlement_review_required":state=="refunded"}
+            "entitlement_review_required":False}
