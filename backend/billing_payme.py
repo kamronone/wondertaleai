@@ -84,3 +84,43 @@ def create_transaction(conn, params, now_ms):
     if not inserted:
         raise PaymeError(-31008,"Transaction already reserved")
     return {"transaction":str(order),"create_time":now_ms,"state":1}
+
+
+def perform_transaction(conn, params, now_ms):
+    """Internal authenticated handler; caller must roll back on any exception."""
+    from datetime import datetime, timezone
+    from uuid import uuid4
+    from billing_domain import period_end
+    from billing_subscriptions import _lock_owner, expire_subscription
+    pid = params.get("id")
+    if not isinstance(pid,str) or len(pid)!=24:
+        raise PaymeError(-31003,"Transaction not found")
+    owner = conn.execute("""SELECT o.owner_id FROM payme_transactions t
+        JOIN payment_orders o ON o.id=t.order_id
+        WHERE t.provider_id=%s AND o.provider='payme'""",(pid,)).fetchone()
+    if not owner:
+        raise PaymeError(-31003,"Transaction not found")
+    _lock_owner(conn,owner[0])
+    row = conn.execute("""SELECT o.id,o.plan_id,o.plan_version,o.amount_minor,o.state,
+        t.amount_minor,t.state,t.provider_time,t.perform_time
+        FROM payment_orders o JOIN payme_transactions t ON t.order_id=o.id
+        WHERE t.provider_id=%s AND o.owner_id=%s AND o.provider='payme'
+        FOR UPDATE OF o,t""",(pid,owner[0])).fetchone()
+    if not row:
+        raise PaymeError(-31003,"Transaction not found")
+    if row[6]==2 and row[4]=="paid":
+        return {"transaction":str(row[0]),"perform_time":row[8],"state":2}
+    if row[6]!=1 or row[4]!="pending" or row[3]!=row[5] or now_ms-row[7]>=43200000:
+        raise PaymeError(-31008,"Transaction unavailable")
+    now = datetime.fromtimestamp(now_ms/1000,timezone.utc)
+    expire_subscription(conn,owner[0],now)
+    if conn.execute("SELECT id FROM subscriptions WHERE owner_id=%s AND status='active' FOR UPDATE",(owner[0],)).fetchone():
+        raise PaymeError(-31008,"Active subscription exists")
+    sid = uuid4()
+    conn.execute("""INSERT INTO subscriptions
+        (id,owner_id,plan_id,plan_version,status,period_start,period_end)
+        VALUES (%s,%s,%s,%s,'active',%s,%s)""",
+        (sid,owner[0],row[1],row[2],now,period_end(now)))
+    conn.execute("UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s",(pid,row[0]))
+    conn.execute("UPDATE payme_transactions SET state=2,perform_time=%s,subscription_id=%s WHERE provider_id=%s",(now_ms,sid,pid))
+    return {"transaction":str(row[0]),"perform_time":now_ms,"state":2}
