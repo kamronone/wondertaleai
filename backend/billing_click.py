@@ -116,6 +116,11 @@ def complete(conn, params, service_id, secret, now):
         from billing_promotions import settle_promotion
         settle_promotion(conn,oid)
         return reply(-9,"Transaction canceled")
+    from billing_gifts import activate_paid_gift
+    if activate_paid_gift(conn,oid,owner[0],row[0],row[1],now):
+        conn.execute("UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s",(params["click_trans_id"],oid))
+        conn.execute("UPDATE click_transactions SET state='completed',completed_at=%s WHERE prepare_id=%s",(now,prepare_id))
+        return reply(0,"Success",prepare_id)
     expire_subscription(conn,owner[0],now)
     if conn.execute("SELECT id FROM subscriptions WHERE owner_id=%s AND status='active' FOR UPDATE",(owner[0],)).fetchone():
         return reply(-9,"Active subscription exists")
