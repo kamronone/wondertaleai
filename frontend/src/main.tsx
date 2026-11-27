@@ -68,6 +68,7 @@ import { classics, type ClassicId, type Classic } from "./classics";
 import { ClassicCover } from "./ClassicCover";
 import { AccountAction } from "./AccountAction";
 import { PricingPlans } from "./PricingPlans";
+import BillingSandboxPanel from "./BillingSandboxPanel";
 import { ParentAccount } from "./ParentAccount";
 import { LegalCenter, type LegalDocument } from "./LegalCenter";
 import { ProfileLegalMenu } from "./ProfileLegalMenu";
@@ -1464,6 +1465,7 @@ function App(){
             <ChevronRight size={19} className="profile-plan-chevron" aria-hidden="true"/>
           </summary>
           <PricingPlans lang={lang} api={API} session={privateToken}/>
+          {import.meta.env.DEV && import.meta.env.VITE_ENABLE_ANALYTICS_LOCAL_SANDBOX==="true" && <BillingSandboxPanel/>}
         </details>
       </section>}
       {tab==="library"&&<section className="library-page library-concept-two">
