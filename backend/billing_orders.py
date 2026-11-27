@@ -55,10 +55,13 @@ def confirm_sandbox_order(conn, owner_id, order_id, event_id, transaction_id, am
     if row[3] != "pending":
         raise ValueError("Invalid order state")
     expire_subscription(conn,owner_id,now)
-    active = conn.execute("""SELECT id FROM subscriptions WHERE owner_id=%s AND status='active'""",
+    active = conn.execute("""SELECT id,plan_id,plan_version,period_end,cancel_at_period_end
+        FROM subscriptions WHERE owner_id=%s AND status='active' FOR UPDATE""",
         (owner_id,)).fetchone()
+    # Early renewal is deliberately rejected: extending the current period would
+    # mix two monthly quotas. Renewal after expiry creates a fresh period.
     if active:
-        raise ValueError("Renewals and plan changes not enabled in sandbox yet")
+        raise ValueError("Renewal available after current period ends; no early charges")
     conn.execute("""UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s""",
         (transaction_id,order_id))
     conn.execute("""INSERT INTO subscriptions
