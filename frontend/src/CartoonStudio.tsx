@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import {ArrowLeft,ChevronLeft,ChevronRight,Film,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
 import {classics} from "./classics";
-import ThreePigsFilm from "./ThreePigsFilm";
+import ClassicFilm,{hasClassicFilm} from "./ClassicFilm";
 import type {Lang} from "./i18n";
 import {buildClassicCartoon,nextCartoonScene} from "./cartoon_storyboard";
 import {preferredStoryVoice,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
@@ -24,6 +24,8 @@ export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void})
  const [id,setId]=useState("three-pigs");
  const [view,setView]=useState<"film"|"storyboard">("storyboard");
  const modeLabels=filmModeLabels[lang];
+ const selectedTitle=classics.find(classic=>classic.id===id)?.title[lang]??t.scene;
+ const filmAvailable=hasClassicFilm(id);
  const scenes=useMemo(()=>buildClassicCartoon(id,lang),[id,lang]);
  const [index,setIndex]=useState(0);
  const [playing,setPlaying]=useState(false);
@@ -99,16 +101,16 @@ export default function CartoonStudio({lang,onBack}:{lang:Lang;onBack:()=>void})
  return <section className="cartoon-studio">
   <button className="cartoon-back" type="button" onClick={()=>{cancel();onBack();}}><ArrowLeft size={17}/>{t.back}</button>
   <div className="cartoon-heading"><span><Film size={23}/></span><div><h1>{t.title}</h1><p>{t.intro}</p></div></div>
-  <label className="cartoon-select">{t.choose}<select value={id} onChange={e=>{reset();setView("storyboard");setId(e.target.value);}}>{classics.map(c=><option key={c.id} value={c.id}>{c.title[lang]}</option>)}</select></label>
-  {id==="three-pigs"&&<div className="cartoon-view-switch" role="group" aria-label={modeLabels.label}>
+  <label className="cartoon-select">{t.choose}<select value={id} onChange={e=>{reset();if(!hasClassicFilm(e.target.value))setView("storyboard");setId(e.target.value);}}>{classics.map(c=><option key={c.id} value={c.id}>{c.title[lang]}</option>)}</select></label>
+  {filmAvailable&&<div className="cartoon-view-switch" role="group" aria-label={modeLabels.label}>
    <button type="button" aria-pressed={view==="storyboard"} onClick={()=>selectView("storyboard")}>{modeLabels.storyboard}</button>
    <button type="button" aria-pressed={view==="film"} onClick={()=>selectView("film")}>{modeLabels.film}</button>
   </div>}
-  {view==="film"&&id==="three-pigs"&&<ThreePigsFilm key={lang} lang={lang} onStoryboard={()=>selectView("storyboard")}/>}
+  {view==="film"&&filmAvailable&&<ClassicFilm key={id+":"+lang} storyId={id} title={selectedTitle} lang={lang} onStoryboard={()=>selectView("storyboard")}/>}
   {view==="storyboard"&&current&&<>
    <div className="cartoon-screen">
     <div className={"cartoon-picture"+(playing?" cartoon-moving":"")} key={id+":"+index}>
-     <img src={image} alt={classics.find(c=>c.id===id)?.title[lang]||t.scene} onError={()=>setFailed(f=>Math.min(2+(current.animation?1:0),f+1))}/>
+     <img src={image} alt={selectedTitle} onError={()=>setFailed(f=>Math.min(2+(current.animation?1:0),f+1))}/>
     </div>
     <span className="cartoon-screen-label">{t.demo}</span>
     <span className="cartoon-scene-label">{t.scene} {index+1}/{scenes.length}</span>

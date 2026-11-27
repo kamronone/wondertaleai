@@ -1,14 +1,17 @@
 import {useEffect,useRef,useState} from "react";
 import type {Lang} from "./i18n";
 
-const filmDirectory="/cartoons/three-pigs";
-const poster="/images/classics/three-pigs/pages/page-1.png";
+const filmIds=new Set(["three-pigs","red-hood"]);
+
+export function hasClassicFilm(id:string){
+ return filmIds.has(id);
+}
 const trackLabels={ru:"Русский",uz:"Özbekça",en:"English"} as const;
 const languages=["ru","uz","en"] as const;
 const copy={
- ru:{title:"Три поросёнка",info:"1 мин 20 с",audio:"Озвучка",error:"Видео не загрузилось.",fallback:"Открыть раскадровку"},
- uz:{title:"Uçta çöçqaça",info:"1 daqiqa 20 soniya",audio:"Ovoz tili",error:"Video yuklanmadi.",fallback:"Sahnalarni oçiş"},
- en:{title:"The Three Little Pigs",info:"1 min 20 sec",audio:"Narration",error:"The video could not load.",fallback:"Open storyboard"}
+ ru:{info:"1 мин 20 с",audio:"Озвучка",error:"Видео не загрузилось.",fallback:"Открыть раскадровку"},
+ uz:{info:"1 daqiqa 20 soniya",audio:"Ovoz tili",error:"Video yuklanmadi.",fallback:"Sahnalarni oçiş"},
+ en:{info:"1 min 20 sec",audio:"Narration",error:"The video could not load.",fallback:"Open storyboard"}
 } as const;
 
 type FilmPosition={
@@ -18,7 +21,9 @@ type FilmPosition={
  captions:TextTrackMode[];
 };
 
-export default function ThreePigsFilm({lang,onStoryboard}:{lang:Lang;onStoryboard:()=>void}){
+export default function ClassicFilm({storyId,title,lang,onStoryboard}:{storyId:string;title:string;lang:Lang;onStoryboard:()=>void}){
+ const filmDirectory="/cartoons/"+storyId;
+ const poster="/images/classics/"+storyId+"/pages/page-1.png";
  const videoRef=useRef<HTMLVideoElement>(null);
  const position=useRef<FilmPosition|null>(null);
  const [audioLanguage,setAudioLanguage]=useState(lang);
@@ -78,7 +83,7 @@ export default function ThreePigsFilm({lang,onStoryboard}:{lang:Lang;onStoryboar
    <button type="button" onClick={onStoryboard}>{t.fallback}</button>
   </div>:<video
    ref={videoRef}
-   aria-label={t.title}
+   aria-label={title}
    src={filmDirectory+"/film-"+audioLanguage+".mp4"}
    poster={poster}
    width={384}

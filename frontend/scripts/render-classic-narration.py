@@ -1,8 +1,9 @@
 """Render caption-timed narration into the bundled MP4 variants.
 
-Run after render-three-pigs-film.sh with Python 3, eSpeak NG and FFmpeg.
+Run after render-classic-film.sh with Python 3, eSpeak NG and FFmpeg.
 The public story text stays local during synthesis.
 """
+import argparse
 import os
 import subprocess
 import tempfile
@@ -10,7 +11,7 @@ import wave
 from pathlib import Path
 
 
-MEDIA = Path(__file__).resolve().parents[1] / "public" / "cartoons" / "three-pigs"
+CARTOONS = Path(__file__).resolve().parents[1] / "public" / "cartoons"
 VOICES = {
     "ru": ("ru+f3", "rus"),
     "uz": ("uz+f3", "uzb"),
@@ -25,8 +26,8 @@ def milliseconds(stamp):
     return (int(minutes) * 60 + int(whole)) * 1000 + int(fraction)
 
 
-def read_cues(language):
-    header, *blocks = (MEDIA / f"{language}.vtt").read_text(encoding="utf-8").strip().split("\n\n")
+def read_cues(media, language):
+    header, *blocks = (media / f"{language}.vtt").read_text(encoding="utf-8").strip().split("\n\n")
     if header != "WEBVTT":
         raise ValueError(f"Expected a WebVTT file for {language}")
     for block in blocks:
@@ -55,8 +56,8 @@ def synthesize_cue(synthesizer, voice, text, output, available_ms):
     raise ValueError(f"Cue exceeds its allotted time: {text}")
 
 
-def render_narration(synthesizer, language, voice, directory):
-    cues = list(read_cues(language))
+def render_narration(synthesizer, media, language, voice, directory):
+    cues = list(read_cues(media, language))
     fragments = []
     rate = None
     previous_end = 0
@@ -86,17 +87,22 @@ def render_narration(synthesizer, language, voice, directory):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("story", choices=("three-pigs", "red-hood"))
+    parser.add_argument("video", type=Path, help="Path to the rendered silent MP4")
+    args = parser.parse_args()
+    media = CARTOONS / args.story
     synthesizer = os.environ.get("ESPEAK_NG", "espeak-ng")
-    with tempfile.TemporaryDirectory(prefix="wondertale-narration-", dir=MEDIA) as work:
+    with tempfile.TemporaryDirectory(prefix="wondertale-narration-", dir=media) as work:
         directory = Path(work)
         results = []
         for language, (voice, audio_code) in VOICES.items():
-            narration = render_narration(synthesizer, language, voice, directory)
+            narration = render_narration(synthesizer, media, language, voice, directory)
             result = directory / f"film-{language}.mp4"
             subprocess.run(
                 [
                     "ffmpeg", "-hide_banner", "-loglevel", "error",
-                    "-i", MEDIA / "film.mp4", "-i", narration,
+                    "-i", args.video, "-i", narration,
                     "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
                     "-af", "highpass=f=90,lowpass=f=6800,loudnorm=I=-18:TP=-2:LRA=7",
                     "-c:a", "aac", "-ar", "24000", "-b:a", "56k",
@@ -106,7 +112,7 @@ def main():
             )
             results.append(result)
         for result in results:
-            result.replace(MEDIA / result.name)
+            result.replace(media / result.name)
 
 
 if __name__ == "__main__":
