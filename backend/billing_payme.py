@@ -123,6 +123,8 @@ def perform_transaction(conn, params, now_ms):
         (sid,owner[0],row[1],row[2],now,period_end(now)))
     conn.execute("UPDATE payment_orders SET state='paid',provider_transaction_id=%s WHERE id=%s",(pid,row[0]))
     conn.execute("UPDATE payme_transactions SET state=2,perform_time=%s,subscription_id=%s WHERE provider_id=%s",(now_ms,sid,pid))
+    from billing_entitlements import link_entitlement
+    link_entitlement(conn,row[0],sid)
     return {"transaction":str(row[0]),"perform_time":now_ms,"state":2}
 
 
