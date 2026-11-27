@@ -157,3 +157,47 @@ def test_quota_exhaustion(db):
     with pytest.raises(PermissionError):
         reserve_generation(db,"alice","quota_request_extra",now)
     assert not reserve_generation(db,"alice","quota_request_0000",now)["may_start"]
+
+
+@pytest.mark.parametrize("provider",["payme","click"])
+def test_provider_lifecycle(db,provider):
+    from uuid import uuid4
+    import hashlib
+    from billing_payme import create_transaction,perform_transaction,check_transaction
+    from billing_click import prepare,complete
+    now=datetime.now(timezone.utc)
+    stamp=int(now.timestamp()*1000)
+    oid=uuid4()
+    db.execute("""INSERT INTO payment_orders
+        (id,owner_id,plan_id,plan_version,amount_minor,currency,provider,state,idempotency_key)
+        VALUES (%s,'alice','plus',1,3900000,'UZS',%s,'pending','provider-test')""",(oid,provider))
+    if provider=="payme":
+        pid="a"*24
+        params={"id":pid,"time":stamp,"amount":3900000,"account":{"order_id":str(oid)}}
+        first=create_transaction(db,params,stamp)
+        assert first==create_transaction(db,params,stamp)
+        paid=perform_transaction(db,{"id":pid},stamp)
+        assert paid["state"]==2
+        assert paid==perform_transaction(db,{"id":pid},stamp+1)
+        assert check_transaction(db,{"id":pid})["state"]==2
+    else:
+        service,secret="123","local-test-secret"
+        params={"click_trans_id":"456","service_id":service,"merchant_trans_id":str(oid),
+                "amount":"39000.00","action":"0","sign_time":"2026-11-27 12:00:00","error":"0"}
+        def sign():
+            parts=[params["click_trans_id"],service,secret,str(oid)]
+            if params["action"]=="1":
+                parts.append(params["merchant_prepare_id"])
+            parts.extend([params["amount"],params["action"],params["sign_time"]])
+            params["sign_string"]=hashlib.md5("".join(parts).encode()).hexdigest()
+        sign()
+        first=prepare(db,params,service,secret)
+        assert first["error"]==0
+        assert first==prepare(db,params,service,secret)
+        params.update(action="1",merchant_prepare_id=str(first["merchant_prepare_id"]))
+        sign()
+        assert complete(db,params,service,secret,now)["error"]==0
+        assert complete(db,params,service,secret,now)["error"]==-4
+    assert db.execute("SELECT state FROM payment_orders WHERE id=%s",(oid,)).fetchone()[0]=="paid"
+    assert db.execute("SELECT count(*) FROM subscriptions WHERE owner_id='alice'").fetchone()[0]==1
+    assert db.execute("SELECT count(*) FROM billing_order_entitlements WHERE order_id=%s",(oid,)).fetchone()[0]==1
