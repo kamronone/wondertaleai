@@ -11,7 +11,7 @@ import {montageFrame,type MontageMotion} from "./montage_motion";
 import {initialSceneEdits,moveScene,setSceneDuration,applySceneEdits,editedSceneSeconds,type ExportScene} from "./cartoon_scene_editor";
 import "./cartoon-scene-editor.css";
 import CartoonNarration from "./CartoonNarration";
-import {prepareNarration,playNarration} from "./cartoon_narration";
+import {prepareNarration,playNarration,prepareSceneNarrations,MAX_SCENE_NARRATION_SECONDS,MAX_SCENE_NARRATION_BYTES} from "./cartoon_narration";
 
 const filmModeLabels={
  ru:{film:"Мультфильмы",storyboard:"Сцены сказок",label:"Режим просмотра",catalog:"Готовые мультфильмы"},
@@ -129,8 +129,9 @@ function waitFrame(ms:number,signal:AbortSignal):Promise<void>{
   signal.addEventListener("abort",abort,{once:true});
  });
 }
-async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void,motion:MontageMotion="still",narration:Blob|null=null):Promise<Blob>{
- const withAudio=music!=="off"||Boolean(narration);
+async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void,motion:MontageMotion="still",narration:Blob|null=null,sceneClips:ReadonlyMap<number,Blob>=new Map()):Promise<Blob>{
+ if(narration&&sceneClips.size)throw Error("Choose one narration mode");
+ const withAudio=music!=="off"||Boolean(narration)||sceneClips.size>0;
  const mime=localVideoFormat(withAudio);
  if(!mime||!scenes.length||scenes.length>20||signal.aborted)throw new Error("Unavailable");
  const canvas=document.createElement("canvas");canvas.width=640;canvas.height=480;
@@ -140,6 +141,7 @@ async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,c
  let audio:AudioContext|null=null;
  let destination:MediaStreamAudioDestinationNode|null=null;
  let narrationBuffer:AudioBuffer|null=null;
+ let sceneBuffers=new Map<number,AudioBuffer>();
  const totalSeconds=scenes.reduce((sum,item)=>sum+exportSceneSeconds(item,duration),0);
  try{
   if(withAudio){
@@ -149,6 +151,7 @@ async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,c
    if(signal.aborted||audio.state!=="running")throw new Error("Audio unavailable");
    destination.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
    if(narration)narrationBuffer=await prepareNarration(audio,narration);
+   if(sceneClips.size)sceneBuffers=await prepareSceneNarrations(audio,sceneClips,scenes.map(scene=>scene.number),signal);
    if(signal.aborted||document.hidden)throw new Error("Cancelled");
   }
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1200000,...(withAudio?{audioBitsPerSecond:96000}:{})});
@@ -205,6 +208,8 @@ async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,c
     if(audio&&destination&&music!=="off")scheduleStoryMusic(audio,destination,music,totalSeconds+2);
     if(audio&&destination&&narrationBuffer)playNarration(audio,destination,narrationBuffer,totalSeconds);
    }
+   const clip=sceneBuffers.get(scene.number);
+   if(audio&&destination&&clip)playNarration(audio,destination,clip,seconds);
    const refresh=window.setInterval(draw,motion==="cinematic"?42:100);
    try{await waitFrame(seconds*1000,signal);}finally{window.clearInterval(refresh);}
    if(recordingError)throw recordingError;
@@ -247,6 +252,10 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const [music,setMusic]=useState<MusicLevel>("off");
  const [motion,setMotion]=useState<MontageMotion>("still");
  const [narration,setNarration]=useState<Blob|null>(null);
+ const [narrationMode,setNarrationMode]=useState<"whole"|"scenes">("whole");
+ const [sceneClips,setSceneClips]=useState<Map<number,Blob>>(()=>new Map());
+ const [narrationScene,setNarrationScene]=useState<number|null>(null);
+ const [clipLimit,setClipLimit]=useState(false);
  const [recording,setRecording]=useState(false);
  const motionLabels=motionCopy[lang];
  const supportsMusic=Boolean(localVideoFormat(true));
@@ -254,6 +263,10 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const [edits,setEdits]=useState(()=>initialSceneEdits(scenes));
  const edited=applySceneEdits(scenes,edits);
  const editor=sceneEditorCopy[lang];
+ const voiceMode={ru:{label:"Режим озвучки",whole:"Весь мультфильм",scenes:"По сценам",choose:"Сцена для записи",saved:"Записано",limit:"Лимит записей исчерпан. Удалите лишние записи.",note:"Голос привязан к сцене и обрезается по её длительности. Сцены без записи остаются без голоса."},uz:{label:"Ovoz rejimi",whole:"Butun multfilm",scenes:"Sahnalar böyiça",choose:"Yozuv uçun sahna",saved:"Yozilgan",limit:"Yozuv limiti tugadi. Ortiqça yozuvlarni öçiring.",note:"Ovoz sahnaga boglangan va uning davomiyligiga mos kesiladi. Yozuvsiz sahnalarda ovoz bölmaydi."},en:{label:"Narration mode",whole:"Entire film",scenes:"Per scene",choose:"Scene to record",saved:"Recorded",limit:"Recording limit reached. Delete unused recordings.",note:"Clips follow their scenes and are trimmed to scene length. Unrecorded scenes have no voice."}}[lang];
+ const selectedScene=edited.find(scene=>scene.number===narrationScene)??edited[0];
+ const activeClips=narrationMode==="scenes"?new Map(edited.flatMap(scene=>{const clip=sceneClips.get(scene.number);return clip?[[scene.number,clip] as const]:[];})):new Map<number,Blob>();
+ const activeNarration=narrationMode==="whole"?narration:null;
  const total=edited.reduce((sum,scene)=>sum+exportSceneSeconds(scene,duration),0);
  const totalLabel=Math.floor(total/60)+":"+String(total%60).padStart(2,"0");
  useEffect(()=>{
@@ -262,12 +275,12 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
   return ()=>{document.removeEventListener("visibilitychange",hide);controller.current?.abort();controller.current=null;if(objectUrl.current)URL.revokeObjectURL(objectUrl.current);};
  },[]);
  async function save(){
-  if(controller.current||!supported||!scenes.length||recording||(narration&&!supportsMusic))return;
+  if(controller.current||!supported||!scenes.length||recording||((activeNarration||activeClips.size>0)&&!supportsMusic))return;
   onStart();setBusy(true);setProgress(0);setError(false);setResult(null);
   if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
   const job=new AbortController();controller.current=job;
   try{
-   const blob=await recordLocalMontage(edited,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);},motion,narration);
+   const blob=await recordLocalMontage(edited,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);},motion,activeNarration,activeClips);
    if(controller.current!==job||job.signal.aborted)return;
    const url=URL.createObjectURL(blob);objectUrl.current=url;setResult({url,ext:blob.type.startsWith("video/mp4")?"mp4":"webm"});
   }catch{if(controller.current===job&&!job.signal.aborted)setError(true);}
@@ -277,7 +290,7 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
   <p className="cartoon-notice">{supported?t.note:t.unsupported}</p>
   {supported&&<div style={{display:"grid",gap:8}}>
    <label className="cartoon-select">{settings.duration}
-    <select disabled={busy} value={duration} onChange={e=>setDuration(e.target.value==="auto"?"auto":Number(e.target.value) as ExportDuration)}>
+    <select disabled={busy||recording} value={duration} onChange={e=>setDuration(e.target.value==="auto"?"auto":Number(e.target.value) as ExportDuration)}>
      {[3,6,10].map(value=><option key={value} value={value}>{value} {settings.seconds}</option>)}
      <option value="auto">{settings.auto}</option>
     </select>
@@ -305,20 +318,27 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
      {edited.map((scene,i)=><div className="wt-scene-row" key={scene.number}>
       <img src={safeLocalArt(scene.image)} alt="" width={42} height={42} loading="lazy"/>
       <div className="wt-scene-info"><strong>{i+1}. {editor.scene} {scene.number}</strong>
-       <select aria-label={editor.scene+" "+scene.number+" · "+settings.duration} disabled={busy} value={scene.durationOverride??"default"} onChange={e=>{const value=e.target.value;setEdits(prev=>setSceneDuration(prev,scene.number,value==="default"?null:value==="auto"?"auto":Number(value) as 3|6|10));}}>
+       <select aria-label={editor.scene+" "+scene.number+" · "+settings.duration} disabled={busy||recording} value={scene.durationOverride??"default"} onChange={e=>{const value=e.target.value;setEdits(prev=>setSceneDuration(prev,scene.number,value==="default"?null:value==="auto"?"auto":Number(value) as 3|6|10));}}>
         <option value="default">{editor.default}</option>
         {[3,6,10].map(n=><option key={n} value={n}>{n} {settings.seconds}</option>)}
         <option value="auto">{settings.auto}</option>
        </select>
       </div>
-      <button type="button" className="icon-button" disabled={busy||i===0} aria-label={editor.up+" · "+editor.scene+" "+scene.number} onClick={()=>setEdits(prev=>moveScene(prev,i,-1))}><ChevronUp size={16}/></button>
-      <button type="button" className="icon-button" disabled={busy||i===edited.length-1} aria-label={editor.down+" · "+editor.scene+" "+scene.number} onClick={()=>setEdits(prev=>moveScene(prev,i,1))}><ChevronDown size={16}/></button>
+      <button type="button" className="icon-button" disabled={busy||recording||i===0} aria-label={editor.up+" · "+editor.scene+" "+scene.number} onClick={()=>setEdits(prev=>moveScene(prev,i,-1))}><ChevronUp size={16}/></button>
+      <button type="button" className="icon-button" disabled={busy||recording||i===edited.length-1} aria-label={editor.down+" · "+editor.scene+" "+scene.number} onClick={()=>setEdits(prev=>moveScene(prev,i,1))}><ChevronDown size={16}/></button>
      </div>)}
     </div>
-    <button type="button" className="secondary-button wt-scene-reset" disabled={busy} onClick={()=>setEdits(initialSceneEdits(scenes))}>{editor.reset}</button>
+    <button type="button" className="secondary-button wt-scene-reset" disabled={busy||recording} onClick={()=>setEdits(initialSceneEdits(scenes))}>{editor.reset}</button>
    </details>
-   {supportsMusic&&<CartoonNarration lang={lang} disabled={busy} blob={narration} onChange={setNarration} onStart={onStart} onActivity={setRecording}/>}
-   {narration&&<p className="cartoon-notice">{({ru:"Голос звучит с начала видео. Если запись длиннее видео, конец обрезается.",uz:"Ovoz video boşidan ešitiladi. Yozuv videodan uzun bölsa, oxiri kesiladi.",en:"Voice starts at the beginning. Audio longer than the video is trimmed."} as const)[lang]}</p>}
+   {supportsMusic&&<label className="cartoon-select">{voiceMode.label}<select disabled={busy||recording} value={narrationMode} onChange={e=>{setNarrationMode(e.target.value==="scenes"?"scenes":"whole");setClipLimit(false);}}><option value="whole">{voiceMode.whole}</option><option value="scenes">{voiceMode.scenes}</option></select></label>}
+   {supportsMusic&&narrationMode==="whole"&&<CartoonNarration key="whole" lang={lang} disabled={busy} blob={narration} onChange={setNarration} onStart={onStart} onActivity={setRecording}/>}
+   {supportsMusic&&narrationMode==="scenes"&&selectedScene&&<>
+    <label className="cartoon-select">{voiceMode.choose}<select disabled={busy||recording} value={selectedScene.number} onChange={e=>{setNarrationScene(Number(e.target.value));setClipLimit(false);}}>{edited.map(scene=><option key={scene.number} value={scene.number}>{editor.scene} {scene.number}{sceneClips.has(scene.number)?" ✓":""}</option>)}</select></label>
+    <p className="cartoon-notice">{voiceMode.saved}: {activeClips.size}/{edited.length}</p>
+    <CartoonNarration key={"scene:"+selectedScene.number} lang={lang} disabled={busy} blob={sceneClips.get(selectedScene.number)??null} maxSeconds={Math.min(MAX_SCENE_NARRATION_SECONDS,exportSceneSeconds(selectedScene,duration))} sceneText={selectedScene.text} onChange={blob=>{const next=new Map(sceneClips);if(blob)next.set(selectedScene.number,blob);else next.delete(selectedScene.number);if([...next.values()].reduce((sum,clip)=>sum+clip.size,0)>MAX_SCENE_NARRATION_BYTES){setClipLimit(true);return;}setClipLimit(false);setSceneClips(next);}} onStart={onStart} onActivity={setRecording}/>
+    <p className="cartoon-notice">{voiceMode.note}</p>{clipLimit&&<p role="alert" className="cartoon-notice">{voiceMode.limit}</p>}
+   </>}
+   {activeNarration&&<p className="cartoon-notice">{({ru:"Голос звучит с начала видео. Если запись длиннее видео, конец обрезается.",uz:"Ovoz video boşidan ešitiladi. Yozuv videodan uzun bölsa, oxiri kesiladi.",en:"Voice starts at the beginning. Audio longer than the video is trimmed."} as const)[lang]}</p>}
    <p className="cartoon-notice">{settings.estimated}: {totalLabel}</p>
   </div>}
   {supported&&<button type="button" className="secondary-button cartoon-offline-button" disabled={recording} onClick={()=>busy?controller.current?.abort():void save()}>{busy?t.cancel:t.save}</button>}
