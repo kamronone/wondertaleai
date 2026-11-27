@@ -1629,6 +1629,12 @@ def private_illustration_for_page(book_id:str,page_number:int,owner:str=Depends(
     """
     if not re.fullmatch(r"[0-9a-f-]{36}",book_id) or page_number<1 or page_number>20:
         raise HTTPException(404,"Illustration not found")
+    # The local personal reader is explicitly gated and cannot start generation.
+    if photo_reference_upload_enabled() and os.getenv("ENABLE_CHARACTER_PAGE_READER","false").lower()=="true":
+        from private_character_reader import lookup_personal_page
+        personal=lookup_personal_page(owner,book_id,page_number)
+        if personal is not None:
+            return personal
     with connection() as c:
         row=sql(c,"SELECT j.id FROM illustration_jobs j JOIN illustration_assets a ON a.job_id=j.id JOIN books b ON b.id=j.book_id AND b.owner_id=j.owner_id WHERE j.book_id=? AND j.page_number=? AND j.owner_id=? AND j.status='completed' ORDER BY j.completed_at DESC,j.id DESC LIMIT 1",(book_id,page_number,owner)).fetchone()
     if not row:
@@ -1698,6 +1704,26 @@ def read_private_illustration_media(job_id:str,owner:str=Depends(current_parent)
     if len(data)!=row[2] or hashlib.sha256(data).hexdigest()!=row[1]:
         raise HTTPException(503,"Illustration failed integrity verification")
     return Response(content=data,media_type="image/png",headers={
+        "Cache-Control":"private, no-store",
+        "X-Content-Type-Options":"nosniff",
+        "Content-Security-Policy":"default-src 'none'; sandbox",
+    })
+
+
+@app.get("/api/photos/character-pages/{request_id}")
+def read_private_character_page(request_id:str,owner:str=Depends(current_parent)):
+    """Local gated PNG access; never starts a job or exposes a public URL."""
+    if not photo_reference_upload_enabled() or os.getenv("ENABLE_CHARACTER_PAGE_READER","false").lower()!="true":
+        raise HTTPException(404,"Illustration not found")
+    try:
+        request_id=str(uuid.UUID(request_id))
+    except (ValueError,TypeError,AttributeError):
+        raise HTTPException(404,"Illustration not found")
+    from private_character_reader import read_personal_page
+    png=read_personal_page(owner,request_id)
+    if png is None:
+        raise HTTPException(404,"Illustration not found")
+    return Response(content=png,media_type="image/png",headers={
         "Cache-Control":"private, no-store",
         "X-Content-Type-Options":"nosniff",
         "Content-Security-Policy":"default-src 'none'; sandbox",
