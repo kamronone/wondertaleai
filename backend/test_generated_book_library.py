@@ -398,3 +398,42 @@ def test_logout_all_revokes_only_current_parent_sessions(api):
     assert client.get("/api/me", headers=first_headers).status_code == 401
     assert client.get("/api/me", headers=another_first_session).status_code == 401
     assert client.get("/api/me", headers=second_headers).status_code == 200
+
+
+def test_failed_paid_attempts_do_not_restore_provider_budget(api, monkeypatch):
+    client, module, parent_id, headers = api
+    monkeypatch.setenv("MAX_AI_PROVIDER_ATTEMPTS_PER_DAY", "2")
+    monkeypatch.setenv("ENABLE_BILLING_AI_PREVIEW", "false")
+    payload = {"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"}
+    calls = []
+    def fail_provider(_data):
+        calls.append(True)
+        raise TimeoutError("simulated uncertain provider charge")
+    monkeypatch.setattr(module, "generate_story", fail_provider)
+    for _ in range(2):
+        assert client.post("/api/books/generate", headers=headers, json=payload).status_code == 502
+    assert client.post("/api/books/generate", headers=headers, json=payload).status_code == 429
+    assert len(calls) == 2
+    with module.connection() as c:
+        assert module.sql(c, "SELECT COALESCE(SUM(used),0) FROM generation_provider_attempts").fetchone()[0] == 2
+        assert module.sql(c, "SELECT COALESCE(SUM(used),0) FROM generation_global_quota").fetchone()[0] == 0
+        assert module.sql(c, "SELECT COALESCE(SUM(used),0) FROM generation_quota").fetchone()[0] == 0
+
+
+def test_uncertain_keyed_generation_cannot_repeat_provider_call(api, monkeypatch):
+    client, module, parent_id, headers = api
+    monkeypatch.setenv("MAX_AI_PROVIDER_ATTEMPTS_PER_DAY", "10")
+    monkeypatch.setenv("ENABLE_BILLING_AI_PREVIEW", "false")
+    key = "synthetic-uncertain-story-key"
+    keyed = {**headers, "Idempotency-Key": key}
+    payload = {"name": "Sam", "age": 7, "language": "en", "idea": "A friendly star visits the forest"}
+    calls = []
+    def fail_provider(_data):
+        calls.append(True)
+        raise TimeoutError("simulated provider timeout")
+    monkeypatch.setattr(module, "generate_story", fail_provider)
+    assert client.post("/api/books/generate", headers=keyed, json=payload).status_code == 502
+    status = client.get("/api/books/generation-requests/" + key, headers=headers)
+    assert status.json() == {"status": "needs_review", "book_id": None}
+    assert client.post("/api/books/generate", headers=keyed, json=payload).status_code == 409
+    assert len(calls) == 1
