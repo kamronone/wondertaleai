@@ -1,4 +1,5 @@
 import { useState } from "react";
+import GiftCardEditor from "./GiftCardEditor";
 
 type Lang = "ru" | "uz" | "en";
 const labels = {
@@ -52,6 +53,7 @@ export default function GiftSubscriptions({lang,api,token}:{lang:Lang;api:string
         setIssued(result.code||"");setRequestKey("");
       })}>{t[1]}</button>
     </div>
+    <GiftCardEditor lang={lang} plan={plan}/>
     {issued&&<div><small>{t[11]}</small><input readOnly value={issued} onFocus={e=>e.target.select()} style={{width:"100%",boxSizing:"border-box"}}/></div>}
     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
       <input aria-label={t[2]} value={code} maxLength={43} autoComplete="off" spellCheck={false} onChange={e=>setCode(e.target.value)} style={{minWidth:0,flex:1}}/>
