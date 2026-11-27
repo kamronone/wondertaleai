@@ -9,6 +9,7 @@ from typing import Literal
 import re
 import unicodedata
 from dataclasses import dataclass
+from story_moderation import moderate_story_text, validate_private_text
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 Language=Literal["ru","uz","en"]
@@ -122,6 +123,9 @@ def generate_story(data:GenerateStoryInput,client=None,*,continuation:StoryConti
         raise RuntimeError("AI text generation is disabled")
     if not os.getenv("OPENAI_API_KEY") and client is None:
         raise RuntimeError("OPENAI_API_KEY is not configured")
+    # Real provider calls always require moderation; injected offline clients
+    # can exercise the same contract by implementing moderations.create.
+    require_moderation = client is None or os.getenv("ENABLE_STORY_MODERATION","false").lower()=="true"
     if client is None:
         from openai import OpenAI
         # Keep the provider deadline below the frontend 120-second request limit.
@@ -173,6 +177,14 @@ def generate_story(data:GenerateStoryInput,client=None,*,continuation:StoryConti
             "embedded in the preceding story."
         )
         payload["preceding_story"]={"title":continuation.title,"chapters":list(continuation.chapters)}
+    input_parts=[data.name,data.idea,data.style,*other]
+    if data.classic_title:
+        input_parts.append(data.classic_title)
+    if continuation is not None:
+        input_parts.extend([continuation.title,*continuation.chapters])
+    validate_private_text(input_parts)
+    if require_moderation:
+        moderate_story_text(input_parts,client)
     prompt=json.dumps(payload,ensure_ascii=False)
     response=client.responses.create(
         model=os.getenv("STORY_TEXT_MODEL","gpt-5.5"),
@@ -192,4 +204,8 @@ def generate_story(data:GenerateStoryInput,client=None,*,continuation:StoryConti
         earlier={normalize(chapter) for chapter in continuation.chapters}
         if any(normalize(chapter) in earlier for chapter in story.pages):
             raise ValueError("Sequel repeats a preceding chapter")
+    output_parts=[story.title,*story.pages]
+    validate_private_text(output_parts)
+    if require_moderation:
+        moderate_story_text(output_parts,client)
     return story
