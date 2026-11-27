@@ -30,7 +30,7 @@ test("generated and personal images stay outside the offline public cache", () =
 });
 
 test("service worker public cache version advances for this allowlist", () => {
-  assert.match(source, /const CACHE = "wondertale-public-v19"/);
+  assert.match(source, /const CACHE = "wondertale-public-v20"/);
 });
 
 test("classic page PNGs use network-first freshness and never cache bad responses", () => {
