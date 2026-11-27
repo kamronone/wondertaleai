@@ -437,3 +437,86 @@ def test_uncertain_keyed_generation_cannot_repeat_provider_call(api, monkeypatch
     assert status.json() == {"status": "needs_review", "book_id": None}
     assert client.post("/api/books/generate", headers=keyed, json=payload).status_code == 409
     assert len(calls) == 1
+
+
+def test_sequel_preserves_source_and_replays_once(api, monkeypatch):
+    client, module, owner, headers = api
+    monkeypatch.setenv("ENABLE_AI_CONTINUATIONS","true")
+    monkeypatch.setenv("MAX_AI_PROVIDER_ATTEMPTS_PER_DAY","10")
+    source=client.post("/api/books/generate",headers=headers,json={
+        "name":"Sam","age":7,"language":"en","idea":"A friendly star visits the forest",
+        "style":"Watercolor","other_heroes":["Fox"]})
+    assert source.status_code==201,source.text
+    book_id=source.json()["id"]
+    calls=[]
+    class Sequel:
+        title="The Next Adventure"
+        language="en"
+        pages=["A new adventure in the enchanted forest. "*3+str(i) for i in range(8)]
+    def generate(data,*,continuation):
+        calls.append((data,continuation))
+        return Sequel()
+    monkeypatch.setattr(module,"generate_story",generate)
+    request={"idea":"A new adventure with the friendly fox","pages_count":8,"acknowledged_story_transfer":True}
+    keyed={**headers,"Idempotency-Key":"sequel-request-test-001"}
+    first=client.post(f"/api/books/{book_id}/continue",headers=keyed,json=request)
+    assert first.status_code==201,first.text
+    replay=client.post(f"/api/books/{book_id}/continue",headers=keyed,json=request)
+    assert replay.status_code==201 and replay.json()==first.json()
+    assert len(calls)==1
+    data,context=calls[0]
+    assert data.name=="Sam" and data.age==7 and data.language=="en"
+    assert data.other_heroes==["Fox"]
+    assert len(context.chapters)==8
+    new_id=first.json()["id"]
+    assert new_id!=book_id and first.json()["continuation_of"]==book_id
+    saved=json.loads(client.get("/api/books/"+new_id,headers=headers).json()["story"])
+    assert saved["continuation_of"]==book_id
+    assert client.get("/api/books/"+book_id,headers=headers).status_code==200
+
+
+def test_sequel_requires_opt_in_and_owner(api, monkeypatch):
+    client,module,owner,headers=api
+    source=client.post("/api/books/generate",headers=headers,json={
+        "name":"Sam","age":7,"language":"en","idea":"A friendly star visits the forest"})
+    assert source.status_code==201
+    book_id=source.json()["id"]
+    path=f"/api/books/{book_id}/continue"
+    keyed={**headers,"Idempotency-Key":"sequel-request-test-002"}
+    body={"idea":"A new adventure with the friendly fox","acknowledged_story_transfer":True}
+    monkeypatch.setenv("ENABLE_AI_CONTINUATIONS","false")
+    assert client.post(path,headers=keyed,json=body).status_code==503
+    monkeypatch.setenv("ENABLE_AI_CONTINUATIONS","true")
+    assert client.post(path,headers=keyed,json={**body,"acknowledged_story_transfer":False}).status_code==422
+    assert client.post(path,headers=headers,json=body).status_code==422
+    other=str(uuid.uuid4())
+    with module.connection() as c:
+        module.sql(c,"INSERT INTO parents(id,email,password_hash,created_at) VALUES(?,?,?,?)",
+                   (other,"other-sequel@test.invalid","unused","test"))
+        c.commit()
+    denied={**keyed,"Authorization":"Bearer "+module.make_token(other)}
+    assert client.post(path,headers=denied,json=body).status_code==404
+    assert len(client.get("/api/books",headers=headers).json())==1
+
+
+def test_deleted_source_during_sequel_prevents_save(api,monkeypatch):
+    client,module,owner,headers=api
+    monkeypatch.setenv("ENABLE_AI_CONTINUATIONS","true")
+    monkeypatch.setenv("MAX_AI_PROVIDER_ATTEMPTS_PER_DAY","10")
+    source=client.post("/api/books/generate",headers=headers,json={
+        "name":"Sam","age":7,"language":"en","idea":"A friendly star visits the forest"})
+    assert source.status_code==201
+    book_id=source.json()["id"]
+    class Sequel:
+        title="The Next Adventure"
+        language="en"
+        pages=["A new adventure in the enchanted forest. "*3+str(i) for i in range(8)]
+    def generate(data,*,continuation):
+        module.delete_book(book_id,owner)
+        return Sequel()
+    monkeypatch.setattr(module,"generate_story",generate)
+    response=client.post(f"/api/books/{book_id}/continue",
+        headers={**headers,"Idempotency-Key":"sequel-request-test-003"},
+        json={"idea":"A new adventure with the friendly fox","acknowledged_story_transfer":True})
+    assert response.status_code==409
+    assert client.get("/api/books",headers=headers).json()==[]
