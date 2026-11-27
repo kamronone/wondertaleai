@@ -5,7 +5,13 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
-import edge_tts
+import shutil
+import sys
+
+try:
+    import edge_tts
+except ImportError:
+    sys.exit('Install narration dependency: python -m pip install edge-tts==7.2.7')
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "scripts/film-sources/cinderella.json"
@@ -22,13 +28,16 @@ def stamp(seconds):
     return f"{h:02}:{m:02}:{s:02}.{ms:03}"
 
 async def main():
+    for tool in ("ffmpeg", "ffprobe"):
+        if shutil.which(tool) is None:
+            raise RuntimeError(f"Required executable missing: {tool}")
     source = json.loads(SOURCE.read_text(encoding="utf-8"))
     scenes = source["scenes"]
     for scene in scenes:
         image = ROOT / "public" / scene["image"].lstrip("/")
         if not image.is_file():
             raise FileNotFoundError(image)
-    out = ROOT / "public/cartoon-build/cinderella"
+    out = ROOT / "cartoon-build/cinderella"
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
         work = Path(temp)
