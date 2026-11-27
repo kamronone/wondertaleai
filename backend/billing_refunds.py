@@ -9,6 +9,8 @@ def request_refund(conn, owner_id: str, order_id: UUID, amount_minor: int, reque
         raise ValueError("Invalid refund amount")
     if not isinstance(request_key,str) or not 1 <= len(request_key) <= 128:
         raise ValueError("Invalid request key")
+    from billing_subscriptions import _lock_owner
+    _lock_owner(conn,owner_id)
     order=conn.execute("""SELECT amount_minor,state FROM payment_orders
         WHERE id=%s AND owner_id=%s FOR UPDATE""",(order_id,owner_id)).fetchone()
     if not order:
@@ -26,6 +28,16 @@ def request_refund(conn, owner_id: str, order_id: UUID, amount_minor: int, reque
         WHERE order_id=%s AND state IN ('pending','completed')""",(order_id,)).fetchone()[0]
     if reserved+amount_minor>order[0]:
         raise ValueError("Refund exceeds available balance")
+    entitlement=conn.execute("""SELECT s.id FROM billing_order_entitlements e
+        JOIN subscriptions s ON s.id=e.subscription_id
+        WHERE e.order_id=%s AND s.owner_id=%s FOR UPDATE OF s""",(order_id,owner_id)).fetchone()
+    if not entitlement:
+        raise ValueError("Manual review required: missing entitlement")
+    if reserved+amount_minor==order[0]:
+        used=conn.execute("""SELECT 1 FROM quota_reservations
+            WHERE subscription_id=%s AND state IN (\'reserved\',\'committed\') LIMIT 1""",(entitlement[0],)).fetchone()
+        if used:
+            raise ValueError("Manual review required: service used or reserved")
     rid=uuid4()
     conn.execute("""INSERT INTO refunds(id,order_id,amount_minor,provider_ref,state)
         VALUES (%s,%s,%s,%s,'pending')""",(rid,order_id,amount_minor,ref))
