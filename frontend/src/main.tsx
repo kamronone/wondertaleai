@@ -75,6 +75,7 @@ import { LegalCenter, type LegalDocument } from "./LegalCenter";
 import { ProfileLegalMenu } from "./ProfileLegalMenu";
 import { ProfileHeader } from "./ProfileHeader";
 import { StoryChildPicker } from "./StoryChildPicker";
+import {PrivateSequel,type SequelAttempt} from "./PrivateSequel";
 import { loadPrivateBooks, transferLocalBooks, validateSession, setPrivateFavorite, updatePrivateReadingProgress, PrivateBookNotFoundError, type RemoteBook } from "./private_library";
 import { endings, storyPresets, type EndingId } from "./story_interactions";
 import { canAppendStoryEnding } from "./ending_length";
@@ -98,7 +99,7 @@ import {voicesForStoryLanguage,preferredStoryVoice,parseStoredVoiceChoices,STORY
 const CartoonStudio=React.lazy(()=>import("./CartoonStudio"));
 
 type Page={number:number;text:string;image_url:string};
-type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId};
+type Book={id:string;created_at:string;name:string;age:number;theme:string;prompt:string;style:string;title:string;pages:Page[];mode:string;language?:Lang;favorite?:boolean;lastPage?:number;savedOnDevice?:boolean;originalEnding?:string;endingChoice?:EndingId;continuationOf?:string};
 const API=(import.meta.env.VITE_API_BASE || "").replace(/\/$/,"");
 // Disabled by default until a separate trusted AI worker is provisioned.
 const AI_JOBS_ENABLED=import.meta.env.VITE_ENABLE_AI_JOB_QUEUE==="true";
@@ -187,6 +188,8 @@ function App(){
   const switchLang=(next:Lang)=>{setLang(next);saveLanguage(next);document.documentElement.lang=next;};
   const [books,setBooks]=useState<Book[]>([]);
   const [privateToken,setPrivateToken]=useState<string|null>(null);
+  const sequelAttempts=useRef<{session:string|null;items:Map<string,SequelAttempt>}>({session:null,items:new Map()});
+  if(sequelAttempts.current.session!==privateToken)sequelAttempts.current={session:privateToken,items:new Map()};
   // Prevent late responses from a previous parent session entering the current account.
   const sessionEpoch=useRef(0);
   // Failed login attempts must not invalidate an already authenticated session.
@@ -1744,6 +1747,7 @@ function App(){
           })()}
         </section>}
         {isDemoBook(active)&&<button type="button" className="sequel-action" onClick={continueAdventure}><BookOpen size={17}/>{t.sequel}<ArrowRight size={17}/></button>}
+         {privateToken&&API&&active.mode==="private-account"&&!readerFocusMode&&!readerNightMode&&bedtimeUntil===null&&import.meta.env.VITE_ENABLE_AI_CONTINUATIONS==="true"&&<PrivateSequel key={active.id} api={API} session={privateToken} book={active as RemoteBook} lang={lang} attempts={sequelAttempts.current.items} previous={remoteBooks.find(book=>book.id===active.continuationOf)} next={remoteBooks.filter(book=>book.continuationOf===active.id)} onOpen={openBook} onCreated={created=>{recentlyCreated.current.set(created.id,Date.now());setRemoteBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);setBooks(prev=>[created,...prev.filter(book=>book.id!==created.id)]);openBook(created);}}/>}
         </section>}
         {<article className="print-book" aria-hidden="true">
           <div className="print-book-cover"><StoryIllustration url={classicReaderImage(isDemoBook(active as DemoBook)?(active as DemoBook).classicId:undefined,active.pages[0].image_url,0)} alt={t.cover}/><h1>{active.title}</h1><p>{t.forChild} {active.name}</p><small>WonderTale AI</small></div>
@@ -1808,6 +1812,7 @@ function BookTile({book,open,lang}:{book:Book;open:()=>void;lang:Lang}){
   return <button type="button" className="book-tile" onClick={open} aria-label={book.title+" · "+book.name+(reading?" · "+progress:"")}>
     <span className="book-cover-art"><StoryIllustration url={book.pages[0]?.image_url||""} alt={book.title+" · "+labels[lang].cover} lazy/><span className="book-cover-age" aria-hidden="true">{book.age}+</span></span>
     <span className="book-caption"><strong>{book.title}</strong><small>{book.name} · {book.pages.length} {labels[lang].pages}</small>
+      {book.continuationOf&&<small className="wt-series-badge">{({ru:"Продолжение",uz:"Davomi",en:"Sequel"} as const)[lang]}</small>
       {reading&&<><small className="read-progress">{progress}</small><span className="book-progress-track" role="progressbar" aria-label={labels[lang].page+" "+Math.min((book.lastPage??0)+1,book.pages.length)+" "+labels[lang].of+" "+book.pages.length} aria-valuemin={0} aria-valuemax={book.pages.length} aria-valuenow={Math.min((book.lastPage??0)+1,book.pages.length)}><span style={{width:(Math.min((book.lastPage??0)+1,book.pages.length)/Math.max(1,book.pages.length)*100)+"%"}}/></span></>}
       {book.favorite&&<span className="book-favorite-badge" aria-label={({ru:"В избранном",uz:"Sevimlilarda",en:"Favorite"} as const)[lang]}><Heart size={14} fill="currentColor"/></span>}
     </span>
