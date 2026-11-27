@@ -7,6 +7,7 @@ import type {Lang} from "./i18n";
 import {buildClassicCartoon,nextCartoonScene,sceneDuration} from "./cartoon_storyboard";
 import type {CartoonScene} from "./cartoon_storyboard";
 import {preferredStoryVoice,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
+import {montageFrame,type MontageMotion} from "./montage_motion";
 
 const filmModeLabels={
  ru:{film:"Мультфильмы",storyboard:"Сцены сказок",label:"Режим просмотра",catalog:"Готовые мультфильмы"},
@@ -41,6 +42,7 @@ const exportSettings={
  uz:{duration:"Sahna davomiyligi",seconds:"son.",auto:"Matn böyiça",captions:"Subtitrlar",estimated:"Tahminiy davomiylik",preview:"Oldindan köriş",on:"Yoqilgan",off:"Öçirilgan"},
  en:{duration:"Scene duration",seconds:"sec.",auto:"Reading time",captions:"Captions",estimated:"Estimated duration",preview:"Preview",on:"On",off:"Off"}
 } as const;
+const motionCopy={ru:{label:"Движение камеры",still:"Без эффектов",cinematic:"Плавные переходы"},uz:{label:"Kamera harakati",still:"Effektsiz",cinematic:"Silliq ötişlar"},en:{label:"Camera motion",still:"No effects",cinematic:"Smooth transitions"}} as const;
 type ExportDuration=3|6|10|"auto";
 function exportSceneSeconds(scene:CartoonScene,duration:ExportDuration):number{
  return duration==="auto"?Math.min(30,Math.max(8,scene.seconds)):duration;
@@ -123,7 +125,7 @@ function waitFrame(ms:number,signal:AbortSignal):Promise<void>{
   signal.addEventListener("abort",abort,{once:true});
  });
 }
-async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void):Promise<Blob>{
+async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void,motion:MontageMotion="still"):Promise<Blob>{
  const mime=localVideoFormat(music!=="off");
  if(!mime||!scenes.length||scenes.length>20||signal.aborted)throw new Error("Unavailable");
  const canvas=document.createElement("canvas");canvas.width=640;canvas.height=480;
@@ -172,9 +174,16 @@ async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,
    const pages=captions?captionPages(ctx,scene.text):[];
    const started=performance.now();
    const draw=()=>{
-    ctx.drawImage(frame,0,0);
+    const fraction=Math.min(.999,Math.max(0,(performance.now()-started)/(seconds*1000)));
+    const camera=montageFrame(fraction,i,motion);
+    ctx.globalAlpha=1;
+    ctx.drawImage(frame,camera.x,camera.y,camera.width,camera.height);
+    if(camera.previousOpacity>0&&i>0){
+     ctx.globalAlpha=camera.previousOpacity;
+     ctx.drawImage(frames[i-1],0,0);
+     ctx.globalAlpha=1;
+    }
     if(pages.length){
-     const fraction=Math.min(.999,Math.max(0,(performance.now()-started)/(seconds*1000)));
      const lines=pages[Math.floor(fraction*pages.length)];
      ctx.fillStyle="rgba(20,16,34,.9)";ctx.fillRect(0,480-lines.length*28-22,640,lines.length*28+22);
      ctx.font="bold 21px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";
@@ -186,7 +195,7 @@ async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,
     active.start(1000);
     if(audio&&destination&&music!=="off")scheduleStoryMusic(audio,destination,music,scenes.reduce((sum,item)=>sum+exportSceneSeconds(item,duration),0)+2);
    }
-   const refresh=window.setInterval(draw,100);
+   const refresh=window.setInterval(draw,motion==="cinematic"?42:100);
    try{await waitFrame(seconds*1000,signal);}finally{window.clearInterval(refresh);}
    if(recordingError)throw recordingError;
    onProgress(Math.min(99,Math.round((i+1)/scenes.length*100)));
@@ -221,6 +230,8 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const [duration,setDuration]=useState<ExportDuration>(6);
  const [captions,setCaptions]=useState(true);
  const [music,setMusic]=useState<MusicLevel>("off");
+ const [motion,setMotion]=useState<MontageMotion>("still");
+ const motionLabels=motionCopy[lang];
  const supportsMusic=Boolean(localVideoFormat(true));
  const audioLabels=musicCopy[lang];
  const total=scenes.reduce((sum,scene)=>sum+exportSceneSeconds(scene,duration),0);
@@ -236,7 +247,7 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
   if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
   const job=new AbortController();controller.current=job;
   try{
-   const blob=await recordLocalMontage(scenes,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);});
+   const blob=await recordLocalMontage(scenes,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);},motion);
    if(controller.current!==job||job.signal.aborted)return;
    const url=URL.createObjectURL(blob);objectUrl.current=url;setResult({url,ext:blob.type.startsWith("video/mp4")?"mp4":"webm"});
   }catch{if(controller.current===job&&!job.signal.aborted)setError(true);}
@@ -253,6 +264,11 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
    </label>
    <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
     <input type="checkbox" checked={captions} disabled={busy} onChange={e=>setCaptions(e.target.checked)}/>{settings.captions}
+   </label>
+   <label className="cartoon-select">{motionLabels.label}
+    <select disabled={busy} value={motion} onChange={e=>setMotion(e.target.value==="cinematic"?"cinematic":"still")}>
+     <option value="still">{motionLabels.still}</option><option value="cinematic">{motionLabels.cinematic}</option>
+    </select>
    </label>
    <label className="cartoon-select">{audioLabels.label}
     <select disabled={busy||!supportsMusic} value={music} onChange={e=>setMusic(e.target.value as MusicLevel)}>
