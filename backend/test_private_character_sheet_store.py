@@ -27,7 +27,9 @@ def fixture(monkeypatch, tmp_path):
     owner, other, book, source, page = [str(uuid.uuid4()) for _ in range(5)]
     now = int(time.time())
     expires = now + 600
-    photo = b"synthetic reference fixture"
+    reference = BytesIO()
+    Image.new("RGB", (128,128), "red").save(reference, format="JPEG")
+    photo = reference.getvalue()
     digest = hashlib.sha256(photo).hexdigest()
     story = json.dumps({"pages": [{"number": i, "text": "A quiet journey."} for i in range(1, 9)]})
     with db.connection() as c:
