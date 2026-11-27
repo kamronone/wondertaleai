@@ -112,6 +112,11 @@ def init_schema():
         # or its source review request cascades to the derived asset.
         sql(c, f"CREATE TABLE IF NOT EXISTS photo_character_sheets (source_request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES photo_reference_temp(owner_id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, style TEXT NOT NULL, hero_mode TEXT NOT NULL, reference_sha256 TEXT NOT NULL, plan_fingerprint TEXT NOT NULL, png_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, expires_at INTEGER NOT NULL, UNIQUE(owner_id,book_id,style,hero_mode))")
         sql(c, "CREATE INDEX IF NOT EXISTS photo_character_sheets_expiry_idx ON photo_character_sheets(expires_at)")
+        # Derived page assets are local-only and cascade when their approved
+        # character sheet or page request is deleted.
+        sql(c, f"CREATE TABLE IF NOT EXISTS photo_character_pages (request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, sheet_request_id TEXT NOT NULL REFERENCES photo_character_sheets(source_request_id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, plan_fingerprint TEXT NOT NULL, sheet_sha256 TEXT NOT NULL, png_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, expires_at INTEGER NOT NULL)")
+        sql(c, "CREATE INDEX IF NOT EXISTS photo_character_pages_expiry_idx ON photo_character_pages(expires_at)")
+
         # Separate sheet attempt from the per-page reservation. No automatic
         # retries: a durable claim is made before a provider can be called.
         sql(c, "CREATE TABLE IF NOT EXISTS photo_sheet_attempts (source_request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, style TEXT NOT NULL, hero_mode TEXT NOT NULL, reference_sha256 TEXT NOT NULL, plan_fingerprint TEXT NOT NULL, day TEXT NOT NULL, reserved_micro_usd INTEGER NOT NULL CHECK(reserved_micro_usd>0), state TEXT NOT NULL CHECK(state IN ('needs_review','ready')), created_at INTEGER NOT NULL, UNIQUE(owner_id,book_id,style,hero_mode))")
@@ -1079,6 +1084,7 @@ def expire_photo_illustration_requests(c):
     """Never leave a pending image request behind after portrait expiry."""
     sql(c,"UPDATE photo_illustration_requests SET status='cancelled' WHERE status='pending_review' AND expires_at<=?",(int(time.time()),))
     sql(c,"DELETE FROM photo_character_sheets WHERE expires_at<=?",(int(time.time()),))
+    sql(c,"DELETE FROM photo_character_pages WHERE expires_at<=?",(int(time.time()),))
 
 
 class PhotoIllustrationRequest(BaseModel):
@@ -1207,6 +1213,7 @@ def cancel_photo_illustration_request(request_id:str,owner:str=Depends(current_p
         if changed.rowcount!=1:
             raise HTTPException(404,"Pending request not found")
         sql(c,"DELETE FROM photo_character_sheets WHERE source_request_id=? AND owner_id=?",(request_id,owner))
+        sql(c,"DELETE FROM photo_character_pages WHERE request_id=? AND owner_id=?",(request_id,owner))
         sql(c,"DELETE FROM photo_mock_assets WHERE request_id=? AND owner_id=?",(request_id,owner))
         c.commit()
     return Response(status_code=204)
