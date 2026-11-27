@@ -195,3 +195,37 @@ def get_statement(conn, params):
         "account":{"order_id":str(r[3])},"transaction":str(r[3]),
         "create_time":r[4],"perform_time":r[5],"cancel_time":r[6],
         "state":r[7],"reason":r[8]} for r in rows]}
+
+
+def dispatch_sandbox(conn, payload, header, login, secret):
+    """Internal sandbox dispatcher, never exposed by the production application.
+    Requires a dedicated local test database and an authenticated request.
+    """
+    import time
+    rid = payload.get("id") if isinstance(payload,dict) else None
+    if type(rid) is not int:
+        rid = None
+    try:
+        authenticate(header,login,secret)
+        if rid is None or not isinstance(payload.get("method"),str) or not isinstance(payload.get("params"),dict):
+            raise PaymeError(-32600,"Invalid request")
+        method, params = payload["method"], payload["params"]
+        now_ms = time.time_ns() // 1000000
+        handlers = {
+            "CheckPerformTransaction": lambda: check_perform(conn,params),
+            "CreateTransaction": lambda: create_transaction(conn,params,now_ms),
+            "PerformTransaction": lambda: perform_transaction(conn,params,now_ms),
+            "CancelTransaction": lambda: cancel_transaction(conn,params,now_ms),
+            "CheckTransaction": lambda: check_transaction(conn,params),
+            "GetStatement": lambda: get_statement(conn,params),
+        }
+        if method not in handlers:
+            raise PaymeError(-32601,"Method unavailable",method)
+        # Nested psycopg transaction rolls back mutations before returning errors.
+        with conn.transaction():
+            result = handlers[method]()
+        return {"id":rid,"result":result}
+    except PaymeError as exc:
+        return {"id":rid,"error":{"code":exc.code,"message":exc.message,"data":exc.data}}
+    except Exception:
+        return {"id":rid,"error":{"code":-32400,"message":"Internal error","data":None}}
