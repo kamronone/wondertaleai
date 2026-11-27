@@ -11,7 +11,7 @@ def _story(language="uz", count=8):
     return json.dumps({
         "title": "Mehribon yulduz",
         "language": language,
-        "pages": [f"Chapter {index+1}: " + "A gentle original story for children. " * 5 for index in range(count)],
+        "pages": [f"Chapter {index+1}: A friendly child discovers the magical garden at stop {index+1}. The forest friends help the child explore safely and learn a new lesson." for index in range(count)],
     })
 
 
@@ -134,3 +134,20 @@ def test_full_story_prompt_requires_causal_arc_and_real_conclusion(monkeypatch):
     assert "Maintain consistent characters" in instructions
     assert "to be continued" in instructions
     assert responses.calls[0]["store"] is False
+
+@pytest.mark.parametrize("count", [8,12,20])
+def test_repeated_chapter_text_cannot_be_hidden_by_numbering(count):
+    import json
+    raw=json.loads(_story("en",count))
+    raw["pages"]=[f"Chapter {i+1}: "+"A gentle story about forest friends and their magical adventure. "*2 for i in range(count)]
+    with pytest.raises(ValueError,match="valid story"):
+        validate_generated_story(json.dumps(raw),"en",count)
+
+def test_incomplete_provider_response_rejected(monkeypatch):
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    payload=GenerateStoryInput(name="Sam",age=7,language="en",idea="A friendly star visits the forest")
+    class Incomplete:
+        def create(self,**kwargs):
+            return SimpleNamespace(status="incomplete",output_text=_story("en"))
+    with pytest.raises(ValueError,match="completed story"):
+        generate_story(payload,client=SimpleNamespace(responses=Incomplete()))
