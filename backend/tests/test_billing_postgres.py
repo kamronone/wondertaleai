@@ -27,7 +27,9 @@ def db():
             conn.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
             conn.execute(sql.SQL("SET LOCAL search_path TO {}").format(sql.Identifier(schema)))
             conn.execute("CREATE TABLE parents(id TEXT PRIMARY KEY)")
-            for file in sorted((Path(__file__).resolve().parents[1]/"migrations").glob("00[1-8]_*.sql")):
+            migrations = sorted((Path(__file__).resolve().parents[1]/"migrations").glob("00[1-8]_*.sql"))
+            assert [p.name[:3] for p in migrations] == [f"{i:03}" for i in range(1,9)]
+            for file in migrations:
                 migration = file.read_text().replace("BEGIN;","",1).rsplit("COMMIT;",1)[0]
                 conn.execute(migration)
             conn.execute("INSERT INTO parents(id) VALUES ('alice'),('bob')")
@@ -92,3 +94,27 @@ def test_gift_refund(db):
     assert not reconcile_gift_refund(db,"alice",gift["order_id"],7900000,now)
     with pytest.raises(ValueError):
         redeem_gift(db,"bob",gift["code"],now)
+
+
+def test_financial_summary(db):
+    from datetime import timedelta
+    from billing_analytics import billing_summary
+    from billing_gifts import create_gift_order, reconcile_gift_refund
+    now = datetime.now(timezone.utc)
+    order = create_sandbox_order(db,"alice","plus","analytics-personal")
+    assert confirm_sandbox_order(db,"alice",order,"analytics-event","analytics-tx",3900000,now)
+    gift = create_gift_order(db,"bob","family","analytics-gift",now)
+    assert confirm_sandbox_order(db,"bob",gift["order_id"],"analytics-gift-event","analytics-gift-tx",7900000,now)
+    assert reconcile_gift_refund(db,"bob",gift["order_id"],7900000,now)
+    report = billing_summary(db,now-timedelta(days=1),now+timedelta(days=1),now)
+    assert report["mode"]=="sandbox"
+    assert report["orders"]==2
+    assert report["paid_orders"]==2
+    assert report["gross_minor"]==11800000
+    assert report["refund_minor"]==7900000
+    assert report["net_minor"]==3900000
+    assert report["active_subscriptions"]==1
+    assert report["monthly_list_value_minor"]==3900000
+    assert sum(d["net_minor"] for d in report["daily"])==report["net_minor"]
+    assert report["gifts"][0]["refunded"]==1
+    assert report["promotions"]==[]
