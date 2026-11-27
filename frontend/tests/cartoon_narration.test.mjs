@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 import {transform} from "esbuild";
 const read=path=>readFileSync(new URL(path,import.meta.url),"utf8");
 const {code}=await transform(read("../src/cartoon_narration.ts"),{loader:"ts",format:"esm",target:"es2022"});
-const {narrationPlaybackSeconds,stopNarrationTracks,prepareNarration,playNarration,MAX_NARRATION_BYTES}=await import("data:text/javascript;base64,"+Buffer.from(code).toString("base64"));
+const {narrationPlaybackSeconds,stopNarrationTracks,prepareNarration,playNarration,MAX_NARRATION_BYTES,prepareSceneNarrations,MAX_DECODED_NARRATION_BYTES}=await import("data:text/javascript;base64,"+Buffer.from(code).toString("base64"));
 test("voice duration is bounded by the video and recording limit",()=>{
  assert.equal(narrationPlaybackSeconds(30,10),10);
  assert.equal(narrationPlaybackSeconds(10,30),10);
@@ -50,4 +50,33 @@ test("recording is consent gated, local and cancelled on visibility change",()=>
  assert.doesNotMatch(component,/fetch\(|localStorage|sessionStorage|indexedDB/);
  assert.match(studio,/playNarration\(audio,destination,narrationBuffer,totalSeconds\)/);
  assert.match(studio,/disabled=\{recording\}/);
+});
+
+test("separate voice clips follow original scene numbers after reordering",async()=>{
+ const clips=new Map([[1,new Blob(["one"],{type:"audio/mp4"})],[3,new Blob(["three"],{type:"audio/mp4"})]]);
+ const calls=[];
+ const audio={decodeAudioData:async bytes=>{const text=new TextDecoder().decode(bytes);calls.push(text);return {duration:3,length:72000,numberOfChannels:1,text};}};
+ const result=await prepareSceneNarrations(audio,clips,[3,2,1],new AbortController().signal);
+ assert.deepEqual(calls,["three","one"]);
+ assert.equal(result.get(3).text,"three");
+ assert.equal(result.get(1).text,"one");
+ assert.equal(result.has(2),false);
+});
+test("scene voice decoding rejects duplicates, excessive duration, memory and cancellation",async()=>{
+ const clips=new Map([[1,new Blob(["one"],{type:"audio/mp4"})]]);
+ const signal=new AbortController().signal;
+ const audio={decodeAudioData:async()=>({duration:40,length:10,numberOfChannels:1})};
+ await assert.rejects(prepareSceneNarrations(audio,clips,[1,1],signal),/Invalid narration scene list/);
+ await assert.rejects(prepareSceneNarrations(audio,clips,[1],signal),/duration limit/);
+ await assert.rejects(prepareSceneNarrations({decodeAudioData:async()=>({duration:3,length:MAX_DECODED_NARRATION_BYTES,numberOfChannels:1})},clips,[1],signal),/Decoded scene narration limit/);
+ const cancelled=new AbortController();cancelled.abort();
+ await assert.rejects(prepareSceneNarrations(audio,clips,[1],cancelled.signal),/Cancelled/);
+});
+test("each voice clip is played for its scene and the two modes are exclusive",()=>{
+ const studio=read("../src/CartoonStudio.tsx");
+ assert.ok(studio.includes("sceneBuffers.get(scene.number)"));
+ assert.ok(studio.includes("playNarration(audio,destination,clip,seconds)"));
+ assert.ok(studio.includes('if(narration&&sceneClips.size)throw Error'));
+ assert.ok(studio.includes('narrationMode==="whole"?narration:null'));
+ assert.ok(studio.includes("sceneText={selectedScene.text}"));
 });
