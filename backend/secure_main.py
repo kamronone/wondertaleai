@@ -728,9 +728,20 @@ def generate_personalized_book(body:GenerateStoryInput,owner:str=Depends(current
         raise
     try:
         if billing_preview:
-            # No external model calls in billing test mode.
-            raise RuntimeError("Billing preview provider disabled")
-        generated=generate_story(body)
+            # Deterministic synthetic output: never call a paid provider here.
+            from types import SimpleNamespace
+            language = getattr(body, "language", "ru")
+            if language not in ("ru", "uz", "en"):
+                language = "ru"
+            samples = {
+                "ru": ("Тестовая сказка", "Это синтетическая страница для проверки лимитов."),
+                "uz": ("Sinov ertagi", "Bu limitlarni tekşiriş uçun sinov sahifasi."),
+                "en": ("Test story", "This is a synthetic page for quota testing."),
+            }
+            title, page = samples[language]
+            generated = SimpleNamespace(title=title, language=language, pages=[page])
+        else:
+            generated=generate_story(body)
     except Exception:
         # A failed provider call must not exhaust the parent's daily allowance.
         # Keep the quota reservation transactionally consistent for concurrent calls.
