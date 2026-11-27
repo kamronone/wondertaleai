@@ -37,7 +37,21 @@ def billing_summary(conn, start: datetime, end: datetime, now: datetime):
           )
         GROUP BY s.plan_id ORDER BY s.plan_id
     """,(now,now)).fetchall()
+    daily = conn.execute("""
+        WITH orders AS (
+          SELECT id, (created_at AT TIME ZONE 'UTC')::date AS day, amount_minor, state
+          FROM payment_orders WHERE provider='sandbox' AND created_at >= %s AND created_at < %s
+        ), refund_totals AS (
+          SELECT r.order_id, sum(r.amount_minor) AS amount FROM refunds r JOIN orders o ON o.id=r.order_id
+          WHERE r.state='completed' GROUP BY r.order_id
+        )
+        SELECT o.day, count(*), count(*) FILTER (WHERE o.state IN ('paid','partially_refunded','refunded')),
+          COALESCE(sum(o.amount_minor) FILTER (WHERE o.state IN ('paid','partially_refunded','refunded')),0),
+          COALESCE(sum(r.amount),0)
+        FROM orders o LEFT JOIN refund_totals r ON r.order_id=o.id GROUP BY o.day ORDER BY o.day
+    """,(start,end)).fetchall()
     return {
+        "daily":[{"day":d.isoformat(),"orders":int(n),"paid_orders":int(p),"gross_minor":int(g),"refund_minor":int(r),"net_minor":int(g)-int(r)} for d,n,p,g,r in daily],
         "mode":"sandbox","currency":"UZS","amount_unit":"tiyin",
         "basis":"order_creation_cohort_current_state",
         "start":start.isoformat(),"end":end.isoformat(),"as_of":now.isoformat(),
