@@ -113,6 +113,8 @@ def complete(conn, params, service_id, secret, now):
     if provider_error<0:
         conn.execute("UPDATE click_transactions SET state='canceled',completed_at=%s WHERE prepare_id=%s",(now,prepare_id))
         conn.execute("UPDATE payment_orders SET state='failed' WHERE id=%s",(oid,))
+        from billing_promotions import settle_promotion
+        settle_promotion(conn,oid)
         return reply(-9,"Transaction canceled")
     expire_subscription(conn,owner[0],now)
     if conn.execute("SELECT id FROM subscriptions WHERE owner_id=%s AND status='active' FOR UPDATE",(owner[0],)).fetchone():
@@ -124,4 +126,6 @@ def complete(conn, params, service_id, secret, now):
     conn.execute("UPDATE click_transactions SET state='completed',completed_at=%s,subscription_id=%s WHERE prepare_id=%s",(now,sid,prepare_id))
     from billing_entitlements import link_entitlement
     link_entitlement(conn,oid,sid)
+    from billing_promotions import settle_promotion
+    settle_promotion(conn,oid)
     return reply(0,"Success",prepare_id)
