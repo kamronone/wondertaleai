@@ -125,6 +125,8 @@ def perform_transaction(conn, params, now_ms):
     conn.execute("UPDATE payme_transactions SET state=2,perform_time=%s,subscription_id=%s WHERE provider_id=%s",(now_ms,sid,pid))
     from billing_entitlements import link_entitlement
     link_entitlement(conn,row[0],sid)
+    from billing_promotions import settle_promotion
+    settle_promotion(conn,row[0])
     return {"transaction":str(row[0]),"perform_time":now_ms,"state":2}
 
 
@@ -154,6 +156,8 @@ def cancel_transaction(conn, params, now_ms):
     if state==1 and order_state=="pending":
         target=-1
         conn.execute("UPDATE payment_orders SET state='failed' WHERE id=%s",(oid,))
+        from billing_promotions import settle_promotion
+        settle_promotion(conn,oid)
     elif state==2 and order_state=="paid" and sid:
         used=conn.execute("""SELECT 1 FROM quota_reservations
             WHERE subscription_id=%s AND state IN ('reserved','committed') LIMIT 1""",(sid,)).fetchone()
