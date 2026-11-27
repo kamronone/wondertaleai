@@ -111,3 +111,34 @@ def rotate_gift_code(conn,purchaser_id,gift_id,now):
     conn.execute("UPDATE billing_gift_codes SET code_digest=%s WHERE id=%s",
         (digest_code(code),gift_id))
     return {"gift_id":str(gift_id),"code":code,"expires_at":gift[1]}
+
+
+def reconcile_gift_refund(conn,purchaser_id,order_id,amount_minor,now):
+    """Internal sandbox reconciliation after independently verified full refund.
+    Never initiates a provider refund. Caller owns transaction.
+    """
+    now=utc(now)
+    if type(amount_minor) is not int or amount_minor<=0:
+        raise ValueError("Invalid refund amount")
+    _lock_owner(conn,purchaser_id)
+    order=conn.execute("""SELECT o.state,o.amount_minor,g.gift_id
+        FROM payment_orders o JOIN billing_gift_orders g ON g.order_id=o.id
+        WHERE o.id=%s AND o.owner_id=%s AND o.provider='sandbox'
+        FOR UPDATE OF o""",(order_id,purchaser_id)).fetchone()
+    if not order or order[1]!=amount_minor:
+        raise ValueError("Gift order or amount mismatch")
+    gift=conn.execute("""SELECT state FROM billing_gift_codes
+        WHERE id=%s AND purchaser_id=%s FOR UPDATE""",(order[2],purchaser_id)).fetchone()
+    if not gift:
+        raise ValueError("Gift unavailable")
+    if order[0]=="refunded" and gift[0]=="revoked":
+        return False
+    if order[0]!="paid" or gift[0] not in ("available","expired"):
+        raise ValueError("Gift cannot be refunded automatically")
+    if conn.execute("SELECT 1 FROM refunds WHERE order_id=%s AND state IN ('pending','completed')",(order_id,)).fetchone():
+        raise ValueError("Existing refund requires reconciliation")
+    conn.execute("""INSERT INTO refunds(id,order_id,amount_minor,provider_ref,state)
+        VALUES (%s,%s,%s,%s,'completed')""",(uuid4(),order_id,amount_minor,"sandbox-gift:"+str(order_id)))
+    conn.execute("UPDATE billing_gift_codes SET state='revoked' WHERE id=%s",(order[2],))
+    conn.execute("UPDATE payment_orders SET state='refunded' WHERE id=%s",(order_id,))
+    return True
