@@ -1,0 +1,83 @@
+{
+  "storyId": "rapunzel",
+  "status": "draft",
+  "languages": [
+    "ru",
+    "uz",
+    "en"
+  ],
+  "scenes": [
+    {
+      "page": 1,
+      "image": "/images/classics/rapunzel/pages/page-1.png",
+      "narration": {
+        "ru": "Рапунцель жила в высокой башне, окружённой лесом.",
+        "uz": "Rapunzel örmon orasidagi baland minorada yaşardi.",
+        "en": "Rapunzel lived in a tall tower surrounded by forest."
+      }
+    },
+    {
+      "page": 2,
+      "image": "/images/classics/rapunzel/pages/page-2.png",
+      "narration": {
+        "ru": "У неё были длинные золотистые волосы. Она мечтала увидеть мир.",
+        "uz": "Uning uzun oltinrang soçlari bor edi. U dunyoni körişni orzu qilardi.",
+        "en": "She had long golden hair and dreamed of seeing the world."
+      }
+    },
+    {
+      "page": 3,
+      "image": "/images/classics/rapunzel/pages/page-3.png",
+      "narration": {
+        "ru": "Однажды принц услышал её песню и остановился у башни.",
+        "uz": "Bir kuni şahzoda uning qöşiğini eşitib, minora yonida töxtadi.",
+        "en": "One day a prince heard her song and stopped by the tower."
+      }
+    },
+    {
+      "page": 4,
+      "image": "/images/classics/rapunzel/pages/page-4.png",
+      "narration": {
+        "ru": "Рапунцель спустила волосы, и принц поднялся к её окну.",
+        "uz": "Rapunzel soçlarini tuşirdi, şahzoda esa derazaga kötarildi.",
+        "en": "Rapunzel lowered her hair, and the prince climbed to her window."
+      }
+    },
+    {
+      "page": 5,
+      "image": "/images/classics/rapunzel/pages/page-5.png",
+      "narration": {
+        "ru": "Они подружились и решили найти путь на свободу.",
+        "uz": "Ular döstlaşib, ozodlikka yöl topişga qaror qilişdi.",
+        "en": "They became friends and decided to find a way to freedom."
+      }
+    },
+    {
+      "page": 6,
+      "image": "/images/classics/rapunzel/pages/page-6.png",
+      "narration": {
+        "ru": "Колдунья разлучила друзей, но они не потеряли надежду.",
+        "uz": "Sehrgar ayol döstlarni ajratdi, ammo ular umidlarini yöqotişmadi.",
+        "en": "The sorceress separated the friends, but they never lost hope."
+      }
+    },
+    {
+      "page": 7,
+      "image": "/images/classics/rapunzel/pages/page-7.png",
+      "narration": {
+        "ru": "После долгих поисков принц вновь встретил Рапунцель.",
+        "uz": "Uzoq izlaşlardan söng şahzoda Rapunzelni yana topdi.",
+        "en": "After a long search, the prince found Rapunzel again."
+      }
+    },
+    {
+      "page": 8,
+      "image": "/images/classics/rapunzel/pages/page-8.png",
+      "narration": {
+        "ru": "Они вернулись домой и начали новую счастливую жизнь.",
+        "uz": "Ular uyga qaytib, yangi baxtli hayot boşlaşdi.",
+        "en": "They returned home and began a happy new life."
+      }
+    }
+  ]
+}
