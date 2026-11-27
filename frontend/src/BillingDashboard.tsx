@@ -192,11 +192,17 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
   {!demo&&<h2>Финансовая аналитика</h2>}{demo&&<p className="admin-demo-notice" role="status">Демонстрационные данные · без подключения к серверу</p>}
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
   <div className="billing-filters admin-date-panel">
-   <div className="admin-date-fields">
-    <label className="admin-date-label"><span>С</span><span className="admin-date-control"><CalendarDays size={15} aria-hidden="true"/><span aria-hidden="true">{start?start.split("-").reverse().join("."):"ДД.ММ.ГГГГ"}</span><input type="date" aria-label="Начало периода" value={start} max={end} onChange={e=>setStart(e.target.value)} onClick={e=>{try{e.currentTarget.showPicker?.();}catch{/* Native picker remains available. */}}}/></span></label>
-    <label className="admin-date-label"><span>По</span><span className="admin-date-control"><CalendarDays size={15} aria-hidden="true"/><span aria-hidden="true">{end?end.split("-").reverse().join("."):"ДД.ММ.ГГГГ"}</span><input type="date" aria-label="Конец периода" value={end} min={start} onChange={e=>setEnd(e.target.value)} onClick={e=>{try{e.currentTarget.showPicker?.();}catch{/* Native picker remains available. */}}}/></span></label>
+   <div className="admin-date-fields" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:8,minWidth:0,width:"100%"}}>
+    {([{label:"С",aria:"Начало периода",value:start,max:end,onChange:setStart},{label:"По",aria:"Конец периода",value:end,min:start,onChange:setEnd}] as const).map(field=><label key={field.aria} className="admin-date-label" style={{display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:4,width:"100%",minWidth:0,margin:0,padding:0}}>
+     <span>{field.label}</span>
+     <span className="admin-date-control" style={{position:"relative",display:"flex",alignItems:"center",gap:6,width:"100%",minWidth:0,height:38,boxSizing:"border-box",border:"1px solid #e1e6ee",borderRadius:8,background:"#fff",padding:"0 8px",overflow:"hidden",fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>
+      <CalendarDays size={15} aria-hidden="true" style={{flexShrink:0,pointerEvents:"none"}}/>
+      <span aria-hidden="true" style={{pointerEvents:"none"}}>{field.value?field.value.split("-").reverse().join("."):"ДД.ММ.ГГГГ"}</span>
+      <input type="date" aria-label={field.aria} value={field.value} min={"min" in field?field.min:undefined} max={"max" in field?field.max:undefined} onChange={e=>field.onChange(e.target.value)} onClick={e=>{try{e.currentTarget.showPicker?.();}catch{/* Native picker remains available. */}}} style={{position:"absolute",inset:0,zIndex:1,opacity:0,width:"100%",maxWidth:"100%",minWidth:0,height:"100%",minHeight:0,maxHeight:"100%",margin:0,padding:0,border:0,fontSize:16,cursor:"pointer"}}/>
+     </span>
+    </label>)}
    </div>
-   <div className="admin-period-buttons" role="group" aria-label="Быстрый выбор периода">
+   <div className="admin-period-buttons" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:6,minWidth:0,width:"100%"}} role="group" aria-label="Быстрый выбор периода">
     <button type="button" onClick={()=>{setStart(day(-6));setEnd(day(0));}} aria-pressed={start===day(-6)&&end===day(0)}>7 дней</button>
     <button type="button" onClick={()=>{setStart(day(-29));setEnd(day(0));}} aria-pressed={start===day(-29)&&end===day(0)}>30 дней</button>
     <button type="button" onClick={()=>{setStart(day(-89));setEnd(day(0));}} aria-pressed={start===day(-89)&&end===day(0)}>90 дней</button>
