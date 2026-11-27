@@ -112,6 +112,10 @@ def init_schema():
         # or its source review request cascades to the derived asset.
         sql(c, f"CREATE TABLE IF NOT EXISTS photo_character_sheets (source_request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES photo_reference_temp(owner_id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, style TEXT NOT NULL, hero_mode TEXT NOT NULL, reference_sha256 TEXT NOT NULL, plan_fingerprint TEXT NOT NULL, png_bytes {('BYTEA' if IS_PG else 'BLOB')} NOT NULL, sha256 TEXT NOT NULL, expires_at INTEGER NOT NULL, UNIQUE(owner_id,book_id,style,hero_mode))")
         sql(c, "CREATE INDEX IF NOT EXISTS photo_character_sheets_expiry_idx ON photo_character_sheets(expires_at)")
+        # Separate sheet attempt from the per-page reservation. No automatic
+        # retries: a durable claim is made before a provider can be called.
+        sql(c, "CREATE TABLE IF NOT EXISTS photo_sheet_attempts (source_request_id TEXT PRIMARY KEY REFERENCES photo_illustration_requests(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES parents(id) ON DELETE CASCADE, book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE, style TEXT NOT NULL, hero_mode TEXT NOT NULL, reference_sha256 TEXT NOT NULL, plan_fingerprint TEXT NOT NULL, day TEXT NOT NULL, reserved_micro_usd INTEGER NOT NULL CHECK(reserved_micro_usd>0), state TEXT NOT NULL CHECK(state IN ('needs_review','ready')), created_at INTEGER NOT NULL, UNIQUE(owner_id,book_id,style,hero_mode))")
+
 
         sql(c, "CREATE INDEX IF NOT EXISTS illustration_jobs_owner_created_idx ON illustration_jobs(owner_id,created_at)")
         sql(c, "CREATE TABLE IF NOT EXISTS illustration_runtime_control (singleton INTEGER PRIMARY KEY CHECK (singleton=1), paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0,1)), updated_at TEXT NOT NULL)")
