@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {ChevronLeft,ChevronRight,Check,Download,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
+import {ChevronLeft,ChevronRight,ChevronUp,ChevronDown,Check,Download,Pause,Play,RotateCcw,Volume2,VolumeX} from "lucide-react";
 import {classics} from "./classics";
 import ClassicFilm,{hasClassicFilm} from "./ClassicFilm";
 import {listOfflineFilmIds} from "./cartoon_offline";
@@ -8,6 +8,8 @@ import {buildClassicCartoon,nextCartoonScene,sceneDuration} from "./cartoon_stor
 import type {CartoonScene} from "./cartoon_storyboard";
 import {preferredStoryVoice,STORY_SPEECH_LOCALE} from "./reader_voice_choices";
 import {montageFrame,type MontageMotion} from "./montage_motion";
+import {initialSceneEdits,moveScene,setSceneDuration,applySceneEdits,editedSceneSeconds,type ExportScene} from "./cartoon_scene_editor";
+import "./cartoon-scene-editor.css";
 
 const filmModeLabels={
  ru:{film:"Мультфильмы",storyboard:"Сцены сказок",label:"Режим просмотра",catalog:"Готовые мультфильмы"},
@@ -44,8 +46,8 @@ const exportSettings={
 } as const;
 const motionCopy={ru:{label:"Движение камеры",still:"Без эффектов",cinematic:"Плавные переходы"},uz:{label:"Kamera harakati",still:"Effektsiz",cinematic:"Silliq ötişlar"},en:{label:"Camera motion",still:"No effects",cinematic:"Smooth transitions"}} as const;
 type ExportDuration=3|6|10|"auto";
-function exportSceneSeconds(scene:CartoonScene,duration:ExportDuration):number{
- return duration==="auto"?Math.min(30,Math.max(8,scene.seconds)):duration;
+function exportSceneSeconds(scene:ExportScene,duration:ExportDuration):number{
+ return editedSceneSeconds(scene,duration);
 }
 function captionPages(ctx:CanvasRenderingContext2D,text:string):string[][]{
  ctx.font="bold 21px sans-serif";
@@ -125,7 +127,7 @@ function waitFrame(ms:number,signal:AbortSignal):Promise<void>{
   signal.addEventListener("abort",abort,{once:true});
  });
 }
-async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void,motion:MontageMotion="still"):Promise<Blob>{
+async function recordLocalMontage(scenes:ExportScene[],duration:ExportDuration,captions:boolean,music:MusicLevel,signal:AbortSignal,onProgress:(n:number)=>void,motion:MontageMotion="still"):Promise<Blob>{
  const mime=localVideoFormat(music!=="off");
  if(!mime||!scenes.length||scenes.length>20||signal.aborted)throw new Error("Unavailable");
  const canvas=document.createElement("canvas");canvas.width=640;canvas.height=480;
@@ -217,6 +219,11 @@ async function recordLocalMontage(scenes:CartoonScene[],duration:ExportDuration,
   if(audio)await audio.close().catch(()=>{});
  }
 }
+const sceneEditorCopy={
+ ru:{title:"Редактор сцен",note:"Изменения применяются только к экспортируемому видео.",reset:"Сбросить",up:"Выше",down:"Ниже",scene:"Сцена",default:"Общая длительность"},
+ uz:{title:"Sahna muharriri",note:"Özgarişlar faqat eksport qilinadigan videoga ta’sir qiladi.",reset:"Tiklaş",up:"Yuqoriga",down:"Pastga",scene:"Sahna",default:"Umumiy davomiylik"},
+ en:{title:"Scene editor",note:"Changes apply only to the exported video.",reset:"Reset",up:"Move up",down:"Move down",scene:"Scene",default:"Global duration"}
+} as const;
 function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang:Lang;onStart:()=>void}){
  const t=exportCopy[lang];
  const controller=useRef<AbortController|null>(null);
@@ -234,7 +241,10 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const motionLabels=motionCopy[lang];
  const supportsMusic=Boolean(localVideoFormat(true));
  const audioLabels=musicCopy[lang];
- const total=scenes.reduce((sum,scene)=>sum+exportSceneSeconds(scene,duration),0);
+ const [edits,setEdits]=useState(()=>initialSceneEdits(scenes));
+ const edited=applySceneEdits(scenes,edits);
+ const editor=sceneEditorCopy[lang];
+ const total=edited.reduce((sum,scene)=>sum+exportSceneSeconds(scene,duration),0);
  const totalLabel=Math.floor(total/60)+":"+String(total%60).padStart(2,"0");
  useEffect(()=>{
   const hide=()=>{if(document.hidden)controller.current?.abort();};
@@ -247,7 +257,7 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
   if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
   const job=new AbortController();controller.current=job;
   try{
-   const blob=await recordLocalMontage(scenes,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);},motion);
+   const blob=await recordLocalMontage(edited,duration,captions,music,job.signal,n=>{if(controller.current===job)setProgress(n);},motion);
    if(controller.current!==job||job.signal.aborted)return;
    const url=URL.createObjectURL(blob);objectUrl.current=url;setResult({url,ext:blob.type.startsWith("video/mp4")?"mp4":"webm"});
   }catch{if(controller.current===job&&!job.signal.aborted)setError(true);}
@@ -278,6 +288,25 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
     </select>
    </label>
    {!supportsMusic&&<p className="cartoon-notice">{audioLabels.unsupported}</p>}
+   <details className="wt-scene-editor">
+    <summary>{editor.title} <span>{edited.length}</span></summary>
+    <p className="cartoon-notice">{editor.note}</p>
+    <div className="wt-scene-list">
+     {edited.map((scene,i)=><div className="wt-scene-row" key={scene.number}>
+      <img src={safeLocalArt(scene.image)} alt="" width={42} height={42} loading="lazy"/>
+      <div className="wt-scene-info"><strong>{i+1}. {editor.scene} {scene.number}</strong>
+       <select aria-label={editor.scene+" "+scene.number+" · "+settings.duration} disabled={busy} value={scene.durationOverride??"default"} onChange={e=>{const value=e.target.value;setEdits(prev=>setSceneDuration(prev,scene.number,value==="default"?null:value==="auto"?"auto":Number(value) as 3|6|10));}}>
+        <option value="default">{editor.default}</option>
+        {[3,6,10].map(n=><option key={n} value={n}>{n} {settings.seconds}</option>)}
+        <option value="auto">{settings.auto}</option>
+       </select>
+      </div>
+      <button type="button" className="icon-button" disabled={busy||i===0} aria-label={editor.up+" · "+editor.scene+" "+scene.number} onClick={()=>setEdits(prev=>moveScene(prev,i,-1))}><ChevronUp size={16}/></button>
+      <button type="button" className="icon-button" disabled={busy||i===edited.length-1} aria-label={editor.down+" · "+editor.scene+" "+scene.number} onClick={()=>setEdits(prev=>moveScene(prev,i,1))}><ChevronDown size={16}/></button>
+     </div>)}
+    </div>
+    <button type="button" className="secondary-button wt-scene-reset" disabled={busy} onClick={()=>setEdits(initialSceneEdits(scenes))}>{editor.reset}</button>
+   </details>
    <p className="cartoon-notice">{settings.estimated}: {totalLabel}</p>
   </div>}
   {supported&&<button type="button" className="secondary-button cartoon-offline-button" onClick={()=>busy?controller.current?.abort():void save()}>{busy?t.cancel:t.save}</button>}
