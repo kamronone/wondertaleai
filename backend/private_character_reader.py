@@ -55,3 +55,71 @@ def read_personal_page(owner, rid):
             return _read_page(c, owner, rid, key)
     except CharacterSheetUnavailable:
         return None
+
+
+def personal_book_readiness(owner: str, book_id: str, style: str, hero_mode: str) -> dict:
+    """Internal local-only report for a single book and character design.
+
+    No provider, job creation, retry, or storage mutation. Do not expose as a
+    public API: it is an operator diagnostic, not authorization to generate.
+    A ready page must pass the same consent, reference, plan and PNG integrity
+    checks as the reader. Report only counts and page numbers, never images,
+    reference hashes, story text, or request IDs.
+    """
+    import json
+    from private_character_sheet_store import _id
+    from private_character_continuity import plan_reference_book
+
+    if not reader_enabled():
+        raise CharacterSheetUnavailable("Private reader disabled")
+    book_id = _id(book_id)
+    with _transaction(owner) as c:
+        story = db.sql(c, "SELECT story FROM books WHERE id=? AND owner_id=?",
+                       (book_id, owner)).fetchone()
+        now = int(time.time())
+        if (not story or not db.photo_consent_active(owner, c)
+                or not db.external_photo_transfer_consent_active(owner, c)):
+            raise CharacterSheetUnavailable("Private book unavailable")
+        if not db.sql(c, "SELECT 1 FROM photo_reference_temp WHERE owner_id=? AND expires_at>?",
+                      (owner, now)).fetchone():
+            raise CharacterSheetUnavailable("Private reference unavailable")
+        try:
+            chapters = json.loads(story[0])["pages"]
+            if not isinstance(chapters, list) or any(
+                type(p["number"]) is not int or p["number"] != i
+                for i, p in enumerate(chapters, 1)
+            ):
+                raise ValueError("Invalid page numbers")
+            plan = plan_reference_book(book_id, [p["text"] for p in chapters], style, hero_mode)
+        except (ValueError, TypeError, KeyError, IndexError) as exc:
+            raise CharacterSheetUnavailable("Private book unavailable") from exc
+        rows = db.sql(c, "SELECT id,page_number FROM photo_illustration_requests "
+            "WHERE owner_id=? AND book_id=? AND style=? AND hero_mode=? "
+            "AND status='pending_review' AND expires_at>? ORDER BY page_number",
+            (owner, book_id, style, hero_mode, now)).fetchall()
+        requests = {page: rid for rid, page in rows}
+        pages = []
+        for page in plan.pages:
+            rid = requests.get(page.page_number)
+            status = "not_requested"
+            if rid:
+                status = "needs_review"
+                try:
+                    _snapshot(c, owner, rid)
+                    key, _ = _context(c, owner, rid)
+                    if key[0][5] != plan.fingerprint:
+                        raise CharacterSheetUnavailable("Plan mismatch")
+                    if _read_page(c, owner, rid, key) is not None:
+                        status = "ready"
+                    elif not db.sql(c, "SELECT 1 FROM photo_ai_attempt_reservations "
+                                   "WHERE request_id=? AND owner_id=?", (rid, owner)).fetchone():
+                        status = "pending_review"
+                except CharacterSheetUnavailable:
+                    # A missing sheet, expired context or corrupt asset must
+                    # not be counted as ready or authorized for another call.
+                    pass
+            pages.append({"page_number": page.page_number, "status": status})
+        counts = {status: sum(p["status"] == status for p in pages)
+                  for status in ("not_requested", "pending_review", "needs_review", "ready")}
+        return {"total_pages": len(pages), "counts": counts, "pages": pages,
+                "generation_started": False}

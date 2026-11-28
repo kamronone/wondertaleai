@@ -59,3 +59,39 @@ def test_local_reader_is_disabled_by_default(reader_context, monkeypatch):
     with pytest.raises(HTTPException) as denied:
         db.private_illustration_for_page(book, 2, owner)
     assert denied.value.status_code == 404
+
+
+def test_whole_book_report_is_read_only_and_does_not_invoke_provider(reader_context):
+    (db, _, owner, other, _, page, _), worker, images, kwargs, book = reader_context
+    from private_character_reader import personal_book_readiness
+    from private_character_sheet_store import CharacterSheetUnavailable
+    report = personal_book_readiness(owner, book, "storybook", "explorer")
+    assert report["total_pages"] == 8
+    assert report["counts"] == {"not_requested": 6, "pending_review": 2, "needs_review": 0, "ready": 0}
+    assert report["generation_started"] is False
+    assert len(images.calls) == 1
+    worker.process_character_page_request(owner, page, **kwargs)
+    report = personal_book_readiness(owner, book, "storybook", "explorer")
+    assert report["counts"] == {"not_requested": 6, "pending_review": 1, "needs_review": 0, "ready": 1}
+    assert report["pages"][1] == {"page_number": 2, "status": "ready"}
+    assert len(images.calls) == 2
+    assert owner not in repr(report) and page not in repr(report)
+    with pytest.raises(CharacterSheetUnavailable):
+        personal_book_readiness(other, book, "storybook", "explorer")
+    db.delete_photo_reference(owner)
+    with pytest.raises(CharacterSheetUnavailable):
+        personal_book_readiness(owner, book, "storybook", "explorer")
+
+
+def test_whole_book_report_never_counts_corrupt_page_as_ready(reader_context):
+    (db, _, owner, _, _, page, _), worker, images, kwargs, book = reader_context
+    from private_character_reader import personal_book_readiness
+    worker.process_character_page_request(owner, page, **kwargs)
+    with db.connection() as c:
+        db.sql(c, "UPDATE photo_character_pages SET sha256=? WHERE request_id=?",
+               ("0" * 64, page))
+        c.commit()
+    report = personal_book_readiness(owner, book, "storybook", "explorer")
+    assert report["pages"][1]["status"] == "needs_review"
+    assert report["counts"]["ready"] == 0
+    assert len(images.calls) == 2

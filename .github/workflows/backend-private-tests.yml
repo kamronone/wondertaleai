@@ -66,6 +66,13 @@ jobs:
           ENABLE_TEXT_AI: 'false'
           ENABLE_REGISTRATION: 'false'
 
+      - name: Test personal illustration continuity and privacy (synthetic media only)
+        run: python -m pytest -q test_private_character_continuity.py test_private_character_sheet_store.py test_private_character_sheet_worker.py test_private_character_page_worker.py test_private_character_reader.py
+        env:
+          APP_ENV: development
+          ENABLE_TEXT_AI: 'false'
+          ENABLE_REGISTRATION: 'false'
+
   postgres-integration:
     # Throwaway PostgreSQL service on the GitHub runner. Never use a Neon,
     # Vercel, staging or production DATABASE_URL for this job.
