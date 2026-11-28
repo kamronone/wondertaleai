@@ -18,3 +18,11 @@ python scripts/build-cinderella-film.py --story cinderella --audio-dir cartoon-a
 ```
 
 FFmpeg and FFprobe are needed for rendering, not for preflight. External TTS is opt-in with `--allow-network-tts` and must be authorized separately. Output remains in `cartoon-build/<story>/`; inspect all video/audio/caption tracks and confirm rights and quality before copying to public or registering a film. No child data is accepted by this classic-only renderer.
+
+## Offline synthetic draft narration
+
+```sh
+python scripts/prepare-local-classic-narration.py --story snow-white --language ru --language en
+```
+
+Requires local eSpeak, FFmpeg and FFprobe. The output is a separate draft directory under cartoon-build, not the public catalog. Russian and English are supported by this helper; Uzbek is deliberately not synthesized using a different language. Listen to each clip and replace low-quality narration before release. Full rendering still requires all 24 approved clips in the supplied audio directory.
