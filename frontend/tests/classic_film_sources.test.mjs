@@ -36,3 +36,14 @@ test("Snow White script follows the reviewed eight-panel artwork",()=>{
  const markers={ru:["яблоко","сон","проснулась","свадьбу","гномов"],uz:["olma","uyqu","uyğondi","töy","mitti"],en:["apple","sleep","awoke","wedding","dwarfs"]};
  for(const lang of source.languages)for(const [i,marker] of markers[lang].entries())assert.ok(source.scenes[i+3].narration[lang].toLowerCase().includes(marker));
 });
+
+
+test("Cinderella midnight and Rapunzel ladder follow actual PNG scenes",()=>{
+ const c=JSON.parse(readFileSync(new URL("scripts/film-sources/cinderella.json",root),"utf8"));
+ const r=JSON.parse(readFileSync(new URL("scripts/film-sources/rapunzel.json",root),"utf8"));
+ for(const [lang,midnight,ladder] of [["ru","полночь","лестниц"],["uz","yarim tun","narvon"],["en","midnight","ladder"]]){
+  assert.ok(c.scenes[6].narration[lang].includes(midnight));
+  assert.ok(r.scenes[3].narration[lang].includes(ladder));
+  assert.ok(r.scenes[5].narration[lang].includes(ladder));
+ }
+});

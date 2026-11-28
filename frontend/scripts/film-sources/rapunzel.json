@@ -11,72 +11,72 @@
       "page": 1,
       "image": "/images/classics/rapunzel/pages/page-1.png",
       "narration": {
-        "ru": "Рапунцель жила в высокой башне, окружённой лесом.",
-        "uz": "Rapunzel örmon orasidagi baland minorada yaşardi.",
-        "en": "Rapunzel lived in a tall tower surrounded by forest."
+        "ru": "В лесу мальчик увидел высокую башню. В её окне жила девушка с длинными золотистыми волосами.",
+        "uz": "Örmonda bola baland minorani kördi. Uning derazasida uzun oltinrang soçli qiz yaşardi.",
+        "en": "In the forest a boy saw a tall tower. A girl with long golden hair lived at its window."
       }
     },
     {
       "page": 2,
       "image": "/images/classics/rapunzel/pages/page-2.png",
       "narration": {
-        "ru": "У неё были длинные золотистые волосы. Она мечтала увидеть мир.",
-        "uz": "Uning uzun oltinrang soçlari bor edi. U dunyoni körişni orzu qilardi.",
-        "en": "She had long golden hair and dreamed of seeing the world."
+        "ru": "Мальчик помахал Рапунцель. Она улыбнулась и рассказала, что мечтает спуститься в лес.",
+        "uz": "Bola Rapunzelga qöl silkidi. U jilmayib, örmonga tuşişni orzu qilişini aytdi.",
+        "en": "The boy waved to Rapunzel. She smiled and said she dreamed of coming down to the forest."
       }
     },
     {
       "page": 3,
       "image": "/images/classics/rapunzel/pages/page-3.png",
       "narration": {
-        "ru": "Однажды принц услышал её песню и остановился у башни.",
-        "uz": "Bir kuni şahzoda uning qöşiğini eşitib, minora yonida töxtadi.",
-        "en": "One day a prince heard her song and stopped by the tower."
+        "ru": "Мальчик позвал взрослого помощника. Вместе они решили помочь Рапунцель выбраться из башни.",
+        "uz": "Bola katta yordamçini çaqirdi. Ular birga Rapunzelga minoradan çiqişda yordam bermoqçi bölişdi.",
+        "en": "The boy called a grown-up helper. Together they decided to help Rapunzel leave the tower."
       }
     },
     {
       "page": 4,
       "image": "/images/classics/rapunzel/pages/page-4.png",
       "narration": {
-        "ru": "Рапунцель спустила волосы, и принц поднялся к её окну.",
-        "uz": "Rapunzel soçlarini tuşirdi, şahzoda esa derazaga kötarildi.",
-        "en": "Rapunzel lowered her hair, and the prince climbed to her window."
+        "ru": "Друзья принесли длинную лестницу и поставили её возле башни.",
+        "uz": "Döstlar uzun narvon olib kelib, uni minora yoniga qöyişdi.",
+        "en": "The friends brought a long ladder and placed it beside the tower."
       }
     },
     {
       "page": 5,
       "image": "/images/classics/rapunzel/pages/page-5.png",
       "narration": {
-        "ru": "Они подружились и решили найти путь на свободу.",
-        "uz": "Ular döstlaşib, ozodlikka yöl topişga qaror qilişdi.",
-        "en": "They became friends and decided to find a way to freedom."
+        "ru": "Мальчик проверил план, а помощник убедился, что лестница стоит надёжно.",
+        "uz": "Bola rejani tekşirdi, yordamçi esa narvon mustahkam turganiga işonç hosil qildi.",
+        "en": "The boy checked the plan while the helper made sure the ladder was secure."
       }
     },
     {
       "page": 6,
       "image": "/images/classics/rapunzel/pages/page-6.png",
       "narration": {
-        "ru": "Колдунья разлучила друзей, но они не потеряли надежду.",
-        "uz": "Sehrgar ayol döstlarni ajratdi, ammo ular umidlarini yöqotişmadi.",
-        "en": "The sorceress separated the friends, but they never lost hope."
+        "ru": "Рапунцель осторожно спустилась по лестнице. Друзья ждали её внизу.",
+        "uz": "Rapunzel ehtiyotkorlik bilan narvondan tuşdi. Döstlari uni pastda kutib turişdi.",
+        "en": "Rapunzel carefully climbed down the ladder. Her friends waited below."
       }
     },
     {
       "page": 7,
       "image": "/images/classics/rapunzel/pages/page-7.png",
       "narration": {
-        "ru": "После долгих поисков принц вновь встретил Рапунцель.",
-        "uz": "Uzoq izlaşlardan söng şahzoda Rapunzelni yana topdi.",
-        "en": "After a long search, the prince found Rapunzel again."
+        "ru": "Наконец Рапунцель оказалась на земле. Она поблагодарила мальчика и села отдохнуть среди цветов.",
+        "uz": "Nihoyat Rapunzel yerga tuşdi. U bolaga rahmat aytib, gullar orasida dam oldi.",
+        "en": "At last Rapunzel reached the ground. She thanked the boy and rested among the flowers."
       }
     },
     {
       "page": 8,
       "image": "/images/classics/rapunzel/pages/page-8.png",
       "narration": {
-        "ru": "Они вернулись домой и начали новую счастливую жизнь.",
-        "uz": "Ular uyga qaytib, yangi baxtli hayot boşlaşdi.",
-        "en": "They returned home and began a happy new life."
+        "ru": "Друзья собрались у уютного домика. Рапунцель радовалась свободе и новым друзьям.",
+        "uz": "Döstlar şinam uyça yonida yiğilişdi. Rapunzel ozodlik va yangi döstlaridan quvondi.",
+        "en": "The friends gathered by a cozy cottage. Rapunzel celebrated her freedom and new friends."
       }
     }
   ]
