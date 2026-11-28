@@ -20,32 +20,23 @@
       "page": 2,
       "image": "/images/classics/snow-white/pages/page-2.png",
       "narration": {
-        "ru": "Девушка укрылась в лесу и нашла маленький домик.",
-        "uz": "Qiz örmonda panoh topdi va kiçkina uyçani kördi.",
-        "en": "The girl found shelter in the forest and discovered a little cottage."
+        "ru": "Белоснежка ушла в лес. Добрые звери помогли ей найти безопасный путь.",
+        "uz": "Oqqiz örmonga ketdi. Mehribon hayvonlar unga xavfsiz yöl topişda yordam berdi.",
+        "en": "Snow White left for the forest. Kind animals helped her find a safe path."
       }
     },
     {
       "page": 3,
       "image": "/images/classics/snow-white/pages/page-3.png",
       "narration": {
-        "ru": "В домике жили семь гномов. Они предложили ей остаться.",
-        "uz": "Uyçada yetti mitti yaşardi. Ular qizga qolişni taklif qilişdi.",
-        "en": "Seven dwarfs lived in the cottage. They invited her to stay."
+        "ru": "У лесного домика её встретили семь гномов. Они предложили ей остаться и стали её друзьями.",
+        "uz": "Örmon uyçasi yonida uni yetti mitti kutib oldi. Ular unga qolişni taklif qilib, döst bölişdi.",
+        "en": "Seven dwarfs welcomed her outside their woodland cottage. They invited her to stay and became her friends."
       }
     },
     {
       "page": 4,
       "image": "/images/classics/snow-white/pages/page-4.png",
-      "narration": {
-        "ru": "Белоснежка подружилась с гномами, и они заботились друг о друге.",
-        "uz": "Oqqiz mittilar bilan döstlaşdi. Ular bir-biriga ğamxörlik qilişdi.",
-        "en": "Snow White befriended the dwarfs, and they cared for one another."
-      }
-    },
-    {
-      "page": 5,
-      "image": "/images/classics/snow-white/pages/page-5.png",
       "narration": {
         "ru": "Королева переоделась старушкой и принесла заколдованное яблоко.",
         "uz": "Qiroliça kampir qiyofasida sehrlangan olma olib keldi.",
@@ -53,30 +44,39 @@
       }
     },
     {
+      "page": 5,
+      "image": "/images/classics/snow-white/pages/page-5.png",
+      "narration": {
+        "ru": "Белоснежка откусила яблоко и погрузилась в волшебный сон. Гномы остались рядом.",
+        "uz": "Oqqiz olmadan tişladi va sehrli uyquga ketdi. Mittilar uning yonida qolişdi.",
+        "en": "Snow White took a bite and fell into an enchanted sleep. The dwarfs stayed beside her."
+      }
+    },
+    {
       "page": 6,
       "image": "/images/classics/snow-white/pages/page-6.png",
       "narration": {
-        "ru": "Белоснежка откусила яблоко и погрузилась в волшебный сон.",
-        "uz": "Oqqiz olmadan tişladi va sehrli uyquga ketdi.",
-        "en": "Snow White took a bite and fell into an enchanted sleep."
+        "ru": "Добрый принц нашёл Белоснежку. Чары рассеялись, и она проснулась.",
+        "uz": "Mehribon şahzoda Oqqizni topdi. Sehr tarqaldi va u uyğondi.",
+        "en": "A kind prince found Snow White. The spell faded, and she awoke."
       }
     },
     {
       "page": 7,
       "image": "/images/classics/snow-white/pages/page-7.png",
       "narration": {
-        "ru": "Гномы берегли Белоснежку. Добрый принц помог разрушить чары.",
-        "uz": "Mittilar Oqqizni asraşdi. Mehribon şahzoda sehrni buzişga yordam berdi.",
-        "en": "The dwarfs watched over Snow White. A kind prince helped break the spell."
+        "ru": "Белоснежка и принц сыграли весёлую свадьбу. Началась их новая счастливая жизнь.",
+        "uz": "Oqqiz va şahzoda quvonçli töy qilişdi. Ularning yangi baxtli hayoti boşlandi.",
+        "en": "Snow White and the prince celebrated their wedding and began a happy new life."
       }
     },
     {
       "page": 8,
       "image": "/images/classics/snow-white/pages/page-8.png",
       "narration": {
-        "ru": "Белоснежка проснулась и вновь встретилась с друзьями. Они радовались её спасению.",
-        "uz": "Oqqiz uyğondi va döstlari bilan yana körişdi. Ular uning qutulganidan quvonişdi.",
-        "en": "Snow White awoke and reunited with her friends. They celebrated her rescue."
+        "ru": "Семь гномов часто навещали друзей. Все радовались, что снова вместе.",
+        "uz": "Yetti mitti döstlarini tez-tez körgani kelardi. Hamma yana birga ekanidan quvondi.",
+        "en": "The seven dwarfs often visited their friends. Everyone was happy to be together again."
       }
     }
   ]

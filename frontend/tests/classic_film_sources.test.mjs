@@ -29,3 +29,10 @@ test("film builder validates assets before network and supports local narration"
  assert.ok(source.includes("if not args.audio_dir and not args.allow_network_tts"));
  assert.ok(source.includes("if not math.isfinite(duration)"));
 });
+
+
+test("Snow White script follows the reviewed eight-panel artwork",()=>{
+ const source=JSON.parse(readFileSync(new URL("scripts/film-sources/snow-white.json",root),"utf8"));
+ const markers={ru:["яблоко","сон","проснулась","свадьбу","гномов"],uz:["olma","uyqu","uyğondi","töy","mitti"],en:["apple","sleep","awoke","wedding","dwarfs"]};
+ for(const lang of source.languages)for(const [i,marker] of markers[lang].entries())assert.ok(source.scenes[i+3].narration[lang].toLowerCase().includes(marker));
+});
