@@ -97,3 +97,65 @@ def test_disabled_storage_fails_closed(fixture, monkeypatch):
     monkeypatch.setenv("ENABLE_CHARACTER_SHEET_STORAGE", "false")
     with pytest.raises(store.CharacterSheetUnavailable):
         store.store_character_sheet(owner, source, sheet, image_moderator=lambda _: True)
+
+
+@pytest.mark.parametrize("count", [8, 12, 20])
+def test_prepare_whole_book_review_is_atomic_and_idempotent(fixture, monkeypatch, count):
+    from private_book_review import prepare_book_review
+    db, _, owner, _, source, page, _ = fixture
+    monkeypatch.setenv("ENABLE_PERSONAL_BOOK_REVIEW", "true")
+    with db.connection() as c:
+        book = db.sql(c, "SELECT book_id FROM photo_illustration_requests WHERE id=?", (source,)).fetchone()[0]
+        story = json.dumps({"pages": [{"number": i, "text": "A quiet journey."} for i in range(1, count+1)]})
+        db.sql(c, "UPDATE books SET story=? WHERE id=?", (story, book))
+        c.commit()
+    assert prepare_book_review(owner, book, "storybook", "explorer") == {
+        "total_pages": count, "created": count-2, "reused": 2,
+        "generation_started": False, "budget_reserved": False}
+    assert prepare_book_review(owner, book, "storybook", "explorer")["created"] == 0
+    with db.connection() as c:
+        rows = db.sql(c, "SELECT id,page_number FROM photo_illustration_requests WHERE owner_id=? ORDER BY page_number", (owner,)).fetchall()
+        assert [r[1] for r in rows] == list(range(1, count+1))
+        assert rows[0][0] == source and rows[1][0] == page
+        for table in ("photo_ai_attempt_reservations", "photo_sheet_attempts", "photo_ai_daily_budget"):
+            assert db.sql(c, "SELECT COUNT(*) FROM "+table).fetchone()[0] == 0
+
+
+def test_whole_book_review_fails_closed_on_conflict_or_revocation(fixture, monkeypatch):
+    from private_book_review import prepare_book_review
+    db, store, owner, other, source, page, _ = fixture
+    with db.connection() as c:
+        book = db.sql(c, "SELECT book_id FROM photo_illustration_requests WHERE id=?", (source,)).fetchone()[0]
+    monkeypatch.delenv("ENABLE_PERSONAL_BOOK_REVIEW", raising=False)
+    with pytest.raises(store.CharacterSheetUnavailable):
+        prepare_book_review(owner, book, "storybook", "explorer")
+    monkeypatch.setenv("ENABLE_PERSONAL_BOOK_REVIEW", "true")
+    for who, style in ((other, "storybook"), (owner, "pencil")):
+        with pytest.raises(store.CharacterSheetUnavailable):
+            prepare_book_review(who, book, style, "explorer")
+    db.cancel_photo_illustration_request(page, owner)
+    with pytest.raises(store.CharacterSheetUnavailable):
+        prepare_book_review(owner, book, "storybook", "explorer")
+    with db.connection() as c:
+        assert db.sql(c, "SELECT COUNT(*) FROM photo_illustration_requests").fetchone()[0] == 2
+    db.delete_photo_reference(owner)
+    with pytest.raises(store.CharacterSheetUnavailable):
+        prepare_book_review(owner, book, "storybook", "explorer")
+
+
+def test_whole_book_review_rolls_back_partial_inserts(fixture, monkeypatch):
+    from private_book_review import prepare_book_review
+    db, _, owner, _, source, _, _ = fixture
+    monkeypatch.setenv("ENABLE_PERSONAL_BOOK_REVIEW", "true")
+    with db.connection() as c:
+        book = db.sql(c, "SELECT book_id FROM photo_illustration_requests WHERE id=?", (source,)).fetchone()[0]
+    original = db.sql
+    def fail_on_fourth(c, statement, params=()):
+        if statement.startswith("INSERT INTO photo_illustration_requests") and params[3] == 4:
+            raise RuntimeError("Synthetic write failure")
+        return original(c, statement, params)
+    monkeypatch.setattr(db, "sql", fail_on_fourth)
+    with pytest.raises(RuntimeError, match="Synthetic write failure"):
+        prepare_book_review(owner, book, "storybook", "explorer")
+    with db.connection() as c:
+        assert db.sql(c, "SELECT COUNT(*) FROM photo_illustration_requests").fetchone()[0] == 2
