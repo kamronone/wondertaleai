@@ -196,3 +196,61 @@ def test_duplicate_chapter_in_otherwise_distinct_story_is_rejected():
     payload["pages"][7]="  "+payload["pages"][3].upper()+"  "
     with pytest.raises(ValueError,match="valid story"):
         validate_generated_story(json.dumps(payload),"en")
+
+
+@pytest.mark.parametrize("raw_suffix", ["\n```\nUnexpected trailing prose", "\n```\n```"])
+def test_json_fence_rejects_trailing_material(raw_suffix):
+    with pytest.raises(ValueError, match="valid story"):
+        validate_generated_story("```json\n"+valid_story("en")+raw_suffix,"en")
+
+
+def test_provider_extra_properties_are_rejected():
+    data=json.loads(valid_story("en"))
+    data["unexpected"]="not part of story schema"
+    with pytest.raises(ValueError,match="valid story"):
+        validate_generated_story(json.dumps(data),"en")
+
+
+@pytest.mark.parametrize("lang",["ru","uz","en"])
+def test_quality_check_accepts_expected_script(lang):
+    from ai_generation import validate_story_quality
+    pages={
+        "ru":["Амир и его друзья отправились в добрый волшебный лес, чтобы помочь маленьким зверятам."]*8,
+        "uz":["Amir va uning döstlari sehrli ötmonda mehribon hayvonlarga yordam beriş uçun birga yölga çiqdilar."]*8,
+        "en":CHAPTERS[:8],
+    }
+    # Quality function is independent of structural duplicate checks.
+    from ai_generation import GeneratedStory
+    validate_story_quality(GeneratedStory(title="Test",language=lang,pages=pages[lang]))
+
+
+def test_quality_check_rejects_wrong_script_in_one_chapter():
+    from ai_generation import validate_story_quality
+    data=json.loads(valid_story("en"))
+    data["pages"][4]="Амир вместе с друзьями отправился в волшебный лес и помог маленьким птицам найти дорогу домой."
+    with pytest.raises(ValueError,match="script"):
+        validate_story_quality(validate_generated_story(json.dumps(data),"en"))
+
+
+@pytest.mark.parametrize("lang,ending",[
+    ("en","To be continued!"),("ru","Продолжение следует…"),("uz","Davomi bor."),
+])
+def test_quality_rejects_explicit_unfinished_ending(lang,ending):
+    from ai_generation import GeneratedStory,validate_story_quality
+    chapter={
+        "en":CHAPTERS[0],
+        "ru":"Амир и его друзья отправились в добрый волшебный лес, чтобы помочь маленьким зверятам.",
+        "uz":"Amir va uning döstlari sehrli örmonda mehribon hayvonlarga yordam beriş uçun birga yölga çiqdilar.",
+    }[lang]
+    pages=[chapter]*7+[chapter+" "+ending]
+    with pytest.raises(ValueError,match="continuation marker"):
+        validate_story_quality(GeneratedStory(title="Test",language=lang,pages=pages))
+
+
+def test_opt_in_mock_exercises_same_quality_gate(monkeypatch):
+    monkeypatch.setenv("ENABLE_TEXT_AI","true")
+    monkeypatch.setenv("ENABLE_STORY_OUTPUT_QUALITY_CHECKS","true")
+    data=GenerateStoryInput(name="Amir",age=7,language="ru",idea="A friendly forest adventure")
+    client=SimpleNamespace(responses=SimpleNamespace(create=lambda **kwargs:SimpleNamespace(output_text=valid_story("ru"))))
+    with pytest.raises(ValueError,match="script"):
+        generate_story(data,client=client)

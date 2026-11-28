@@ -10,7 +10,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from story_moderation import moderate_story_text, validate_private_text
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 Language=Literal["ru","uz","en"]
 
@@ -53,6 +53,7 @@ class StoryContinuation:
 
 
 class GeneratedStory(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
     title: str=Field(min_length=3,max_length=120)
     language: Language
     pages: list[str]=Field(min_length=8,max_length=20)
@@ -63,7 +64,10 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
             raise ValueError("Provider output must be text")
         raw=raw.strip()
         if raw.startswith("```"):
-            raw=raw.split("\n",1)[1].rsplit("```",1)[0].strip()
+            fenced=re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*?)\r?\n```",raw,flags=re.DOTALL|re.IGNORECASE)
+            if fenced is None:
+                raise ValueError("Invalid JSON fence")
+            raw=fenced.group(1).strip()
         parsed=GeneratedStory.model_validate(json.loads(raw))
         if parsed.language!=lang:
             raise ValueError("Language mismatch")
@@ -88,6 +92,32 @@ def validate_generated_story(raw: str,lang:Language,pages_expected:Literal[8,12,
         return parsed
     except (ValueError,ValidationError,IndexError,KeyError) as exc:
         raise ValueError("Model did not return a valid story") from exc
+
+_UNFINISHED_ENDINGS = {
+    "ru": r"(?:продолжение следует|конец первой части)",
+    "uz": r"(?:davomi bor|davomi kutilmoqda|birin[çc]hi qism tugadi|birinçi qism tugadi)",
+    "en": r"(?:to be continued|end of part one|end of part 1)",
+}
+
+
+def validate_story_quality(story: GeneratedStory) -> None:
+    """Conservative local output checks, not language identification or
+    a guarantee of literary quality. Allow names in other alphabets.
+    English and Latin Uzbek cannot be distinguished by script alone.
+    """
+    expected = "CYRILLIC" if story.language == "ru" else "LATIN"
+    for chapter in story.pages:
+        letters = [unicodedata.name(ch, "") for ch in chapter if ch.isalpha()]
+        if len(letters) < 30:
+            raise ValueError("Story chapter contains insufficient readable text")
+        matching = sum(name.startswith(expected + " ") for name in letters)
+        if matching * 4 < len(letters) * 3:
+            raise ValueError("Story chapter script does not match requested language")
+    ending = unicodedata.normalize("NFKC", story.pages[-1]).casefold().strip()
+    ending = re.sub(r"[\s.!?…\"'»”]+$", "", ending)
+    if re.search(r"(?:^|[\s.!?…])" + _UNFINISHED_ENDINGS[story.language] + r"$", ending):
+        raise ValueError("Story ends with an explicit continuation marker")
+
 
 def story_output_format(language:Language)->dict:
     """Strict response shape. App validation enforces the exact page count and text lengths.
@@ -126,6 +156,9 @@ def generate_story(data:GenerateStoryInput,client=None,*,continuation:StoryConti
     # Real provider calls always require moderation; injected offline clients
     # can exercise the same contract by implementing moderations.create.
     require_moderation = client is None or os.getenv("ENABLE_STORY_MODERATION","false").lower()=="true"
+    # Always enforced for a real client constructed here. Injected synthetic
+    # clients can opt into these checks without changing legacy fixtures.
+    require_quality = client is None or os.getenv("ENABLE_STORY_OUTPUT_QUALITY_CHECKS","false").lower()=="true"
     if client is None:
         from openai import OpenAI
         # Keep the provider deadline below the frontend 120-second request limit.
@@ -199,6 +232,8 @@ def generate_story(data:GenerateStoryInput,client=None,*,continuation:StoryConti
         raise ValueError("Model did not return a completed story")
     output=getattr(response,"output_text","")
     story=validate_generated_story(output,data.language,data.pages_count)
+    if require_quality:
+        validate_story_quality(story)
     if continuation is not None:
         normalize=lambda value:" ".join(unicodedata.normalize("NFKC",value).casefold().split())
         earlier={normalize(chapter) for chapter in continuation.chapters}
