@@ -82,7 +82,7 @@ def test_queue_is_bounded_and_denies_anonymous_users(api,monkeypatch):
     assert client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=body).status_code==429
     assert client.get("/api/billing/status",headers=auth).json()["ai_used_today"]==0
 
-def test_worker_failure_is_not_retried(api,monkeypatch):
+def test_uncertain_provider_failure_requires_review_and_is_not_retried(api,monkeypatch):
     client,module,register=api
     email,auth=register()
     monkeypatch.setenv("AI_ALLOWED_EMAILS",email)
@@ -91,14 +91,24 @@ def test_worker_failure_is_not_retried(api,monkeypatch):
         calls.append(1)
         raise RuntimeError("Mocked unavailable model")
     monkeypatch.setattr(module,"generate_story",failing)
-    queued=client.post("/api/books/jobs",headers={**auth,"Idempotency-Key":uuid.uuid4().hex},json=payload())
+    headers={**auth,"Idempotency-Key":uuid.uuid4().hex}
+    queued=client.post("/api/books/jobs",headers=headers,json=payload())
     assert queued.status_code==202
     job_id=queued.json()["id"]
     assert module.process_one_queued_ai_job()==job_id
     assert module.process_one_queued_ai_job() is None
-    assert client.get("/api/books/jobs/"+job_id,headers=auth).json()["status"]=="failed"
+    # An upstream exception cannot prove that the provider did not charge.
+    # Keep the claim for reconciliation and never automatically retry it.
+    status=client.get("/api/books/jobs/"+job_id,headers=auth).json()
+    assert status["status"]=="needs_review"
+    assert status["book_id"] is None
+    replay=client.post("/api/books/jobs",headers=headers,json=payload())
+    assert replay.status_code==202
+    assert replay.json()==status
+    assert module.process_one_queued_ai_job() is None
     assert len(calls)==1
     assert client.get("/api/books",headers=auth).json()==[]
+    assert client.get("/api/billing/status",headers=auth).json()["ai_used_today"]==0
 
 
 def test_stalled_worker_needs_review_without_another_request(api,monkeypatch):

@@ -10,19 +10,21 @@ const copy={
  en:{title:"Parent narration",note:"Recording stays in this page's memory. Read from the first scene in export order. Up to 120 seconds.",record:"Record voice",stop:"Stop",remove:"Delete recording",preview:"Listen to recording",consent:"I allow microphone access for this recording.",error:"Could not record audio. Check microphone permission.",unsupported:"Voice recording is unavailable in this browser.",waiting:"Waiting for microphone permission",ready:"Recording ready"}
 } as const;
 
+type NarrationJob={stream:MediaStream|null;recorder:MediaRecorder|null;timer:number|null;cancelled:boolean};
+
 export default function CartoonNarration({lang,disabled,blob,onChange,onStart,onActivity,maxSeconds=MAX_NARRATION_SECONDS,sceneText}:{
  lang:Lang;disabled:boolean;blob:Blob|null;onChange:(blob:Blob|null)=>void;onStart:()=>void;onActivity:(active:boolean)=>void;maxSeconds?:number;sceneText?:string
 }){
  const t=copy[lang],format=narrationFormat();
  const limit=Math.max(1,Math.min(MAX_NARRATION_SECONDS,maxSeconds));
  const sceneNote={ru:"Озвучьте выбранную сцену. Запись остаётся только в памяти страницы. Лимит: ",uz:"Tanlangan sahnani ovozli öqing. Yozuv faqat sahifa xotirasida qoladi. Limit: ",en:"Narrate the selected scene. The recording stays in page memory only. Limit: "}[lang]+limit+" "+{ru:"сек.",uz:"son.",en:"sec."}[lang];
- const supported=Boolean(format&&navigator.mediaDevices?.getUserMedia&&typeof AudioContext!=="undefined");
+ const supported=Boolean(format&&typeof navigator!=="undefined"&&typeof navigator.mediaDevices?.getUserMedia==="function"&&typeof AudioContext!=="undefined");
  const [consent,setConsent]=useState(false);
  const [phase,setPhase]=useState<"idle"|"waiting"|"recording">("idle");
  const [seconds,setSeconds]=useState(0);
  const [error,setError]=useState(false);
  const [preview,setPreview]=useState<string|null>(null);
- const active=useRef<{stream:MediaStream|null;recorder:MediaRecorder|null;timer:number|null;cancelled:boolean}|null>(null);
+ const active=useRef<NarrationJob|null>(null);
  const activity=useRef(onActivity);activity.current=onActivity;
  const stop=(discard=false)=>{
   const job=active.current;if(!job)return;
@@ -51,7 +53,7 @@ export default function CartoonNarration({lang,disabled,blob,onChange,onStart,on
  },[blob]);
  async function start(){
   if(active.current||!supported||!format||!consent||disabled||document.hidden)return;
-  const job={stream:null,recorder:null,timer:null,cancelled:false} as NonNullable<typeof active.current>;
+  const job:NarrationJob={stream:null,recorder:null,timer:null,cancelled:false};
   active.current=job;onStart();activity.current(true);setPhase("waiting");setSeconds(0);setError(false);
   try{
    const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
