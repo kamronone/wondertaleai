@@ -665,7 +665,7 @@
 }
 .profile-mockup-popover-title strong{font-size:15px}
 .profile-mockup-popover-title button{
-  width:32px;height:32px;
+  width:44px;height:44px;flex:0 0 44px;
   display:grid;place-items:center;
   border:0;border-radius:9px;
   background:#f2e7fc;color:#69439a;
@@ -731,7 +731,7 @@
   border-radius:10px;
   background:#fff;
   color:#422968;
-  font-size:13px;
+  font-size:16px;
 }
 .profile-mockup-settings-row{
   display:flex;
@@ -785,7 +785,7 @@
   .profile-mockup-brand small{font-size:7px;letter-spacing:.11em}
   .profile-mockup-tools{gap:5px}
   .profile-mockup-icon-button{
-    width:39px;height:39px;flex-basis:39px;border-radius:13px;
+    width:44px;height:44px;flex-basis:44px;border-radius:13px;
   }
   .profile-mockup-icon-button svg{width:20px;height:20px}
   .profile-mockup-popover{right:9px;top:calc(100% - 2px);padding:12px}
@@ -797,7 +797,7 @@
   .profile-mockup-brand strong{font-size:12px}
   .profile-mockup-brand small{font-size:6px}
   .profile-mockup-icon-button{
-    flex-basis:35px;width:35px;height:37px;
+    flex-basis:44px;width:44px;height:44px;
   }
 }
 

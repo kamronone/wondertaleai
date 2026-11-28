@@ -54,6 +54,7 @@ import "./create-hero-art-final.css";
 import "./create-photo-unavailable.css";
 import "./private-reader-illustration-status.css";
 import "./reader-pager-no-overlap.css";
+import "./shared-control-standard.css";
 import {canDownloadClassicArt,hasClassicOfflineArt,downloadClassicOfflineArt} from "./reader_offline_art";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";

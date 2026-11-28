@@ -1,0 +1,83 @@
+/* WT-04: shared control geometry, readable labels and focus states.
+   This file affects only storybook routes, not the admin workspace.
+   Keep approved artwork, page surfaces and fixed reader navigation intact. */
+.shell {
+  --wt-control-touch: 44px;
+  --wt-control-focus: var(--wt-site-accent, #8741c0);
+}
+.shell :is(.library-page.library-concept-two, .create-page.create-reference-page, .reader-page, .profile-concept-three, .cartoon-studio) :is(button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--wt-control-focus);
+  outline-offset: 2px;
+}
+.shell .library-page.library-concept-two .library-concept-search:focus-within {
+  outline: 2px solid var(--wt-control-focus);
+  outline-offset: 2px;
+}
+.shell .library-page.library-concept-two .library-concept-search input:focus-visible {
+  outline: none;
+}
+.shell .create-page.create-reference-page .form-card :is(.form-grid, .wizard-step-actions, .wizard-step-three-actions) > * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+.shell .reader-page :is(.reader-audio-toolbar, .reader-mode-controls) > button > svg {
+  flex-shrink: 0;
+}
+.shell .profile-mockup-topbar .profile-mockup-icon-button,
+.shell .profile-mockup-popover-title button {
+  min-width: var(--wt-control-touch);
+  min-height: var(--wt-control-touch);
+  box-sizing: border-box;
+}
+.shell .profile-mockup-popover {
+  max-height: min(70dvh, 520px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.shell .profile-mockup-language select {
+  box-sizing: border-box;
+  min-width: 0;
+}
+.shell .cartoon-studio .cartoon-view-switch .chip,
+.shell .cartoon-studio .cartoon-offline-button {
+  min-height: var(--wt-control-touch);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media screen and (max-width:700px) {
+  .shell .create-page.create-reference-page .form-card :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), select, textarea),
+  .shell .reader-page .reader-display-settings :is(select, textarea),
+  .shell .profile-mockup-language select {
+    box-sizing: border-box;
+    font-size: 16px !important;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .shell .create-page.create-reference-page .form-card :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), select),
+  .shell .reader-page .reader-display-settings select {
+    min-height: var(--wt-control-touch);
+  }
+  .shell .reader-page .reader-audio-toolbar > button {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    height: auto !important;
+    max-height: none !important;
+  }
+}
+/* Theme-aware search, without recoloring covers or altering reading modes. */
+.shell[data-site-theme="forest"] .library-page.library-concept-two .library-concept-search {
+  background: #fffef9 !important;
+  border-color: #aecab2 !important;
+}
+.shell[data-site-theme="night"] .library-page.library-concept-two .library-concept-search {
+  background: #352d48 !important;
+  border-color: #675676 !important;
+  color: #eee5fa;
+}
+.shell[data-site-theme="forest"] .library-page.library-concept-two .library-concept-search input[type="search"],
+.shell[data-site-theme="night"] .library-page.library-concept-two .library-concept-search input[type="search"] {
+  color: var(--wt-site-ink) !important;
+}
+.shell[data-site-theme="night"] .library-page.library-concept-two .library-concept-search input::placeholder {
+  color: #d4c5e9;
+}
