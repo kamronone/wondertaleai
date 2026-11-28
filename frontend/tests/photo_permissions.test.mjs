@@ -27,7 +27,10 @@ test("parent cannot opt into external sharing implicitly",()=>{
   assert.match(panel,/setChecked\(false\)/);
   assert.match(panel,/update\("external",false\)/);
   assert.match(panel,/update\("local",!local\.agreed\)/);
-  assert.match(panel,/setExternal\(previous=>previous\?\{\.\.\.previous,agreed:false\}:previous\)/);
+  assert.ok(panel.includes("setLocal(null);setExternal(null);"));
+  assert.ok(panel.includes("setVersion(v=>v+1);"));
+  assert.ok(panel.includes("!busy&&!loading&&local&&external"));
+  assert.ok(panel.includes("mutation.current===controller"));
 });
 
 test("photo permission panel is in parent account only and explains feature is off",()=>{

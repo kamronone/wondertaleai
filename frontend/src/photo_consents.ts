@@ -39,7 +39,7 @@ export async function getPhotoConsent(api:string,session:string,
     kind:PhotoConsentKind,signal?:AbortSignal):Promise<PhotoConsent>{
   assertApi(api,session);
   const res=await fetch(api+endpoints[kind],{
-    headers:{Authorization:"Bearer "+session},cache:"no-store",signal
+    headers:{Authorization:"Bearer "+session},cache:"no-store",redirect:"error",credentials:"omit",signal
   });
   if(!res.ok)throw new Error("Photo consent fetch failed");
   return parseResponse(await res.json(),kind);
@@ -55,7 +55,7 @@ export async function setPhotoConsent(api:string,session:string,
   const res=await fetch(api+endpoints[kind],{
     method:"POST",headers:{Authorization:"Bearer "+session,
       "Content-Type":"application/json"},
-    cache:"no-store",signal,body:JSON.stringify(payload)
+    cache:"no-store",redirect:"error",credentials:"omit",signal,body:JSON.stringify(payload)
   });
   if(!res.ok)throw new Error("Photo consent update failed");
   const result=parseResponse(await res.json(),kind);

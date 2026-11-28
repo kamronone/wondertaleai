@@ -1,4 +1,4 @@
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import type {Lang} from "./i18n";
 import {getPhotoConsent,setPhotoConsent,type PhotoConsent} from "./photo_consents";
 
@@ -57,8 +57,11 @@ export function PhotoPermissionsPanel({api,session,lang}:{
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
   const [version,setVersion]=useState(0);
+  const [saveError,setSaveError]=useState("");
+  const mutation=useRef<AbortController|null>(null);
+  useEffect(()=>()=>{mutation.current?.abort();mutation.current=null;},[api,session]);
   useEffect(()=>{
-    if(!open)return;
+    if(!open||busy)return;
     const controller=new AbortController();
     setLoading(true);setError("");setLocal(null);setExternal(null);setChecked(false);
     void Promise.all([
@@ -72,32 +75,40 @@ export function PhotoPermissionsPanel({api,session,lang}:{
       if(!controller.signal.aborted)setLoading(false);
     });
     return ()=>controller.abort();
-  },[api,session,open,version,t.failure]);
+  },[api,session,open,busy,version,t.failure]);
   const update=async(kind:"local"|"external",agreed:boolean)=>{
-    if(busy||!local||!external)return;
+    if(busy||mutation.current||!local||!external)return;
     if(kind==="external"&&agreed&&(!local.agreed||!checked))return;
-    setBusy(true);setError("");
+    const controller=new AbortController();
+    mutation.current=controller;
+    setBusy(true);setError("");setSaveError("");setChecked(false);
+    // Never show an old grant or revoke as current during an uncertain write.
+    setLocal(null);setExternal(null);
     try{
-      const response=await setPhotoConsent(api,session,kind,agreed,AbortSignal.timeout(15000));
-      if(kind==="local"){
-        setLocal(response);
-        if(!agreed)setExternal(previous=>previous?{...previous,agreed:false}:previous);
-      }else{
-        setExternal(response);
-        setChecked(false);
+      await setPhotoConsent(api,session,kind,agreed,AbortSignal.any([controller.signal,AbortSignal.timeout(15000)]));
+    }catch{
+      if(!controller.signal.aborted)setSaveError(t.saveError);
+    }finally{
+      if(mutation.current===controller){
+        mutation.current=null;
+        // Both permissions are reloaded after every write, including a lost
+        // response; revoking local permission may revoke external permission.
+        setVersion(v=>v+1);
+        setBusy(false);
       }
-    }catch{setError(t.saveError);}
-    finally{setBusy(false);}
+    }
   };
   return <details className="photo-permissions-panel" open={open}
       onToggle={event=>setOpen(event.currentTarget.open)}>
     <summary><strong>{t.title}</strong><span>{t.summary}</span></summary>
     <div className="photo-permissions-body">
       <p>{t.intro}</p>
-      {loading&&<p role="status">{t.load}</p>}
+      {busy&&<p role="status">{t.saving}</p>}
+      {!busy&&loading&&<p role="status">{t.load}</p>}
+      {saveError&&<p role="alert">{saveError}</p>}
       {error&&<p role="alert">{error}</p>}
-      {!loading&&!local&&<button type="button" onClick={()=>setVersion(v=>v+1)}>{t.retry}</button>}
-      {local&&external&&<>
+      {!busy&&!loading&&(!local||!external)&&<button type="button" onClick={()=>setVersion(v=>v+1)}>{t.retry}</button>}
+      {!busy&&!loading&&local&&external&&<>
         <div className="photo-permissions-item">
           <div><strong>{t.local}</strong><small>{local.photo_upload_enabled?t.granted:t.disabled}</small></div>
           <p>{t.localInfo}</p>

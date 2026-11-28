@@ -13,7 +13,7 @@ function parseConsent(raw:unknown):IllustrationConsent{
 
 export async function fetchIllustrationConsent(api:string,token:string,signal?:AbortSignal):Promise<IllustrationConsent>{
   const response=await fetch(api+"/api/illustrations/consent",{
-    headers:{Authorization:"Bearer "+token},cache:"no-store",signal
+    headers:{Authorization:"Bearer "+token},cache:"no-store",redirect:"error",credentials:"omit",signal
   });
   if(!response.ok)throw new Error("Could not load illustration consent");
   return parseConsent(await response.json());
@@ -26,6 +26,7 @@ export async function updateIllustrationConsent(
     method:"POST",
     headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
     cache:"no-store",
+    redirect:"error",credentials:"omit",
     signal,
     body:JSON.stringify({agreed,policy_version:ILLUSTRATION_POLICY_VERSION})
   });
