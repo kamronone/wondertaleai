@@ -26,3 +26,7 @@ python scripts/prepare-local-classic-narration.py --story snow-white --language 
 ```
 
 Requires local eSpeak, FFmpeg and FFprobe. The output is a separate draft directory under cartoon-build, not the public catalog. Russian and English are supported by this helper; Uzbek is deliberately not synthesized using a different language. Listen to each clip and replace low-quality narration before release. Full rendering still requires all 24 approved clips in the supplied audio directory.
+
+## Synchronized multilingual timeline
+
+Before rendering, the builder prepares and measures all 24 audio clips. Each scene uses the longest narration across RU/UZ/EN plus 0.8 seconds, rounded up to a 25 FPS frame. Shorter audio is padded with silence. All video variants and caption tracks use the same scene boundaries, allowing the player to switch audio languages without jumping to a different part of the story. The builder rejects segment or final duration deviations. Review every output before publication; this does not certify voice quality or guarantee mobile playback.

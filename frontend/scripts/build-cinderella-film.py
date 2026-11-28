@@ -24,6 +24,26 @@ def stamp(seconds):
     s, ms = divmod(ms, 1000)
     return f"{h:02}:{m:02}:{s:02}.{ms:03}"
 
+FPS = 25
+SCENE_PAUSE = 0.8
+
+
+def shared_scene_timeline(durations):
+    """All language versions use the same frame-exact scene boundaries."""
+    if set(durations) != set(VOICES) or any(len(values) != 8 for values in durations.values()):
+        raise ValueError("Expected eight narration durations in all three languages")
+    if any(not math.isfinite(value) or not 0.2 <= value <= 120
+           for values in durations.values() for value in values):
+        raise ValueError("Invalid narration duration")
+    return [math.ceil((max(durations[lang][i] for lang in VOICES) + SCENE_PAUSE) * FPS)
+            for i in range(8)]
+
+
+def audio_duration(path):
+    return float(run("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                     "-of", "default=noprint_wrappers=1:nokey=1", str(path)))
+
+
 def validate_source(story, source, public_dir, audio_dir=None):
     """Validate all inputs before any TTS, FFmpeg or output writes."""
     if (not isinstance(source, dict) or source.get("storyId") != story
@@ -113,34 +133,44 @@ async def main():
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
         work = Path(temp)
+        # Obtain and measure every narration clip before any video render.
+        durations = {lang: [] for lang in VOICES}
         for lang, voice in VOICES.items():
-            cues = ["WEBVTT", ""]
-            segments = []
-            offset = 0.0
             for scene in scenes:
                 i = scene["page"]
                 audio = work / f"{lang}-{i}.mp3"
-                segment = work / f"{lang}-{i}.mp4"
-                narration = scene["narration"][lang]
-                spoken = narration
+                spoken = scene["narration"][lang]
                 if lang == "uz":
                     spoken = spoken.translate(str.maketrans({"ş":"sh","Ş":"Sh","ç":"ch","Ç":"Ch","ö":"oʻ","Ö":"Oʻ","ğ":"gʻ","Ğ":"Gʻ"}))
                 if args.audio_dir:
                     shutil.copyfile(args.audio_dir / f"{lang}-{i}.mp3", audio)
                 else:
                     await edge_tts.Communicate(spoken, voice, rate="-10%").save(str(audio))
-                duration = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(audio)))
+                duration = audio_duration(audio)
                 if not math.isfinite(duration) or not 0.2 <= duration <= 120:
                     raise ValueError("Invalid narration duration")
+                durations[lang].append(duration)
+        timeline = shared_scene_timeline(durations)
+        expected_length = sum(timeline) / FPS
+        for lang in VOICES:
+            cues = ["WEBVTT", ""]
+            segments = []
+            offset_frames = 0
+            for scene in scenes:
+                i = scene["page"]
+                audio = work / f"{lang}-{i}.mp3"
+                segment = work / f"{lang}-{i}.mp4"
+                narration = scene["narration"][lang]
+                frames = timeline[i-1]
+                scene_seconds = frames / FPS
                 image = ROOT / "public" / scene["image"].lstrip("/")
-                frames = max(1, math.ceil((duration + 0.8) * 25))
                 base = "scale=768:1024:force_original_aspect_ratio=decrease,pad=768:1024:(ow-iw)/2:(oh-ih)/2,setsar=1"
                 if args.static:
                     camera = base + ",scale=384:512"
                 else:
                     zoom = f"1+0.035*on/{frames}" if i % 2 else f"1.035-0.035*on/{frames}"
                     camera = base + f",zoompan=z='{zoom}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=384x512:fps=25"
-                    fade_start = max(0, duration + 0.8 - 0.25)
+                    fade_start = max(0, scene_seconds - 0.25)
                     camera += f",fade=t=in:st=0:d=0.25,fade=t=out:st={fade_start}:d=0.25"
                 animation_name = ANIMATIONS.get(args.story, {}).get(i)
                 animation = ROOT / "public/images/classics" / args.story / "animations" / f"{animation_name}.gif" if animation_name else None
@@ -149,16 +179,18 @@ async def main():
                     visual_args = ["-stream_loop", "-1", "-ignore_loop", "1", "-i", str(animation)]
                     camera = "fps=25," + base + ",scale=384:512" + f",fade=t=in:st=0:d=0.25,fade=t=out:st={fade_start}:d=0.25"
                 effect = args.effects_dir / f"page-{i}.wav" if args.effects_dir else None
-                audio_args = ["-map", "0:v:0", "-map", "1:a:0", "-af", "apad=pad_dur=0.8"]
+                audio_args = ["-map", "0:v:0", "-map", "1:a:0", "-af", "apad"]
                 if effect and effect.is_file():
-                    mix = (f"[1:a]aresample=48000,aformat=channel_layouts=mono,apad=pad_dur=0.8[voice];"
+                    mix = (f"[1:a]aresample=48000,aformat=channel_layouts=mono,apad[voice];"
                            f"[2:a]aresample=48000,aformat=channel_layouts=mono,volume={args.effects_volume},adelay=250:all=1[fx];"
                            "[voice][fx]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95:latency=1[mix]")
                     audio_args = ["-i", str(effect), "-filter_complex", mix, "-map", "0:v:0", "-map", "[mix]"]
-                run("ffmpeg", "-y", "-v", "error", *visual_args, "-i", str(audio), *audio_args, "-vf", camera, "-t", str(duration+0.8), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
-                actual = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(segment)))
-                cues.extend([f"{stamp(offset)} --> {stamp(offset+min(duration,actual))}", narration, ""])
-                offset += actual
+                run("ffmpeg", "-y", "-v", "error", *visual_args, "-i", str(audio), *audio_args, "-vf", camera, "-t", str(scene_seconds), "-r", str(FPS), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "48000", "-ac", "1", str(segment))
+                actual = audio_duration(segment)
+                if not math.isfinite(actual) or abs(actual - scene_seconds) > 0.08:
+                    raise ValueError("Rendered scene duration differs from common timeline")
+                cues.extend([f"{stamp(offset_frames/FPS)} --> {stamp((offset_frames+frames)/FPS)}", narration, ""])
+                offset_frames += frames
                 segments.append(segment)
             manifest = work / f"{lang}.txt"
             manifest.write_text("".join(f"file '{p.name}'\n" for p in segments), encoding="utf-8")
@@ -177,6 +209,9 @@ async def main():
                 run("ffmpeg", "-y", "-v", "error", "-i", str(joined), "-stream_loop", "-1", "-i", str(args.music.resolve()), "-filter_complex", mix, "-map", "0:v:0", "-map", "[mix]", "-c:v", "copy", "-c:a", "aac", "-ar", "48000", "-movflags", "+faststart", str(target))
             else:
                 shutil.copyfile(joined, target)
+            actual_length = audio_duration(target)
+            if not math.isfinite(actual_length) or abs(actual_length - expected_length) > 0.25:
+                raise ValueError("Rendered film duration differs from common timeline")
             (out / f"{lang}.vtt").write_text("\n".join(cues), encoding="utf-8")
     print(f"Review generated films before publishing: {out}")
 

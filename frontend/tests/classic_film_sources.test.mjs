@@ -47,3 +47,14 @@ test("Cinderella midnight and Rapunzel ladder follow actual PNG scenes",()=>{
   assert.ok(r.scenes[5].narration[lang].includes(ladder));
  }
 });
+
+
+test("film variants use common scene boundaries and pad shorter narration",()=>{
+ const source=readFileSync(new URL("scripts/build-cinderella-film.py",root),"utf8");
+ assert.ok(source.includes("max(durations[lang][i] for lang in VOICES)"));
+ assert.ok(source.indexOf("timeline = shared_scene_timeline(durations)")<source.indexOf("for lang in VOICES:\n            cues"));
+ assert.ok(source.includes("scene_seconds = frames / FPS"));
+ assert.ok(source.includes('"-af", "apad"'));
+ assert.ok(source.includes("stamp((offset_frames+frames)/FPS)"));
+ assert.ok(source.includes("abs(actual_length - expected_length) > 0.25"));
+});
