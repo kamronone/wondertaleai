@@ -85,3 +85,98 @@ def prepare_book_review(owner: str, book_id: str, style: str, hero_mode: str) ->
         # are touched. The existing one-shot workers retain their own gates.
         return {"total_pages": total, "created": created, "reused": total-created,
                 "generation_started": False, "budget_reserved": False}
+
+
+def next_book_review_step(owner: str, book_id: str, style: str, hero_mode: str) -> dict:
+    """Read-only operator preflight, not a reservation or a worker scheduler.
+
+    Estimate only remaining image edits at the configured per-attempt amount.
+    Moderation and actual provider billing are not included. A subsequent
+    worker must independently revalidate permission and atomically reserve
+    budget; this snapshot cannot authorize any external request.
+    """
+    from datetime import datetime, timezone
+    from photo_illustration_budget import _gate, _positive_limit
+    from private_character_page_worker import _context, _read_page
+
+    if (os.getenv("APP_ENV", "").lower() != "development"
+            or os.getenv("ENABLE_PERSONAL_BOOK_REVIEW", "false").lower() != "true"):
+        raise CharacterSheetUnavailable("Whole-book review disabled")
+    book_id = _id(book_id)
+    with _transaction(owner) as c:
+        _gate(c)
+        estimate = _positive_limit("PHOTO_EDIT_ESTIMATE_MICRO_USD", 2_000_000)
+        global_cap = _positive_limit("PHOTO_EDIT_DAILY_GLOBAL_MICRO_USD", 20_000_000)
+        parent_cap = _positive_limit("PHOTO_EDIT_DAILY_PARENT_MICRO_USD", 5_000_000)
+        now = int(time.time())
+        story = db.sql(c, "SELECT story FROM books WHERE id=? AND owner_id=?",
+                       (book_id, owner)).fetchone()
+        if not story:
+            raise CharacterSheetUnavailable("Private book unavailable")
+        try:
+            chapters = json.loads(story[0])["pages"]
+            if not isinstance(chapters, list) or any(
+                not isinstance(p, dict) or type(p.get("number")) is not int
+                or p["number"] != i for i, p in enumerate(chapters, 1)
+            ):
+                raise ValueError("Invalid page sequence")
+            plan = plan_reference_book(book_id, [p["text"] for p in chapters], style, hero_mode)
+        except (ValueError, TypeError, KeyError, IndexError) as exc:
+            raise CharacterSheetUnavailable("Private book unavailable") from exc
+        rows = db.sql(c, "SELECT id,page_number FROM photo_illustration_requests "
+            "WHERE owner_id=? AND book_id=? AND style=? AND hero_mode=? "
+            "AND status='pending_review' AND expires_at>? ORDER BY page_number",
+            (owner, book_id, style, hero_mode, now)).fetchall()
+        if [r[1] for r in rows] != list(range(1, len(plan.pages)+1)):
+            raise CharacterSheetUnavailable("Complete active review queue required")
+        snapshots = [_snapshot(c, owner, rid) for rid, _ in rows]
+        if any(s[5] != plan.fingerprint or s[3] != snapshots[0][3] for s in snapshots):
+            raise CharacterSheetUnavailable("Review plan changed")
+        sheet = db.sql(c, "SELECT 1 FROM photo_character_sheets WHERE owner_id=? "
+            "AND book_id=? AND style=? AND hero_mode=?",
+            (owner, book_id, style, hero_mode)).fetchone()
+        sheet_attempt = db.sql(c, "SELECT state FROM photo_sheet_attempts WHERE owner_id=? "
+            "AND book_id=? AND style=? AND hero_mode=?",
+            (owner, book_id, style, hero_mode)).fetchone()
+        ready = []
+        pending = []
+        uncertain = []
+        for rid, number in rows:
+            attempted = db.sql(c, "SELECT 1 FROM photo_ai_attempt_reservations "
+                "WHERE request_id=? AND owner_id=?", (rid, owner)).fetchone()
+            if sheet:
+                try:
+                    key, _ = _context(c, owner, rid)
+                    if _read_page(c, owner, rid, key) is not None:
+                        ready.append(number)
+                        continue
+                except CharacterSheetUnavailable:
+                    uncertain.append(number)
+                    continue
+            if attempted:
+                uncertain.append(number)
+            else:
+                pending.append(number)
+        day = datetime.now(timezone.utc).date().isoformat()
+        global_row = db.sql(c, "SELECT reserved_micro_usd FROM photo_ai_daily_budget WHERE day=?",
+                            (day,)).fetchone()
+        parent_row = db.sql(c, "SELECT reserved_micro_usd FROM photo_ai_parent_budget WHERE owner_id=? AND day=?",
+                            (owner, day)).fetchone()
+        remaining = min(max(0, global_cap-(global_row[0] if global_row else 0)),
+                        max(0, parent_cap-(parent_row[0] if parent_row else 0)))
+        required = (len(pending)+(0 if sheet else 1))*estimate
+        state, next_page = "complete", None
+        if uncertain or (not sheet and sheet_attempt) or (sheet_attempt and sheet_attempt[0] != "ready"):
+            state = "needs_review"
+        elif pending or not sheet:
+            if required > remaining:
+                state = "budget_insufficient"
+            elif not sheet:
+                state, next_page = "prepare_character", 1
+            else:
+                state, next_page = "prepare_page", pending[0]
+        return {"state": state, "next_page": next_page, "ready_pages": len(ready),
+                "total_pages": len(rows), "uncertain_pages": uncertain,
+                "estimated_remaining_micro_usd": required,
+                "available_daily_micro_usd": remaining,
+                "budget_reserved": False, "provider_called": False}

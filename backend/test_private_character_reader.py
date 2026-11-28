@@ -95,3 +95,42 @@ def test_whole_book_report_never_counts_corrupt_page_as_ready(reader_context):
     assert report["pages"][1]["status"] == "needs_review"
     assert report["counts"]["ready"] == 0
     assert len(images.calls) == 2
+
+
+def test_preflight_whole_book_budget_and_sequence(reader_context, monkeypatch):
+    (db, _, owner, other, source, page, _), worker, images, kwargs, book = reader_context
+    from private_book_review import prepare_book_review, next_book_review_step
+    from private_character_sheet_store import CharacterSheetUnavailable
+    monkeypatch.setenv("ENABLE_PERSONAL_BOOK_REVIEW", "true")
+    prepare_book_review(owner, book, "storybook", "explorer")
+    blocked = next_book_review_step(owner, book, "storybook", "explorer")
+    assert blocked["state"] == "budget_insufficient"
+    assert blocked["estimated_remaining_micro_usd"] == 800000
+    assert blocked["available_daily_micro_usd"] == 200000
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_GLOBAL_MICRO_USD", "2000000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_PARENT_MICRO_USD", "2000000")
+    result = next_book_review_step(owner, book, "storybook", "explorer")
+    assert result["state"] == "prepare_page" and result["next_page"] == 1
+    assert result["provider_called"] is False and result["budget_reserved"] is False
+    assert len(images.calls) == 1
+    worker.process_character_page_request(owner, source, **kwargs)
+    result = next_book_review_step(owner, book, "storybook", "explorer")
+    assert result["next_page"] == 2 and result["ready_pages"] == 1
+    assert result["estimated_remaining_micro_usd"] == 700000
+    assert len(images.calls) == 2
+    with pytest.raises(CharacterSheetUnavailable):
+        next_book_review_step(other, book, "storybook", "explorer")
+
+
+def test_preflight_stops_after_uncertain_page_attempt(reader_context, monkeypatch):
+    (db, _, owner, _, source, page, _), worker, images, kwargs, book = reader_context
+    from private_book_review import prepare_book_review, next_book_review_step
+    from photo_illustration_budget import reserve_photo_attempt_budget
+    monkeypatch.setenv("ENABLE_PERSONAL_BOOK_REVIEW", "true")
+    prepare_book_review(owner, book, "storybook", "explorer")
+    reserve_photo_attempt_budget(page, require_fresh=True)
+    result = next_book_review_step(owner, book, "storybook", "explorer")
+    assert result["state"] == "needs_review"
+    assert result["uncertain_pages"] == [2]
+    assert result["next_page"] is None
+    assert len(images.calls) == 1
