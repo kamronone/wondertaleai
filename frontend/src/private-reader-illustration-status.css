@@ -49,3 +49,21 @@
 @media(max-width:380px){
   .story-page-image .private-illustration-placeholder{min-height:180px;padding:18px 12px}
 }
+
+/* Opt-in private book overview. Compact, normal document flow; no pager changes. */
+.reader-page .book-illustration-overview{margin:8px 0;border:1px solid currentColor;border-radius:12px;padding:0 12px;color:var(--wt-site-ink,#574b62);background:var(--wt-site-card,#fff);box-sizing:border-box}
+.book-illustration-overview>summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;font-size:13px;font-weight:700;list-style:none}
+.book-illustration-overview>summary::-webkit-details-marker{display:none}
+.book-illustration-overview>summary::after{content:"+";font-size:19px}
+.book-illustration-overview[open]>summary::after{content:"−"}
+.book-illustration-overview .illustration-overview-body{display:grid;gap:8px;padding-bottom:12px}
+.illustration-overview-body p{font-size:12px;line-height:1.45;margin:0}
+.illustration-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:5px}
+.illustration-overview-grid button,.illustration-overview-refresh{min-height:44px;min-width:0;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit;font-size:12px;cursor:pointer}
+.illustration-overview-grid button{display:grid;place-content:center;gap:2px;padding:3px}
+.illustration-overview-grid button span{font-size:14px;font-weight:700}
+.illustration-overview-grid button[data-status="available"] span{color:#268044}
+.illustration-overview-grid button[data-status="needs_review"] span,.illustration-overview-grid button[data-status="error"] span{color:#a76026}
+.illustration-overview-grid button:focus-visible,.illustration-overview-refresh:focus-visible,.book-illustration-overview>summary:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.illustration-overview-legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px}
+@media print{.book-illustration-overview{display:none!important}}
