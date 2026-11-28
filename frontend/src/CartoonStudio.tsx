@@ -270,6 +270,10 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
  const total=edited.reduce((sum,scene)=>sum+exportSceneSeconds(scene,duration),0);
  const totalLabel=Math.floor(total/60)+":"+String(total%60).padStart(2,"0");
  useEffect(()=>{
+  if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current=null;}
+  setResult(null);setError(false);setProgress(0);
+ },[scenes,duration,captions,music,motion,narration,narrationMode,sceneClips,edits]);
+ useEffect(()=>{
   const hide=()=>{if(document.hidden)controller.current?.abort();};
   document.addEventListener("visibilitychange",hide);
   return ()=>{document.removeEventListener("visibilitychange",hide);controller.current?.abort();controller.current=null;if(objectUrl.current)URL.revokeObjectURL(objectUrl.current);};
@@ -296,15 +300,15 @@ function StoryboardVideoExport({scenes,lang,onStart}:{scenes:CartoonScene[];lang
     </select>
    </label>
    <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
-    <input type="checkbox" checked={captions} disabled={busy} onChange={e=>setCaptions(e.target.checked)}/>{settings.captions}
+    <input type="checkbox" checked={captions} disabled={busy||recording} onChange={e=>setCaptions(e.target.checked)}/>{settings.captions}
    </label>
    <label className="cartoon-select">{motionLabels.label}
-    <select disabled={busy} value={motion} onChange={e=>setMotion(e.target.value==="cinematic"?"cinematic":"still")}>
+    <select disabled={busy||recording} value={motion} onChange={e=>setMotion(e.target.value==="cinematic"?"cinematic":"still")}>
      <option value="still">{motionLabels.still}</option><option value="cinematic">{motionLabels.cinematic}</option>
     </select>
    </label>
    <label className="cartoon-select">{audioLabels.label}
-    <select disabled={busy||!supportsMusic} value={music} onChange={e=>setMusic(e.target.value as MusicLevel)}>
+    <select disabled={busy||recording||!supportsMusic} value={music} onChange={e=>setMusic(e.target.value as MusicLevel)}>
      <option value="off">{audioLabels.off}</option>
      <option value="quiet">{audioLabels.quiet}</option>
      <option value="normal">{audioLabels.normal}</option>
@@ -370,6 +374,7 @@ export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks
  const [voiceMissing,setVoiceMissing]=useState(false);
  const [failed,setFailed]=useState(0);
  const [elapsed,setElapsed]=useState(0);
+ const playback=useRef<{elapsed:number;started:number;paused:boolean}|null>(null);
  const lastFilm=useRef(id);
  const run=useRef(0);
  const timer=useRef<number|null>(null);
@@ -377,12 +382,14 @@ export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks
  const current=scenes[index];
  const cancel=()=>{
   ++run.current;
+  const wasPaused=playback.current?.paused===true;
+  playback.current=null;
   if(timer.current!==null){window.clearInterval(timer.current);timer.current=null;}
-  if(utterance.current&&"speechSynthesis" in window){utterance.current.onend=null;utterance.current.onerror=null;window.speechSynthesis.cancel();}
+  if(utterance.current&&"speechSynthesis" in window){utterance.current.onend=null;utterance.current.onerror=null;window.speechSynthesis.cancel();if(wasPaused)window.speechSynthesis.resume();}
   utterance.current=null;
  };
  const reset=()=>{cancel();setPlaying(false);setEnded(false);setIndex(0);setElapsed(0);setFailed(0);setVoiceMissing(false);};
- useEffect(()=>{reset();return cancel;},[id,lang]);
+ useEffect(()=>{reset();return cancel;},[id,lang,personal]);
  useEffect(()=>{if(id.startsWith("book:")&&!personal){reset();setId("three-pigs");}},[id,personal]);
  useEffect(()=>{setFailed(0);},[index]);
  useEffect(()=>{
@@ -428,10 +435,11 @@ export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks
   if(!scene)return;
   setIndex(at);setFailed(0);setElapsed(0);setEnded(false);setPlaying(true);setVoiceMissing(false);
   const token=run.current;
-  const started=performance.now();
+  const clock={elapsed:0,started:performance.now(),paused:false};
+  playback.current=clock;
   let narration=false;
   const advance=()=>{
-   if(run.current!==token)return;
+   if(run.current!==token||clock.paused)return;
    const next=nextCartoonScene(at,scenes.length);
    if(next===null){cancel();setPlaying(false);setElapsed(scene.seconds);setEnded(true);}
    else start(next);
@@ -451,12 +459,29 @@ export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks
    }else setVoiceMissing(true);
   }else if(!muted)setVoiceMissing(true);
   timer.current=window.setInterval(()=>{
-   if(run.current!==token)return;
-   const seconds=(performance.now()-started)/1000;
+   if(run.current!==token||clock.paused)return;
+   const seconds=(clock.elapsed+performance.now()-clock.started)/1000;
    setElapsed(Math.min(seconds,scene.seconds));
    // A bounded watchdog also handles missing Safari speech completion events.
    if(seconds>=(narration?Math.max(scene.seconds*2,30):scene.seconds))advance();
   },200);
+ }
+ function togglePlayback(){
+  const clock=playback.current;
+  if(playing&&clock){
+   clock.elapsed+=Math.max(0,performance.now()-clock.started);
+   clock.paused=true;
+   if(utterance.current&&"speechSynthesis" in window)window.speechSynthesis.pause();
+   setPlaying(false);
+   return;
+  }
+  if(clock?.paused&&!ended){
+   clock.started=performance.now();clock.paused=false;
+   if(utterance.current&&"speechSynthesis" in window)window.speechSynthesis.resume();
+   setPlaying(true);
+   return;
+  }
+  start(ended?0:index);
  }
  const image=current?(failed===0&&current.animation?current.animation:failed<=(current.animation?1:0)?current.image:current.fallback||"/images/wondertale-hero.webp"):"";
  return <section className="cartoon-studio">
@@ -495,7 +520,7 @@ export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks
    <div className="cartoon-progress" role="progressbar" aria-label={t.scene} aria-valuenow={index+1} aria-valuemin={1} aria-valuemax={scenes.length}><span style={{width:((index+Math.min(1,elapsed/current.seconds))/scenes.length*100)+"%"}}/></div>
    <div className="cartoon-controls">
     <button type="button" className="icon-button" aria-label={t.previous} disabled={index===0} onClick={()=>jump(index-1)}><ChevronLeft size={21}/></button>
-    <button type="button" className="primary-button cartoon-play" onClick={()=>{if(playing){cancel();setPlaying(false);}else start(ended?0:index);}}>{playing?<Pause size={19}/>:<Play size={19}/>} {playing?t.pause:t.play}</button>
+    <button type="button" className="primary-button cartoon-play" onClick={togglePlayback}>{playing?<Pause size={19}/>:<Play size={19}/>} {playing?t.pause:t.play}</button>
     <button type="button" className="icon-button" aria-label={t.nextScene} disabled={index>=scenes.length-1} onClick={()=>jump(index+1)}><ChevronRight size={21}/></button>
     <button type="button" className="icon-button" aria-label={muted?t.silent:t.voice} aria-pressed={!muted} onClick={()=>{cancel();setPlaying(false);setMuted(v=>!v);}}>{muted?<VolumeX size={20}/>:<Volume2 size={20}/>}</button>
     <button type="button" className="icon-button" aria-label={t.restart} onClick={reset}><RotateCcw size={19}/></button>
@@ -504,7 +529,7 @@ export default function CartoonStudio({lang,localBooks=[]}:{lang:Lang;localBooks
    <p className="cartoon-caption" aria-live="polite">{current.text}</p>
    <div className="cartoon-strip" role="group" aria-label={t.scene}>{scenes.map((scene,i)=><button key={scene.number} type="button" className="icon-button" aria-label={t.scene+" "+scene.number} aria-current={i===index?"step":undefined} onClick={()=>jump(i)}>{scene.number}</button>)}</div>
    <p className="cartoon-notice">{personal?personalCopy[lang].note:t.note}</p>
-   <StoryboardVideoExport key={id+":"+lang} scenes={scenes} lang={lang} onStart={()=>{cancel();setPlaying(false);}}/>
+   <StoryboardVideoExport key={id+":"+lang+":"+JSON.stringify(scenes.map(scene=>[scene.number,scene.text,scene.image]))} scenes={scenes} lang={lang} onStart={()=>{cancel();setPlaying(false);}}/>
    {!localBooks.length&&<p className="cartoon-notice">{personalCopy[lang].empty}</p>}
   </div>}
  </section>;

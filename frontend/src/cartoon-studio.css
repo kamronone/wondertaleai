@@ -264,3 +264,16 @@
   .cartoon-studio .cartoon-controls .icon-button { flex-basis: 36px; width: 36px; min-width: 36px; }
   .cartoon-studio .cartoon-controls .cartoon-play { font-size: 12px; overflow-wrap: anywhere; }
 }
+
+/* Keep player actions compact but touchable, including 320px screens. */
+.cartoon-studio .cartoon-controls{display:grid;grid-template-columns:44px minmax(0,1fr) 44px 44px 44px;gap:5px}
+.cartoon-studio .cartoon-controls .icon-button{width:44px;min-width:44px;height:44px}
+.cartoon-studio .cartoon-controls .cartoon-play{width:100%;min-height:44px}
+.cartoon-studio .cartoon-player .cartoon-select select{min-height:44px;max-width:100%;box-sizing:border-box}
+.cartoon-studio .cartoon-view-switch .chip{min-height:44px}
+.cartoon-studio .cartoon-strip button{flex:0 0 44px;width:44px;min-width:44px;height:44px}
+@media(max-width:360px){
+ .cartoon-studio .cartoon-controls{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ .cartoon-studio .cartoon-controls .cartoon-play{grid-row:1;grid-column:1/-1}
+ .cartoon-studio .cartoon-controls .icon-button{justify-self:center}
+}
