@@ -6,11 +6,36 @@ import pytest
 
 from ai_generation import GenerateStoryInput, generate_story, validate_generated_story
 
+# Distinct test chapters: a valid provider fixture must not rely on numbering
+# identical paragraphs. These samples are synthetic, never provider output.
+CHAPTERS = [
+    "Amir finds a tiny lantern under the old oak tree and carefully carries it home to show his friends.",
+    "The lantern glows softly when the children promise to help a lost bird find its way back to the nest.",
+    "At sunrise the friends follow a winding path beside the river and discover a bridge covered in leaves.",
+    "They collect the fallen branches together and repair the bridge so the forest animals can cross safely.",
+    "A rabbit offers them a basket of berries and explains that the garden gate has been closed by the wind.",
+    "Amir notices a little silver key among the flowers and asks the gardener whether it belongs to her.",
+    "The gardener opens the gate and invites everyone to plant seeds that will bloom in the coming spring.",
+    "The children share their lantern with the shy hedgehog and sit quietly until he feels comfortable nearby.",
+    "A gentle rain begins to fall, so the friends build a shelter using leaves and the sticks they collected.",
+    "When the clouds disappear, a rainbow leads the children to a hill where an injured butterfly is resting.",
+    "They place the butterfly near a warm flower and watch its wings slowly become strong enough to fly.",
+    "The butterfly circles a stone fountain, revealing a narrow trail to a meadow filled with golden grass.",
+    "In the meadow Amir hears a small bell and helps a shepherd guide three wandering sheep back home.",
+    "The grateful shepherd gives each friend a ribbon to remind them of the importance of working together.",
+    "As evening approaches, the children notice the lantern becoming dim and decide to return to the village.",
+    "They follow the repaired bridge across the river, stopping to see the little bird sleeping in its nest.",
+    "Near the garden gate, they water the seeds one final time and thank the gardener for her patient advice.",
+    "The villagers welcome them with warm bread and listen as the children explain what they learned that day.",
+    "Amir places the lantern on a windowsill where it can shine for any traveler who needs a little guidance.",
+    "Before falling asleep, he remembers that kindness is the brightest magic and dreams of another gentle adventure.",
+]
+
 def valid_story(language="ru"):
     return json.dumps({
         "title": {"ru":"Амир и волшебная ночь","uz":"Amir va sehrli tun","en":"Amir and the Magical Night"}[language],
         "language":language,
-        "pages":["A calm child-friendly scene, where Amir helps his friends discover the magic of kindness and courage."]*8
+        "pages":CHAPTERS[:8]
     },ensure_ascii=False)
 
 def test_generated_story_validates_eight_pages():
@@ -51,7 +76,7 @@ def test_ai_adapter_uses_no_child_photo(monkeypatch):
 @pytest.mark.parametrize("pages",[8,12,20])
 def test_expected_book_lengths(pages):
     payload=json.loads(valid_story("en"))
-    payload["pages"]=[f"Chapter {index+1}: " + payload["pages"][0] for index in range(pages)]
+    payload["pages"]=CHAPTERS[:pages]
     result=validate_generated_story(json.dumps(payload),"en",pages)
     assert len(result.pages)==pages
 
@@ -68,7 +93,7 @@ def test_multiple_heroes_and_requested_length_in_ai_prompt(monkeypatch):
             assert parsed["pages_count"]==12
             assert kwargs["store"] is False
             output=json.loads(valid_story("en"))
-            output["pages"]=output["pages"][:1]*12
+            output["pages"]=CHAPTERS[:12]
             return SimpleNamespace(output_text=json.dumps(output))
     client=SimpleNamespace(responses=FakeResponses())
     data=GenerateStoryInput(name="Amir",age=5,language="en",idea="A magical forest journey with friends",other_heroes=["Aliya","Omar"],pages_count=12)
@@ -158,3 +183,16 @@ def test_full_length_story_rejects_repeated_pages_with_different_whitespace():
     payload["pages"]=pages
     with pytest.raises(ValueError,match="valid story"):
         validate_generated_story(json.dumps(payload),"en",20)
+
+@pytest.mark.parametrize("count",[8,12,20])
+def test_repeated_chapter_text_cannot_be_hidden_by_page_labels(count):
+    payload=json.loads(valid_story("en"))
+    payload["pages"]=[f"Chapter {index+1}: {CHAPTERS[0]}" for index in range(count)]
+    with pytest.raises(ValueError,match="valid story"):
+        validate_generated_story(json.dumps(payload),"en",count)
+
+def test_duplicate_chapter_in_otherwise_distinct_story_is_rejected():
+    payload=json.loads(valid_story("en"))
+    payload["pages"][7]="  "+payload["pages"][3].upper()+"  "
+    with pytest.raises(ValueError,match="valid story"):
+        validate_generated_story(json.dumps(payload),"en")

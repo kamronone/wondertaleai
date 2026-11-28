@@ -155,12 +155,9 @@ export default function ClassicFilm({storyId,title,lang,onStoryboard,onDownloads
   <div className="cartoon-film-toolbar">
    <label className="cartoon-select cartoon-film-audio">
    {t.audio}
-   <span className="cartoon-audio-field">
-    <span className="cartoon-audio-value" aria-hidden="true">{trackLabels[audioLanguage]}</span>
-   <select disabled={busy} value={audioLanguage} onChange={event=>changeAudio(event.target.value as Lang)}>
+   <select className="cartoon-audio-field" disabled={busy} value={audioLanguage} onChange={event=>changeAudio(event.target.value as Lang)}>
     {languages.map(language=><option key={language} value={language} lang={language}>{trackLabels[language]}</option>)}
    </select>
-   </span>
    </label>
    {durationLabel!==null&&<span className="cartoon-notice">{durationLabel}</span>}
    {!failed&&<button type="button" className="icon-button" aria-label={fullscreenLabel} title={fullscreenLabel} onClick={()=>void openFullscreen()}><Maximize size={18}/></button>}

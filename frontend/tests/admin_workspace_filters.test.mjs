@@ -11,7 +11,7 @@ test("user list supports status and book-count sorting before pagination",()=>{
 });
 test("clearing filters does not reset demo records or bypass permissions",()=>{
  assert.equal((source.match(/>Очистить фильтры<\/button>/g)||[]).length,2);
- assert.match(source,/onClick=\{\(\)=>\{setQuery\("");setPlan\("all"\);setUserStatus\("all"\);setUserSort\("id"\);setUserPage\(0\);\}\}/);
+ assert.ok(source.includes('onClick={()=>{setQuery("");setPlan("all");setUserStatus("all");setUserSort("id");setUserPage(0);}}'));
  assert.match(source,/disabled=\{!canManageUsers\(role\)\}/);
  assert.match(source,/disabled=\{!canModerate\(role\)\}/);
 });
