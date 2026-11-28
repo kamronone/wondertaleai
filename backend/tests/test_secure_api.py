@@ -474,7 +474,7 @@ def test_ai_idempotency_is_scoped_to_parent_and_rejects_pending(monkeypatch):
     assert len(calls)==2
 
 
-def test_failed_ai_generation_releases_idempotency_reservation(monkeypatch):
+def test_uncertain_ai_generation_retains_idempotency_claim(monkeypatch):
     import uuid
     from ai_generation import GeneratedStory
     email="ai-retry-"+str(uuid.uuid4())+"@example.com"
@@ -494,10 +494,17 @@ def test_failed_ai_generation_releases_idempotency_reservation(monkeypatch):
     auth={**headers(token),"Idempotency-Key":"safe-retry-"+uuid.uuid4().hex}
     first=client.post("/api/books/generate",headers=auth,json=data)
     assert first.status_code==502
+    # A provider exception is ambiguous: it may already have incurred cost.
+    # Verify reconciliation state and prevent another call for the same key.
     again=client.post("/api/books/generate",headers=auth,json=data)
-    assert again.status_code==201,again.text
-    assert len(calls)==2
-    assert client.get("/api/billing/status",headers=headers(token)).json()["ai_used_today"]==1
+    assert again.status_code==409,again.text
+    assert again.json()["detail"]=="Previous generation requires review"
+    status=client.get("/api/books/generation-requests/"+auth["Idempotency-Key"],headers=headers(token))
+    assert status.status_code==200
+    assert status.json()=={"status":"needs_review","book_id":None}
+    assert len(calls)==1
+    assert client.get("/api/books",headers=headers(token)).json()==[]
+    assert client.get("/api/billing/status",headers=headers(token)).json()["ai_used_today"]==0
 
 
 def test_invalid_ai_idempotency_key_rejected_without_provider(monkeypatch):

@@ -30,19 +30,25 @@
 .admin-page{margin:0!important;padding:0!important;max-width:none!important;min-height:100dvh;width:100%;background:#f4f6fa;color:#182337;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}
 .admin-shell,.admin-shell *{box-sizing:border-box}
 .admin-shell{--admin-ink:#182337;--admin-muted:#66758b;--admin-border:#e1e6ee;--admin-accent:#087b72;display:grid;grid-template-columns:220px minmax(0,1fr);gap:0;min-height:100dvh;color:var(--admin-ink)}
-.admin-sidebar{position:sticky;top:0;align-self:start;min-height:100dvh;display:flex;flex-direction:column;gap:24px;padding:24px 14px;background:#fff;border-right:1px solid var(--admin-border)}
-.admin-brand{display:flex;align-items:center;gap:10px;padding:0 8px}
+.admin-sidebar{position:sticky;top:0;align-self:start;min-width:0;min-height:100dvh;display:flex;flex-direction:column;gap:20px;padding:20px 12px;background:#fff;border-right:1px solid var(--admin-border)}
+.admin-sidebar-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.admin-mobile-exit{display:none}
+.admin-brand{display:flex;align-items:center;gap:8px;padding:0 6px;min-width:0}
+.admin-brand>div{min-width:0}
 .admin-brand-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#087b72;color:white;flex:none}
 .admin-brand strong{display:block;font-size:19px;letter-spacing:-.6px;line-height:1.1}
-.admin-brand small{font-size:9px;letter-spacing:1px;color:var(--admin-muted);font-weight:700}
+.admin-brand small{font-size:10px;color:var(--admin-muted);font-weight:600;line-height:1.2;display:block;margin-top:3px}
 .admin-navigation{display:grid;gap:5px}
-.admin-shell .admin-navigation button{display:flex;align-items:center;gap:10px;width:100%;min-height:42px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:#536176;font:inherit;font-size:13px;font-weight:550;text-align:left;cursor:pointer}
+.admin-shell .admin-navigation button{display:flex;align-items:center;gap:8px;width:100%;min-width:0;min-height:44px;height:auto;margin:0;padding:8px 10px;border:1px solid transparent;border-radius:9px;background:transparent;color:#536176;font:inherit;font-size:13px;font-weight:550;text-align:left;line-height:1.2;cursor:pointer;box-shadow:none}
+.admin-navigation button span{min-width:0;overflow-wrap:anywhere;white-space:normal}
 .admin-navigation button svg{flex:none}
-.admin-shell .admin-navigation button[aria-pressed="true"]{background:#e5f4f1;color:#087267;font-weight:700}
+.admin-shell .admin-navigation button[aria-pressed="true"]{background:#e5f4f1;color:#087267;border-color:#c8e5de;font-weight:700}
 .admin-shell .admin-navigation button:hover{background:#edf3f5}
 .admin-exit{display:flex;align-items:center;gap:8px;margin-top:auto;padding:12px 8px;color:var(--admin-muted);font-size:12px;text-decoration:none}
-.admin-main{min-width:0;width:100%;max-width:1400px;margin:0 auto;padding:28px 30px;display:grid;align-content:start;gap:16px}
-.admin-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.admin-main{min-width:0;width:100%;max-width:1280px;margin:0 auto;padding:24px;display:grid;align-content:start;gap:14px}
+.admin-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;min-width:0}
+.admin-header>div{min-width:0}
+.admin-demo-label{flex-shrink:0}
 .admin-header h1{font-size:clamp(22px,3vw,29px);font-weight:750;line-height:1.2;letter-spacing:-.8px;margin:7px 0 0;color:var(--admin-ink)}
 .admin-breadcrumb{display:flex;align-items:center;gap:5px;color:var(--admin-muted);font-size:11px}
 .admin-demo-label{display:inline-flex;align-items:center;gap:5px;border:1px solid #e3d9ad;border-radius:7px;background:#fff9e8;color:#826015;padding:6px 9px;font-size:11px;white-space:nowrap}
@@ -59,7 +65,7 @@
 .admin-shell .admin-date-panel label{flex:1 1 145px}
 .admin-shell .admin-export{display:inline-flex;gap:6px;align-items:center;justify-content:center;background:#087b72!important;color:#fff!important;border-color:#087b72!important}
 .admin-shell .billing-metrics{gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))}
-.admin-shell .billing-metrics article{padding:15px;min-height:86px;background:white;border:1px solid var(--admin-border);border-radius:12px;box-shadow:0 2px 6px #16283c06;align-content:start;gap:7px}
+.admin-shell .billing-metrics article{padding:12px;min-height:76px;background:white;border:1px solid var(--admin-border);border-radius:10px;align-content:start;gap:5px}
 .admin-shell .billing-metrics small{font-size:12px;opacity:1;color:var(--admin-muted);line-height:1.4}
 .admin-shell .billing-metrics strong{font-size:clamp(15px,1.6vw,22px);font-weight:740;line-height:1.3;letter-spacing:-.4px;color:var(--admin-ink)}
 .admin-shell .admin-kpis article:nth-child(2){background:#eaf7f3;border-color:#cce8df}
@@ -82,7 +88,7 @@
 .admin-shell p[role="alert"]{border:1px solid #f1c9c6;background:#fff2f1;color:#a63633;padding:12px;border-radius:9px}
 .admin-shell .billing-dashboard[hidden]{display:none!important}
 @media(max-width:950px){.admin-shell{grid-template-columns:185px minmax(0,1fr)}.admin-main{padding:22px 20px}.admin-shell .billing-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:700px){.admin-shell{display:block}.admin-sidebar{position:static;min-height:0;padding:12px 14px 10px;gap:12px;border-right:0;border-bottom:1px solid var(--admin-border)}.admin-brand{padding:0}.admin-brand-icon{width:34px;height:34px;border-radius:9px}.admin-brand strong{font-size:17px}.admin-brand small{font-size:8px}.admin-navigation{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.admin-shell .admin-navigation button{padding:7px 6px;gap:5px;min-height:36px;font-size:11px;justify-content:flex-start}.admin-navigation button svg{width:15px;height:15px}.admin-exit{margin:0;padding:0;font-size:11px;position:absolute;right:14px;top:20px}.admin-main{padding:16px 12px;gap:12px}.admin-shell .billing-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-shell .billing-metrics article{padding:11px;min-height:78px}.admin-shell .billing-metrics strong{font-size:18px}.admin-shell .billing-metrics small{font-size:11px}.admin-shell .billing-filters input,.admin-shell select{font-size:16px;min-height:38px}.admin-record-list article{grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:11px}.admin-record-list article button,.admin-record-list article label{justify-self:stretch;min-width:0}.admin-event-list article{grid-template-columns:minmax(0,1fr) auto;padding:11px}.admin-event-list article small:last-child{grid-column:1/-1}.admin-shell .admin-chart-panel{padding:10px}.admin-shell .billing-plan-row{grid-template-columns:72px minmax(0,1fr) auto;gap:6px;font-size:11px}.admin-shell .admin-date-panel{padding:10px}.admin-shell .admin-date-panel label{flex:1 1 115px}}
+@media(max-width:700px){.admin-shell{display:block}.admin-sidebar{position:static;min-height:0;padding:12px 14px 10px;gap:12px;border-right:0;border-bottom:1px solid var(--admin-border)}.admin-brand{padding:0}.admin-brand-icon{width:34px;height:34px;border-radius:9px}.admin-brand strong{font-size:17px}.admin-brand small{font-size:8px}.admin-navigation{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.admin-shell .admin-navigation button{padding:6px;gap:4px;min-height:44px;font-size:11px;justify-content:flex-start}.admin-navigation button svg{width:15px;height:15px}.admin-exit{display:none}.admin-mobile-exit{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border:1px solid var(--admin-border);border-radius:9px;color:var(--admin-muted);text-decoration:none}.admin-main{padding:16px 12px;gap:12px}.admin-shell .billing-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-shell .billing-metrics article{padding:10px;min-height:68px}.admin-shell .billing-metrics strong{font-size:clamp(15px,4.3vw,18px)}.admin-shell .billing-metrics small{font-size:11px}.admin-shell .billing-filters input,.admin-shell select{font-size:16px;min-height:38px}.admin-record-list article{grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:11px}.admin-record-list article button,.admin-record-list article label{justify-self:stretch;min-width:0}.admin-event-list article{grid-template-columns:minmax(0,1fr) auto;padding:11px}.admin-event-list article small:last-child{grid-column:1/-1}.admin-shell .admin-chart-panel{padding:10px}.admin-shell .billing-plan-row{grid-template-columns:72px minmax(0,1fr) auto;gap:6px;font-size:11px}.admin-shell .admin-date-panel{padding:10px}.admin-shell .admin-date-panel label{flex:1 1 115px}}
 @media(max-width:350px){.admin-navigation{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-shell .billing-metrics strong{font-size:15px}.admin-exit{font-size:10px}.admin-header h1{font-size:20px}}
 
 
@@ -118,3 +124,21 @@
 .admin-shell .admin-record-list article>label select{min-width:0;width:100%}
 .admin-shell .admin-chart-details .admin-chart-panel{padding:8px 0;border:0;border-radius:0}
 @media(max-width:700px){.admin-shell .admin-visual-chart{grid-template-rows:110px auto;padding:10px;gap:6px}.admin-shell .admin-record-list article{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.admin-shell .admin-record-list article button{font-size:12px;padding:5px 6px}.admin-shell .admin-event-list article>*{min-width:0;overflow-wrap:anywhere}}
+
+/* Compact workspace controls: no absolute exit link, no oversized actions. */
+.admin-shell .admin-report-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.admin-shell .admin-report-heading h2{margin:0;min-width:0;font-size:14px}
+.admin-shell .admin-report-heading .admin-export{width:auto;min-width:72px;min-height:44px;flex:none;margin:0;padding:7px 10px}
+.admin-shell .admin-plan-list{display:grid;gap:10px;padding:12px;background:#fff;border:1px solid var(--admin-border);border-radius:10px;min-width:0}
+.admin-shell .billing-dashboard>.billing-filters:not(.admin-date-panel):not(.admin-report-heading):not(.admin-pagination){display:flex;flex-wrap:wrap;align-items:end;min-width:0}
+.admin-shell .billing-filters label>input,.admin-shell .billing-filters label>select{width:100%;min-width:0}
+.admin-shell .admin-record-list article>button,.admin-shell .admin-record-list article>label select,.admin-shell .billing-filters:not(.admin-date-panel) button{min-height:44px}
+.admin-shell .admin-navigation button:focus-visible,.admin-shell a:focus-visible{outline:2px solid var(--admin-accent);outline-offset:2px}
+@media(max-width:700px){
+ .admin-shell .admin-sidebar{padding:10px 12px;gap:8px}
+ .admin-shell .admin-brand small{font-size:10px}
+ .admin-shell .admin-main{padding:12px;gap:10px}
+ .admin-shell .admin-header h1{margin-top:4px;font-size:clamp(19px,5vw,24px)}
+ .admin-shell .admin-record-list article>button,.admin-shell .admin-record-list article>label select{max-width:100%;height:auto}
+ .admin-shell .billing-filters label>input,.admin-shell .billing-filters label>select{min-height:44px}
+}

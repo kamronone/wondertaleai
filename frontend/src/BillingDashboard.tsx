@@ -192,9 +192,11 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
  const chartMax=Math.max(1,...points.map(([,p])=>p.gross));
  return <section className={demo?"billing-dashboard admin-shell":"billing-dashboard"}>
   {demo&&<aside className="admin-sidebar">
-   <div className="admin-brand"><span className="admin-brand-icon"><BookOpen size={21}/></span><div><strong>Ertakcha</strong><small>ADMIN WORKSPACE</small></div></div>
-   <nav className="admin-navigation" aria-label="Разделы админки">{(Object.keys(sectionNames) as AdminSection[]).map(key=>{const Icon=sectionIcons[key];return <button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}><Icon size={18}/><span>{sectionNames[key]}</span></button>;})}</nav>
-   <a className="admin-exit" href="/"><ArrowUpRight size={16}/> Открыть Ertakcha</a>
+   <div className="admin-sidebar-head"><div className="admin-brand"><span className="admin-brand-icon"><BookOpen size={21} aria-hidden="true"/></span><div><strong>Ertakcha</strong><small>Панель управления</small></div></div>
+    <a className="admin-mobile-exit" href="/" aria-label="Открыть Ertakcha"><ArrowUpRight size={18} aria-hidden="true"/></a>
+   </div>
+   <nav className="admin-navigation" aria-label="Разделы админки">{(Object.keys(sectionNames) as AdminSection[]).map(key=>{const Icon=sectionIcons[key];return <button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}><Icon size={18} aria-hidden="true"/><span>{sectionNames[key]}</span></button>;})}</nav>
+   <a className="admin-exit" href="/"><ArrowUpRight size={16} aria-hidden="true"/> Открыть Ertakcha</a>
   </aside>}
   <div className={demo?"admin-main":"billing-dashboard"}>
   {demo&&<header className="admin-header"><div><small className="admin-breadcrumb">Рабочее пространство <ChevronRight size={12}/> {sectionNames[section]}</small><h1>{section==="finance"?"Обзор финансов":sectionNames[section]}</h1></div><span className="admin-demo-label"><ShieldCheck size={15}/> Демо</span></header>}
@@ -222,7 +224,7 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
   {validRange&&state==="loading"&&<p role="status">Загрузка…</p>}
   {validRange&&state==="error"&&<p role="alert">Статистика недоступна. Проверьте подключение и доступ.</p>}
   {validRange&&data&&<>
-   <div className="billing-filters"><button className="admin-export" type="button" onClick={exportCsv}><Download size={16}/> Экспорт CSV</button></div>
+   <div className="billing-filters admin-report-heading"><h2>Показатели за период</h2><button className="admin-export" type="button" onClick={exportCsv}><Download size={16} aria-hidden="true"/> CSV</button></div>
    <div className="billing-metrics admin-kpis">{[
     ["Общий объём",money(data.gross_minor)],["После возвратов",money(data.net_minor)],
     ["Возвраты",money(data.refund_minor)],["Заказы",String(data.orders)],
@@ -244,7 +246,7 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
    <div className="billing-metrics">{data.gifts.map(g=><article key={g.plan}><strong>{g.plan}</strong><small>Заказы: {g.orders} · Оплачено: {g.paid}</small><small>Активировано: {g.redeemed}</small><small>Доступно: {g.available} · Просрочено: {g.expired}</small><small>Возвращено: {g.refunded}</small><small>Общий объём: {money(g.gross_minor)}</small><small>Доля активаций: {g.paid?(g.redeemed/g.paid*100).toFixed(1)+"%":"—"}</small></article>)}</div>
    <h3>Активные тарифы на текущий момент</h3>
    {data.active_plans.length===0&&<p>Нет активных подписок</p>}
-   {data.active_plans.map(p=><div className="billing-plan-row" key={p.plan}><span>{p.plan}</span><progress max={Math.max(1,data.active_subscriptions)} value={p.count} aria-label={p.plan}/><strong>{p.count}</strong></div>)}
+   <div className="admin-plan-list">{data.active_plans.map(p=><div className="billing-plan-row" key={p.plan}><span>{p.plan}</span><progress max={Math.max(1,data.active_subscriptions)} value={p.count} aria-label={p.plan}/><strong>{p.count}</strong></div>)}</div>
    <p className="billing-muted">Стоимость активных тарифов не является MRR: автопродление отключено.</p>
   </>}
   </>}
