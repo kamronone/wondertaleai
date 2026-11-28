@@ -1,0 +1,40 @@
+{
+  "classicId": "rapunzel",
+  "version": 1,
+  "width": 960,
+  "height": 720,
+  "pages": [
+    {
+      "page": 1,
+      "sha256": "34890c16cb47e9492382cd0ee3f7f57ad57dd79ce82bc87a4f5cd4b193506f88"
+    },
+    {
+      "page": 2,
+      "sha256": "ddd4275809d413ff1742f498e9e01e71c9129a214ce74a225fbae4c419d4a067"
+    },
+    {
+      "page": 3,
+      "sha256": "fe86bafce72a0a54cef2b7d21f545cd3f44137bc3ce5bcb07b79c27954c8169f"
+    },
+    {
+      "page": 4,
+      "sha256": "24dc79abda92cd872ea36efa861ebb22634c16ebbc84dc52a95f70918a7b1a42"
+    },
+    {
+      "page": 5,
+      "sha256": "e4587e0db3347affa108a9b475e5d104c31c122c18e355837c0f7b50d57fad29"
+    },
+    {
+      "page": 6,
+      "sha256": "2d4a3486e10b4bca34ed42194fdddf009602fb2663310911471833190ef0f051"
+    },
+    {
+      "page": 7,
+      "sha256": "97bef0b0bc09198cd754d3df3691abe3411eee15463bf798cee6a236140de67b"
+    },
+    {
+      "page": 8,
+      "sha256": "01fd2523d03c820c235164278e50e29a29d937f9873c4692f353752334b4ea16"
+    }
+  ]
+}

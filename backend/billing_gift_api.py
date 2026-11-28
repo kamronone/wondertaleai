@@ -1,0 +1,94 @@
+"""Unmounted gift API for isolated sandbox use only."""
+from datetime import datetime, timezone
+from collections import deque
+from threading import Lock
+from time import monotonic
+from uuid import UUID
+from typing import Literal
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from fastapi.routing import APIRoute
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
+from billing_gifts import create_gift_order, redeem_gift, rotate_gift_code, list_gifts
+
+class GiftOrder(BaseModel):
+    plan_id: Literal["plus", "family"]
+    request_key: str = Field(min_length=1, max_length=128)
+
+class GiftRedeem(BaseModel):
+    code: str = Field(min_length=43, max_length=43)
+
+class PrivateGiftRoute(APIRoute):
+    def get_route_handler(self):
+        handler=super().get_route_handler()
+        async def private_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(status_code=422,content={"detail":"Invalid gift request"},
+                                    headers={"Cache-Control":"no-store"})
+        return private_handler
+
+def build_gift_router(owner_dependency, connection_factory, *, distributed_limiter=None):
+    router = APIRouter(prefix="/api/billing/gifts",route_class=PrivateGiftRoute)
+    attempts={}
+    lock=Lock()
+    def throttle(owner):
+        if distributed_limiter is not None:
+            from billing_rate_limit import RateLimitUnavailable
+            try:
+                retry=distributed_limiter.retry_after('gift-mutation',owner,limit=10)
+            except RateLimitUnavailable:
+                raise HTTPException(503,'Rate limiter unavailable',headers={'Cache-Control':'no-store'}) from None
+            if retry:
+                raise HTTPException(429,'Too many requests',headers={'Retry-After':str(retry),'Cache-Control':'no-store'})
+            return
+        now=monotonic()
+        with lock:
+            for key in list(attempts):
+                queue=attempts[key]
+                while queue and queue[0]<=now-60:
+                    queue.popleft()
+                if not queue:
+                    del attempts[key]
+            if owner not in attempts and len(attempts)>=1024:
+                raise HTTPException(429,"Too many requests",headers={"Retry-After":"60","Cache-Control":"no-store"})
+            queue=attempts.setdefault(owner,deque())
+            if len(queue)>=10:
+                raise HTTPException(429,"Too many requests",headers={"Retry-After":"60","Cache-Control":"no-store"})
+            queue.append(now)
+
+    def run(owner, response, operation, *, mutation=False):
+        response.headers["Cache-Control"] = "no-store"
+        if not isinstance(owner,str) or not owner:
+            raise HTTPException(401,"Authentication required")
+        if mutation:
+            throttle(owner)
+        try:
+            with connection_factory() as conn:
+                with conn.transaction():
+                    return operation(conn,datetime.now(timezone.utc))
+        except (ValueError, LookupError):
+            raise HTTPException(400,"Gift operation unavailable",headers={"Cache-Control":"no-store"}) from None
+
+    @router.post("/orders")
+    def create(body: GiftOrder,response: Response,owner=Depends(owner_dependency)):
+        return run(owner,response,lambda conn,now:create_gift_order(
+            conn,owner,body.plan_id,body.request_key,now,provider="sandbox"),mutation=True)
+
+    @router.post("/redeem")
+    def redeem(body: GiftRedeem,response: Response,owner=Depends(owner_dependency)):
+        return run(owner,response,lambda conn,now:redeem_gift(conn,owner,body.code,now),mutation=True)
+
+    @router.post("/{gift_id}/rotate")
+    def rotate(gift_id: UUID,response: Response,owner=Depends(owner_dependency)):
+        return run(owner,response,lambda conn,now:rotate_gift_code(conn,owner,gift_id,now),mutation=True)
+
+    @router.get("")
+    def history(response: Response,direction: Literal["purchased","received"]="purchased",
+                limit: int=20,before_time: datetime|None=None,before_id: UUID|None=None,
+                owner=Depends(owner_dependency)):
+        return run(owner,response,lambda conn,now:list_gifts(conn,owner,now,
+            direction=direction,limit=limit,before_time=before_time,before_id=before_id))
+    return router

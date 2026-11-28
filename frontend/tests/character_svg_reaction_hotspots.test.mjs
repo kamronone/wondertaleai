@@ -1,0 +1,228 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+
+const hotspot=readFileSync(new URL("../src/CharacterHotspot.tsx",import.meta.url),"utf8");
+
+test("hotspots position on an inline SVG when story PNG is unavailable",()=>{
+  assert.match(hotspot,/svg\.story-image-fallback/);
+  assert.match(hotspot,/if\(!media\)return null/);
+  assert.match(hotspot,/media\.getBoundingClientRect\(\)/);
+});
+
+test("cover-cropped classic artwork uses visible rectangle for hotspots",()=>{
+  assert.match(hotspot,/getComputedStyle\(media\)\.objectFit/);
+  assert.match(hotspot,/fit!=="cover"/);
+  assert.match(hotspot,/media instanceof HTMLImageElement/);
+});
+
+test("hotspots update if the primary image is replaced with SVG fallback",()=>{
+  assert.match(hotspot,/new MutationObserver\(\(\)=>\{/);
+  assert.match(hotspot,/mediaObserver\?\.observe\(stage,\{childList:true,subtree:true\}\)/);
+  assert.match(hotspot,/mediaObserver\?\.disconnect\(\)/);
+});
+
+test("hotspot interactions do not navigate between story pages",()=>{
+  assert.match(hotspot,/onClick=\{event=>\{event\.stopPropagation\(\);setVisibleReaction/);
+  assert.doesNotMatch(hotspot,/setPage\(|nextReaderPage\(/);
+});
+
+test("every character tap restarts animation and keeps dialogue visible",()=>{
+  assert.match(hotspot,/setReactionReplay\(value=>value\+1\)/);
+  assert.match(hotspot,/key=\{reactionReplay\}/);
+  assert.match(hotspot,/setVisibleReaction\(true\)/);
+  assert.doesNotMatch(hotspot,/setVisibleReaction\(value=>!value\)/);
+});
+
+test("new classic chapter reactions are available in all supported languages",()=>{
+ for(const key of ["snow-white:1","snow-white:4","snow-white:8","red-hood:2","cinderella:1","rapunzel:1"]){
+   const source=hotspot.slice(hotspot.indexOf('"'+key+'"'));
+   assert.ok(source.startsWith('"'+key+'": {'),key+" is present");
+   assert.match(source.slice(0,350),/label:words\(/,key+" has three localized labels");
+   assert.match(source.slice(0,620),/message:words\(/,key+" has three localized messages");
+ }
+});
+
+test("six additional fairy tales include a localized chapter-one reaction",()=>{
+ const catalog=readFileSync(new URL("../src/classics.ts",import.meta.url),"utf8");
+ for(const id of ["kolobok","turnip","pinocchio","thumbelina","jack-beanstalk","goldilocks"]){
+   assert.ok(catalog.includes('"'+id+'"'),id+" exists in the classic catalog");
+   const marker='"'+id+':1": {';
+   const start=hotspot.indexOf(marker);
+   assert.ok(start>=0,id+" has an interactive first chapter");
+   const end=hotspot.indexOf(String.fromCharCode(10)+"  },",start);
+   assert.ok(end>start,id+" reaction entry is complete");
+   const entry=hotspot.slice(start,end);
+   assert.ok(entry.includes("motion:"),id+" defines animation type");
+   assert.ok(entry.includes("position:{x:"),id+" defines a position");
+   assert.ok(entry.includes("label:words("),id+" defines localized labels");
+   assert.ok(entry.includes("message:words("),id+" defines localized dialogue");
+ }
+});
+
+test("mutation reactions cannot retrigger endless coordinate updates",()=>{
+ assert.match(hotspot,/setPoint\(previous=>previous\?\.left===next\?\.left&&previous\?\.top===next\?\.top\?previous:next\)/);
+ assert.match(hotspot,/if\(next===picture\)return/);
+ assert.match(hotspot,/picture\?\.removeEventListener\("load",update\)/);
+ assert.match(hotspot,/picture\?\.addEventListener\("load",update\)/);
+});
+
+test("each story page owns a fresh character reaction lifecycle",()=>{
+ const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
+ assert.match(main,/<CharacterHotspot key=\{active\.id\+"\:"\+page\}/);
+ assert.match(hotspot,/useEffect\(\(\)=>\{setVisibleReaction\(false\);setReactionReplay\(0\);setGifFailed\(false\);setPoint\(null\);\},\[classicId,page\]\)/);
+});
+
+test("hotspot icon represents actual scene action instead of generic sparkles",()=>{
+ assert.match(hotspot,/<MotionIcon size=\{20\} aria-hidden="true"\/>/);
+ assert.doesNotMatch(hotspot,/<Sparkles size=\{18\} aria-hidden="true"\/>/);
+});
+
+test("reaction dialogue can be dismissed without changing the story page",()=>{
+ assert.match(hotspot,/className="wt-character-reaction-close"/);
+ assert.match(hotspot,/aria-label=\{words\("Закрыть реплику","Javobni yopish","Close reply"\)\[lang\]\}/);
+ assert.match(hotspot,/onClick=\{event=>\{event\.stopPropagation\(\);setVisibleReaction\(false\);\}\}/);
+ const css=readFileSync(new URL("../src/character-reaction-motion.css",import.meta.url),"utf8");
+ assert.match(css,/\.wt-character-reaction-close\{/);
+ assert.match(css,/min-height:44px/);
+ assert.match(css,/max-height:min\(45%,180px\)/);
+});
+
+test("dialogue pointer and touch events never turn a reader page",()=>{
+ assert.match(hotspot,/className="wt-character-reaction" onPointerDown=\{event=>event\.stopPropagation\(\)\}/);
+ assert.match(hotspot,/onPointerMove=\{event=>event\.stopPropagation\(\)\}/);
+ assert.match(hotspot,/onTouchMove=\{event=>event\.stopPropagation\(\)\}/);
+ assert.match(hotspot,/<span role="status" aria-live="polite">\{reaction\.message\[lang\]\}<\/span>/);
+ assert.match(hotspot,/event\.key==="Escape"/);
+});
+
+test("six more classics have chapter reactions with translated dialogue",()=>{
+ const ids=["frog-prince","princess-pea","little-mermaid","snow-queen","nutcracker","aladdin"];
+ const catalog=readFileSync(new URL("../src/classics.ts",import.meta.url),"utf8");
+ for(const id of ids){
+   assert.ok(catalog.includes('"'+id+'"'),"missing classic "+id);
+   const start=hotspot.indexOf('"'+id+':1": {');
+   assert.ok(start>=0,"missing reaction "+id);
+   const end=hotspot.indexOf(String.fromCharCode(10)+"  },",start);
+   assert.ok(end>start,"incomplete reaction "+id);
+   const entry=hotspot.slice(start,end);
+   assert.match(entry,/label:words\(/);
+   assert.match(entry,/message:words\(/);
+   assert.match(entry,/position:\{x:/);
+ }
+});
+
+test("character reactions resolve four generated GIFs and one embedded GIF",()=>{
+ const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
+ const packageJson=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8"));
+ const installer=readFileSync(new URL("../scripts/install-reaction-gifs.mjs",import.meta.url),"utf8");
+ assert.equal(packageJson.scripts.prebuild,"npm run reaction:gif:install");
+ assert.equal(packageJson.scripts.pretest,"npm run reaction:gif:install");
+ assert.equal(packageJson.scripts.predev,"npm run reaction:gif:install");
+ for(const filename of ["snow-white-wave","duckling-flutter","bremen-music","red-hood-wave"]){
+   assert.ok(installer.includes('"'+filename+'"'),filename+" is bundled for prebuild");
+   assert.ok(assets.includes("/images/interactions/reactions/"+filename+".gif"),filename+" uses generated image");
+ }
+ assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
+ for(const id of ["cinderella:5"]){
+   assert.ok(assets.includes('"'+id+'":"data:image/gif;base64,R0lGODlh'),id+" embeds GIF89a");
+ }
+ assert.match(hotspot,/className="wt-character-reaction-gif"/);
+ assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
+});
+
+test("remaining inline Cinderella GIF has six transparent 56px frames",()=>{
+ const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
+ for(const id of ["cinderella:5"]){
+   const start=assets.indexOf('"'+id+'":"data:image/gif;base64,');
+   assert.ok(start>=0,id+" has an embedded GIF");
+   const base64Start=start+('"'+id+'":"data:image/gif;base64,').length;
+   const base64End=assets.indexOf('"',base64Start);
+   const gif=Buffer.from(assets.slice(base64Start,base64End),"base64");
+   assert.equal(gif.toString("ascii",0,6),"GIF89a");
+   assert.equal(gif.readUInt16LE(6),56);
+   assert.equal(gif.readUInt16LE(8),56);
+   assert.equal(gif[gif.length-1],0x3b);
+   // Skip sub-blocks instead of searching raw pixels for image delimiters.
+   let cursor=13+3*(1<<((gif[10]&7)+1)),frames=0;
+   while(cursor<gif.length){
+     const marker=gif[cursor++];
+     if(marker===0x3b)break;
+     if(marker===0x21){cursor++;while(true){const length=gif[cursor++];if(!length)break;cursor+=length;}continue;}
+     assert.equal(marker,0x2c,id+" contains a valid image descriptor");
+     cursor+=8;
+     const packed=gif[cursor++];
+     if(packed&0x80)cursor+=3*(1<<((packed&7)+1));
+     cursor++; // LZW minimum code size.
+     while(true){const length=gif[cursor++];if(!length)break;cursor+=length;}
+     frames++;
+   }
+   assert.equal(frames,6,id+" has six animation frames");
+ }
+});
+
+test("storybook GIFs stay local and brick delivery uses a clean illustrated success state",()=>{
+ const brick=readFileSync(new URL("../src/BrickPassInteraction.tsx",import.meta.url),"utf8");
+ const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
+ const main=readFileSync(new URL("../src/main.tsx",import.meta.url),"utf8");
+ assert.match(hotspot,/reactionGifData\[\x60\$\{classicId\}:\$\{page\}\x60\]/);
+ assert.match(brick,/delivered&&<CheckCircle2 className="wt-brick-reaction-still"/);
+ assert.doesNotMatch(brick,/reactionGifData|wt-brick-reaction-gif/);
+ assert.match(css,/\.wt-brick-reaction-still\{/);
+ assert.doesNotMatch(css,/wt-brick-reaction-gif/);
+ assert.match(css,/pointer-events:none/);
+ assert.ok(main.includes('<BrickPassInteraction key={active.id+":"+page}'));
+});
+
+test("Reduce Motion keeps a static character reaction visible instead of an empty layer",()=>{
+ const motion=readFileSync(new URL("../src/character-reaction-motion.css",import.meta.url),"utf8");
+ assert.match(hotspot,/className="wt-character-reaction-still"/);
+ assert.match(motion,/prefers-reduced-motion:reduce/);
+ assert.match(motion,/\.wt-character-reaction-still svg\{/);
+ assert.match(motion,/opacity:1!important/);
+ assert.match(motion,/wt-character-reaction-fx:not\(:has\(\.wt-character-reaction-gif\)\)>svg:first-child/);
+});
+
+test("brick delivery preserves illustrated pig and shows a small success check",()=>{
+ const brick=readFileSync(new URL("../src/BrickPassInteraction.tsx",import.meta.url),"utf8");
+ const css=readFileSync(new URL("../src/brick-pass-interaction.css",import.meta.url),"utf8");
+ assert.match(brick,/<CheckCircle2 className="wt-brick-reaction-still"/);
+ assert.match(css,/\.wt-brick-reaction-still\{/);
+ assert.match(css,/\.wt-brick-reaction-still\{[\s\S]*?display:block/);
+ assert.doesNotMatch(brick,/wt-brick-reaction-gif/);
+});
+
+test("Red Riding Hood uses real full-size six-frame GIF instead of pixel art",()=>{
+ const assets=readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8");
+ const installer=readFileSync(new URL("../scripts/install-reaction-gifs.mjs",import.meta.url),"utf8");
+ const encoded=readFileSync(new URL("../artwork/reaction-gifs/red-hood-wave.gif.b64",import.meta.url),"utf8").trim();
+ const gif=Buffer.from(encoded,"base64");
+ assert.equal(gif.toString("ascii",0,6),"GIF89a");
+ assert.equal(gif.readUInt16LE(6),256);
+ assert.equal(gif.readUInt16LE(8),256);
+ assert.ok(gif.length>20000);
+ assert.ok(assets.includes('"red-hood:1":"/images/interactions/reactions/red-hood-wave.gif"'));
+ assert.ok(installer.includes('checkedGif(bytes,asset,256,256,6,8)'));
+ assert.ok(!assets.includes('"red-hood:1":"data:image/gif;base64,'));
+});
+
+test("high-resolution GIF asset sources are versioned and validated by the installer",()=>{
+ const installer=readFileSync(new URL("../scripts/install-reaction-gifs.mjs",import.meta.url),"utf8");
+ for(const [filename,key] of [["snow-white-wave","snow-white:2"],["duckling-flutter","ugly-duckling:3"],["bremen-music","bremen:2"]]){
+   const encoded=readFileSync(new URL("../artwork/reaction-gifs/"+filename+".gif.b64",import.meta.url),"utf8").trim();
+   const gif=Buffer.from(encoded,"base64");
+   assert.equal(gif.toString("ascii",0,6),"GIF89a");
+   assert.equal(gif.readUInt16LE(6),80);
+   assert.equal(gif.readUInt16LE(8),80);
+   assert.ok(gif.length>1000);
+   assert.ok(installer.includes(filename));
+   assert.ok(readFileSync(new URL("../src/reaction_gif_assets.ts",import.meta.url),"utf8").includes('"'+key+'":"/images/interactions/reactions/'+filename+'.gif"'));
+ }
+});
+
+test("built GIF load failures gracefully fall back without broken images",()=>{
+ assert.match(hotspot,/const \[gifFailed,setGifFailed\]=useState\(false\)/);
+ assert.match(hotspot,/gifAsset&&!gifFailed/);
+ assert.match(hotspot,/onError=\{\(\)=>setGifFailed\(true\)\}/);
+ assert.match(hotspot,/<MotionIcon size=\{26\} strokeWidth=\{2\.2\}\/>/);
+});

@@ -1,0 +1,159 @@
+/* iPhone visual QA: correct tiny filter labels, extra-tall empty card and visible image edge.
+   Imported LAST to override earlier experiments without affecting other routes. */
+.library-page.library-concept-two{
+  --library-mobile-line:#e0c9f0;
+}
+.library-page.library-concept-two .library-concept-chips>button{
+  min-width:0!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  box-sizing:border-box!important;
+  gap:5px!important;
+  font-size:12px!important;
+  font-weight:720!important;
+  letter-spacing:0!important;
+}
+.library-page.library-concept-two .library-concept-chips>button svg{
+  flex:0 0 15px!important;
+  width:15px!important;
+  height:15px!important;
+}
+.library-page.library-concept-two .library-concept-art{
+  overflow:hidden!important;
+  border-radius:14px;
+}
+.library-page.library-concept-two .library-concept-castle-art{
+  border:0!important;
+  box-shadow:none!important;
+  /* Hides the export seam at the PNG top edge without replacing the artwork. */
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 100%);
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 100%);
+}
+.library-page.library-concept-two>.empty.library-concept-empty{
+  box-shadow:0 5px 16px rgba(113,69,143,.08)!important;
+}
+.library-page.library-concept-two .library-concept-create svg{
+  display:block;
+  flex:0 0 18px;
+  margin:0;
+  opacity:1!important;
+  color:#fff!important;
+  stroke:#fff!important;
+  stroke-width:2.1;
+}
+@media(max-width:620px){
+  .shell > main > .library-page.library-concept-two{
+    gap:11px!important;
+    padding:13px 12px 7px!important;
+  }
+  .library-page.library-concept-two .library-concept-heading{
+    gap:8px!important;
+    margin:0!important;
+  }
+  .library-page.library-concept-two .library-concept-heading h2{
+    font-size:24px!important;
+    line-height:1.13!important;
+  }
+  .library-page.library-concept-two .library-concept-heading p{
+    font-size:11px!important;
+    margin-top:3px!important;
+  }
+  .library-page.library-concept-two .library-concept-toolbar{gap:9px!important}
+  .library-page.library-concept-two .library-concept-chips{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:6px!important;
+    overflow:visible!important;
+  }
+  .library-page.library-concept-two .library-concept-chips>button{
+    width:100%!important;
+    min-width:0!important;
+    padding:6px 4px!important;
+    min-height:37px!important;
+    font-size:clamp(9px,2.6vw,11px)!important;
+    gap:4px!important;
+    white-space:nowrap!important;
+    justify-content:center!important;
+    line-height:1.2!important;
+  }
+  .library-page.library-concept-two .library-concept-chips>button svg{
+    width:13px!important;
+    height:13px!important;
+    flex-basis:13px!important;
+  }
+  .library-page.library-concept-two .library-concept-metrics{
+    border-radius:14px!important;
+    min-height:61px!important;
+  }
+  .library-page.library-concept-two .library-concept-metrics>.library-achievements-disclosure,
+  .library-page.library-concept-two .library-concept-metrics>.library-concept-metric{
+    min-height:61px!important;
+    padding:7px 5px!important;
+  }
+  .library-page.library-concept-two .library-achievements-disclosure>summary,
+  .library-page.library-concept-two .library-concept-metrics>.library-concept-metric{
+    min-height:45px!important;
+  }
+  .library-page.library-concept-two>.empty.library-concept-empty{
+    padding:8px 12px 13px!important;
+    border-radius:18px!important;
+    gap:0!important;
+    min-height:0!important;
+    height:auto!important;
+  }
+  .library-page.library-concept-two .library-concept-art{
+    width:min(245px,100%)!important;
+    min-height:0!important;
+    max-width:100%!important;
+    margin:0 auto!important;
+    height:auto!important;
+    aspect-ratio:480/285!important;
+  }
+  .library-page.library-concept-two .library-concept-castle-art{
+    width:100%!important;
+    max-width:100%!important;
+    max-height:155px!important;
+    height:auto!important;
+    aspect-ratio:480/285!important;
+  }
+  .library-page.library-concept-two .library-empty-copy{
+    margin:0!important;
+    padding:1px 2px 0!important;
+    gap:1px!important;
+  }
+  .library-page.library-concept-two .library-empty-copy>h3{
+    font-size:20px!important;
+    line-height:1.2!important;
+  }
+  .library-page.library-concept-two .library-empty-copy>p{
+    margin:3px 0 0!important;
+    font-size:11px!important;
+    line-height:1.35!important;
+  }
+  .library-page.library-concept-two .library-concept-create{
+    min-height:43px!important;
+    padding:8px 17px!important;
+    margin:9px auto 0!important;
+    font-size:12px!important;
+    box-shadow:0 3px 10px rgba(105,45,164,.16)!important;
+  }
+  .shell:has(.library-page.library-concept-two) .site-legal-footer{
+    margin:0!important;
+    padding:8px 8px 12px!important;
+    font-size:11px!important;
+  }
+}
+@media(max-width:360px){
+  .library-page.library-concept-two .library-concept-chips{gap:4px!important}
+  .library-page.library-concept-two .library-concept-chips>button{
+    padding:5px 2px!important;
+    font-size:9px!important;
+    gap:2px!important;
+  }
+  .library-page.library-concept-two .library-concept-chips>button svg{
+    width:12px!important;
+    height:12px!important;
+    flex-basis:12px!important;
+  }
+  .library-page.library-concept-two .library-concept-art{width:min(225px,100%)!important}
+}

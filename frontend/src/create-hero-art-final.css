@@ -1,0 +1,108 @@
+/* Hero picker: uniform portrait cards for transparent character PNGs.
+   The five source files are create-boy/girl/fox/robot/dragon.png in public/images.
+   Keep the whole portrait visible and the label readable on narrow iPhones. */
+.create-page.create-reference-page .create-hero-options{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  align-items:stretch;
+}
+.create-page.create-reference-page .create-hero-option,
+.create-page.create-reference-page .create-hero-option.selected{
+  position:relative;
+  display:grid;
+  grid-template-rows:minmax(100px,1fr) auto;
+  align-items:end;
+  justify-items:center;
+  gap:7px;
+  min-width:0;
+  box-sizing:border-box;
+  padding:9px 7px 12px;
+  border-radius:18px;
+  overflow:hidden;
+  background:linear-gradient(175deg,#fffefd,#f5eafa);
+}
+.create-page.create-reference-page .create-hero-option img{
+  display:block;
+  width:100%;
+  height:136px;
+  max-width:160px;
+  max-height:100%;
+  margin:auto;
+  padding:0;
+  object-fit:contain;
+  object-position:center bottom;
+  background:none;
+  border:0;
+  border-radius:0;
+  mix-blend-mode:normal;
+}
+.create-page.create-reference-page .create-hero-option>span{
+  width:100%;
+  min-width:0;
+  min-height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:clamp(12px,1.7vw,15px);
+  line-height:1.25;
+  overflow-wrap:anywhere;
+  text-align:center;
+}
+.create-page.create-reference-page .create-hero-option.selected{
+  border-color:#8a44bc;
+  box-shadow:inset 0 0 0 1px #8a44bc,0 6px 18px #7d52ad1c;
+}
+.create-page.create-reference-page .create-hero-checked{
+  position:absolute;
+  z-index:2;
+  top:4px;
+  right:4px;
+}
+@media screen and (max-width:700px){
+  .create-page.create-reference-page .create-hero-options{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .create-page.create-reference-page .create-hero-option,
+  .create-page.create-reference-page .create-hero-option.selected{
+    min-height:166px!important;
+    height:100%!important;
+    grid-template-rows:111px minmax(34px,auto)!important;
+    gap:4px!important;
+    padding:8px 5px 9px!important;
+    border-radius:15px!important;
+    overflow:hidden!important;
+  }
+  .create-page.create-reference-page .create-hero-option img{
+    align-self:center!important;
+    justify-self:center!important;
+    width:100%!important;
+    max-width:128px!important;
+    height:111px!important;
+    min-height:0!important;
+    object-fit:contain!important;
+    object-position:center bottom!important;
+    border-radius:0!important;
+    background:none!important;
+  }
+  .create-page.create-reference-page .create-hero-option>span{
+    align-self:center!important;
+    min-height:34px!important;
+    padding:0 2px!important;
+    font-size:clamp(11px,2.9vw,13px)!important;
+  }
+}
+@media screen and (max-width:360px){
+  .create-page.create-reference-page .create-hero-options{gap:6px!important}
+  .create-page.create-reference-page .create-hero-option,
+  .create-page.create-reference-page .create-hero-option.selected{
+    min-height:149px!important;
+    grid-template-rows:94px minmax(34px,auto)!important;
+    padding:7px 3px 8px!important;
+  }
+  .create-page.create-reference-page .create-hero-option img{
+    height:94px!important;
+    max-width:104px!important;
+  }
+}

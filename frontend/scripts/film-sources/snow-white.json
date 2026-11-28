@@ -1,0 +1,83 @@
+{
+  "storyId": "snow-white",
+  "status": "draft",
+  "languages": [
+    "ru",
+    "uz",
+    "en"
+  ],
+  "scenes": [
+    {
+      "page": 1,
+      "image": "/images/classics/snow-white/pages/page-1.png",
+      "narration": {
+        "ru": "Белоснежка жила во дворце. Королева завидовала её красоте.",
+        "uz": "Oqqiz saroyda yaşardi. Qiroliça uning güzalligiga hasad qilardi.",
+        "en": "Snow White lived in a palace. The queen envied her beauty."
+      }
+    },
+    {
+      "page": 2,
+      "image": "/images/classics/snow-white/pages/page-2.png",
+      "narration": {
+        "ru": "Белоснежка ушла в лес. Добрые звери помогли ей найти безопасный путь.",
+        "uz": "Oqqiz örmonga ketdi. Mehribon hayvonlar unga xavfsiz yöl topişda yordam berdi.",
+        "en": "Snow White left for the forest. Kind animals helped her find a safe path."
+      }
+    },
+    {
+      "page": 3,
+      "image": "/images/classics/snow-white/pages/page-3.png",
+      "narration": {
+        "ru": "У лесного домика её встретили семь гномов. Они предложили ей остаться и стали её друзьями.",
+        "uz": "Örmon uyçasi yonida uni yetti mitti kutib oldi. Ular unga qolişni taklif qilib, döst bölişdi.",
+        "en": "Seven dwarfs welcomed her outside their woodland cottage. They invited her to stay and became her friends."
+      }
+    },
+    {
+      "page": 4,
+      "image": "/images/classics/snow-white/pages/page-4.png",
+      "narration": {
+        "ru": "Королева переоделась старушкой и принесла заколдованное яблоко.",
+        "uz": "Qiroliça kampir qiyofasida sehrlangan olma olib keldi.",
+        "en": "The queen disguised herself as an old woman and brought an enchanted apple."
+      }
+    },
+    {
+      "page": 5,
+      "image": "/images/classics/snow-white/pages/page-5.png",
+      "narration": {
+        "ru": "Белоснежка откусила яблоко и погрузилась в волшебный сон. Гномы остались рядом.",
+        "uz": "Oqqiz olmadan tişladi va sehrli uyquga ketdi. Mittilar uning yonida qolişdi.",
+        "en": "Snow White took a bite and fell into an enchanted sleep. The dwarfs stayed beside her."
+      }
+    },
+    {
+      "page": 6,
+      "image": "/images/classics/snow-white/pages/page-6.png",
+      "narration": {
+        "ru": "Добрый принц нашёл Белоснежку. Чары рассеялись, и она проснулась.",
+        "uz": "Mehribon şahzoda Oqqizni topdi. Sehr tarqaldi va u uyğondi.",
+        "en": "A kind prince found Snow White. The spell faded, and she awoke."
+      }
+    },
+    {
+      "page": 7,
+      "image": "/images/classics/snow-white/pages/page-7.png",
+      "narration": {
+        "ru": "Белоснежка и принц сыграли весёлую свадьбу. Началась их новая счастливая жизнь.",
+        "uz": "Oqqiz va şahzoda quvonçli töy qilişdi. Ularning yangi baxtli hayoti boşlandi.",
+        "en": "Snow White and the prince celebrated their wedding and began a happy new life."
+      }
+    },
+    {
+      "page": 8,
+      "image": "/images/classics/snow-white/pages/page-8.png",
+      "narration": {
+        "ru": "Семь гномов часто навещали друзей. Все радовались, что снова вместе.",
+        "uz": "Yetti mitti döstlarini tez-tez körgani kelardi. Hamma yana birga ekanidan quvondi.",
+        "en": "The seven dwarfs often visited their friends. Everyone was happy to be together again."
+      }
+    }
+  ]
+}

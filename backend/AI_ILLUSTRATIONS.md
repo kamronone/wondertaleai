@@ -1,0 +1,286 @@
+# Private AI illustration foundation
+
+**Status: isolated code only. A provider adapter exists, but no live model
+calls, automatic worker, deployment or production image generation is enabled.**
+
+The feature is gated by `ENABLE_AI_ILLUSTRATIONS=true`, which is **false
+by default**. Do not enable it for real families until a consent, storage,
+moderation and cost review has been completed. This flag only allows creating
+database entries, not rendering images.
+
+## Owner-scoped API
+
+- `POST /api/illustrations/jobs` with `{book_id,page_number,style}`, using
+  an authenticated parent token. The book and requested page must exist under
+  that exact parent. Styles: `watercolor`, `storybook`, `pencil`.
+- Identical page/style requests return the same queued job. At most two
+  queued/processing illustration jobs exist per parent.
+- `GET /api/illustrations/jobs` returns at most 20 owner-scoped statuses,
+  page numbers, and opaque IDs, never story text, child names or image URLs.
+- `DELETE /api/illustrations/jobs/{job_id}` cancels a job only while queued.
+- Responses are `private, no-store`. On parent or book deletion, related
+  records disappear via foreign key cascades.
+
+Migration: `backend/migrations/007_private_illustration_jobs.sql`. Use a
+**dedicated WonderTale test PostgreSQL database**, never a shared project DB.
+
+## Visual continuity prototype
+
+`illustration_planning.py` can construct deterministic, safe, original
+visual briefs. For the same book ID, every page has the same fictional
+character outfit and appearance. It uses curated scenes and does not include
+the child's name, photos, story text or parent identifiers in the prompt.
+The briefs are **generic**, not yet scene-accurate illustrations of the story.
+No prompt is transmitted externally.
+
+## Private PNG pilot storage (code only)
+
+A limited, **database-backed** image asset path is now implemented.
+`backend/private_illustration_media.py` accepts decoded PNG/JPEG/WebP input
+from an internal trusted caller, checks the file size and pixel dimensions,
+and re-encodes pixels as a metadata-free PNG (at most 3 MB, 2048 pixels per
+edge, 4 million pixels total). It does not call an image provider or perform
+content moderation.
+
+The trusted worker-only Python function
+`save_private_illustration_asset(job_id, image_bytes)` accepts media
+**only for an already-claimed `processing` illustration job**. It stores
+sanitized bytes and a SHA-256 checksum in the database in the same transaction
+as marking the job completed. There is **no public upload route**.
+
+`GET /api/illustrations/media/{job_id}` requires the parent's bearer token
+and verifies both the completed job and exact book ownership before returning
+PNG bytes with `Cache-Control: private, no-store`. A wrong owner gets 404.
+On book or account deletion, database foreign-key cascades delete the image
+bytes. Migration: `008_private_illustration_assets.sql`.
+
+This is a **small-pilot engineering foundation**, not a scalable media
+service. The private database must be encrypted, access controlled and
+backed up appropriately. Larger workloads should move binary data into
+private object storage with short-lived, owner-validated access. The
+actual image generation worker, content safety/moderation, spending
+limits, parental consent review and production delivery remain unfinished.
+
+## Quota-gated worker foundation (not active)
+
+`illustration_worker.process_one_illustration_job` can claim **one** queued
+illustration from the private DB. This Python function is not called by any
+HTTP route or scheduled task and has an **isolated provider adapter that is not automatically started**.
+
+It runs only if **both** `ENABLE_AI_ILLUSTRATIONS=true` and
+`ENABLE_AI_ILLUSTRATIONS_WORKER=true` are configured. Without positive
+integer caps in `MAX_ILLUSTRATIONS_PER_DAY` and
+`MAX_PARENT_ILLUSTRATIONS_PER_DAY` it refuses to start. Caps are clamped
+to at most 10 for this pilot foundation and default to **zero**.
+
+The worker requires three explicitly injected, trusted callbacks:
+`moderator(prompt)->bool`, `renderer(prompt)->bytes`, and
+`image_moderator(bytes)->bool`. It checks both the pilot email allowlist and
+book ownership *again at claim time*, atomically reserves the daily global
+and per-parent count, and calls the callbacks only after committing the claim.
+The prompt is an **original generic fictional scene**, with no page text,
+child name, email or other personally identifying information. A failed
+moderation result never publishes an image. Renderer errors and uncertain
+attempts are terminal; no automatic paid retries or quota refunds.
+
+This is **not verified provider-side billing protection** or a production
+content safety system. Actual text and image moderation services must be
+implemented, evaluated and monitored independently; any uncertain provider
+call requires human reconciliation before a deliberate new attempt. Quota
+rows are persistent and consume quota even if a renderer crashes.
+
+Migration: `009_illustration_daily_quotas.sql`. Tests inject synthetic PNG
+bytes and mock moderation, and never contact an AI provider.
+
+## OpenAI Images adapter (isolated, not deployed)
+
+`backend/openai_illustration_provider.py` now contains a validated adapter for
+OpenAI Images API using the pilot model `gpt-image-1.5`, 1024×1024 PNG,
+one output per invocation, no automatic retries, and a 90-second client
+deadline. It accepts only the original curated fictional briefs from
+`illustration_planning.py`. Provider output is a single base64-encoded image,
+decoded with strict size/type checks, sanitized and metadata-stripped before
+the caller may persist it. The adapter does **not** log a child's name,
+private story text, API key, prompts, provider outputs or decoded images.
+
+Three environment switches must all be enabled:
+`ENABLE_AI_ILLUSTRATIONS=true`,
+`ENABLE_AI_ILLUSTRATIONS_WORKER=true`, and
+`ENABLE_OPENAI_IMAGE_PROVIDER=true`. The last flag defaults to **false**
+and this adapter refuses `APP_ENV=production`. The pilot model cannot be
+changed by simply editing `OPENAI_IMAGE_MODEL` in runtime configuration.
+Calls require a server-side `OPENAI_API_KEY`; do not supply that key to Vite.
+
+**The adapter is not attached to an automatic runner, HTTP route or
+scheduled job**. A human-reviewed, independently working prompt-safety
+reviewer and **output-image safety reviewer** must be connected to the
+existing `process_one_illustration_job` worker before a real request is
+permitted. A mock callback returning `True` is sufficient for tests
+**only**, not live child-facing generation. The adapter does not implement
+provider-side content moderation, cost estimation, provider idempotency or
+billing reconciliation.
+
+A full live pilot also needs parental consent, approved text/image safety
+policy, budget alerts, a controlled worker host, and verification that the
+intended model/account permissions are available. No provider requests are
+performed by CI or by importing this module.
+
+## Moderation integration (mock-tested; not enabled)
+
+`illustration_moderation.py` now supports separate **input text** and
+**output image** moderation through OpenAI's `omni-moderation-latest` API.
+The image is normalized to a stripped PNG and sent as an in-memory data URL.
+No public storage URL or child-identifying information is used. Missing,
+invalid, ambiguous or flagged moderation results **fail closed**.
+
+`approved_illustration_runner.py` wires those checks to the existing
+quota-reserving illustration worker and the OpenAI Images adapter, in order:
+`prompt moderation → one image generation → output moderation → private PNG`.
+It is a Python callable, **not** an HTTP route, scheduled worker or deployed
+service. It requires the existing three feature flags plus
+`ENABLE_OPENAI_IMAGE_MODERATION=true`, which defaults to **false**.
+Both adapters refuse Production. All CI testing injects fake provider clients,
+so no real keys, requests or usage charges are involved.
+
+The moderation API does not guarantee suitability for every child or every
+type of harmful imagery. Before any real pilot, the product needs independent
+child-focused human review criteria, consent and reporting workflows,
+documented false-negative testing, input/output moderation verification on
+real provider responses, incident response and budgeting controls. Failures
+after the potentially paid call remain `needs_review` rather than being
+retried automatically.
+
+## Pilot emergency stop and attempt monitoring
+
+The worker has a **persistent operator kill switch** in
+`illustration_runtime_control` (migration
+`010_illustration_emergency_stop.sql`). A private PostgreSQL operator may
+pause all pending work by running this SQL in an authenticated, restricted
+database session:
+
+```sql
+UPDATE illustration_runtime_control
+SET paused=1, updated_at=NOW()::text WHERE singleton=1;
+```
+
+Re-enable only after investigating incidents and explicitly approving
+resumption:
+
+```sql
+UPDATE illustration_runtime_control
+SET paused=0, updated_at=NOW()::text WHERE singleton=1;
+```
+
+A separate `ILLUSTRATION_EMERGENCY_STOP=true` environment flag also pauses
+work without writing to the database. If the database control cannot be read,
+the worker **fails closed**. Worker checks occur before claiming, immediately
+before a possibly billable provider call, and before saving its result. This
+does **not cancel an API call already in flight**, nor can it guarantee that a
+provider did not bill it. Such jobs need manual reconciliation.
+
+`illustration_worker.illustration_attempt_snapshot()` is an **internal-only**
+diagnostic function returning daily reserved call counts, aggregate job
+statuses and the pause state. It intentionally returns no account addresses,
+child names, prompts, or images. Counts are **not actual money spent** or a
+provider billing reconciliation; quota reservations can include failed or
+uncertain calls. Do not expose this function through a public HTTP route.
+
+No dashboard, scheduler, or production worker has been enabled.
+
+## Private audit and operator reconciliation
+
+Migration `011_illustration_audit_events.sql` creates a minimal
+`illustration_job_events` table. The queue and trusted worker record
+`queued`, `processing`, `completed`, `failed` and `needs_review`
+transitions in the same transaction as the job status. No event contains a
+parent email, child's name, story text, image bytes or provider credentials.
+Events are automatically deleted when their related book, job or parent is
+deleted, avoiding orphaned personal identifiers.
+
+`illustration_reconciliation.unresolved_illustration_report()` is a
+**read-only Python function**, not an HTTP endpoint. It works only in
+development, Preview or staging, returns a bounded list of opaque identifiers
+for processing jobs older than a threshold, and includes aggregate counts
+of statuses and reserved attempts. It neither queries provider billing nor
+mutates any job. `needs_review` in this report is an operator diagnosis,
+not an automatic database state transition.
+
+**Do not automatically retry** a job found by this report or mark its
+reservation refundable. The provider may have charged before the worker
+stopped. Confirm provider usage and transaction history in an authorized
+operator workflow before making any decision. The report is deliberately
+unavailable in Production and must not be published to a client.
+
+## Manual provider billing reconciliation (operator-only)
+
+Migration `012_illustration_billing_reviews.sql` introduces a minimal,
+job-scoped reconciliation record. The trusted Python module
+`illustration_billing_reconciliation.py` can record exactly one manual
+finding per **terminal** illustration job: `charged`, `not_charged`, or
+`unknown`. A confirmed charge requires a positive amount in
+**micro-USD** (one USD = 1,000,000 micro-USD); verified non-charges require
+zero; unknown charges must not include an amount.
+
+The operator provides a SHA-256 digest of separately retained billing
+evidence, not a sensitive provider invoice or customer data. The database
+keeps no child details or provider credentials in the review, and deletion
+of a job/book/parent cascades to its review. Subsequent conflicting reviews
+are rejected rather than overwriting the original.
+
+Access requires `ENABLE_ILLUSTRATION_BILLING_RECONCILIATION=true` and
+`APP_ENV=development|preview|staging`. There is **no public endpoint**,
+automatic provider billing lookup, retry, refund or quota adjustment.
+`billing_review_snapshot()` only aggregates operator-entered results;
+it is not a substitute for the provider's billing dashboard. Direct
+database writes should be restricted to a dedicated trusted operator role
+and audited separately.
+
+A manual finding **never** changes the status of an uncertain job and
+**never** automatically starts a second image generation. The review
+exists to help an operator decide what actually happened before any
+separately authorized remediation.
+
+## Parental consent (versioned opt-in)
+
+Migration `013_illustration_parent_consent.sql` stores an explicit, owner-scoped
+consent record. A new parent has **no consent**. Authenticated endpoints:
+`GET /api/illustrations/consent` returns current consent and policy version;
+`POST /api/illustrations/consent` accepts
+`{"agreed":true,"policy_version":"illustration-pilot-v1"}` or `agreed:false`
+to revoke it. A different policy revision is rejected, and upgrading the
+policy requires a fresh explicit grant.
+
+Creating illustration jobs requires **both** the existing feature/pilot
+allowlist and current parental consent. A worker rechecks current consent
+before claiming a job, before the potentially paid provider call, and before
+committing the image to the private database.
+
+Revocation atomically deletes **queued** illustration jobs and quarantines
+`processing` jobs as `needs_review`. Jobs already sent to an external
+provider cannot be cancelled reliably, and their usage must still be
+reconciled manually; no automatic retry/refund occurs. Previously saved
+images are **not deleted merely by revoking future generation consent**.
+They remain private and are deleted with their book or parent account.
+
+This API alone is **not a compliant parental-consent UX**. The user-facing
+product still needs a clear, localized explanation of generation, retention,
+cost and external processors, a visible agreement control, age-appropriate
+notices and legally reviewed terms before any real child-facing pilot.
+
+## Release blockers
+
+1. Review the parental agreement and data-processing obligations for minors.
+2. Build a non-public binary/media store with access-controlled delivery,
+   provider asset validation, checksums, maximum dimensions/file sizes,
+   malware and safety review, and account deletion cleanup.
+3. Use a separate trusted worker with explicit spending ceilings and a
+   provider-specific idempotency and crash-reconciliation strategy.
+4. Decide how a private book's actual scenes can be illustrated without
+   unnecessarily transmitting identifying child information.
+5. Persist media identifiers only after validation. Never accept arbitrary
+   user-provided storage keys or third-party image URLs.
+6. Add consent revocation, monitoring, retention windows, and integration
+   tests against a disposable isolated database before any Preview rollout.
+
+All existing tests use local databases, and illustration planning tests
+run with no provider network calls.

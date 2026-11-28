@@ -1,0 +1,266 @@
+/* Story-aware interactive SVG props, with all touch behaviour inside the illustration. */
+.reader-page .story-page-image .wt-gift-play{
+  position:absolute!important;
+  inset:0!important;
+  z-index:7!important;
+  overflow:hidden;
+  pointer-events:none!important;
+  border-radius:inherit;
+  isolation:isolate;
+}
+.reader-page .wt-gift-target{
+  position:absolute;
+  display:grid;
+  place-items:center;
+  width:65px;
+  height:65px;
+  border:2px dashed rgba(255,245,207,.95);
+  border-radius:50%;
+  background:rgba(105,67,137,.19);
+  box-shadow:0 0 0 6px rgba(255,249,224,.14);
+  transform:translate(-50%,-50%);
+  color:white;
+  pointer-events:none;
+}
+.reader-page .wt-gift-target-ring{
+  width:35px;
+  height:35px;
+  border:2px dashed rgba(255,255,255,.91);
+  border-radius:50%;
+}
+.reader-page .wt-gift-play.is-delivered .wt-gift-target{
+  border:2px solid #f5fff0;
+  background:rgba(89,149,80,.85);
+  box-shadow:0 0 0 6px rgba(221,255,191,.28);
+}
+.reader-page .wt-gift-item{
+  position:absolute;
+  display:grid;
+  place-items:center;
+  width:73px;
+  height:72px;
+  box-sizing:border-box;
+  padding:0;
+  background:none;
+  border:none;
+  transform:translate(-50%,-50%);
+  cursor:grab;
+  touch-action:none!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  pointer-events:auto!important;
+  filter:drop-shadow(0 5px 4px rgba(43,29,32,.35));
+  z-index:2;
+}
+.reader-page .wt-gift-item img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.reader-page .wt-gift-item.is-dragging{
+  cursor:grabbing;
+  filter:drop-shadow(0 10px 9px rgba(43,29,32,.5));
+}
+.reader-page .wt-gift-item:focus-visible{
+  outline:3px solid #fff1a0;
+  outline-offset:2px;
+  border-radius:13px;
+}
+.reader-page .wt-gift-play.is-delivered .wt-gift-item{
+  opacity:0;
+  pointer-events:none!important;
+}
+.reader-page .wt-gift-guide{
+  position:absolute;
+  left:9px;
+  bottom:9px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  box-sizing:border-box;
+  width:max-content;
+  max-width:calc(100% - 103px);
+  min-height:43px;
+  padding:6px 9px;
+  border:1px solid rgba(255,255,255,.65);
+  border-radius:12px;
+  color:white;
+  background:rgba(40,31,46,.77);
+  box-shadow:0 4px 12px rgba(40,22,32,.2);
+  pointer-events:none;
+}
+.reader-page .wt-gift-guide img{
+  display:block;
+  flex:0 0 30px;
+  width:30px;
+  height:30px;
+  object-fit:contain;
+}
+.reader-page .wt-gift-guide small{
+  display:block;
+  min-width:0;
+  font-size:11px;
+  font-weight:750;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.reader-page .wt-gift-speech{
+  position:absolute;
+  top:7%;
+  left:8%;
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  box-sizing:border-box;
+  width:max-content;
+  max-width:83%;
+  min-height:60px;
+  padding:12px 14px;
+  border:2px solid #eddbbc;
+  border-radius:19px;
+  color:#57364c;
+  background:rgba(255,251,242,.97);
+  box-shadow:0 6px 19px rgba(54,30,36,.24);
+  font-size:clamp(12px,3.2vw,15px);
+  font-weight:800;
+  line-height:1.42;
+  overflow-wrap:anywhere;
+  z-index:9;
+  pointer-events:none;
+}
+.reader-page .wt-gift-speech::after{
+  content:"";
+  position:absolute;
+  left:29%;
+  bottom:-10px;
+  width:16px;
+  height:16px;
+  background:#fffbf2;
+  border-right:2px solid #eddbbc;
+  border-bottom:2px solid #eddbbc;
+  transform:rotate(45deg);
+}
+.reader-page .wt-gift-speech svg{
+  color:#5a9c50;
+  flex:0 0 19px;
+}
+@media(max-width:420px){
+  .reader-page .wt-gift-item{width:62px;height:62px}
+  .reader-page .wt-gift-target{width:56px;height:56px}
+  .reader-page .wt-gift-guide{max-width:calc(100% - 85px);min-height:38px;padding:5px 7px}
+  .reader-page .wt-gift-guide img{flex-basis:23px;width:23px;height:23px}
+  .reader-page .wt-gift-guide small{font-size:10px}
+  .reader-page .wt-gift-speech{max-width:85%;left:6%;top:5%;padding:10px 12px;font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-gift-item{transition:none!important}
+}
+@media print{
+  .reader-page .wt-gift-play{display:none!important}
+}
+
+/* The hero's gift visibly lands, then the spoken response stays until a manual page turn.
+   Effects are purely decorative and never block swipe controls or demand sound. */
+.reader-page .wt-gift-play.is-delivered .wt-gift-target{
+  animation:wt-gift-land .48s cubic-bezier(.2,.85,.24,1.16) both;
+}
+.reader-page .wt-gift-play.is-delivered .wt-gift-target::after{
+  content:"✦";
+  position:absolute;
+  top:-19px;
+  right:-13px;
+  color:#ffe9a0;
+  font-size:25px;
+  text-shadow:0 2px 9px rgba(84,39,88,.38);
+  animation:wt-gift-sparkle .75s ease-out both;
+}
+.reader-page .wt-gift-play.is-delivered .wt-gift-speech{
+  animation:wt-gift-reply .34s ease-out both;
+}
+@keyframes wt-gift-land{
+  0%{opacity:.45;transform:translate(-50%,-50%) scale(.74)}
+  65%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@keyframes wt-gift-sparkle{
+  0%{opacity:0;transform:translateY(12px) scale(.6)}
+  40%{opacity:1;transform:translateY(-4px) scale(1.1)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes wt-gift-reply{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-gift-play.is-delivered .wt-gift-target,
+  .reader-page .wt-gift-play.is-delivered .wt-gift-target::after,
+  .reader-page .wt-gift-play.is-delivered .wt-gift-speech{
+    animation:none!important;
+  }
+}
+
+/* A visual response from the recipient, separate from the draggable prop.
+   The illustrated PNG/GIF itself remains untouched. The reply stays readable. */
+.reader-page .wt-gift-reaction-fx{
+  position:absolute;z-index:5;pointer-events:none;
+  width:90px;height:90px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+}
+.reader-page .wt-gift-reaction-fx::before{
+  content:"";position:absolute;inset:6px;
+  border:3px solid #fff0bfc9;
+  border-radius:50%;background:radial-gradient(circle,#fee2b85c,transparent 68%);
+  animation:wt-gift-character-halo 1700ms ease-out both;
+}
+.reader-page .wt-gift-reaction-fx svg{
+  position:absolute;top:13px;left:27px;color:#fff6cf;
+  filter:drop-shadow(0 3px 4px #6e478b80);
+  animation:wt-gift-character-response 1700ms ease-out both;
+}
+.reader-page .wt-gift-reaction-fx svg:nth-child(2){
+  left:53px;top:35px;animation-delay:150ms;color:#ffe0ef;
+}
+@keyframes wt-gift-character-halo{
+  0%{opacity:0;scale:.35}
+  28%{opacity:1;scale:1}
+  70%{opacity:.7}
+  100%{opacity:0;scale:1.35}
+}
+@keyframes wt-gift-character-response{
+  0%{opacity:0;transform:translateY(8px) rotate(-20deg) scale(.5)}
+  24%{opacity:1;transform:translateY(-7px) rotate(18deg) scale(1.16)}
+  51%{opacity:1;transform:translateY(-13px) rotate(-15deg)}
+  80%{opacity:.8}
+  100%{opacity:0;transform:translate(16px,-34px) rotate(16deg) scale(.8)}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-gift-reaction-fx{display:none!important}
+}
+@media print{.reader-page .wt-gift-reaction-fx{display:none!important}}
+
+/* No extra oversized button: children can tap the object, then its glowing target. */
+.reader-page .wt-gift-target.is-selected{
+  pointer-events:auto!important;
+  cursor:pointer;
+  background:rgba(130,88,180,.42);
+  border:3px solid #ffeca8;
+  outline:3px solid rgba(255,253,223,.72);
+  outline-offset:3px;
+  box-shadow:0 0 0 9px rgba(255,243,187,.22);
+  z-index:8;
+}
+.reader-page .wt-gift-target.is-selected:focus-visible{
+  outline:4px solid #f5d68c;
+  outline-offset:5px;
+}
+.reader-page .wt-gift-item.is-selected{
+  filter:drop-shadow(0 0 9px rgba(255,226,137,.95));
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-gift-target.is-selected{animation:none!important}
+}

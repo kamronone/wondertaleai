@@ -1,0 +1,1918 @@
+/* WonderTale mobile navigation and reader polish.
+   Scoped overrides follow the legacy theme to avoid cascade regressions. */
+@media (max-width:620px){
+  .shell main {padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+  .shell .mobile-tabbar{
+    position:fixed!important;
+    inset:auto 0 0 0!important;
+    z-index:80!important;
+    display:flex;
+    align-items:stretch;
+    width:100%;
+    min-height:57px;
+    padding:7px 8px calc(8px + env(safe-area-inset-bottom))!important;
+    background:rgba(255,252,255,.97);
+    border-top:1px solid #e5d5ef;
+    border-radius:15px 15px 0 0;
+    box-shadow:0 -6px 23px rgba(40,21,76,.13);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+  }
+  .shell .mobile-tabbar button{
+    flex:1 1 25%;
+    max-width:none!important;
+    min-width:0;
+    min-height:44px;
+    padding:4px 2px;
+    border-radius:10px;
+    font-size:clamp(9px,2.8vw,11px);
+    line-height:1.2;
+    gap:3px;
+  }
+  .shell .mobile-tabbar button span{
+    display:block;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-overflow:clip;
+    text-align:center;
+  }
+  .shell .mobile-tabbar button.active{background:#f4ecff}
+  .reader-page .reader-toolbar{gap:8px}
+  .reader-page .reader-actions{flex-wrap:nowrap}
+  .reader-page .reader-display-settings{margin-bottom:13px}
+  .reader-page .pager{margin-bottom:18px}
+}
+.reader-page .story-page{
+  touch-action:pan-y pinch-zoom;
+  overscroll-behavior-x:contain;
+}
+.reader-page .story-text{
+  white-space:pre-wrap;
+  hyphens:auto;
+}
+.reader-page button:focus-visible,
+.create-page button:focus-visible,
+.mobile-tabbar button:focus-visible,
+.classic-card:focus-visible{
+  outline:3px solid #ad75d9;
+  outline-offset:3px;
+}
+@media print {
+  .shell .mobile-tabbar{display:none!important}
+  .print-book-cover,.print-book-page{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .print-book-page p{
+    overflow-wrap:anywhere;
+    max-height:none;
+    orphans:3;
+    widows:3;
+  }
+}
+
+/* Accessible confirmation step in the story creator. */
+.wizard-review{margin:0 0 16px;padding:15px;border:1px solid #e7d7ed;border-radius:15px;background:#fcf9ff;min-width:0}
+.wizard-review>strong{display:block;font-size:15px;color:#4b356e;margin-bottom:11px}
+.wizard-review dl{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.wizard-review dl div{min-width:0;padding:9px 11px;border-radius:10px;background:#fff;border:1px solid #ece1f4}
+.wizard-review dt{font-size:11px;color:#826e96}
+.wizard-review dd{margin:4px 0 0;font-size:13px;color:#4b3768;font-weight:700;overflow-wrap:anywhere}
+.wizard-review p{font-size:12px;line-height:1.6;color:#5e4e70;white-space:pre-wrap;overflow-wrap:anywhere}
+.wizard-review button{min-height:40px;padding:9px 13px;border:1px solid #d8bce8;border-radius:10px;background:#fff;color:#69418f;font-weight:700;font-size:12px}
+@media(max-width:380px){.wizard-review dl{grid-template-columns:1fr}}
+
+/* Earned achievements are visibly distinct; progress remains library-scoped. */
+.reading-achievement.unlocked{border-color:#b3d4bc;background:linear-gradient(145deg,#fff,#eff8f1)}
+.reading-achievement.unlocked .reading-achievement-count{color:#387352}
+.reading-achievement.unlocked .reading-achievement-track>span{background:#5b9a73}
+.reading-achievement.unlocked>span{color:#34674c}
+
+/* A4 book export: preserve every page with readable text and safe margins.
+   The browser's Print / Save as PDF remains the export mechanism. */
+@media print{
+  .print-book-cover,.print-book-page{
+    padding:7mm 5mm!important;
+    min-height:265mm!important;
+    height:auto;
+    overflow:visible;
+    box-sizing:border-box;
+    break-after:page;
+    page-break-after:always;
+  }
+  .print-book-page{gap:5mm!important}
+  .print-book-page img{
+    height:97mm!important;
+    max-height:97mm!important;
+    width:100%;
+    object-fit:contain;
+    flex:0 0 auto;
+  }
+  .print-book-page p{
+    font-family:Georgia,serif;
+    font-size:12pt!important;
+    line-height:1.45!important;
+    text-align:left;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+    margin:0!important;
+  }
+  .print-book-page-head{flex:0 0 auto}
+  .print-book-cover img{max-height:145mm}
+  .print-book-page:last-child{break-after:auto;page-break-after:auto}
+}
+
+/* SVG artwork fallback must size identically to normal images in printed books. */
+@media print{
+  .print-book-cover>.story-image-fallback{
+    display:block;
+    width:78%;
+    height:145mm;
+    margin:0 auto 12mm;
+  }
+  .print-book-page>.story-image-fallback{
+    display:block;
+    width:100%;
+    height:97mm;
+    max-height:97mm;
+    flex:0 0 auto;
+  }
+}
+
+
+/* Reader controls fit narrow iPhones without horizontal page scrolling. */
+.reader-page,.reader-page .reader-toolbar,.reader-page .reader-title{min-width:0}
+.reader-page .reader-title h2,
+.reader-page .reader-title>span,
+.reader-page .reader-saved-tag{overflow-wrap:anywhere;word-break:normal}
+.reader-page .reader-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.reader-page .reader-actions .icon-button{flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px}
+.reader-page .pager>button{display:inline-flex;align-items:center;justify-content:center;gap:5px}
+@media(max-width:420px){
+  .reader-page .reader-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+  .reader-page .back-button{min-width:0;max-width:100%;white-space:normal;text-align:left;overflow-wrap:anywhere}
+  .reader-page .reader-actions{gap:5px}
+  .reader-page .reader-actions .icon-button{flex-basis:40px;width:40px;height:44px;min-width:40px;min-height:44px}
+  .reader-page .reader-title h2{font-size:clamp(20px,5.6vw,25px);line-height:1.3;max-width:100%}
+  .reader-page .reader-display-settings{min-width:0}
+  .reader-page .reader-night-toggle{min-width:0;white-space:normal;text-align:center}
+  .reader-page .pager{display:grid;grid-template-columns:minmax(0,1fr) minmax(62px,auto) minmax(0,1fr);gap:6px}
+  .reader-page .pager>button{width:100%;min-width:0;min-height:44px;padding:8px 5px;font-size:11px;line-height:1.25}
+  .reader-page .pager-indicators{min-width:0;max-width:100%}
+}
+@media(max-width:350px){
+  .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr);justify-items:start}
+  .reader-page .reader-actions{width:100%;justify-content:flex-start}
+  .reader-page .reader-title h2{font-size:20px}
+  .reader-page .pager{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+  .reader-page .pager-current{font-size:10px}
+}
+
+
+/* Creator: checkbox inputs must not inherit full-width text-field styles. */
+.create-page .form-card input[type="checkbox"]{
+  appearance:auto;
+  box-sizing:border-box;
+  flex:0 0 20px;
+  width:20px;
+  height:20px;
+  min-width:20px;
+  min-height:20px;
+  max-width:20px;
+  padding:0;
+  border-radius:4px;
+  margin:2px 0 0;
+  accent-color:#8050bd;
+}
+.create-page .form-card .consent,
+.create-page .form-card .device-save-option label{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  min-width:0;
+}
+.create-page .form-card .consent>span,
+.create-page .form-card .device-save-option label>span{
+  flex:1 1 auto;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+@media(max-width:620px){
+  .create-page .form-card{box-sizing:border-box;max-width:100%;min-width:0}
+  .create-page .form-card label,
+  .create-page .form-grid,
+  .create-page .story-lang-field{min-width:0}
+  /* A compact, scrollable set of classic stories instead of dozens of rows. */
+  .create-page .classic-choice,
+  .create-page .story-preset-actions{
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+    max-width:100%;
+    gap:8px;
+    padding:3px 2px 12px;
+  }
+  .create-page .classic-choice>button,
+  .create-page .story-preset-actions>button{
+    flex:0 0 auto;
+    max-width:min(48vw,154px);
+    min-height:44px;
+    overflow-wrap:anywhere;
+    scroll-snap-align:start;
+  }
+  .create-page .story-lang-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .create-page .story-lang-options>button{min-width:0;min-height:44px;padding:8px 5px;overflow-wrap:anywhere}
+  .create-page .wizard-step-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:8px}
+  .create-page .wizard-step-actions>button{width:100%;min-width:0;min-height:44px;max-width:100%;padding:9px 10px;font-size:12px;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
+  .create-page .wizard-step-actions>button:only-child{grid-column:2}
+  .create-page .wizard-step-actions>button svg{flex-shrink:0}
+}
+@media(max-width:350px){
+  .create-page .story-lang-options{gap:5px}
+  .create-page .wizard-step-actions>button{font-size:11px;padding:9px 6px;gap:4px}
+  .create-page .wizard-step-actions>button svg{width:15px;height:15px}
+}
+
+/* Validation is shown beside hero inputs rather than only after the final step. */
+.create-page .wizard-inline-error{
+  margin:5px 0 12px;
+  padding:9px 11px;
+  border-left:3px solid #a74d62;
+  border-radius:8px;
+  background:#fff3f5;
+  color:#833349;
+  font-size:12px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.create-page .second-hero-field input[aria-invalid="true"]{
+  border-color:#a74d62;
+  box-shadow:0 0 0 2px rgba(167,77,98,.10);
+}
+
+
+/* Creation mode has two choices, while story languages have three. */
+.create-page .creator-mode-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.create-page .creator-mode-options>button{
+  min-width:0;
+  min-height:44px;
+  padding:9px 10px;
+  font-size:12px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+.create-page .story-lang-options>button[aria-pressed="true"],
+.create-page .classic-choice>button[aria-pressed="true"]{
+  font-weight:800;
+}
+
+
+/* WonderTale 2.0: coherent compact controls on phone and tablet. */
+.shell main,.shell .topbar{min-width:0}
+.shell button,.shell select,.shell input,.shell textarea{font-family:inherit}
+.shell button{transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.shell button:focus-visible,.shell select:focus-visible,.shell input:focus-visible,.shell textarea:focus-visible{
+  outline:3px solid #8355b9;outline-offset:3px;
+}
+.shell button:disabled{cursor:not-allowed;opacity:.55}
+.shell .book-caption strong,.shell .classic-info strong{overflow-wrap:anywhere}
+.shell .book-tile,.shell .classic-card{min-width:0}
+.shell .book-tile:focus-visible,.shell .classic-card:focus-visible{outline-offset:4px}
+.create-page .wizard-progress .progress-step[aria-current="step"]{font-weight:800}
+.create-page .story-character-counter{display:block;margin:-8px 0 14px;text-align:right;color:#766584;font-size:11px;font-variant-numeric:tabular-nums}
+.create-page .story-character-counter[data-invalid="true"]{color:#9c3350;font-weight:750}
+.library-page .library-discovery{display:grid;grid-template-columns:minmax(0,1fr) minmax(142px,200px);gap:10px;margin:0 0 14px}
+.library-page .library-discovery label{display:block;margin:0;color:#584670;font-size:12px}
+.library-page .library-discovery input,.library-page .library-discovery select{width:100%;min-width:0;box-sizing:border-box;min-height:44px;margin-top:5px;border-radius:12px;padding:10px 12px;font-size:16px}
+.library-page .library-results-note{margin:-3px 0 14px;color:#7a7086;font-size:12px}
+.library-page .library-empty-results{padding:26px 12px;text-align:center;color:#6f5d7e}
+.library-page .library-empty-results button{min-height:44px;margin-top:8px;padding:9px 16px;border-radius:10px;border:1px solid #d8c2e8;background:#fff;color:#63458d;font-weight:700}
+.reader-page .reader-actions button{touch-action:manipulation}
+.welcome-screen .welcome-language{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px}
+.welcome-screen .welcome-language label{margin:0;color:#fff;font-size:12px}
+.welcome-screen .welcome-language select{min-height:44px;width:auto;max-width:180px;background:#fff;color:#32204f;border:1px solid #b7a5db;border-radius:12px;font-size:14px}
+@media(max-width:620px){
+  .shell .hero{min-height:360px}
+  .shell .hero-content{padding:20px 17px 24px}
+  .shell .hero h1{font-size:clamp(25px,7.1vw,33px);line-height:1.14}
+  .shell .hero p{font-size:13px;line-height:1.5}
+  .shell .hero .primary-button{max-width:100%;min-height:44px;padding:10px 14px;font-size:12px;white-space:normal}
+  .shell .book-grid{gap:10px}
+  .shell .book-caption{padding:10px}
+  .shell .book-caption strong{font-size:12px;line-height:1.35}
+  .shell .section-head h2,.shell .section-heading h2{font-size:clamp(21px,6vw,25px)}
+  .shell .mobile-tabbar button{min-width:0}
+  .shell .mobile-tabbar button span{overflow-wrap:anywhere;font-size:10px;line-height:1.2}
+  .library-page .library-discovery{grid-template-columns:minmax(0,1fr)}
+  .create-page .wizard-progress{overflow:hidden}
+  .create-page .progress-step{min-width:0;font-size:11px;overflow-wrap:anywhere}
+  .create-page .wizard-step-actions>button{min-height:44px;font-size:12px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .shell .book-tile:hover,.shell .classic-card:hover{transform:translateY(-2px)}
+  .shell .primary-button:not(:disabled):active{transform:scale(.985)}
+}
+@media(prefers-reduced-motion:reduce){
+  .shell button,.shell .book-tile,.shell .classic-card{transition:none!important;animation:none!important;transform:none!important}
+}
+
+/* A clear end state for finished books without hiding reading progress. */
+.book-tile .read-progress{display:block;overflow-wrap:anywhere}
+.reading-achievements-summary{font-size:12px;color:#604778;margin:-4px 0 12px;font-weight:650}
+.reading-achievement.unlocked{border-color:#b7d8bd;background:linear-gradient(145deg,#fff,#f0faf1)}
+.reading-achievement.unlocked .reading-achievement-count{color:#34764e}
+@media(max-width:420px){
+  .shell .hero{min-height:330px}
+  .reading-achievements-summary{font-size:11px}
+}
+
+
+/* Home: unfinished stories return to the reader with one tap. */
+.continue-story-card{display:flex;align-items:center;gap:13px;width:100%;min-width:0;margin:12px 0;padding:10px 13px;border:1px solid #e4d7ed;border-radius:16px;background:linear-gradient(100deg,#fffdf8,#f6f0ff);color:#513670;text-align:left}
+.continue-story-card>img,.continue-story-card>.story-image-fallback{width:76px;min-width:76px;height:68px;max-height:68px;aspect-ratio:1;object-fit:cover;border-radius:11px}
+.continue-story-card .continue-story-copy{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.continue-story-card .continue-story-copy strong{font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.continue-story-card .continue-story-copy small{font-size:11px;color:#79628f}
+.continue-story-card>svg:last-child{flex-shrink:0}
+.continue-story-card:focus-visible{outline:3px solid #8355b9;outline-offset:3px}
+@media(max-width:420px){
+  .continue-story-card{gap:9px;padding:9px}
+  .continue-story-card>img,.continue-story-card>.story-image-fallback{width:60px;min-width:60px;height:62px}
+  .continue-story-card .continue-story-copy strong{font-size:12px}
+  .continue-story-card .continue-story-copy small{font-size:10px}
+}
+
+
+/* iPhone reader: use a legible page counter instead of tiny page dots.
+   Wide screens retain the existing direct page-jump controls. */
+.reader-page .pager-mobile-current{display:none}
+@media(max-width:620px){
+  .reader-page .pager-indicators{min-width:48px;flex:0 1 auto}
+  .reader-page .pager-mobile-current{
+    display:block;
+    font-size:12px;
+    font-weight:750;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+    color:#63468c
+  }
+  .reader-page .pager-indicators>.dot,
+  .reader-page .pager-indicators>.pager-jump,
+  .reader-page .pager-indicators>.pager-current{display:none}
+  .reader-page .pager>button{min-height:44px}
+  .reader-page .reader-actions .icon-button{
+    min-width:44px;
+    width:44px;
+    height:44px;
+    flex-basis:44px;
+  }
+}
+@media(max-width:420px){
+  .reader-page .pager{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+  .reader-page .pager-indicators{justify-content:center}
+}
+
+
+/* Reader: long book titles and localized controls cannot push the iPhone viewport. */
+.reader-page .reader-title h2,
+.reader-page .reader-title>span,
+.reader-page .reader-toolbar .back-button{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.reader-page .reader-title h2{hyphens:auto}
+.reader-page .reader-toolbar,
+.reader-page .reader-actions,
+.reader-page .reader-display-settings,
+.reader-page .reader-font-controls{max-width:100%;box-sizing:border-box}
+@media(max-width:420px){
+  .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr) auto}
+  .reader-page .back-button{overflow-wrap:anywhere;min-height:44px}
+  .reader-page .reader-actions{flex-wrap:nowrap}
+  .reader-page .reader-title h2{font-size:clamp(19px,5.4vw,24px);line-height:1.28}
+  .reader-page .reader-display-settings{overflow-wrap:anywhere}
+  .reader-page .reader-night-toggle{overflow-wrap:anywhere}
+}
+@media(max-width:360px){
+  .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr)}
+  .reader-page .reader-actions{width:100%;justify-content:flex-start}
+}
+
+
+/* WonderTale compact home and navigation: small text, predictable mobile taps. */
+@media(max-width:620px){
+  .shell .hero{min-height:0!important;box-shadow:none}
+  .shell .hero-sky{max-height:224px;overflow:hidden}
+  .shell .hero-content{padding:13px 16px 17px!important}
+  .shell .hero h1{font-size:clamp(23px,6.2vw,29px)!important;line-height:1.16;margin:0 0 8px}
+  .shell .hero p{font-size:12px!important;line-height:1.45;margin:0 0 12px}
+  .shell .hero .primary-button{
+    width:auto;max-width:100%;min-height:44px;padding:9px 13px;
+    font-size:12px;line-height:1.3;border-radius:12px;gap:7px
+  }
+  .shell .quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px}
+  .shell .quick-actions>button{min-width:0;min-height:58px;padding:9px;gap:7px;box-sizing:border-box}
+  .shell .quick-actions>button strong{font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+  .shell .quick-actions .quick-icon{flex-shrink:0}
+  .shell .section-head{gap:9px}
+  .shell .section-head h2{font-size:clamp(19px,5.4vw,24px)!important}
+  .shell .text-link{font-size:12px;overflow-wrap:anywhere;min-height:44px}
+  .shell .book-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .shell .book-tile{min-width:0;overflow:hidden;border-radius:14px}
+  .shell .book-caption{display:flex;flex-direction:column;gap:3px;padding:10px}
+  .shell .book-caption strong{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+  .shell .book-caption small{font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+  .shell .mobile-tabbar{
+    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:4px;padding:6px 8px calc(6px + env(safe-area-inset-bottom))!important;
+  }
+  .shell .mobile-tabbar button{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    max-width:none!important;min-width:0;min-height:48px;gap:3px;
+    padding:5px 2px;font-size:10px;white-space:normal
+  }
+  .shell .mobile-tabbar button span{
+    display:block;max-width:100%;white-space:normal;overflow:visible;
+    overflow-wrap:anywhere;font-size:10px;line-height:1.15;text-align:center
+  }
+  .shell .mobile-tabbar button[aria-current="page"]{background:#f1e8ff;color:#59358a}
+}
+@media(max-width:360px){
+  .shell .quick-actions>button{gap:4px;padding:8px 6px}
+  .shell .quick-actions .quick-icon svg{width:18px;height:18px}
+  .shell .hero-sky{max-height:185px}
+}
+
+
+/* Reader: two compact controls instead of permanently exposed settings. */
+.reader-page .reader-mode-controls{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:8px;
+  margin:4px 0 12px;
+}
+.reader-page .reader-mode-controls>button{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  max-width:100%;min-height:44px;padding:9px 13px;
+  border:1px solid #d9c6e8;border-radius:11px;
+  background:#fff;color:#62448b;font-size:12px;line-height:1.25;
+  font-weight:700;overflow-wrap:anywhere;
+}
+.reader-page .reader-mode-controls>button.active{
+  background:#6246a1;color:#fff;border-color:#6246a1;
+}
+.reader-page.reader-focused .reader-title,
+.reader-page.reader-focused .reader-audio-toolbar,
+.reader-page.reader-focused .story-edit-zone,
+.reader-page.reader-focused .interactive-endings,
+.reader-page.reader-focused .sequel-action{
+  display:none!important;
+}
+.reader-page.reader-focused .story-page{margin:10px 0 18px}
+.reader-page.reader-focused .story-text{max-width:72ch;margin-inline:auto}
+@media(max-width:620px){
+  .reader-page .reader-mode-controls{margin:5px 0 10px}
+  .reader-page .reader-mode-controls>button{font-size:11px;padding:8px 12px}
+  .reader-page.reader-focused .story-page-image img{max-height:340px}
+  .reader-page.reader-focused .story-text{line-height:1.8}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .reader-mode-controls>button{transition:none!important}
+}
+
+
+/* Illustrated covers: show each story's own art, with a subtle book-like frame. */
+.shell .book-tile .book-cover-art{
+  display:block;position:relative;isolation:isolate;overflow:hidden;
+  aspect-ratio:4/3;width:100%;flex:0 0 auto;
+  background:linear-gradient(150deg,#e8d8f6,#c5c8eb 52%,#f5d7bf);
+}
+.shell .book-tile .book-cover-art>img,
+.shell .book-tile .book-cover-art>.story-image-fallback{
+  display:block;width:100%;height:100%;max-width:none;max-height:none;
+  min-height:0;aspect-ratio:4/3;object-fit:cover;
+  border-radius:0;box-shadow:none;
+}
+.shell .book-tile .book-cover-art::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 1px #ffffff66,inset 0 -18px 30px #21134225;
+}
+.shell .book-tile .book-cover-age{
+  position:absolute;top:9px;right:9px;z-index:1;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:31px;min-height:25px;padding:3px 7px;
+  border:1px solid #ffffffa6;border-radius:9px;
+  background:#fffaf4ee;color:#583d70;
+  font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;
+  box-shadow:0 2px 8px #281d3818;
+}
+.shell .book-tile .book-caption{min-width:0;position:relative}
+.shell .book-tile:focus-visible .book-cover-art{outline:3px solid #8355b9;outline-offset:-3px}
+.shell .classic-cover .classic-generated-image{
+  display:block;width:100%;height:100%;object-fit:cover;
+  object-position:center;transition:transform .2s ease;
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  .shell .classic-card:hover .classic-generated-image{transform:scale(1.025)}
+}
+@media(max-width:620px){
+  .shell .book-tile .book-cover-age{top:7px;right:7px;font-size:10px;min-width:27px;min-height:23px}
+  .shell .book-tile .book-cover-art{aspect-ratio:4/3}
+}
+
+
+/* Print/export must not include the fixed app navigation or reading controls. */
+@media print{
+  .shell .mobile-tabbar,
+  .reader-page .reader-mode-controls{display:none!important}
+}
+
+
+/* Onboarding 2.0: keep the illustration, but free space for readable actions. */
+.welcome-screen .welcome-skip{
+  position:absolute;z-index:4;top:max(14px,env(safe-area-inset-top));right:16px;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:8px 14px;border:1px solid #ffffff80;border-radius:999px;
+  background:#251a68c9;color:#fff;font-size:12px;font-weight:750;
+  text-shadow:0 1px 4px #120e4080;backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.welcome-screen .welcome-skip:focus-visible{
+  outline:3px solid #fff;outline-offset:3px;
+}
+@media(max-width:620px){
+  .welcome-screen .welcome-content{
+    width:100%;max-width:430px;
+    padding:10px 20px max(20px,env(safe-area-inset-bottom));
+  }
+  .welcome-screen .welcome-brand{font-size:clamp(24px,6.6vw,30px)}
+  .welcome-screen .welcome-brand svg{width:22px;height:22px}
+  .welcome-screen .welcome-brand strong{min-height:26px;padding:4px 7px}
+  .welcome-screen .welcome-content h1{
+    margin:10px auto 0;max-width:340px;
+    font-size:clamp(15px,4.1vw,18px);line-height:1.4;
+  }
+  .welcome-screen .welcome-dots{margin:13px 0 15px;min-height:24px}
+  .welcome-screen .welcome-dots button{
+    width:12px;height:12px;min-width:12px;min-height:12px;
+  }
+  .welcome-screen .welcome-primary,
+  .welcome-screen .welcome-secondary{
+    min-height:44px;max-width:360px;
+    padding:10px 14px;font-size:13px;line-height:1.3;
+    border-radius:13px;box-sizing:border-box;
+  }
+  .welcome-screen .welcome-secondary{margin-top:8px}
+  .welcome-screen .welcome-skip{right:12px;top:max(12px,env(safe-area-inset-top))}
+}
+@media(max-width:380px){
+  .welcome-screen .welcome-content{padding-left:15px;padding-right:15px}
+  .welcome-screen .welcome-brand{font-size:24px}
+  .welcome-screen .welcome-content h1{font-size:15px}
+  .welcome-screen .welcome-dots{margin:9px 0 11px}
+}
+@media(max-height:660px){
+  .welcome-screen .welcome-content{padding-top:6px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  .welcome-screen .welcome-dots{margin:7px 0 9px}
+  .welcome-screen .welcome-content h1{margin-top:6px}
+}
+
+
+/* Home 3.0: lightweight reading progress, no extra oversized widgets. */
+.continue-story-card .continue-story-progress,
+.shell .book-tile .book-progress-track{
+  display:block;width:100%;height:5px;overflow:hidden;
+  border-radius:999px;background:#e9dbf1;
+}
+.continue-story-card .continue-story-progress{margin-top:5px}
+.continue-story-card .continue-story-progress>span,
+.shell .book-tile .book-progress-track>span{
+  display:block;height:100%;border-radius:inherit;
+  background:linear-gradient(90deg,#8061b9,#cb81c1);
+}
+.shell .book-tile .book-progress-track{height:4px;margin-top:3px}
+.shell .book-caption .read-progress{
+  display:block;color:#73518f;font-weight:650;
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:620px){
+  .continue-story-card{margin-block:11px;padding:9px 11px}
+  .continue-story-card .continue-story-copy{gap:3px}
+  .continue-story-card .continue-story-copy strong{font-size:13px}
+  .shell .book-grid .book-caption{min-height:0}
+  .shell .book-tile .book-progress-track{margin-top:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  .continue-story-card .continue-story-progress>span,
+  .shell .book-tile .book-progress-track>span{transition:none!important}
+}
+
+
+/* Classic library: readable compact cards and age guidance on real cover art. */
+.shell .classic-card .classic-cover{isolation:isolate}
+.shell .classic-card .classic-age-badge{
+  position:absolute;top:8px;right:8px;z-index:3;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:25px;min-width:30px;padding:3px 7px;
+  border-radius:9px;border:1px solid #ffffffa0;
+  background:#fffaf4ee;color:#51356d;
+  box-shadow:0 2px 8px #20163826;
+  font-size:11px;font-weight:800;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.shell .classic-card .classic-info{min-width:0}
+.shell .classic-card .classic-info strong,
+.shell .classic-card .classic-info small{overflow-wrap:anywhere}
+.shell .classic-card .classic-info small{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;
+  overflow:hidden;line-height:1.45;
+}
+.shell .classic-card .classic-link{margin-top:auto;padding-top:8px}
+.shell .classic-card:focus-visible{outline:3px solid #8051b5;outline-offset:3px}
+@media(max-width:620px){
+  .shell .classic-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .shell .classic-card{border-radius:13px}
+  .shell .classic-card .classic-cover{height:auto;aspect-ratio:4/3}
+  .shell .classic-card .classic-info{padding:9px;gap:5px}
+  .shell .classic-card .classic-info strong{font-size:12px;line-height:1.3}
+  .shell .classic-card .classic-info small{font-size:10px;line-height:1.4}
+  .shell .classic-card .classic-link{font-size:10px;padding-top:5px;gap:4px}
+  .shell .classic-card .classic-age-badge{top:6px;right:6px;min-height:23px;min-width:27px;font-size:10px}
+}
+@media(max-width:350px){
+  .shell .classic-grid{gap:7px}
+  .shell .classic-card .classic-info{padding:8px}
+}
+
+
+/* Reader comfort: a paper-like option between bright and night reading. */
+.reader-page .story-page.reader-warm{
+  background:#f5e8cd;border-color:#d9c6a1;
+  box-shadow:0 8px 24px #73532719;
+}
+.reader-page .story-page.reader-warm .story-text{
+  background:#f5e8cd;color:#433525;
+}
+.reader-page .story-page.reader-warm .dropcap-star{color:#9e6d32}
+.reader-page .reader-warm-toggle{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:44px;max-width:100%;padding:8px 11px;
+  border:1px solid #e4d8f2;border-radius:10px;
+  color:#493467;background:#fff;font-size:12px;font-weight:650;
+  white-space:normal;overflow-wrap:anywhere;cursor:pointer;
+}
+.reader-page .reader-warm-toggle.active{
+  background:#73512b;color:#fff;border-color:#73512b;
+}
+.reader-page .reader-night-toggle{min-height:44px}
+.reader-page .reader-font-controls button{min-height:44px;height:44px;min-width:40px}
+@media(max-width:620px){
+  .reader-page .reader-display-settings{
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  }
+  .reader-page .reader-warm-toggle,
+  .reader-page .reader-night-toggle{
+    flex:1 1 118px;min-height:44px;
+    font-size:11px;line-height:1.3;padding:8px;
+  }
+  .reader-page .reader-font-controls{flex:0 0 auto}
+  .reader-page .story-page.reader-warm .story-text{line-height:1.78}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .story-page.reader-warm,
+  .reader-page .reader-warm-toggle{transition:none!important}
+}
+
+
+/* Keep the beginning of the new page visible after mobile swipe or pager navigation. */
+.reader-page .story-page{scroll-margin-top:14px}
+@media(max-width:620px){
+  .reader-page .story-page{scroll-margin-top:10px}
+}
+
+
+/* Mobile viewport: prevent flex-grow and duplicated bottom reservations from
+   creating a large empty block between the last page control and footer.
+   The fixed tab bar needs one reserved area, owned by .shell alone. */
+@media screen and (max-width:620px){
+  .shell{
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:calc(76px + env(safe-area-inset-bottom, 0px))!important;
+    justify-content:flex-start!important;
+  }
+  .shell > .topbar{margin:0 auto!important;flex:0 0 auto!important}
+  .shell > main{
+    flex:0 0 auto!important;
+    min-height:0!important;
+    margin:0 auto!important;
+    padding-bottom:12px!important;
+  }
+  .shell > footer{
+    flex:0 0 auto!important;
+    margin:0!important;
+    padding:12px 16px 14px!important;
+  }
+  .reader-page .pager{margin-bottom:4px!important}
+}
+/* Print output must keep the existing book layout without mobile tabbar gaps. */
+@media print{
+  .shell{min-height:0!important;padding-bottom:0!important}
+  .shell > main{padding-bottom:0!important}
+  .shell > footer{display:none!important}
+}
+
+
+/* Library-specific empty state: the older mobile theme reserves 105px inside
+   .library-page even though the fixed tabbar is already reserved by .shell.
+   Never stretch an empty shelf into a second viewport. */
+@media screen and (max-width:620px){
+  .shell > main > .library-page{
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:8px!important;
+    margin-bottom:0!important;
+  }
+  .library-page > .empty{
+    box-sizing:border-box;
+    width:auto;
+    min-height:0!important;
+    height:auto!important;
+    padding:28px 16px!important;
+    margin:16px 0 8px!important;
+    border-radius:17px;
+  }
+  .library-page > .empty h3{font-size:19px;line-height:1.3;margin:10px 0 5px}
+  .library-page > .empty p{font-size:13px;line-height:1.5;margin:0}
+  .library-page > .empty svg{width:28px;height:28px}
+}
+
+/* Creation wizard must not reserve a second fixed-navbar gap.
+   The shell owns the only bottom safe area on small screens. */
+@media screen and (max-width:620px){
+  .shell > main > .create-page{
+    box-sizing:border-box;
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:8px!important;
+    margin-bottom:0!important;
+  }
+  .create-page > .form-card{
+    min-height:0!important;
+    height:auto!important;
+    margin-bottom:0!important;
+  }
+  .create-page .wizard-step-actions{margin-bottom:0!important}
+  .create-page .form-card > .error,
+  .create-page .form-card > [role="alert"]{margin-bottom:0!important}
+}
+
+/* Compact reader toolbar: library back action stays at left, book actions at right.
+   Overrides legacy phone rules that stack / center action buttons. */
+@media screen and (max-width:620px){
+  .reader-page .reader-toolbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    justify-items:stretch!important;
+    column-gap:8px!important;
+    row-gap:8px!important;
+    width:100%;
+    margin:0 0 12px!important;
+  }
+  .reader-page .reader-toolbar > .back-button{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    justify-self:start!important;
+    text-align:left!important;
+    min-width:0;
+    width:auto!important;
+    max-width:100%;
+    margin:0!important;
+    padding:8px 4px!important;
+    font-size:12px!important;
+    line-height:1.25;
+    white-space:normal;
+  }
+  .reader-page .reader-toolbar > .reader-actions{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    justify-self:end!important;
+    width:auto!important;
+    min-width:0;
+    flex-wrap:nowrap!important;
+    gap:5px!important;
+  }
+  .reader-page .reader-toolbar > .reader-actions .icon-button{
+    flex:0 0 44px!important;
+    width:44px!important;
+    min-width:44px!important;
+    height:44px!important;
+    padding:9px!important;
+  }
+}
+@media screen and (max-width:355px){
+  .reader-page .reader-toolbar{grid-template-columns:minmax(0,1fr)!important}
+  .reader-page .reader-toolbar > .reader-actions{
+    grid-row:2;
+    justify-self:end!important;
+  }
+}
+
+/* Keep the expanded reader settings visible directly below their trigger. */
+.reader-page .reader-mode-controls + .reader-display-settings{
+  display:flex!important;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 12px;
+  padding:12px;
+  border:1px solid #e4d7ed;
+  border-radius:13px;
+  background:#fffafc;
+}
+.reader-page .reader-mode-controls button[aria-expanded="true"]{
+  background:#f0e5fa;
+  border-color:#9c74c6;
+  color:#513779;
+}
+@media(max-width:620px){
+  .reader-page .reader-mode-controls + .reader-display-settings{
+    padding:11px;
+    gap:8px;
+  }
+}
+
+/* Reader-specific bottom gap: legacy theme adds 100px to .reader-page,
+   while the fixed tabbar's safe area is already reserved by .shell.
+   The page and its last pager must follow natural content height. */
+@media screen and (max-width:620px){
+  .shell > main > .reader-page{
+    box-sizing:border-box;
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:8px!important;
+    margin-bottom:0!important;
+  }
+  .shell > main > .reader-page .pager{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+  .shell > main > .reader-page .reader-page-index{
+    margin-bottom:8px!important;
+  }
+}
+
+
+/* Unified mobile action buttons: equal heights in the creator's last step,
+   while retaining the distinction between primary and secondary actions.
+   This is scoped to text actions; compact icon buttons and tabbar are untouched. */
+@media screen and (max-width:620px){
+  .create-page .wizard-step-actions{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:10px!important;
+    width:100%;
+    margin-top:14px!important;
+  }
+  .create-page .wizard-step-actions > .primary-button,
+  .create-page .wizard-step-actions > .secondary-button{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:7px!important;
+    flex:none!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    min-height:60px!important;
+    height:60px!important;
+    padding:7px 10px!important;
+    margin:0!important;
+    border-radius:14px!important;
+    box-sizing:border-box!important;
+    font-size:12px!important;
+    font-weight:750!important;
+    line-height:1.25!important;
+    text-align:center!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere;
+  }
+  .create-page .wizard-step-actions > .secondary-button{
+    background:#fff!important;
+    color:#654b84!important;
+    border:1px solid #e1d1eb!important;
+    box-shadow:none!important;
+  }
+  .create-page .wizard-step-actions > .primary-button{
+    border:1px solid transparent!important;
+    color:#fff!important;
+  }
+  .create-page .wizard-step-actions > button svg{
+    flex:0 0 16px!important;
+    width:16px!important;
+    height:16px!important;
+  }
+  .create-page .wizard-step-actions > button:only-child{
+    grid-column:2!important;
+  }
+  .create-page .form-card > .secondary-button,
+  .library-page .primary-button.add-book,
+  .reader-page .story-edit-zone button,
+  .reader-page .pager > button{
+    min-height:44px;
+    font-size:12px;
+    line-height:1.3;
+  }
+}
+@media screen and (max-width:350px){
+  .create-page .wizard-step-actions{
+    gap:7px!important;
+  }
+  .create-page .wizard-step-actions > .primary-button,
+  .create-page .wizard-step-actions > .secondary-button{
+    min-height:64px!important;
+    height:64px!important;
+    padding:6px 7px!important;
+    font-size:11px!important;
+  }
+}
+
+/* Reader top-area redesign: compact paired controls, discreet bedtime timer,
+   and a single coherent metadata row. Avoid oversize controls on iPhone. */
+.reader-page .reader-book-meta{
+  display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+  gap:5px 9px;max-width:100%;min-width:0;
+  color:#72598e;font-size:12px;line-height:1.35;font-weight:650;
+}
+.reader-page .reader-book-meta .reader-crown{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;flex:0 0 22px;margin:0;color:#9c75b5;
+}
+.reader-page .reader-book-meta .reader-child-label{
+  min-width:0;overflow-wrap:anywhere;
+}
+.reader-page .reader-book-meta .reader-saved-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  margin:0!important;padding:4px 8px;font-size:10px;
+  border-radius:999px;line-height:1.2;
+}
+@media screen and (max-width:620px){
+  .reader-page .reader-mode-controls{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    align-items:stretch;justify-content:stretch;
+    width:100%;gap:8px;margin:4px 0 8px;
+  }
+  .reader-page .reader-mode-controls > button{
+    display:inline-flex;align-items:center;justify-content:center;
+    gap:6px;min-width:0;max-width:none;width:100%;
+    min-height:44px;padding:8px 9px;font-size:12px;line-height:1.25;
+    font-weight:700;border-radius:11px;white-space:normal;
+  }
+  .reader-page .reader-mode-controls > button svg{flex:0 0 17px;width:17px;height:17px}
+  .reader-page .bedtime-controls{
+    display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:center;gap:7px;
+    margin:0 0 12px;padding:8px 10px;
+    border:1px solid #e9ddf1;border-radius:12px;
+    background:#fbf8ff;font-size:11px;line-height:1.3;
+  }
+  .reader-page .bedtime-controls > svg{
+    width:16px;height:16px;grid-column:1;grid-row:1;justify-self:start;
+  }
+  .reader-page .bedtime-controls > span{
+    grid-column:1;grid-row:1;padding-left:22px;
+    margin:0;min-width:0;overflow-wrap:anywhere;
+    font-size:11px;font-weight:750;
+  }
+  .reader-page .bedtime-controls > button{
+    min-width:0;min-height:44px;padding:8px 10px;
+    border-radius:10px;font-size:11px;font-weight:700;
+    white-space:nowrap;
+  }
+  .reader-page .bedtime-controls > button:nth-of-type(3){
+    grid-column:1/-1;justify-self:end;
+  }
+  .reader-page .reader-title{
+    display:block;max-width:100%;
+    margin:5px 0 12px;text-align:center;
+  }
+  .reader-page .reader-title h2{
+    margin:8px 0 4px;font-size:clamp(20px,5.2vw,25px);
+    line-height:1.28;overflow-wrap:anywhere;
+  }
+  .reader-page .reader-title > p{
+    margin:3px 0 6px;font-size:11px;
+  }
+  .reader-page .reader-title .reader-progress-track{margin:7px auto 3px}
+}
+@media screen and (max-width:355px){
+  .reader-page .bedtime-controls{
+    grid-template-columns:minmax(0,1fr) auto auto;gap:4px;
+    padding:8px;
+  }
+  .reader-page .bedtime-controls > button{padding:7px 7px;font-size:10px}
+  .reader-page .reader-mode-controls > button{font-size:11px;padding:8px 5px}
+}
+
+/* Parent profile refresh: one clear status, secondary tips behind disclosure.
+   Keep account authentication and family management behavior unchanged. */
+.parent-account-page .parent-account-unavailable{
+  display:grid;gap:11px;align-items:stretch;text-align:left;
+  padding:15px;box-shadow:none;
+}
+.parent-account-page .parent-account-status{
+  display:flex;gap:11px;align-items:center;min-width:0;
+}
+.parent-account-page .parent-account-status>svg{
+  flex:0 0 36px;width:36px;height:36px;padding:8px;
+  border-radius:11px;background:#f2eaf9;color:#7c54a8;
+}
+.parent-account-page .parent-account-status>div{display:grid;gap:4px;min-width:0}
+.parent-account-page .parent-account-status strong{font-size:14px;line-height:1.25;color:#4e376c}
+.parent-account-page .parent-account-status span{font-size:12px;line-height:1.45;color:#756783}
+.parent-account-page .parent-account-help{min-width:0;border-top:1px solid #eee6f3;padding-top:7px}
+.parent-account-page .parent-account-help summary{
+  display:flex;align-items:center;min-height:44px;
+  font-size:12px;font-weight:700;color:#8057a8;cursor:pointer;
+}
+.parent-account-page .parent-account-help p{margin:0 0 8px;font-size:12px;line-height:1.5;text-align:left}
+.parent-account-page .parent-account-unavailable>.parent-account-secondary{
+  justify-self:start;width:auto;min-height:44px;
+  padding:9px 13px;font-size:12px;
+}
+.parent-account-page .parent-account-reading-section{
+  margin:14px 0 0;border:1px solid #e3d7ec;
+  border-radius:15px;background:#fff;overflow:hidden;
+}
+.parent-account-page .parent-account-reading-section>summary{
+  display:flex;align-items:center;gap:10px;list-style:none;
+  min-height:54px;padding:13px 15px;cursor:pointer;
+  font-size:13px;font-weight:750;color:#624483;
+}
+.parent-account-page .parent-account-reading-section>summary::-webkit-details-marker{display:none}
+.parent-account-page .parent-account-reading-section>summary svg{flex:0 0 18px}
+.parent-account-page .parent-account-reading-section .parent-account-expand{
+  margin-left:auto;font-size:20px;line-height:1;transition:transform .15s ease;
+}
+.parent-account-page .parent-account-reading-section[open] .parent-account-expand{transform:rotate(180deg)}
+.parent-account-page .parent-account-reading-section .parent-reading-guide{
+  margin:0;padding:14px;border:0;border-top:1px solid #eee7f4;
+  border-radius:0;background:#fdfaff;
+}
+.parent-account-page .parent-account-footnote{
+  margin:10px 2px 0;font-size:10px;line-height:1.45;color:#82748e;
+}
+@media screen and (max-width:620px){
+  .parent-account-page{
+    width:100%;max-width:100%;padding:12px 14px 12px;margin:0 auto;
+  }
+  .parent-account-page .parent-account-head{gap:10px;margin:0 0 14px}
+  .parent-account-page .parent-account-symbol{
+    width:43px;height:43px;border-radius:13px;
+  }
+  .parent-account-page .parent-account-head h2{font-size:19px;line-height:1.25;margin-bottom:3px}
+  .parent-account-page .parent-account-head p{font-size:11px}
+  .parent-account-page .parent-account-card,
+  .parent-account-page .parent-account-unavailable{
+    padding:14px;border-radius:15px;margin:0;
+  }
+  .parent-account-page .parent-account-card{gap:11px}
+  .parent-account-page .parent-account-reading-section{margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .parent-account-page .parent-account-reading-section .parent-account-expand{transition:none}
+}
+
+/* Mobile book reading: fit more of the illustration and the first paragraphs
+   without cutting any story text. Long stories continue scrolling naturally. */
+@media screen and (max-width:620px){
+  .reader-page .story-page{
+    border-radius:15px;
+    margin-top:8px;
+    margin-bottom:12px;
+    scroll-margin-top:8px;
+  }
+  .reader-page .story-page-image{
+    padding:8px 8px 0;
+  }
+  .reader-page .story-page-image img,
+  .reader-page .story-page-image > .story-image-fallback{
+    display:block;
+    width:100%;
+    max-height:min(33dvh,240px);
+    min-height:0;
+    height:auto;
+    object-fit:contain;
+    border-radius:11px;
+    box-shadow:none;
+  }
+  .reader-page .story-page .story-text{
+    padding:15px 15px 19px;
+    line-height:1.55;
+    text-align:left;
+    overflow-wrap:anywhere;
+    white-space:pre-wrap;
+  }
+  .reader-page .story-page.reader-font-small .story-text{
+    font-size:14px;
+    line-height:1.5;
+  }
+  .reader-page .story-page.reader-font-normal .story-text{
+    font-size:15px;
+    line-height:1.55;
+  }
+  .reader-page .story-page.reader-font-large .story-text{
+    font-size:18px;
+    line-height:1.6;
+  }
+  .reader-page .story-page .dropcap-star{
+    margin-right:5px;
+  }
+  .reader-page .story-edit-zone{
+    margin:8px 0 10px;
+  }
+  .reader-page .pager{
+    gap:7px;
+    margin:8px 0 0!important;
+  }
+}
+@media screen and (max-width:380px){
+  .reader-page .story-page-image img,
+  .reader-page .story-page-image > .story-image-fallback{
+    max-height:min(30dvh,205px);
+  }
+  .reader-page .story-page .story-text{
+    padding:12px 12px 16px;
+  }
+}
+@media print{
+  .reader-page .story-page-image img,
+  .reader-page .story-page-image > .story-image-fallback{
+    max-height:none;
+  }
+  .reader-page .story-page .story-text{
+    white-space:pre-wrap;
+  }
+}
+
+/* A single focused finale avoids three full-size competing cards. */
+.reader-page .reader-finale{
+  margin:14px 0 10px;
+  padding:14px;
+  border:1px solid #e2d5ec;
+  border-radius:16px;
+  background:#fffaff;
+  display:grid;
+  gap:12px;
+  min-width:0;
+}
+.reader-page .reader-finale-heading{
+  display:grid;gap:4px;
+}
+.reader-page .reader-finale-heading strong{
+  font-size:15px;line-height:1.3;color:#51386e;
+}
+.reader-page .reader-finale-heading span{
+  font-size:12px;line-height:1.35;color:#82718e;
+}
+.reader-page .reader-finale-options{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.reader-page .reader-finale-options>button{
+  display:flex;align-items:center;justify-content:center;
+  min-width:0;min-height:48px;padding:9px 8px;
+  background:#fff;border:1px solid #ddcbe8;border-radius:11px;
+  color:#654384;font-size:12px;font-weight:700;line-height:1.3;
+  text-align:center;overflow-wrap:anywhere;white-space:normal;
+}
+.reader-page .reader-finale-options>button[aria-pressed="true"]{
+  background:#7650aa;color:#fff;border-color:#7650aa;
+}
+.reader-page .reader-finale .interactive-endings,
+.reader-page .reader-finale .story-branch-quest,
+.reader-page .reader-finale .reading-word-game{
+  margin:0;
+  padding:12px;
+  border-radius:12px;
+  box-shadow:none;
+  width:100%;
+  box-sizing:border-box;
+}
+.reader-page .reader-finale .interactive-endings>div,
+.reader-page .reader-finale .story-branch-choices{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.reader-page .reader-finale .interactive-endings button,
+.reader-page .reader-finale .story-branch-choices button,
+.reader-page .reader-finale .reading-word-choices button{
+  box-sizing:border-box;width:100%;min-width:0;min-height:48px;
+  display:flex;align-items:center;justify-content:center;
+  padding:9px 10px;font-size:12px;line-height:1.3;
+  text-align:center;overflow-wrap:anywhere;white-space:normal;
+}
+.reader-page .reader-finale .reading-word-choices{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;gap:8px;
+}
+.reader-page .reader-finale .sequel-action{
+  margin:0;
+  width:100%;
+  min-height:48px;
+  border-radius:11px;
+  font-size:12px;
+  line-height:1.3;
+  padding:9px 12px;
+  flex-wrap:wrap;
+  box-shadow:none;
+}
+.reader-page .reader-finale button:focus-visible{
+  outline:3px solid #9d77ca;
+  outline-offset:2px;
+}
+@media screen and (max-width:620px){
+  .reader-page .reader-finale{
+    margin:10px 0 8px;padding:11px;gap:9px;border-radius:14px;
+  }
+  .reader-page .reader-finale-heading strong{font-size:14px}
+  .reader-page .reader-finale-options{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+  }
+  .reader-page .reader-finale-options>button{font-size:11px;min-height:44px}
+  .reader-page .reader-finale .reading-word-choices{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+  }
+}
+@media screen and (max-width:360px){
+  .reader-page .reader-finale .reading-word-choices{
+    grid-template-columns:1fr;
+  }
+  .reader-page .reader-finale .interactive-endings>div,
+  .reader-page .reader-finale .story-branch-choices{
+    grid-template-columns:1fr;
+  }
+}
+@media print{
+  .reader-page .reader-finale{display:none!important}
+}
+
+/* Mobile IA 2.0: compact opt-in sections and immediate continue-reading action.
+   Native details keep keyboard accessibility and avoid persisted child data. */
+.library-page .library-achievements-disclosure,
+.create-page .wizard-optional-character,
+.account-plans-disclosure{
+  border:1px solid #e5d8ee;
+  border-radius:13px;
+  background:#fffdfd;
+  margin:10px 0 14px;
+  min-width:0;
+}
+.library-page .library-achievements-disclosure>summary,
+.create-page .wizard-optional-character>summary,
+.account-plans-disclosure>summary{
+  display:flex;align-items:center;gap:9px;
+  cursor:pointer;list-style:none;
+  box-sizing:border-box;min-height:48px;
+  padding:11px 13px;font-size:13px;font-weight:750;
+  color:#664782;
+}
+.library-page .library-achievements-disclosure>summary::-webkit-details-marker,
+.create-page .wizard-optional-character>summary::-webkit-details-marker,
+.account-plans-disclosure>summary::-webkit-details-marker{display:none}
+.library-page .library-achievements-disclosure>summary svg:last-child,
+.create-page .wizard-optional-character>summary svg:last-child,
+.account-plans-disclosure>summary svg:last-child{margin-left:auto;transition:transform .16s ease}
+.library-page .library-achievements-disclosure[open]>summary svg:last-child,
+.create-page .wizard-optional-character[open]>summary svg:last-child,
+.account-plans-disclosure[open]>summary svg:last-child{transform:rotate(180deg)}
+.library-page .library-achievements-disclosure>.reading-achievements{
+  margin:0!important;
+  border:0!important;
+  border-top:1px solid #eee4f4!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+.create-page .wizard-optional-character>.character-builder{
+  margin:0!important;border:0!important;border-top:1px solid #eee4f4!important;
+  border-radius:0!important;background:#fff!important;
+}
+.account-plans-disclosure{max-width:680px;margin:10px auto 18px}
+.account-plans-disclosure>:not(summary){max-width:100%;box-sizing:border-box}
+.library-page .library-resume{
+  margin:11px 0 13px;padding:12px;
+  border:1px solid #dfd1eb;border-radius:14px;
+  background:#fbf8ff;display:grid;gap:8px;
+}
+.library-page .library-resume-text{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:750;color:#654684;
+}
+.library-page .library-resume button{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  width:100%;min-height:44px;padding:9px 11px;
+  border:1px solid #e6daf1;border-radius:11px;
+  background:#fff;color:#5e407d;text-align:left;
+  font-size:12px;font-weight:700;line-height:1.3;
+}
+.library-page .library-resume button span{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.library-page .library-resume button svg{flex:0 0 17px}
+@media screen and (max-width:620px){
+  .library-page .library-achievements-disclosure,
+  .create-page .wizard-optional-character{margin:8px 0 11px}
+  .library-page .library-achievements-disclosure>summary,
+  .create-page .wizard-optional-character>summary,
+  .account-plans-disclosure>summary{padding:9px 11px;font-size:12px}
+  .reader-page.reader-focused .bedtime-controls,
+  .reader-page.reader-focused .reader-display-settings{
+    display:none!important;
+  }
+  .reader-page.reader-focused .reader-mode-controls{
+    margin:4px 0 7px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .library-page .library-achievements-disclosure>summary svg:last-child,
+  .create-page .wizard-optional-character>summary svg:last-child,
+  .account-plans-disclosure>summary svg:last-child{transition:none}
+}
+
+/* Mobile width audit: shared overflow guards for 320/375/390/430px iPhones.
+   Keep form fields readable without letting labels or cards widen the page. */
+@media screen and (max-width:430px){
+  .shell > main,
+  .shell > main > section,
+  .shell > main > .reader-page,
+  .shell > main > .library-page,
+  .shell > main > .create-page{
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+  }
+  .library-page .library-discovery,
+  .library-page .book-grid,
+  .create-page .form-grid{
+    min-width:0;
+    max-width:100%;
+  }
+  .create-page .form-card input:not([type="checkbox"]):not([type="radio"]),
+  .create-page .form-card select,
+  .create-page .form-card textarea,
+  .parent-account-page .parent-account-card input{
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .library-page .book-caption,
+  .library-page .book-caption strong,
+  .reader-page .reader-book-meta,
+  .create-page .step-title,
+  .parent-account-page .parent-account-head>div{
+    min-width:0;overflow-wrap:anywhere;
+  }
+  .library-page .book-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .shell .mobile-tabbar{
+    width:100%;
+    max-width:100vw;
+    box-sizing:border-box;
+  }
+}
+@media screen and (max-width:340px){
+  .library-page .book-grid{gap:7px}
+  .library-page .book-caption{padding:8px}
+  .library-page .book-caption strong{font-size:11px;line-height:1.3}
+  .create-page .wizard-progress .progress-step{font-size:9px;min-width:0}
+  .parent-account-page .parent-account-head h2{font-size:18px}
+}
+
+/* Legal information is available on mobile without overloading the main tabbar. */
+.site-legal-footer{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:9px;
+  padding:14px 14px 18px!important;
+  font-size:12px;color:#83748d;text-align:center;
+}
+.site-legal-footer nav{
+  display:flex;align-items:center;justify-content:center;
+  flex-wrap:wrap;gap:3px 8px;
+  max-width:100%;
+}
+.site-legal-footer nav button{
+  min-height:36px;padding:7px 8px;
+  border:0;border-radius:8px;background:transparent;
+  color:#6b498d;font:inherit;font-size:11px;font-weight:700;
+  text-decoration:underline;text-underline-offset:2px;
+}
+.legal-center{
+  width:min(800px,100%);margin:0 auto;
+  padding:12px 17px 25px;box-sizing:border-box;
+  color:#453559;
+}
+.legal-center header{
+  margin:12px 0 14px;
+  padding:17px;border:1px solid #e5d9ed;
+  border-radius:16px;background:#fffaff;
+}
+.legal-center h1{font-size:clamp(21px,4vw,28px);line-height:1.3;margin:0 0 8px}
+.legal-center header p{font-size:13px;line-height:1.55;margin:0 0 9px}
+.legal-center header small{color:#877891;font-size:11px}
+.legal-center .legal-back{
+  min-height:44px;border:0;background:transparent;
+  color:#704c92;font-size:13px;font-weight:750;
+}
+.legal-center .legal-tabs{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;margin:0 0 16px;
+}
+.legal-center .legal-tabs button{
+  min-height:44px;min-width:0;
+  border:1px solid #dfd3e8;border-radius:10px;
+  padding:8px 6px;font-size:11px;line-height:1.35;
+  font-weight:700;background:#fff;color:#5f4878;
+  overflow-wrap:anywhere;
+}
+.legal-center .legal-tabs button[aria-current="page"]{
+  background:#7450a5;color:#fff;border-color:#7450a5;
+}
+.legal-center .legal-sections{
+  display:grid;gap:12px;
+}
+.legal-center .legal-sections>section{
+  padding:15px;border:1px solid #e8dcec;
+  border-radius:13px;background:#fff;
+}
+.legal-center .legal-sections h2{
+  font-size:15px;line-height:1.4;margin:0 0 8px;
+}
+.legal-center .legal-sections p{
+  font-size:13px;line-height:1.68;margin:8px 0 0;
+}
+.legal-center .legal-laws{margin:20px 0 0;padding:15px;border-top:1px solid #e4d8ee}
+.legal-center .legal-laws strong{font-size:13px}
+.legal-center .legal-laws ul{margin:8px 0 0;padding-left:19px}
+.legal-center .legal-laws li{margin:7px 0;font-size:12px;line-height:1.5}
+.legal-center .legal-laws a{color:#694699;text-decoration:underline;overflow-wrap:anywhere}
+.legal-consent-links{
+  display:flex;gap:6px;flex-wrap:wrap;
+  margin:0 0 12px;
+}
+.create-page .legal-consent-links button{
+  min-height:44px;padding:8px 10px;
+  border:1px solid #e0d2eb;border-radius:9px;
+  background:#fff;color:#644782;
+  font-size:11px;font-weight:700;
+  text-decoration:underline;text-underline-offset:2px;
+}
+.site-legal-footer button:focus-visible,
+.legal-center button:focus-visible,
+.legal-center a:focus-visible,
+.create-page .legal-consent-links button:focus-visible{
+  outline:3px solid #a27acc;outline-offset:2px;
+}
+@media screen and (max-width:620px){
+  .site-legal-footer{margin:0!important;padding:11px 8px 12px!important;gap:6px}
+  .site-legal-footer nav{gap:0 3px}
+  .site-legal-footer nav button{font-size:10px;padding:5px 7px}
+  .legal-center{padding:9px 12px 12px}
+  .legal-center header{padding:13px}
+  .legal-center .legal-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .legal-center .legal-sections>section{padding:13px}
+}
+
+/* Branded parent profile illustration, cropped from an original generated PNG.
+   No stock media and no user or child photos are stored in this image. */
+.parent-account-page .parent-account-hero{
+  position:relative;
+  display:grid;
+  grid-template-columns:118px minmax(0,1fr);
+  gap:15px;
+  align-items:center;
+  min-width:0;
+  padding:14px 17px;
+  margin:0 0 15px;
+  border:1px solid #dcccef;
+  border-radius:19px;
+  background:linear-gradient(125deg,#f2eaff 0%,#fffaf8 75%);
+  box-shadow:0 5px 15px rgba(92,53,137,.07);
+}
+.parent-account-page .parent-account-hero-art{
+  width:118px;
+  height:118px;
+  overflow:hidden;
+  border-radius:22px;
+  border:2px solid rgba(255,255,255,.9);
+  box-shadow:0 4px 13px rgba(67,37,111,.13);
+  background:#624899;
+}
+.parent-account-page .parent-account-hero-art img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  image-rendering:auto;
+}
+.parent-account-page .parent-account-hero-copy{
+  display:grid;
+  gap:5px;
+  min-width:0;
+  align-content:center;
+}
+.parent-account-page .parent-account-hero-copy .parent-account-eyebrow{
+  font-size:10px;
+  line-height:1.25;
+  color:#8662af;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.parent-account-page .parent-account-hero-copy h2{
+  margin:0;
+  font-size:21px;
+  line-height:1.22;
+  color:#50356f;
+  overflow-wrap:anywhere;
+}
+.parent-account-page .parent-account-hero-copy p{
+  margin:0;
+  font-size:12px;
+  line-height:1.4;
+  color:#806c94;
+}
+.parent-account-page .parent-account-author{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid #e5d6f0;
+  color:#654583;
+  font-weight:700;
+  font-size:10px;
+  overflow-wrap:anywhere;
+}
+@media screen and (max-width:620px){
+  .parent-account-page .parent-account-hero{
+    grid-template-columns:86px minmax(0,1fr);
+    gap:11px;
+    padding:11px;
+    margin:0 0 12px;
+    border-radius:15px;
+  }
+  .parent-account-page .parent-account-hero-art{
+    width:86px;
+    height:86px;
+    border-radius:17px;
+  }
+  .parent-account-page .parent-account-hero-copy{
+    gap:3px;
+  }
+  .parent-account-page .parent-account-hero-copy h2{
+    font-size:17px;
+  }
+  .parent-account-page .parent-account-hero-copy p{
+    font-size:11px;
+  }
+  .parent-account-page .parent-account-author{
+    font-size:9px;
+    padding:4px 7px;
+  }
+}
+@media screen and (max-width:340px){
+  .parent-account-page .parent-account-hero{
+    grid-template-columns:69px minmax(0,1fr);
+    gap:9px;
+    padding:9px;
+  }
+  .parent-account-page .parent-account-hero-art{
+    width:69px;
+    height:69px;
+    border-radius:13px;
+  }
+  .parent-account-page .parent-account-hero-copy h2{
+    font-size:15px;
+  }
+  .parent-account-page .parent-account-hero-copy p{
+    font-size:10px;
+  }
+}
+
+/* Legal pages belong to the profile, not the fixed navigation or global footer. */
+.profile-legal-menu{
+  display:grid;
+  gap:10px;
+  width:100%;
+  max-width:680px;
+  min-width:0;
+  box-sizing:border-box;
+  margin:14px auto 0;
+  padding:14px;
+  border:1px solid #e2d6ed;
+  border-radius:16px;
+  background:#fff;
+}
+.profile-legal-heading h3{
+  margin:0;
+  color:#503771;
+  font-size:16px;
+  line-height:1.35;
+}
+.profile-legal-heading p{
+  margin:4px 0 0;
+  color:#80718c;
+  font-size:12px;
+  line-height:1.45;
+}
+.profile-legal-links{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.profile-legal-links > button{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  min-height:52px;
+  width:100%;
+  padding:9px 10px;
+  border:1px solid #e9dff2;
+  border-radius:12px;
+  color:#61447f;
+  background:#fcfaff;
+  text-align:left;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.3;
+  cursor:pointer;
+}
+.profile-legal-icon{
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  background:#f1e7fa;
+  color:#7e56aa;
+}
+.profile-legal-label{
+  flex:1 1 auto;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.profile-legal-chevron{
+  flex:0 0 17px;
+  color:#907ba5;
+}
+.profile-legal-links > button:hover{
+  background:#f7f0ff;
+  border-color:#d7c0eb;
+}
+.profile-legal-links > button:focus-visible{
+  outline:3px solid #a276c7;
+  outline-offset:2px;
+}
+.site-legal-footer{
+  gap:0!important;
+  padding-bottom:12px!important;
+}
+@media screen and (max-width:620px){
+  .profile-legal-menu{
+    margin:12px auto 0;
+    padding:12px;
+    gap:9px;
+    border-radius:15px;
+  }
+  .profile-legal-heading h3{font-size:15px}
+  .profile-legal-links{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+  .profile-legal-links > button{
+    min-height:48px;
+    font-size:12px;
+  }
+  .site-legal-footer{
+    padding:10px 8px 12px!important;
+  }
+}
+
+/* Profile UI 3.0: short, consistent account sections instead of oversized cards.
+   These late overrides deliberately supersede the older storybook theme. */
+.parent-account-page .parent-account-unavailable{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  text-align:left;
+  padding:13px 15px;
+  border-radius:14px;
+  box-shadow:none;
+}
+.parent-account-page .parent-account-status{
+  align-items:center;
+  gap:10px;
+  padding:0 0 8px;
+}
+.parent-account-page .parent-account-status>svg{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  padding:9px;
+}
+.parent-account-page .parent-account-status>div{gap:2px}
+.parent-account-page .parent-account-status strong{
+  font-size:14px;
+  line-height:1.25;
+}
+.parent-account-page .parent-account-status span{
+  font-size:11px;
+  line-height:1.4;
+}
+.parent-account-page .parent-account-help{
+  padding:0;
+  margin-top:3px;
+  border-top:1px solid #f0e7f4;
+}
+.parent-account-page .parent-account-help>summary{
+  min-height:43px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 2px;
+  font-size:12px;
+  font-weight:700;
+  color:#76529a;
+  line-height:1.3;
+  list-style:none;
+  cursor:pointer;
+}
+.parent-account-page .parent-account-help>summary::-webkit-details-marker{display:none}
+.parent-account-page .parent-account-help>summary .parent-account-expand{
+  flex:0 0 auto;
+  font-size:18px;
+  transition:transform .15s ease;
+}
+.parent-account-page .parent-account-help[open]>summary .parent-account-expand{
+  transform:rotate(180deg);
+}
+.parent-account-page .parent-account-help>p{
+  margin:0 0 9px!important;
+  padding:0 2px;
+  font-size:11px;
+  line-height:1.5;
+  color:#806d8e;
+}
+.parent-account-page .parent-account-reading-section{
+  margin:10px 0 0;
+  border-radius:13px;
+}
+.parent-account-page .parent-account-reading-section>summary{
+  min-height:48px;
+  padding:9px 13px;
+  font-size:12px;
+  gap:9px;
+}
+.parent-account-page .parent-account-reading-section .parent-account-footnote{
+  margin:0!important;
+  padding:0 14px 13px;
+  font-size:10px;
+  line-height:1.45;
+  text-align:left;
+}
+.profile-legal-menu{
+  margin:10px auto 0;
+  padding:12px;
+  gap:8px;
+  border-radius:14px;
+  box-shadow:none;
+}
+.profile-legal-heading h3{font-size:14px;line-height:1.25}
+.profile-legal-heading p{font-size:11px;line-height:1.4;margin-top:3px}
+.profile-legal-links > button{
+  min-height:46px;
+  padding:6px 9px;
+  gap:8px;
+  font-size:11px;
+  border-radius:10px;
+}
+.profile-legal-icon{
+  width:32px;
+  height:32px;
+  flex-basis:32px;
+  border-radius:9px;
+}
+.account-plans-disclosure{
+  margin:10px auto 6px;
+  border-radius:13px;
+}
+.account-plans-disclosure>summary{
+  min-height:48px;
+  font-size:12px;
+  padding:10px 12px;
+}
+.parent-account-page .parent-account-hero{
+  margin-bottom:10px;
+  padding:10px 12px;
+  gap:11px;
+  box-shadow:none;
+}
+.parent-account-page .parent-account-hero-copy h2{
+  font-size:18px;
+  line-height:1.22;
+}
+.parent-account-page .parent-account-author{
+  font-size:10px;
+  padding:4px 7px;
+}
+.site-legal-footer{
+  margin-top:0!important;
+  padding:9px 8px 12px!important;
+  font-size:11px;
+  line-height:1.4;
+}
+@media screen and (max-width:620px){
+  .parent-account-page{
+    padding:9px 12px 8px!important;
+    max-width:100%;
+  }
+  .parent-account-page .parent-account-hero{
+    grid-template-columns:66px minmax(0,1fr);
+    margin:0 0 10px;
+    padding:9px;
+    gap:10px;
+    border-radius:14px;
+  }
+  .parent-account-page .parent-account-hero-art{
+    width:66px;
+    height:66px;
+    border-radius:13px;
+  }
+  .parent-account-page .parent-account-hero-copy h2{font-size:16px}
+  .parent-account-page .parent-account-hero-copy p{font-size:10px}
+  .parent-account-page .parent-account-hero-copy .parent-account-eyebrow{font-size:9px}
+  .parent-account-page .parent-account-author{font-size:9px}
+  .parent-account-page .parent-account-unavailable,
+  .parent-account-page .parent-account-card{
+    padding:11px 12px;
+    border-radius:13px;
+  }
+  .parent-account-page .parent-account-unavailable{gap:0}
+  .parent-account-page .parent-account-reading-section{margin-top:9px}
+  .parent-account-page .parent-account-reading-section>summary{
+    min-height:46px;
+    padding:8px 11px;
+  }
+  .profile-legal-menu{
+    margin:9px 12px 0;
+    width:calc(100% - 24px);
+    padding:10px;
+    gap:7px;
+    border-radius:13px;
+  }
+  .profile-legal-links{gap:6px}
+  .profile-legal-links > button{
+    min-height:44px;
+    padding:5px 8px;
+    font-size:11px;
+  }
+  .profile-legal-icon{
+    flex-basis:30px;
+    width:30px;
+    height:30px;
+  }
+  .account-plans-disclosure{
+    margin:9px 12px 6px;
+    width:calc(100% - 24px);
+  }
+  .account-plans-disclosure>summary{min-height:46px;padding:8px 11px}
+}
+@media(prefers-reduced-motion:reduce){
+  .parent-account-page .parent-account-help>summary .parent-account-expand{transition:none}
+}

@@ -1,0 +1,14 @@
+# Netlify configuration for the frontend-only WonderTale AI application.
+# Backend/API and secrets are intentionally not deployed from this configuration.
+[build]
+  base = "frontend"
+  command = "npm install --no-audit --no-fund && npm test && npm run build && npm run check:images:release"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

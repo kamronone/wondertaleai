@@ -1,0 +1,35 @@
+/* Explain that real-photo character generation is intentionally unavailable.
+   No misleading upload control, no child image leaves the phone. */
+.create-page .create-photo-unavailable{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 13px;
+  margin-top:10px;
+  border:1px solid #dbc7e8;
+  border-radius:14px;
+  background:#faf5fe;
+  color:#4c365c;
+}
+.create-page .create-photo-unavailable>svg{
+  flex:0 0 20px;
+  margin-top:2px;
+  color:#8352a1;
+}
+.create-page .create-photo-unavailable>div{min-width:0}
+.create-page .create-photo-unavailable strong{
+  display:block;
+  font-size:13px;
+  line-height:1.35;
+  font-weight:750;
+}
+.create-page .create-photo-unavailable p{
+  margin:5px 0 0;
+  font-size:12px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+@media(max-width:360px){
+  .create-page .create-photo-unavailable{padding:10px;gap:8px}
+  .create-page .create-photo-unavailable p{font-size:11px}
+}

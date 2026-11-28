@@ -1,0 +1,185 @@
+/* Small, lightweight GIF-like character reactions over existing PNG/GIF book art.
+   Never replace an illustration, intercept page swipes or move the reader text. */
+.reader-page .story-page-image .wt-character-reaction-fx{
+  position:absolute;z-index:1;pointer-events:none;
+  width:96px;height:96px;display:grid;place-items:center;
+  transform:translate(-50%,-50%);
+  color:#fff4bc;filter:drop-shadow(0 2px 4px #53375f90);
+  border-radius:50%;
+}
+.reader-page .wt-character-reaction-fx::before{
+  content:"";position:absolute;inset:11px;border:2px solid #fff7c5a8;
+  border-radius:50%;background:radial-gradient(circle,#f9d8ff70,transparent 75%);
+  animation:wt-reaction-halo 1700ms ease-out both;
+}
+.reader-page .wt-character-reaction-fx svg{
+  position:absolute;opacity:0;
+  animation:wt-reaction-burst 1650ms ease-out both;
+}
+.reader-page .wt-character-reaction-fx svg:nth-child(1){left:30px;top:34px;--wt-tx:-8px;--wt-ty:-26px}
+.reader-page .wt-character-reaction-fx svg:nth-child(2){left:59px;top:22px;--wt-tx:17px;--wt-ty:-42px;animation-delay:130ms}
+.reader-page .wt-character-reaction-fx svg:nth-child(3){left:16px;top:52px;--wt-tx:-20px;--wt-ty:-33px;animation-delay:240ms}
+.reader-page .wt-reaction-wave svg{animation-name:wt-reaction-wave}
+.reader-page .wt-reaction-music svg{animation-name:wt-reaction-music;color:#fff1bc}
+.reader-page .wt-reaction-flutter svg{animation-name:wt-reaction-flutter;color:#ecfaff}
+.reader-page .wt-reaction-bow svg{animation-name:wt-reaction-bow;color:#ffe3f1}
+.reader-page .wt-reaction-dance svg{animation-name:wt-reaction-dance;color:#ffeac6}
+.reader-page .wt-reaction-shine svg{animation-name:wt-reaction-shine;color:#fffac9}
+.reader-page .wt-reaction-bloom svg{animation-name:wt-reaction-bloom;color:#ffe2df}
+.reader-page .wt-reaction-cheer svg{animation-name:wt-reaction-cheer;color:#ecffe0}
+@keyframes wt-reaction-halo{
+  0%{opacity:0;transform:scale(.5)}
+  25%{opacity:1;transform:scale(1)}
+  70%{opacity:.72}
+  100%{opacity:0;transform:scale(1.5)}
+}
+@keyframes wt-reaction-burst{
+  0%{opacity:0;transform:translate(0,10px) scale(.5)}
+  22%{opacity:1}
+  75%{opacity:.9}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scale(1.15)}
+}
+@keyframes wt-reaction-wave{
+  0%{opacity:0;transform:translateY(10px) rotate(-30deg) scale(.7)}
+  18%,42%,65%{opacity:1;transform:translateY(-6px) rotate(30deg)}
+  30%,54%{transform:translateY(-10px) rotate(-28deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) rotate(15deg)}
+}
+@keyframes wt-reaction-music{
+  0%{opacity:0;transform:translate(0,10px) rotate(-12deg)}
+  30%{opacity:1;transform:translate(8px,-6px) rotate(12deg)}
+  65%{opacity:1;transform:translate(-5px,-21px) rotate(-10deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) rotate(15deg)}
+}
+@keyframes wt-reaction-flutter{
+  0%{opacity:0;transform:scaleX(.35) rotate(-25deg)}
+  20%,50%,75%{opacity:1;transform:scaleX(1.2) rotate(25deg)}
+  34%,64%{transform:scaleX(.6) rotate(-25deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scaleX(.5)}
+}
+@keyframes wt-reaction-bow{
+  0%{opacity:0;transform:rotate(-10deg) scale(.65)}
+  25%{opacity:1;transform:rotate(25deg) translateY(7px)}
+  55%{opacity:1;transform:rotate(-10deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty))}
+}
+@keyframes wt-reaction-dance{
+  0%{opacity:0;transform:translateY(8px) rotate(-16deg)}
+  20%,60%{opacity:1;transform:translateY(-13px) rotate(20deg)}
+  40%,80%{opacity:1;transform:translateY(4px) rotate(-20deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty))}
+}
+@keyframes wt-reaction-shine{
+  0%{opacity:0;transform:scale(.2) rotate(-30deg)}
+  35%{opacity:1;transform:scale(1.3) rotate(60deg)}
+  70%{opacity:.95;transform:scale(1) rotate(140deg)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scale(.4) rotate(200deg)}
+}
+@keyframes wt-reaction-bloom{
+  0%{opacity:0;transform:scale(.1) rotate(-40deg)}
+  40%{opacity:1;transform:scale(1.3) rotate(8deg)}
+  70%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty)) scale(1.05)}
+}
+@keyframes wt-reaction-cheer{
+  0%{opacity:0;transform:translateY(12px) scale(.65)}
+  24%,60%{opacity:1;transform:translateY(-18px) scale(1.18)}
+  42%,77%{opacity:1;transform:translateY(0) scale(.85)}
+  100%{opacity:0;transform:translate(var(--wt-tx),var(--wt-ty))}
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .wt-character-reaction-fx::before,
+  .reader-page .wt-character-reaction-fx svg{animation:none!important;opacity:0!important}
+}
+@media print{.reader-page .wt-character-reaction-fx{display:none!important}}
+
+/* Real transparent GIF: character animation overlays the actual page art.
+   Never alter the PNG/SVG/GIF scene under the overlay. */
+.reader-page .story-page-image .wt-character-reaction-gif{
+ position:absolute;inset:8px;width:80px;height:80px;
+ object-fit:contain;image-rendering:auto;pointer-events:none;
+ filter:drop-shadow(0 2px 4px #321b4c42);
+}
+.reader-page .wt-character-reaction-fx:has(.wt-character-reaction-gif)::before{display:none}
+@media(prefers-reduced-motion:reduce){
+ .reader-page .story-page-image .wt-character-reaction-gif{display:none!important}
+}
+@media print{
+ .reader-page .story-page-image .wt-character-reaction-gif{display:none!important}
+}
+
+/* Dismiss only the speech bubble, never trigger a swipe or page advance.
+   The close target is 44px for small iPhone screens. */
+.reader-page .story-page-image .wt-character-reaction{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  max-height:min(45%,180px);
+  overflow-y:auto;
+  box-sizing:border-box;
+  pointer-events:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.reader-page .story-page-image .wt-character-reaction>span{
+  flex:1;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.reader-page .story-page-image .wt-character-reaction-close{
+  display:grid;
+  place-items:center;
+  flex:0 0 44px;
+  width:44px;
+  height:44px;
+  min-height:44px;
+  border:1px solid #d7bee9;
+  border-radius:12px;
+  background:#fff;
+  color:#624082;
+  padding:0;
+  cursor:pointer;
+  touch-action:manipulation;
+  pointer-events:auto;
+}
+.reader-page .story-page-image .wt-character-reaction-close:focus-visible{
+  outline:3px solid #ac7bd3;
+  outline-offset:2px;
+}
+@media print{
+  .reader-page .story-page-image .wt-character-reaction{display:none!important}
+}
+
+/* In reduced-motion mode the reaction still has a visible static cue.
+   GIF scenes use a single icon; CSS-only scenes keep their first icon. */
+.reader-page .story-page-image .wt-character-reaction-still{
+  display:none;
+  position:absolute;
+  inset:0;
+  place-items:center;
+  color:#fff5ce;
+  filter:drop-shadow(0 2px 5px #543565a3);
+  pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-page .story-page-image .wt-character-reaction-still{
+    display:grid!important;
+  }
+  .reader-page .story-page-image .wt-character-reaction-still svg{
+    position:static!important;
+    display:block!important;
+    opacity:1!important;
+    animation:none!important;
+    transform:none!important;
+  }
+  .reader-page .wt-character-reaction-fx:not(:has(.wt-character-reaction-gif))>svg:first-child{
+    display:block!important;
+    opacity:1!important;
+    top:34px!important;
+    left:35px!important;
+    animation:none!important;
+    transform:none!important;
+  }
+  .reader-page .wt-character-reaction-fx:not(:has(.wt-character-reaction-gif))>svg:not(:first-child){
+    display:none!important;
+  }
+}

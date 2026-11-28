@@ -1,0 +1,69 @@
+/* All reader illustrations use one responsive picture window.
+   PNG and animated GIF dimensions differ; do not let their natural height
+   resize the whole book or push the text below the viewport. */
+@media screen and (max-width:700px){
+  .reader-page .story-page .story-page-image,
+  .reader-page .story-page.book-style-spread .story-page-image,
+  .reader-page .story-page.book-style-classic .story-page-image,
+  .reader-page .story-page.book-style-storybook .story-page-image,
+  .reader-page .story-page.book-style-simple .story-page-image{
+    position:relative!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-width:0!important;
+    height:clamp(230px,38svh,345px)!important;
+    max-height:345px!important;
+    padding:8px!important;
+    margin:0!important;
+    overflow:hidden!important;
+    background:#fbf4ec!important;
+  }
+
+  /* Show the entire art, not a cropped thumbnail. Both landscape and
+     portrait artwork fit inside the same fixed-size window. */
+  .reader-page .story-page .story-page-image img,
+  .reader-page .story-page .story-page-image > svg,
+  .reader-page .story-page .story-page-image .story-image-fallback,
+  .reader-page .story-page .story-page-image picture img,
+  .reader-page .story-page .story-page-image > div > img{
+    display:block!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    height:100%!important;
+    max-height:100%!important;
+    min-height:0!important;
+    aspect-ratio:auto!important;
+    object-fit:contain!important;
+    object-position:center!important;
+    margin:0 auto!important;
+    border-radius:10px!important;
+    box-shadow:none!important;
+  }
+
+  .reader-page .story-page .story-page-image > div:not(.wt-art-effects){
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+    max-width:100%;
+    min-width:0;
+  }
+  .reader-page .story-page .story-text{
+    padding-top:14px;
+  }
+}
+@media screen and (max-width:700px) and (max-height:650px){
+  .reader-page .story-page .story-page-image,
+  .reader-page .story-page.book-style-spread .story-page-image,
+  .reader-page .story-page.book-style-classic .story-page-image,
+  .reader-page .story-page.book-style-storybook .story-page-image,
+  .reader-page .story-page.book-style-simple .story-page-image{
+    height:clamp(190px,36svh,260px)!important;
+  }
+}

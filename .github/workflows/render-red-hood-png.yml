@@ -1,0 +1,22 @@
+name: Verify Red Riding Hood watercolor artwork
+
+# Manual verification only. Never regenerate or commit simplified vector art
+# over the original watercolor PNGs used by the live story reader.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check all eight original watercolor PNGs
+        working-directory: frontend
+        run: node --test tests/red_hood_watercolor_assets.test.mjs

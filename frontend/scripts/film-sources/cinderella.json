@@ -1,0 +1,83 @@
+{
+  "storyId": "cinderella",
+  "status": "draft",
+  "languages": [
+    "ru",
+    "uz",
+    "en"
+  ],
+  "scenes": [
+    {
+      "page": 1,
+      "image": "/images/classics/cinderella/pages/page-1.png",
+      "narration": {
+        "ru": "Золушка каждый день трудилась по дому, но оставалась доброй и мечтала о счастье.",
+        "uz": "Zoluşka har kuni uy işlarini bajarardi, ammo mehribon bölib, baxtni orzu qilardi.",
+        "en": "Cinderella worked at home every day, but remained kind and dreamed of happiness."
+      }
+    },
+    {
+      "page": 2,
+      "image": "/images/classics/cinderella/pages/page-2.png",
+      "narration": {
+        "ru": "Мачеха и сёстры собирались на королевский бал, оставив Золушку дома.",
+        "uz": "Ögay ona va opalari qirol baliga tayyorlanişdi, Zoluşkani esa uyda qoldirişdi.",
+        "en": "Her stepmother and stepsisters prepared for the royal ball and left Cinderella at home."
+      }
+    },
+    {
+      "page": 3,
+      "image": "/images/classics/cinderella/pages/page-3.png",
+      "narration": {
+        "ru": "Добрая фея подарила ей волшебное платье и превратила тыкву в карету.",
+        "uz": "Mehribon pari unga sehrli köylak sovğa qildi va qovoqni aravaga aylantirdi.",
+        "en": "A kind fairy gave her a magical dress and turned a pumpkin into a carriage."
+      }
+    },
+    {
+      "page": 4,
+      "image": "/images/classics/cinderella/pages/page-4.png",
+      "narration": {
+        "ru": "Фея велела вернуться до полуночи. Золушка приехала во дворец в волшебной карете.",
+        "uz": "Pari yarim tungacha qaytişni aytdi. Zoluşka sehrli aravada saroyga keldi.",
+        "en": "The fairy told her to return before midnight. Cinderella arrived at the palace in her magical carriage."
+      }
+    },
+    {
+      "page": 5,
+      "image": "/images/classics/cinderella/pages/page-5.png",
+      "narration": {
+        "ru": "На балу принц пригласил Золушку танцевать, и они закружились в танце.",
+        "uz": "Balda şahzoda Zoluşkani raqsga taklif qildi va ular birga raqsga tuşişdi.",
+        "en": "At the ball the prince invited Cinderella to dance, and they twirled together."
+      }
+    },
+    {
+      "page": 6,
+      "image": "/images/classics/cinderella/pages/page-6.png",
+      "narration": {
+        "ru": "Они беседовали за столом, радовались знакомству и совсем забыли о времени.",
+        "uz": "Ular dasturxon atrofida suhbatlaşib, tanişganidan quvonişdi va vaqtni unutdi.",
+        "en": "They talked happily at the table and forgot all about the time."
+      }
+    },
+    {
+      "page": 7,
+      "image": "/images/classics/cinderella/pages/page-7.png",
+      "narration": {
+        "ru": "Часы пробили полночь. Золушка поспешила домой и потеряла на лестнице туфельку.",
+        "uz": "Soat yarim tunni bildirdi. Zoluşka uyga şoşilib, zinada tuflisini yöqotdi.",
+        "en": "The clock struck midnight. Cinderella hurried home and lost a slipper on the stairs."
+      }
+    },
+    {
+      "page": 8,
+      "image": "/images/classics/cinderella/pages/page-8.png",
+      "narration": {
+        "ru": "Принц нашёл Золушку и вернул ей туфельку. Они снова встретились и начали счастливую жизнь.",
+        "uz": "Şahzoda Zoluşkani topib, tuflisini qaytardi. Ular yana uçraşib, baxtli hayot boşlaşdi.",
+        "en": "The prince found Cinderella and returned her slipper. They were reunited and began a happy life."
+      }
+    }
+  ]
+}

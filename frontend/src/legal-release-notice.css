@@ -1,0 +1,30 @@
+/* Legal documents are drafts until operator and data processing details are verified. */
+.legal-center .legal-release-notice{
+  box-sizing:border-box;
+  margin:14px 0 18px;
+  padding:13px 15px;
+  border:1px solid #dfd0d5;
+  border-left:4px solid #8b677a;
+  border-radius:12px;
+  background:#fffaf3;
+  color:#46384d;
+  line-height:1.5;
+}
+.legal-center .legal-release-notice strong{
+  display:block;
+  margin:0 0 5px;
+  font-size:14px;
+  font-weight:750;
+}
+.legal-center .legal-release-notice p{
+  margin:0;
+  font-size:13px;
+  line-height:1.6;
+}
+@media(max-width:620px){
+  .legal-center .legal-release-notice{margin:10px 0 14px;padding:12px}
+  .legal-center .legal-release-notice p{font-size:12px}
+}
+@media print{
+  .legal-center .legal-release-notice{break-inside:avoid}
+}

@@ -1,0 +1,13 @@
+/* Keep chapter navigation compact in the mobile book reader. */
+.wt-chapter-navigator{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.wt-chapter-navigator label{font-size:13px;line-height:1.4;font-weight:600;opacity:.78}
+.wt-chapter-navigator select{box-sizing:border-box;min-width:126px;max-width:100%;min-height:38px;padding:7px 32px 7px 12px;border:1px solid rgba(105,83,129,.25);border-radius:11px;background:var(--card,#fff);color:inherit;font:inherit;font-size:14px;line-height:1.3;cursor:pointer}
+.wt-chapter-navigator select:focus-visible{outline:2px solid #8660bf;outline-offset:2px}
+.reader-night .wt-chapter-navigator select{background:#2c2241;color:#f8f1ff;border-color:#645477}
+@media(max-width:480px){.wt-chapter-navigator{justify-content:space-between;gap:8px}.wt-chapter-navigator label{font-size:12px}.wt-chapter-navigator select{min-width:130px;max-width:60%;font-size:13px}}
+
+/* Plot landmark: a quiet cue, not another oversized navigation button. */
+.wt-chapter-navigator .wt-story-part-label{font-size:12px;font-weight:700;color:inherit;opacity:.84;white-space:nowrap}
+.wt-chapter-navigator select optgroup{font-weight:700}
+.wt-chapter-navigator select option{font-weight:400}
+@media(max-width:480px){.wt-chapter-navigator .wt-story-part-label{flex:1 1 100%;text-align:center;font-size:12px}.wt-chapter-navigator label{font-size:12px}}

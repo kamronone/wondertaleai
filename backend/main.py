@@ -3,6 +3,7 @@ import base64
 import io
 import json
 import os
+import secrets
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -39,6 +40,9 @@ def db():
 
 with db() as c:
     c.execute("CREATE TABLE IF NOT EXISTS books (id TEXT PRIMARY KEY, created_at TEXT, name TEXT, age INTEGER, theme TEXT, prompt TEXT, style TEXT, title TEXT, pages TEXT, mode TEXT)")
+    cols = [r[1] for r in c.execute("PRAGMA table_info(books)")]
+    if "language" not in cols:
+        c.execute("ALTER TABLE books ADD COLUMN language TEXT NOT NULL DEFAULT 'ru'")
     c.commit()
 
 class Page(BaseModel):
@@ -57,6 +61,7 @@ class Book(BaseModel):
     title: str
     pages: list[Page]
     mode: str
+    language: str = "ru"
 
 def decode(row):
     obj = dict(row)
@@ -80,7 +85,29 @@ def validate_photo(raw):
     except (UnidentifiedImageError, ValueError, OSError):
         raise HTTPException(400, "Загрузите корректное фото JPG, PNG или WebP")
 
-def story_demo(name, prompt, theme):
+def story_demo(name, prompt, theme, language="ru"):
+    if language == "uz":
+        return f"{name} va sehrli yulduz", [
+            f"Bir kuni {name} deraza yonida yordamga muhtoj kichkina yulduzni ko‘rib qoldi.",
+            f"Yulduz {theme} olamidagi kamalakning ranglari yo‘qolganini aytib berdi.",
+            f"{name} quvnoq tulkicha bilan sarguzashtga yo‘l oldi.",
+            "Do‘stlar sehrli daraxtga boradigan yo‘lni ko‘rsatgan ajdarni uchratishdi.",
+            f"Qahramon orzusini esladi: {prompt}.",
+            "Ular yorqin gullar orasidan kichkina kalitni topishdi.",
+            f"{name} kalitni burdi va olam yana go‘zal ranglarga to‘ldi.",
+            "Mehribonlik va jasorat dunyodagi eng katta mo‘jiza edi."
+        ]
+    if language == "en":
+        return f"{name} and the Magic Star", [
+            f"One day, {name} spotted a little star outside the window.",
+            f"The star explained that the rainbow colors had vanished from {theme}.",
+            f"{name} set off on an adventure with a cheerful little fox.",
+            "They met a friendly dragon who showed them the enchanted tree.",
+            f"The hero remembered a wonderful dream: {prompt}.",
+            "Together, they discovered a small key among the glowing flowers.",
+            f"{name} turned the key and the colors of the world returned.",
+            "The hero learned that kindness and courage are the greatest magic."
+        ]
     title = f"{name} и секрет волшебной звезды"
     return title, [
         f"Однажды {name} заметил яркую звёздочку, которая осторожно постучала в окно.",
@@ -93,12 +120,13 @@ def story_demo(name, prompt, theme):
         f"Вечером {name} вернулся домой, улыбнулся и заснул с тёплой мыслью о дружбе.",
     ]
 
-def story_ai(name, age, prompt, theme, style):
+def story_ai(name, age, prompt, theme, style, language="ru"):
     from openai import OpenAI
     client = OpenAI()
+    target_language = {"ru":"Russian","uz":"Uzbek in modern Latin script with ch, sh, oʻ and gʻ","en":"English"}[language]
     result = client.responses.create(
         model=os.getenv("TEXT_MODEL", "gpt-5.5"),
-        instructions='Write a gentle, safe Russian-language children story with 8 pages. Return only a JSON object with "title" and "pages" (array of exactly 8 strings). Avoid violence, threats, advertisements and personal information beyond first name.',
+        instructions=f'Write a gentle, safe children story entirely in {target_language}, with 8 pages. Return only JSON with "title" and "pages" (exactly 8 strings). Translate ideas into that language when necessary. Avoid violence, threats, advertisements or personal information beyond the first name.',
         input=f"Имя героя: {name}; возраст: {age}; тема: {theme}; стиль: {style}; идея: {prompt}"
     )
     output = result.output_text.strip()
@@ -144,6 +172,34 @@ def ai_image(path, index, scene, name, style, reference):
         result = client.images.generate(**options)
     path.write_bytes(base64.b64decode(result.data[0].b64_json))
 
+@app.middleware("http")
+async def protect_private_books(request, call_next):
+    """Fail closed: never serve children's books without a configured secret.
+
+    This is only a temporary single-parent preview gate, NOT per-user auth.
+    Multi-user production must validate session identity and scope every row.
+    """
+    if request.url.path.startswith("/api/books") and request.method != "OPTIONS":
+        token = os.getenv("BOOKS_ACCESS_TOKEN", "").strip()
+        if not token:
+            return Response(
+                content=json.dumps({"detail": "Private book access is not configured"}),
+                status_code=503,
+                media_type="application/json",
+                headers={"Cache-Control": "no-store"},
+            )
+        authorization = request.headers.get("authorization", "")
+        scheme, _, provided = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not secrets.compare_digest(provided, token):
+            return Response(
+                content=json.dumps({"detail": "Unauthorized"}),
+                status_code=401,
+                media_type="application/json",
+                headers={"WWW-Authenticate": "Bearer", "Cache-Control": "no-store"},
+            )
+    return await call_next(request)
+
+
 @app.get("/api/health")
 def health():
     return {"ok": True, "mode": MODE}
@@ -162,9 +218,10 @@ def get_book(book_id: str):
     return decode(row)
 
 @app.post("/api/books", response_model=Book, status_code=201)
-def create_book(name: str = Form(...), age: int = Form(...), prompt: str = Form(...), theme: str = Form("Волшебство"), style: str = Form("Акварель"), parental_consent: bool = Form(False), photo: UploadFile | None = File(None)):
+def create_book(name: str = Form(...), age: int = Form(...), prompt: str = Form(...), theme: str = Form("Волшебство"), style: str = Form("Акварель"), language: str = Form("ru"), parental_consent: bool = Form(False), photo: UploadFile | None = File(None)):
     if not parental_consent: raise HTTPException(400, "Требуется согласие родителя или законного представителя")
     name = name.strip()
+    if language not in ("ru", "uz", "en"): raise HTTPException(422, "Unsupported language")
     if not (1 <= len(name) <= 60 and 2 <= age <= 14 and 8 <= len(prompt) <= 1200 and len(theme) <= 50 and len(style) <= 50):
         raise HTTPException(422, "Проверьте имя, возраст и описание")
     if MODE == "ai" and not os.getenv("OPENAI_API_KEY"):
@@ -175,16 +232,16 @@ def create_book(name: str = Form(...), age: int = Form(...), prompt: str = Form(
     folder = DATA / book_id
     folder.mkdir()
     try:
-        title, scenes = story_ai(name, age, prompt, theme, style) if MODE == "ai" else story_demo(name, prompt, theme)
+        title, scenes = story_ai(name, age, prompt, theme, style, language) if MODE == "ai" else story_demo(name, prompt, theme, language)
         pages = []
         for index, text in enumerate(scenes):
             dest = folder / f"{index+1}.png"
             if MODE == "ai": ai_image(dest, index, text, name, style, reference)
             else: demo_image(dest, index)
             pages.append({"number": index+1, "text": text, "image_url": f"/api/books/{book_id}/images/{index+1}"})
-        book = Book(id=book_id, created_at=datetime.now(timezone.utc).isoformat(), name=name, age=age, prompt=prompt, theme=theme, style=style, title=title, pages=[Page(**p) for p in pages], mode=MODE)
+        book = Book(id=book_id, created_at=datetime.now(timezone.utc).isoformat(), name=name, age=age, prompt=prompt, theme=theme, style=style, title=title, pages=[Page(**p) for p in pages], mode=MODE, language=language)
         with db() as c:
-            c.execute("INSERT INTO books VALUES (?,?,?,?,?,?,?,?,?,?)", (book.id, book.created_at, name, age, theme, prompt, style, title, json.dumps(pages, ensure_ascii=False), MODE))
+            c.execute("INSERT INTO books (id,created_at,name,age,theme,prompt,style,title,pages,mode,language) VALUES (?,?,?,?,?,?,?,?,?,?,?)", (book.id, book.created_at, name, age, theme, prompt, style, title, json.dumps(pages, ensure_ascii=False), MODE, language))
             c.commit()
         return book
     except Exception:

@@ -1,0 +1,63 @@
+/* A small, optional replay control; never covers the character's speech bubble. */
+.reader-page .story-page-image .wt-scene-reply-controls{
+ position:absolute;
+ left:50%;
+ bottom:8px;
+ transform:translateX(-50%);
+ z-index:11;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ gap:4px;
+ width:max-content;
+ max-width:calc(100% - 20px);
+ pointer-events:auto!important;
+}
+.reader-page .wt-scene-reply-controls button{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:6px;
+ box-sizing:border-box;
+ min-height:44px;
+ max-width:100%;
+ padding:7px 13px;
+ border:1px solid #ddc5ec;
+ border-radius:13px;
+ color:#573974;
+ background:rgba(255,251,248,.98);
+ box-shadow:0 2px 7px #3d2a4b32;
+ font-size:12px;
+ line-height:1.25;
+ font-weight:750;
+ white-space:normal;
+ cursor:pointer;
+ touch-action:manipulation;
+}
+.reader-page .wt-scene-reply-controls button:focus-visible{
+ outline:3px solid #eed58d;
+ outline-offset:2px;
+}
+.reader-page .wt-scene-reply-controls button[aria-pressed="true"]{
+ background:#f0e3fb;
+ border-color:#9b70bf;
+}
+.reader-page .wt-scene-reply-controls>span{
+ display:block;
+ max-width:220px;
+ padding:4px 7px;
+ border-radius:7px;
+ background:#fff9f2;
+ color:#58354d;
+ text-align:center;
+ font-size:11px;
+ line-height:1.25;
+ overflow-wrap:anywhere;
+}
+@media(max-width:420px){
+ .reader-page .story-page-image .wt-scene-reply-controls{bottom:5px}
+ .reader-page .wt-scene-reply-controls button{font-size:11px;padding:7px 9px}
+}
+@media print{
+ .reader-page .story-page-image .wt-scene-reply-controls{display:none!important}
+}

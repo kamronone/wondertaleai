@@ -1,0 +1,21 @@
+/* Opt-in AI queue: compact cards that fit narrow iPhone screens. */
+.ai-jobs-panel{margin:12px 0;padding:14px;border:1px solid var(--border,#e8e0ef);border-radius:18px;background:var(--surface,#fff)}
+.ai-jobs-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ai-jobs-head h3{font-size:1rem;margin:0 0 5px}
+.ai-jobs-head p{font-size:.82rem;line-height:1.45;opacity:.8;margin:0 0 10px}
+.ai-jobs-panel .small-button{font-size:.79rem;min-height:35px;padding:6px 10px;white-space:normal}
+.ai-jobs-list{display:grid;gap:7px;list-style:none;padding:0;margin:9px 0 0}
+.ai-jobs-list li{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:9px 11px;border:1px solid var(--border,#e8e0ef);border-radius:12px;min-width:0}
+.ai-jobs-status{min-width:0;overflow-wrap:anywhere;font-size:.83rem;font-weight:600}
+@media(max-width:390px){.ai-jobs-panel{padding:11px}.ai-jobs-head{flex-wrap:wrap}.ai-jobs-list li{padding:8px}}
+
+.ai-jobs-auto-refresh{
+  margin:0 0 10px;
+  color:var(--text-muted,#67577c);
+  font-size:.76rem;
+  line-height:1.4;
+}
+.ai-jobs-head .small-button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}

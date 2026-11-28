@@ -1,0 +1,135 @@
+/* Reader controls: one clear hierarchy beneath the page text.
+   Narration first, equal-size secondary buttons second, editing in Settings.
+   These final overrides are scoped to the reader and mobile screens. */
+@media screen and (max-width:700px) {
+  .reader-page .reader-audio-toolbar {
+    order:3!important;
+    display:grid!important;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr))!important;
+    align-items:stretch!important;
+    justify-content:stretch!important;
+    gap:8px!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:11px 0 7px!important;
+    padding:0!important;
+    background:transparent!important;
+  }
+  .reader-page .reader-audio-toolbar > button,
+  .reader-page .reader-audio-toolbar > button:first-child {
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:8px!important;
+    box-sizing:border-box!important;
+    flex:1 1 100%!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:46px!important;
+    height:auto!important;
+    max-height:none!important;
+    padding:8px 13px!important;
+    margin:0!important;
+    border-radius:15px!important;
+    font-size:14px!important;
+    line-height:1.2!important;
+    font-weight:750!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere;
+  }
+  .reader-page .reader-audio-toolbar > button:first-child {
+    background:linear-gradient(115deg,#a26ac7,#8552b5)!important;
+    border:1px solid #9162ba!important;
+    color:#fff!important;
+    box-shadow:0 4px 12px rgba(95,57,126,.15)!important;
+  }
+  .reader-page .reader-audio-toolbar > button:not(:first-child) {
+    background:#f6ecfa!important;
+    border:1px solid #ddc4e9!important;
+    color:#65427d!important;
+    box-shadow:none!important;
+  }
+  .reader-page .reader-mode-controls {
+    order:4!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    justify-content:stretch!important;
+    align-items:stretch!important;
+    gap:8px!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    margin:0 0 10px!important;
+    padding:0!important;
+  }
+  .reader-page .reader-mode-controls > button {
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:6px!important;
+    box-sizing:border-box!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:100%!important;
+    min-height:44px!important;
+    height:auto!important;
+    padding:7px 9px!important;
+    margin:0!important;
+    border:1px solid #dfc8eb!important;
+    border-radius:14px!important;
+    background:#fffaf9!important;
+    color:#634579!important;
+    box-shadow:none!important;
+    font-size:clamp(11px,3.2vw,13px)!important;
+    line-height:1.15!important;
+    font-weight:750!important;
+    white-space:normal!important;
+  }
+  .reader-page .reader-mode-controls > button:only-child {
+    grid-column:1/-1!important;
+  }
+  .reader-page .reader-mode-controls > button[aria-pressed="true"] {
+    background:#ecdcf7!important;
+    border-color:#aa82cf!important;
+  }
+  .reader-page .reader-display-settings {
+    order:5!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    margin:0 0 10px!important;
+  }
+  .reader-page .reader-display-settings .reader-edit-settings {
+    margin:12px 0 0!important;
+    padding:12px 0 0!important;
+    border-top:1px solid #e3d2e9!important;
+  }
+  .reader-page .reader-display-settings .reader-edit-settings .story-edit-zone,
+  .reader-page .reader-display-settings > .story-edit-zone {
+    display:block!important;
+    width:100%!important;
+    margin:0 0 8px!important;
+    padding:0!important;
+    background:none!important;
+    box-shadow:none!important;
+  }
+  .reader-page .reader-display-settings .reader-edit-settings .story-edit-zone > button,
+  .reader-page .reader-display-settings > .story-edit-zone > button {
+    display:flex!important;
+    justify-content:center!important;
+    align-items:center!important;
+    gap:7px!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-height:43px!important;
+    margin:0!important;
+    padding:9px 12px!important;
+    border:1px solid #e0c8eb!important;
+    border-radius:13px!important;
+    background:#fff!important;
+    color:#72458b!important;
+    box-shadow:none!important;
+    font-size:12px!important;
+    line-height:1.2!important;
+  }
+}

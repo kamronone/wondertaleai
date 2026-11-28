@@ -1,0 +1,90 @@
+/* Global appearance themes: scoped to the app root and never recolor book illustrations. */
+.shell[data-site-theme="forest"]{
+ --wt-site-ink:#274739;--wt-site-accent:#347a59;--wt-site-soft:#f1f9ec;
+ --royal:#264e41;--violet:#39765a;--pink:#7da887;--gold:#ecca82;--ink:#274739;--cream:#f5faed;
+ color:var(--wt-site-ink);
+ background:linear-gradient(180deg,#eaf4e8 0,#f7faef 400px,#fcf9f0 100%);
+}
+.shell[data-site-theme="night"]{
+ --wt-site-ink:#e9defd;--wt-site-accent:#bd9aef;--wt-site-soft:#302945;
+ --royal:#e9defd;--violet:#b395e7;--pink:#d6a0da;--gold:#ffe09a;--ink:#e9defd;--cream:#29223a;
+ color:var(--wt-site-ink);
+ background:linear-gradient(180deg,#171529 0,#241b38 420px,#1a172a 100%);
+ color-scheme:dark;
+}
+.shell[data-site-theme="forest"] .topbar,.shell[data-site-theme="night"] .topbar{color:var(--wt-site-ink)}
+.shell[data-site-theme="forest"] .brand{color:#235943}
+.shell[data-site-theme="forest"] .brandaccent{color:#478563}
+.shell[data-site-theme="night"] .brand{color:#f4ebff}
+.shell[data-site-theme="night"] .brandaccent{color:#ccafe9}
+.shell[data-site-theme="forest"] .hero{
+ background:radial-gradient(ellipse at 70% 35%,#98c5a87a,transparent 46%),linear-gradient(135deg,#174a42,#337c60 62%,#91b883);
+ box-shadow:0 16px 38px #1b634c29;
+}
+.shell[data-site-theme="night"] .hero{
+ background:radial-gradient(ellipse at 72% 24%,#9073c56e,transparent 50%),linear-gradient(135deg,#10142e,#24214a 56%,#4b376b);
+ box-shadow:0 16px 40px #08061e64;
+}
+.shell[data-site-theme="forest"] .hero .primary-button{background:linear-gradient(110deg,#f8e4a8,#cfedb6);color:#27543d;border-color:#e7eac1;box-shadow:0 6px 22px #184b383d}
+.shell[data-site-theme="night"] .hero .primary-button{background:linear-gradient(110deg,#efd7ff,#bd9bed);color:#281d46;border-color:#fff0ff;box-shadow:0 6px 24px #0b082c88}
+.shell[data-site-theme="forest"] .primary-button:not(.hero .primary-button){background:#327b5e;color:white}
+.shell[data-site-theme="night"] .primary-button:not(.hero .primary-button){background:#9c7add;color:#17132e}
+.shell[data-site-theme="forest"] .header-actions .small-button{background:#f6fbf2;color:#2b6147;border-color:#b8d5bd}
+.shell[data-site-theme="night"] .header-actions .small-button{background:#302940;color:#eee1fb;border-color:#5d4e77}
+.shell[data-site-theme="night"] .create-page,
+.shell[data-site-theme="night"] .library-page,
+.shell[data-site-theme="night"] .reader-page,
+.shell[data-site-theme="night"] .account-page{color:#ebe1f6}
+.shell[data-site-theme="night"] :is(.features article,.quick-actions>button,.form-card,.book-tile,.classic-card,.continue-story-card,.library-card,.section-panel,.reader-toolbar,.reader-mode-controls,.reader-family-preferences,.site-legal-footer,.profile-mockup-popover){
+ background-color:#2b243c;
+ color:#eee5fa;
+ border-color:#514366;
+}
+.shell[data-site-theme="forest"] :is(.features article,.quick-actions>button,.form-card,.book-tile,.classic-card,.continue-story-card,.library-card,.section-panel,.reader-toolbar,.reader-mode-controls,.reader-family-preferences,.profile-mockup-popover){
+ background-color:#f6fbf2;
+ color:#285540;
+ border-color:#c7ddc7;
+}
+.shell[data-site-theme="night"] :is(.features p,.section-head small,.book-caption small,.profile-mockup-brand small){color:#d4c5e9}
+.shell[data-site-theme="night"] :is(.form-card input,.form-card textarea,.form-card select,.profile-mockup-language select){
+ background:#352d48;color:#f6edff;border-color:#675676;
+}
+.shell[data-site-theme="forest"] :is(.form-card input,.form-card textarea,.form-card select,.profile-mockup-language select){
+ background:#fffef9;color:#24523d;border-color:#aecab2;
+}
+.shell[data-site-theme="night"] .profile-mockup-topbar{background:#211c32;color:#f3eaff;border-color:#58486b}
+.shell[data-site-theme="forest"] .profile-mockup-topbar{background:#eaf5e8;color:#28523c;border-color:#c4d9c3}
+.shell[data-site-theme="night"] .profile-mockup-icon-button{background:#403552;color:#f3e9ff;border-color:#625074}
+.shell[data-site-theme="forest"] .profile-mockup-icon-button{background:#f4fbf0;color:#2c694a;border-color:#bad2b9}
+/* Reader's own night/warm mode has priority, independent from the website theme. */
+.shell[data-site-theme="night"] .reader-page .story-page,
+.shell[data-site-theme="night"] .reader-page .story-text{color:#35294e}
+.shell[data-site-theme="night"] .reader-page .story-page.reader-night,
+.shell[data-site-theme="night"] .reader-page .story-page.reader-night .story-text{color:#f9f0e2}
+.wt-theme-choice:focus-visible{outline:3px solid #efc578;outline-offset:2px}
+.wt-theme-settings{display:flex;flex-direction:column;gap:8px;padding:10px 0}
+.wt-theme-settings-title{font-size:13px;font-weight:800}
+.wt-theme-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.wt-theme-choice{min-width:0;min-height:44px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:7px 4px;border:1px solid #d7c6e6;border-radius:11px;background:#fff9fb;color:#503b70;font-size:11px;font-weight:750;line-height:1.25}
+.wt-theme-choice[aria-pressed="true"]{border:2px solid #8f6bc6;box-shadow:0 0 0 2px #b391da26;background:#eee3fb}
+.wt-theme-choice[data-option="forest"]{background:#e1f2dc;color:#27583e;border-color:#9ac5a1}
+.wt-theme-choice[data-option="night"]{background:#302841;color:#eee6fb;border-color:#6d5a85}
+.wt-theme-choice[data-option="forest"][aria-pressed="true"]{border-color:#377d57;box-shadow:0 0 0 2px #377d5730}
+.wt-theme-choice[data-option="night"][aria-pressed="true"]{border-color:#e1baff;box-shadow:0 0 0 2px #c299e540}
+@media(max-width:420px){
+ .wt-theme-options{gap:4px}
+ .wt-theme-choice{font-size:10px;padding:6px 3px}
+}
+/* Logo and profile only: calm one-action mobile header. */
+@media(max-width:420px){
+ .shell .topbar{padding-left:12px;padding-right:12px;gap:7px}
+ .shell .header-actions{gap:6px;flex:0 0 auto}
+ .shell .header-actions .small-button{padding:8px;min-width:40px;min-height:40px}
+ .shell .header-actions .small-button span{display:none}
+ .shell .brand{min-width:0;font-size:clamp(15px,4vw,20px);gap:6px}
+ .shell .brandmark{flex:0 0 34px;width:34px;height:34px}
+ .shell .brand small{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .wt-theme-choice{transition:none!important}
+}

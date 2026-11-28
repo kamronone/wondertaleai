@@ -1,0 +1,83 @@
+{
+  "storyId": "rapunzel",
+  "status": "draft",
+  "languages": [
+    "ru",
+    "uz",
+    "en"
+  ],
+  "scenes": [
+    {
+      "page": 1,
+      "image": "/images/classics/rapunzel/pages/page-1.png",
+      "narration": {
+        "ru": "В лесу мальчик увидел высокую башню. В её окне жила девушка с длинными золотистыми волосами.",
+        "uz": "Örmonda bola baland minorani kördi. Uning derazasida uzun oltinrang soçli qiz yaşardi.",
+        "en": "In the forest a boy saw a tall tower. A girl with long golden hair lived at its window."
+      }
+    },
+    {
+      "page": 2,
+      "image": "/images/classics/rapunzel/pages/page-2.png",
+      "narration": {
+        "ru": "Мальчик помахал Рапунцель. Она улыбнулась и рассказала, что мечтает спуститься в лес.",
+        "uz": "Bola Rapunzelga qöl silkidi. U jilmayib, örmonga tuşişni orzu qilişini aytdi.",
+        "en": "The boy waved to Rapunzel. She smiled and said she dreamed of coming down to the forest."
+      }
+    },
+    {
+      "page": 3,
+      "image": "/images/classics/rapunzel/pages/page-3.png",
+      "narration": {
+        "ru": "Мальчик позвал взрослого помощника. Вместе они решили помочь Рапунцель выбраться из башни.",
+        "uz": "Bola katta yordamçini çaqirdi. Ular birga Rapunzelga minoradan çiqişda yordam bermoqçi bölişdi.",
+        "en": "The boy called a grown-up helper. Together they decided to help Rapunzel leave the tower."
+      }
+    },
+    {
+      "page": 4,
+      "image": "/images/classics/rapunzel/pages/page-4.png",
+      "narration": {
+        "ru": "Друзья принесли длинную лестницу и поставили её возле башни.",
+        "uz": "Döstlar uzun narvon olib kelib, uni minora yoniga qöyişdi.",
+        "en": "The friends brought a long ladder and placed it beside the tower."
+      }
+    },
+    {
+      "page": 5,
+      "image": "/images/classics/rapunzel/pages/page-5.png",
+      "narration": {
+        "ru": "Мальчик проверил план, а помощник убедился, что лестница стоит надёжно.",
+        "uz": "Bola rejani tekşirdi, yordamçi esa narvon mustahkam turganiga işonç hosil qildi.",
+        "en": "The boy checked the plan while the helper made sure the ladder was secure."
+      }
+    },
+    {
+      "page": 6,
+      "image": "/images/classics/rapunzel/pages/page-6.png",
+      "narration": {
+        "ru": "Рапунцель осторожно спустилась по лестнице. Друзья ждали её внизу.",
+        "uz": "Rapunzel ehtiyotkorlik bilan narvondan tuşdi. Döstlari uni pastda kutib turişdi.",
+        "en": "Rapunzel carefully climbed down the ladder. Her friends waited below."
+      }
+    },
+    {
+      "page": 7,
+      "image": "/images/classics/rapunzel/pages/page-7.png",
+      "narration": {
+        "ru": "Наконец Рапунцель оказалась на земле. Она поблагодарила мальчика и села отдохнуть среди цветов.",
+        "uz": "Nihoyat Rapunzel yerga tuşdi. U bolaga rahmat aytib, gullar orasida dam oldi.",
+        "en": "At last Rapunzel reached the ground. She thanked the boy and rested among the flowers."
+      }
+    },
+    {
+      "page": 8,
+      "image": "/images/classics/rapunzel/pages/page-8.png",
+      "narration": {
+        "ru": "Друзья собрались у уютного домика. Рапунцель радовалась свободе и новым друзьям.",
+        "uz": "Döstlar şinam uyça yonida yiğilişdi. Rapunzel ozodlik va yangi döstlaridan quvondi.",
+        "en": "The friends gathered by a cozy cottage. Rapunzel celebrated her freedom and new friends."
+      }
+    }
+  ]
+}

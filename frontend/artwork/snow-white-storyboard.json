@@ -1,0 +1,53 @@
+{
+  "story": "snow-white",
+  "version": 1,
+  "pages": [
+    {
+      "page": 1,
+      "scene": "Forest departure",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. Snow White in blue and gold dress leaves stone castle at dawn, winding forest path, gentle expression, distant towers. Keep the same wardrobe and face throughout the series."
+    },
+    {
+      "page": 2,
+      "scene": "Kind forest animals",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. Snow White follows a woodland trail as deer, squirrels and birds guide her through sunlit trees. Keep the same wardrobe and face throughout the series."
+    },
+    {
+      "page": 3,
+      "scene": "Small cottage",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. Snow White discovers the seven dwarfs' cozy woodland cottage, seven tiny chairs visible through warm window. Keep the same wardrobe and face throughout the series."
+    },
+    {
+      "page": 4,
+      "scene": "Seven new friends",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. Seven distinct kind dwarfs greet Snow White around a wooden dinner table, joyful introductions. Keep the same wardrobe and face throughout the series."
+    },
+    {
+      "page": 5,
+      "scene": "The disguised visitor",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. A cloaked elderly vendor offers a shining red apple at the cottage doorway, Snow White looks uncertain, no horror. Keep the same wardrobe and face throughout the series."
+    },
+    {
+      "page": 6,
+      "scene": "A long enchanted sleep",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. Snow White rests peacefully in a flower-covered bed while worried friends gather, soft magical lighting. Keep the same wardrobe and face throughout the series."
+    },
+    {
+      "page": 7,
+      "scene": "The spell breaks",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. A gentle glow fills the cottage; Snow White wakes with friends beside her, hopeful expressions. Keep the same wardrobe and face throughout the series."
+    },
+    {
+      "page": 8,
+      "scene": "Happy reunion",
+      "prompt": "Original age-appropriate illustrated children's storybook art, watercolor and clean painterly animation style, recurring Snow White consistent on every page (short dark hair, blue bodice, warm yellow skirt, red hair ribbon), landscape 4:3, character-focused, clear scene readability, no text, no watermark. Snow White and seven dwarfs celebrate in a flower meadow, castle visible in the distance, warm ending. Keep the same wardrobe and face throughout the series."
+    }
+  ],
+  "notes": [
+    "Produce eight visually distinct original PNGs with real scene-to-chapter alignment, not one reused cover.",
+    "Filenames: public/images/classics/snow-white/pages/page-1.png ... page-8.png.",
+    "Minimum dimensions 480x360; recommended 1200x900; ensure distinct SHA256 for every page.",
+    "The new build flag is enabled only when all eight files exist; release image checker rejects incomplete packs.",
+    "Avoid copying recognizable character designs from modern animated films; use a unique public-domain-inspired visual identity."
+  ]
+}

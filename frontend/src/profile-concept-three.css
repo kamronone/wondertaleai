@@ -1,0 +1,951 @@
+/* WonderTale AI | Profile Concept 3
+   Reference: third user-approved profile PNG. Only profile markup is restyled.
+   The demo indicator is informational, never a false interactive switch. */
+
+.profile-concept-three {
+  --profile-ink: #281449;
+  --profile-ink-soft: #644985;
+  --profile-line: #e4d3f6;
+  --profile-purple: #7947bc;
+  --profile-bg: #faf5ff;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(840px, 100%);
+  padding: 0 16px 22px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #f7edff 0%, #fcf8ff 50%, #f6ecff 100%);
+  color: var(--profile-ink);
+}
+
+.profile-concept-three .parent-account-page {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 0 !important;
+}
+
+.profile-concept-three .parent-account-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 164px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  min-height: 191px;
+  padding: 21px 25px;
+  margin: 14px 0 20px;
+  box-sizing: border-box;
+  border: 1px solid #e4d3fc;
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 84% 12%, rgba(231,206,255,.98) 0%, transparent 38%),
+    linear-gradient(112deg, #fbf7ff 0%, #f3e8ff 67%, #e6d5fd 100%);
+  box-shadow: 0 10px 30px rgba(90,53,140,.08);
+}
+
+.profile-concept-three .parent-account-hero-art {
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  width: 164px;
+  height: 164px;
+  margin: 0;
+  border: 5px solid #fff;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #66439a;
+  box-shadow: 0 7px 20px #51308228;
+}
+
+.profile-concept-three .parent-account-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+}
+
+.profile-concept-three .parent-account-hero-copy {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 0 110px 0 0;
+}
+
+.profile-concept-three .parent-account-hero-copy h2 {
+  font-size: clamp(20px, 3.3vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  font-weight: 800;
+  color: #2e164d;
+  margin: 0;
+}
+
+.profile-concept-three .parent-account-hero-copy p {
+  margin: 0;
+  color: #865bb8;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.profile-concept-three .parent-account-author {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  margin: 0;
+  border: 1px solid #d9bbf5;
+  border-radius: 999px;
+  background: #ffffffcf;
+  color: #3d2459;
+  font-size: 12px;
+  font-weight: 760;
+  box-shadow: 0 2px 5px #5030800a;
+}
+
+.profile-concept-three .parent-account-author svg { color: #8655b7; }
+
+.profile-concept-three .parent-account-castle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 170px;
+  height: 172px;
+  opacity: .95;
+  pointer-events: none;
+}
+
+.profile-concept-three .parent-account-castle img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 28%), linear-gradient(0deg, transparent 0%, black 18%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, black 28%);
+}
+
+/* The demo state is a readable expandable status card, not a fake toggle. */
+.profile-concept-three .parent-account-unavailable {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0 0 20px;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid #e2cbfa;
+  background: linear-gradient(105deg, #faf2ff, #f5e9ff 95%);
+  box-shadow: 0 6px 20px #6b40ac0c;
+}
+
+.profile-concept-three .parent-account-unavailable > summary {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+}
+
+.profile-concept-three .parent-account-unavailable > summary::-webkit-details-marker { display: none; }
+.profile-concept-three .parent-account-unavailable > summary:focus-visible {
+  outline: 3px solid #a375da;
+  outline-offset: -3px;
+  border-radius: 20px;
+}
+
+.profile-concept-three .parent-account-status {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 16px;
+  min-height: 94px;
+  padding: 16px 20px;
+  margin: 0;
+}
+
+.profile-concept-three .parent-profile-sparkle {
+  flex: 0 0 56px;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: #eddbff;
+  color: #7638b6;
+  font-size: 33px;
+  line-height: 1;
+}
+
+.profile-concept-three .parent-account-status > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+
+.profile-concept-three .parent-account-status strong {
+  font-size: 17px;
+  font-weight: 800;
+  color: #301852;
+  line-height: 1.25;
+}
+
+.profile-concept-three .parent-account-status span:not(.parent-profile-sparkle):not(.parent-profile-demo-pill) {
+  font-size: 12px;
+  font-weight: 450;
+  color: #6b5282;
+  line-height: 1.4;
+}
+
+.profile-concept-three .parent-profile-demo-pill {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 28px;
+  padding: 3px;
+  box-sizing: border-box;
+  border: 1px solid #cdb5dd;
+  border-radius: 999px;
+  background: #d7c7e3;
+}
+
+.profile-concept-three .parent-profile-demo-pill > span {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px #6746823a;
+}
+
+.profile-concept-three .parent-account-help-content {
+  padding: 0 20px 18px 92px;
+  color: #705887;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.profile-concept-three .parent-account-help-content strong { color: #4c3070; font-size: 12px; }
+.profile-concept-three .parent-account-help-content p { margin: 6px 0; font-size: 12px; line-height: 1.5; }
+.profile-concept-three .parent-account-help-content button { margin-top: 10px; }
+.profile-concept-three .parent-account-card {
+  border-radius: 18px;
+  margin: 0 0 20px;
+  padding: 20px;
+  box-shadow: 0 5px 17px #61438c0d;
+}
+.profile-concept-three .parent-account-reading-section { margin: 10px 0; }
+
+/* Legal section: heading outside the single grouped list. */
+.profile-concept-three .profile-legal-menu {
+  display: block;
+  margin: 0 0 22px;
+  padding: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-concept-three .profile-legal-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 14px;
+  margin: 0 0 13px;
+  border: 0;
+}
+
+.profile-concept-three .profile-legal-heading-icon {
+  flex: 0 0 52px;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: #6d2faf;
+  background: #e9d8fc;
+}
+
+.profile-concept-three .profile-legal-heading h3 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.25;
+  color: #2b1649;
+  font-weight: 800;
+}
+.profile-concept-three .profile-legal-heading p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #705784;
+  line-height: 1.42;
+  font-weight: 500;
+}
+
+.profile-concept-three .profile-legal-links {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border: 1px solid #e4d4f8;
+  border-radius: 22px;
+  background: #fffaff;
+  overflow: hidden;
+  box-shadow: 0 5px 15px #6842980b;
+}
+
+.profile-concept-three .profile-legal-links > button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 67px;
+  width: 100%;
+  gap: 13px;
+  padding: 10px 19px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #29154a;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 720;
+  text-align: left;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.profile-concept-three .profile-legal-links > button + button::before {
+  content: "";
+  position: absolute;
+  left: 77px;
+  right: 18px;
+  top: 0;
+  height: 1px;
+  background: #e7d8f2;
+}
+
+.profile-concept-three .profile-legal-links > button:hover { background: #f7efff; }
+.profile-concept-three .profile-legal-links > button:active { background: #f0e2ff; }
+.profile-concept-three .profile-legal-links > button:focus-visible {
+  outline: 3px solid #a174d5;
+  outline-offset: -3px;
+}
+
+.profile-concept-three .profile-legal-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  background: #f0e3fc;
+  color: #7134b1;
+}
+
+.profile-concept-three .profile-legal-icon svg { width: 22px; height: 22px; }
+
+.profile-concept-three .profile-legal-label {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-concept-three .profile-legal-chevron {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  color: #382057;
+}
+
+/* The plan card stays collapsed and explicitly does not simulate billing. */
+.profile-concept-three .account-plans-disclosure {
+  display: block;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 1px solid #e0cbf8;
+  border-radius: 19px;
+  overflow: hidden;
+  background: linear-gradient(105deg, #fffaff 58%, #edddff 100%);
+  box-shadow: 0 5px 20px #6f469c0b;
+}
+.profile-concept-three .account-plans-disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-height: 83px;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 14px;
+  padding: 14px 20px;
+  list-style: none;
+  cursor: pointer;
+}
+.profile-concept-three .account-plans-disclosure > summary::-webkit-details-marker { display: none; }
+.profile-concept-three .account-plans-disclosure > summary:focus-visible {
+  outline: 3px solid #a174d5;
+  outline-offset: -3px;
+  border-radius: 19px;
+}
+.profile-concept-three .profile-plan-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: #f2e6ff;
+  color: #eaa02c;
+}
+.profile-concept-three .profile-plan-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.profile-concept-three .profile-plan-copy strong {
+  font-size: 16px;
+  color: #30164c;
+  font-weight: 770;
+  line-height: 1.25;
+}
+.profile-concept-three .profile-plan-copy small {
+  font-size: 12px;
+  color: #735785;
+  line-height: 1.35;
+  font-weight: 500;
+}
+.profile-concept-three .profile-plan-chevron {
+  color: #3a225a;
+  flex: 0 0 20px;
+}
+.profile-concept-three .account-plans-disclosure[open] .profile-plan-chevron { transform: rotate(180deg); }
+.profile-concept-three .account-plans-disclosure > :not(summary) {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.profile-concept-three .account-plans-disclosure > summary + * {
+  border-top: 1px solid #e3d1f5;
+}
+
+/* Tabs and other screens keep their own styles. */
+@media (max-width: 620px) {
+  .profile-concept-three {
+    width: 100%;
+    gap: 0;
+    padding: 0 10px 8px;
+  }
+  .profile-concept-three .parent-account-page { padding: 0 !important; }
+  .profile-concept-three .parent-account-hero {
+    grid-template-columns: 92px minmax(0, 1fr);
+    min-height: 120px;
+    gap: 11px;
+    padding: 12px;
+    margin: 8px 0 12px;
+    border-radius: 18px;
+  }
+  .profile-concept-three .parent-account-hero-art {
+    width: 92px;
+    height: 92px;
+    border-width: 3px;
+    border-radius: 19px;
+  }
+  .profile-concept-three .parent-account-hero-copy {
+    gap: 5px;
+    padding-right: 18px;
+  }
+  .profile-concept-three .parent-account-hero-copy h2 {
+    font-size: clamp(16px, 4.7vw, 21px);
+    line-height: 1.18;
+  }
+  .profile-concept-three .parent-account-hero-copy p { font-size: 13px; line-height: 1.25; }
+  .profile-concept-three .parent-account-author {
+    padding: 5px 7px;
+    font-size: 10px;
+    line-height: 1.25;
+    gap: 5px;
+  }
+  .profile-concept-three .parent-account-author svg { width: 12px; height: 12px; }
+  .profile-concept-three .parent-account-castle {
+    right: -20px;
+    bottom: -6px;
+    width: 93px;
+    height: 100px;
+    opacity: .55;
+  }
+  .profile-concept-three .parent-account-unavailable {
+    margin-bottom: 15px;
+    border-radius: 16px;
+  }
+  .profile-concept-three .parent-account-status {
+    min-height: 74px;
+    padding: 11px 13px;
+    gap: 10px;
+  }
+  .profile-concept-three .parent-profile-sparkle {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    font-size: 25px;
+  }
+  .profile-concept-three .parent-account-status strong { font-size: 14px; }
+  .profile-concept-three .parent-account-status span:not(.parent-profile-sparkle):not(.parent-profile-demo-pill) {
+    font-size: 11px;
+  }
+  .profile-concept-three .parent-profile-demo-pill {
+    width: 42px;
+    flex-basis: 42px;
+    height: 25px;
+  }
+  .profile-concept-three .parent-profile-demo-pill > span { width: 17px; height: 17px; }
+  .profile-concept-three .parent-account-help-content { padding: 0 12px 12px 65px; font-size: 11px; }
+  .profile-concept-three .profile-legal-menu { margin-bottom: 15px; }
+  .profile-concept-three .profile-legal-heading { gap: 9px; padding: 0 8px; margin: 0 0 9px; }
+  .profile-concept-three .profile-legal-heading-icon {
+    flex-basis: 39px;
+    width: 39px;
+    height: 39px;
+  }
+  .profile-concept-three .profile-legal-heading-icon svg { width: 20px; height: 20px; }
+  .profile-concept-three .profile-legal-heading h3 { font-size: 16px; }
+  .profile-concept-three .profile-legal-heading p { font-size: 10px; margin-top: 3px; }
+  .profile-concept-three .profile-legal-links { border-radius: 16px; }
+  .profile-concept-three .profile-legal-links > button { min-height: 52px; padding: 8px 11px; gap: 10px; font-size: 12px; }
+  .profile-concept-three .profile-legal-links > button + button::before { left: 57px; right: 11px; }
+  .profile-concept-three .profile-legal-icon {
+    flex-basis: 35px;
+    width: 35px;
+    height: 35px;
+    border-radius: 12px;
+  }
+  .profile-concept-three .profile-legal-icon svg { width: 18px; height: 18px; }
+  .profile-concept-three .profile-legal-chevron { width: 17px; height: 17px; flex-basis: 17px; }
+  .profile-concept-three .account-plans-disclosure { margin: 0 0 5px; border-radius: 16px; }
+  .profile-concept-three .account-plans-disclosure > summary { min-height: 67px; gap: 11px; padding: 10px 12px; }
+  .profile-concept-three .profile-plan-icon { flex-basis: 39px; width: 39px; height: 39px; border-radius: 13px; }
+  .profile-concept-three .profile-plan-icon svg { width: 22px; height: 22px; }
+  .profile-concept-three .profile-plan-copy strong { font-size: 13px; }
+  .profile-concept-three .profile-plan-copy small { font-size: 10px; }
+  .profile-concept-three .parent-account-card { margin-bottom: 13px; }
+}
+@media (max-width: 350px) {
+  .profile-concept-three .parent-account-hero { grid-template-columns: 72px minmax(0, 1fr); padding: 9px; gap: 9px; }
+  .profile-concept-three .parent-account-hero-art { width: 72px; height: 72px; border-radius: 15px; }
+  .profile-concept-three .parent-account-hero-copy h2 { font-size: 15px; }
+  .profile-concept-three .parent-account-hero-copy p { font-size: 11px; }
+  .profile-concept-three .parent-account-author { font-size: 9px; padding: 4px 6px; }
+  .profile-concept-three .parent-account-castle { width: 76px; opacity: .4; }
+  .profile-concept-three .profile-legal-links > button { min-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-concept-three .profile-plan-chevron { transition: none; }
+}
+
+/* Profile-specific mockup toolbar: keeps original site header on other tabs. */
+.shell:has(.profile-concept-three) {
+  background: linear-gradient(180deg,#2a154e 0,#5e2d90 114px,#f7edff 115px,#fbf6ff 100%);
+}
+.shell:has(.profile-concept-three) > main {
+  padding-top:0;
+}
+.profile-mockup-topbar{
+  position:relative;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  max-width:1120px;
+  min-height:92px;
+  box-sizing:border-box;
+  padding:15px 28px;
+  margin:0 auto;
+  background:linear-gradient(100deg,#28144f 0%,#40236e 58%,#321857 100%);
+  color:#fff;
+}
+.profile-mockup-back,
+.profile-mockup-icon-button{
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 45px;
+  width:45px;
+  height:45px;
+  border:1px solid rgba(230,201,255,.45);
+  border-radius:16px;
+  color:#fff;
+  background:#ffffff11;
+}
+.profile-mockup-back{
+  border-color:transparent;
+  background:transparent;
+}
+.profile-mockup-icon-button[aria-expanded="true"]{
+  background:#ffffff33;
+  border-color:#dec5ff;
+}
+.profile-mockup-brand{
+  display:flex;
+  align-items:center;
+  flex:1;
+  gap:11px;
+  min-width:0;
+}
+.profile-mockup-brand img{
+  flex:0 0 48px;
+  width:48px;
+  height:48px;
+  border-radius:15px;
+  object-fit:cover;
+}
+.profile-mockup-brand span{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.profile-mockup-brand strong{
+  color:white;
+  font-size:clamp(16px,2.6vw,23px);
+  line-height:1.14;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.profile-mockup-brand em{font-style:normal;color:#d2a1ff}
+.profile-mockup-brand small{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.16em;
+  color:#e4d7ef;
+}
+.profile-mockup-tools{
+  display:flex;
+  align-items:center;
+  flex:0 0 auto;
+  gap:10px;
+}
+.profile-mockup-popover{
+  position:absolute;
+  top:calc(100% - 5px);
+  right:26px;
+  z-index:30;
+  width:min(354px,calc(100vw - 24px));
+  max-width:100%;
+  box-sizing:border-box;
+  padding:15px;
+  border-radius:18px;
+  border:1px solid #dfc9f3;
+  background:#fffaff;
+  color:#301c50;
+  box-shadow:0 14px 36px #26143c38;
+}
+.profile-mockup-popover-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 12px;
+}
+.profile-mockup-popover-title strong{font-size:15px}
+.profile-mockup-popover-title button{
+  width:44px;height:44px;flex:0 0 44px;
+  display:grid;place-items:center;
+  border:0;border-radius:9px;
+  background:#f2e7fc;color:#69439a;
+}
+.profile-mockup-empty{
+  display:grid;
+  justify-items:center;
+  gap:5px;
+  padding:16px 9px;
+  border:1px solid #e9dbf4;
+  border-radius:13px;
+  background:#fcf8ff;
+  text-align:center;
+}
+.profile-mockup-empty svg{color:#8158ad}
+.profile-mockup-empty strong{font-size:13px}
+.profile-mockup-empty p{
+  margin:0;
+  font-size:11px;
+  line-height:1.5;
+  color:#7c6b8b;
+}
+.profile-mockup-permission{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:9px;padding:13px 2px 6px;
+  font-size:11px;
+}
+.profile-mockup-permission strong{color:#77509e;text-align:right}
+.profile-mockup-enable{
+  width:100%;
+  min-height:44px;
+  padding:10px 12px;
+  border:0;
+  border-radius:11px;
+  background:#7850b0;
+  color:#fff;
+  font-size:12px;
+  font-weight:750;
+}
+.profile-mockup-popover>small{
+  display:block;
+  margin:8px 0 0;
+  font-size:10px;
+  line-height:1.5;
+  color:#86748f;
+}
+.profile-mockup-language{
+  display:grid;
+  align-items:center;
+  grid-template-columns:auto 1fr;
+  gap:8px;
+  color:#5e4086;
+  font-size:12px;
+  font-weight:700;
+}
+.profile-mockup-language select{
+  grid-column:1/-1;
+  min-height:44px;
+  max-width:100%;
+  width:100%;
+  padding:8px 12px;
+  border:1px solid #dfccec;
+  border-radius:10px;
+  background:#fff;
+  color:#422968;
+  font-size:16px;
+}
+.profile-mockup-settings-row{
+  display:flex;
+  align-items:center;
+  width:100%;
+  gap:9px;
+  min-height:46px;
+  margin:10px 0 0;
+  padding:9px 10px;
+  border:1px solid #eee3f7;
+  border-radius:10px;
+  background:#fff;
+  color:#5a3b80;
+  font-size:12px;
+  font-weight:700;
+}
+.profile-mockup-settings-row span{flex:1;text-align:left}
+.profile-mockup-topbar button:focus-visible,
+.profile-mockup-topbar select:focus-visible{
+  outline:3px solid #d9a8ff;
+  outline-offset:2px;
+}
+/* Deliberately emulate the thin bright photo frame in reference three. */
+.profile-concept-three .parent-account-hero-art{
+  outline:1px solid #eee0ff;
+  outline-offset:3px;
+  border-color:#fff;
+  box-shadow:0 8px 22px #62358c37;
+}
+.profile-concept-three .parent-account-author{
+  position:relative;
+  border:1px solid #d8b8fc;
+  background:linear-gradient(100deg,#fff,#f4e4ff);
+}
+/* Fix placement of shared footer after the profile content. */
+.shell:has(.profile-concept-three) > .site-legal-footer{
+  background:#f9f2ff;
+}
+@media(max-width:620px){
+  .profile-mockup-topbar{
+    padding:9px 10px;
+    min-height:69px;
+    gap:6px;
+  }
+  .profile-mockup-back{flex-basis:34px;width:34px;height:40px}
+  .profile-mockup-brand{gap:6px}
+  .profile-mockup-brand img{
+    width:36px;height:36px;flex-basis:36px;border-radius:12px;
+  }
+  .profile-mockup-brand strong{font-size:clamp(13px,4vw,18px)}
+  .profile-mockup-brand small{font-size:7px;letter-spacing:.11em}
+  .profile-mockup-tools{gap:5px}
+  .profile-mockup-icon-button{
+    width:44px;height:44px;flex-basis:44px;border-radius:13px;
+  }
+  .profile-mockup-icon-button svg{width:20px;height:20px}
+  .profile-mockup-popover{right:9px;top:calc(100% - 2px);padding:12px}
+  .profile-concept-three .parent-account-hero-art{
+    outline-offset:2px;
+  }
+}
+@media(max-width:340px){
+  .profile-mockup-brand strong{font-size:12px}
+  .profile-mockup-brand small{font-size:6px}
+  .profile-mockup-icon-button{
+    flex-basis:44px;width:44px;height:44px;
+  }
+}
+
+/* Tariff row: visually consistent with compact legal menu, not an oversized banner. */
+.profile-concept-three .account-plans-disclosure{
+  border-radius:15px;
+  border:1px solid #e1d4ed;
+  box-shadow:none;
+  background:linear-gradient(105deg,#fffaff,#f5edff);
+}
+.profile-concept-three .account-plans-disclosure > summary{
+  min-height:58px;
+  gap:10px;
+  padding:9px 14px;
+}
+.profile-concept-three .profile-plan-icon{
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  border-radius:11px;
+}
+.profile-concept-three .profile-plan-icon svg{
+  width:21px;
+  height:21px;
+}
+.profile-concept-three .profile-plan-copy{
+  gap:3px;
+}
+.profile-concept-three .profile-plan-copy strong{
+  font-size:13px;
+  line-height:1.25;
+  font-weight:750;
+  overflow-wrap:anywhere;
+}
+.profile-concept-three .profile-plan-copy small{
+  font-size:11px;
+  line-height:1.3;
+}
+.profile-concept-three .profile-plan-chevron{
+  flex:0 0 17px;
+  width:17px;
+  height:17px;
+  margin-left:auto;
+  transition:transform .18s ease;
+}
+.profile-concept-three .account-plans-disclosure[open] .profile-plan-chevron{
+  transform:rotate(90deg);
+}
+@media(max-width:620px){
+  .profile-concept-three .account-plans-disclosure{
+    margin:0 0 6px;
+    border-radius:13px;
+  }
+  .profile-concept-three .account-plans-disclosure > summary{
+    min-height:54px;
+    gap:9px;
+    padding:8px 10px;
+  }
+  .profile-concept-three .profile-plan-icon{
+    flex:0 0 35px;
+    width:35px;
+    height:35px;
+    border-radius:10px;
+  }
+  .profile-concept-three .profile-plan-icon svg{
+    width:20px;
+    height:20px;
+  }
+  .profile-concept-three .profile-plan-copy strong{
+    font-size:12px;
+  }
+  .profile-concept-three .profile-plan-copy small{
+    font-size:10px;
+  }
+}
+@media(max-width:350px){
+  .profile-concept-three .profile-plan-copy strong{font-size:11px}
+  .profile-concept-three .profile-plan-copy small{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .profile-concept-three .profile-plan-chevron{transition:none}
+}
+
+/* Center the crown geometrically and optically in its icon tile. */
+.profile-concept-three .account-plans-disclosure > summary .profile-plan-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  padding:0;
+  line-height:0;
+  box-sizing:border-box;
+  text-align:center;
+}
+.profile-concept-three .account-plans-disclosure > summary .profile-plan-icon > svg{
+  display:block;
+  position:static;
+  flex:none;
+  margin:auto;
+  padding:0;
+  transform:translateY(-1px);
+  vertical-align:middle;
+}
+
+/* Connection status in a signed-in account: an offline session is not a successful sync. */
+.profile-concept-three .parent-account-connection-state{
+  display:grid;
+  gap:7px;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  padding:12px;
+  margin:12px 0;
+  border:1px solid #e8d6b6;
+  border-radius:13px;
+  background:#fff9ed;
+  color:#684a29;
+}
+.profile-concept-three .parent-account-connection-state>strong{
+  display:block;
+  font-size:13px;
+  line-height:1.35;
+}
+.profile-concept-three .parent-account-connection-state>p{
+  margin:0;
+  font-size:12px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.profile-concept-three .parent-account-connection-state>button{
+  justify-self:start;
+  min-height:42px!important;
+  max-width:100%;
+  padding:8px 12px;
+  font-size:12px;
+  white-space:normal;
+}
+.profile-concept-three .parent-account-primary:disabled{
+  cursor:not-allowed;
+  opacity:.56;
+}
+@media(max-width:620px){
+  .profile-concept-three .parent-account-card input[type="email"],
+  .profile-concept-three .parent-account-card input[type="password"],
+  .profile-concept-three .parent-account-card input[type="number"]{
+    font-size:16px!important;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+}
