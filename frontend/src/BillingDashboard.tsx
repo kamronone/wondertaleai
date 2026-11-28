@@ -1,6 +1,7 @@
 import {useEffect,useState} from "react";
-import {LayoutDashboard,Users,BookOpen,BrainCircuit,ClipboardList,Activity,ArrowUpRight,Download,ShieldCheck,ChevronRight,CalendarDays} from "lucide-react";
+import {LayoutDashboard,Users,BookOpen,BrainCircuit,ClipboardList,Activity,ArrowUpRight,Download,ShieldCheck,ChevronRight} from "lucide-react";
 import "./billing-dashboard.css";
+import {utcDay as day,utcPeriod,utcReportRange} from "./admin_report_dates";
 
 type Summary={
  mode:"sandbox";currency:"UZS";amount_unit:"tiyin";
@@ -12,7 +13,6 @@ type Summary={
  daily:{day:string;gross_minor:number;refund_minor:number;net_minor:number;orders:number;paid_orders:number}[];
  active_plans:{plan:string;count:number;monthly_list_value_minor:number}[];
 };
-const day=(offset:number)=>new Date(Date.now()+offset*86400000).toISOString().slice(0,10);
 const money=(n:number)=>new Intl.NumberFormat("ru-RU",{maximumFractionDigits:2}).format(n/100)+" сум";
 
 type AdminSection="finance"|"users"|"content"|"ai"|"audit"|"system";
@@ -133,12 +133,14 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
  const [end,setEnd]=useState(()=>day(0));
  const [data,setData]=useState<Summary|null>(null);
  const [state,setState]=useState<"loading"|"error"|"ready">("loading");
+ const validRange=utcReportRange(start,end)!==null;
+ const presetNow=Date.now();
  useEffect(()=>{
   const controller=new AbortController();
   setData(null);setState("loading");
-  const from=new Date(start+"T00:00:00Z"),to=new Date(end+"T00:00:00Z");
-  to.setUTCDate(to.getUTCDate()+1);
-  if(!Number.isFinite(+from)||!Number.isFinite(+to)||+to<=+from||+to-+from>366*86400000){setState("error");return;}
+  const range=utcReportRange(start,end);
+  if(!range){setState("error");return;}
+  const {from,to}=range;
   if(demo){
    // Deterministic synthetic orders. No browser library, user identifiers or backend data.
    const samples=Array.from({length:90},(_,i)=>{
@@ -201,25 +203,25 @@ export default function BillingDashboard({api,token,demo=false}:{api:string;toke
   {!demo&&<h2>Финансовая аналитика</h2>}{demo&&<p className="admin-demo-notice" role="status">Демонстрационные данные · без подключения к серверу</p>}
   <p className="billing-muted">Тестовые операции, не реальные доходы. Период по дате создания заказа (UTC).</p>
   <div className="billing-filters admin-date-panel">
-   <div className="admin-date-fields" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:8,minWidth:0,width:"100%"}}>
-    {([{label:"С",aria:"Начало периода",value:start,max:end,onChange:setStart},{label:"По",aria:"Конец периода",value:end,min:start,onChange:setEnd}] as const).map(field=><label key={field.aria} className="admin-date-label" style={{display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:4,width:"100%",minWidth:0,margin:0,padding:0}}>
-     <span>{field.label}</span>
-     <span className="admin-date-control" style={{position:"relative",display:"flex",alignItems:"center",gap:6,width:"100%",minWidth:0,height:38,boxSizing:"border-box",border:"1px solid #e1e6ee",borderRadius:8,background:"#fff",padding:"0 8px",overflow:"hidden",fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>
-      <CalendarDays size={15} aria-hidden="true" style={{flexShrink:0,pointerEvents:"none"}}/>
-      <span aria-hidden="true" style={{pointerEvents:"none"}}>{field.value?field.value.split("-").reverse().join("."):"ДД.ММ.ГГГГ"}</span>
-      <input type="date" aria-label={field.aria} value={field.value} min={"min" in field?field.min:undefined} max={"max" in field?field.max:undefined} onChange={e=>field.onChange(e.target.value)} onClick={e=>{try{e.currentTarget.showPicker?.();}catch{/* Native picker remains available. */}}} style={{position:"absolute",inset:0,zIndex:1,opacity:0,width:"100%",maxWidth:"100%",minWidth:0,height:"100%",minHeight:0,maxHeight:"100%",margin:0,padding:0,border:0,fontSize:16,cursor:"pointer"}}/>
-     </span>
-    </label>)}
+   <div className="admin-date-fields">
+    <label className="admin-date-label"><span>С</span>
+     <input className="admin-date-input" type="date" aria-label="Начало периода" value={start} max={end||undefined} required aria-invalid={!validRange} onChange={e=>setStart(e.target.value)}/>
+    </label>
+    <label className="admin-date-label"><span>По</span>
+     <input className="admin-date-input" type="date" aria-label="Конец периода" value={end} min={start||undefined} required aria-invalid={!validRange} onChange={e=>setEnd(e.target.value)}/>
+    </label>
    </div>
-   <div className="admin-period-buttons" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:6,minWidth:0,width:"100%"}} role="group" aria-label="Быстрый выбор периода">
-    <button type="button" onClick={()=>{setStart(day(-6));setEnd(day(0));}} aria-pressed={start===day(-6)&&end===day(0)}>7 дней</button>
-    <button type="button" onClick={()=>{setStart(day(-29));setEnd(day(0));}} aria-pressed={start===day(-29)&&end===day(0)}>30 дней</button>
-    <button type="button" onClick={()=>{setStart(day(-89));setEnd(day(0));}} aria-pressed={start===day(-89)&&end===day(0)}>90 дней</button>
+   <div className="admin-period-buttons" role="group" aria-label="Быстрый выбор периода">
+    {([7,30,90] as const).map(days=>{
+     const period=utcPeriod(days,presetNow);
+     return <button key={days} type="button" aria-pressed={start===period.start&&end===period.end} onClick={()=>{const next=utcPeriod(days);setStart(next.start);setEnd(next.end);}}>{days} дней</button>;
+    })}
    </div>
   </div>
-  {state==="loading"&&<p role="status">Загрузка…</p>}
-  {state==="error"&&<p role="alert">Статистика недоступна. Проверьте доступ и период (не более 366 дней).</p>}
-  {data&&<>
+  {!validRange&&<p role="alert">Укажите обе даты в правильном порядке. Период не должен превышать 366 дней.</p>}
+  {validRange&&state==="loading"&&<p role="status">Загрузка…</p>}
+  {validRange&&state==="error"&&<p role="alert">Статистика недоступна. Проверьте подключение и доступ.</p>}
+  {validRange&&data&&<>
    <div className="billing-filters"><button className="admin-export" type="button" onClick={exportCsv}><Download size={16}/> Экспорт CSV</button></div>
    <div className="billing-metrics admin-kpis">{[
     ["Общий объём",money(data.gross_minor)],["После возвратов",money(data.net_minor)],
