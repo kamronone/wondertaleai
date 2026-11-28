@@ -69,7 +69,9 @@ def plan_reference_book(
     book_id: str, chapters: list[str], style: str, hero_mode: str
 ) -> ReferenceBookPlan:
     character = build_character_sheet_prompt(style, hero_mode)
-    briefs = plan_story_illustrations(book_id, chapters, style)
+    # The v1 fingerprint must remain stable for existing approved sheets.
+    # A future persisted plan version can opt into the improved planner.
+    briefs = plan_story_illustrations(book_id, chapters, style, legacy=True)
     pages = tuple(
         ReferencePage(
             brief.page_number, SCENES.index(brief.scene) + 1,

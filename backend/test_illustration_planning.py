@@ -145,3 +145,50 @@ def test_private_worker_integration_is_exercised_by_backend_ci(monkeypatch):
     assert all(args==(book,owner) for _,args in statements)
     with pytest.raises(ValueError,match="unavailable"):
         private_storyboard_prompt(book,str(uuid.uuid4()),2,"storybook")
+
+
+def test_assignment_maximizes_total_relevance_instead_of_greedy():
+    from illustration_planning import _maximum_scene_assignment
+    # Taking the single largest score (10) first forces the second row to 0.
+    scores = [[10, 9, 0], [9, 0, 0]]
+    assert _maximum_scene_assignment(scores) == [1, 0]
+
+
+def test_assignment_matches_exhaustive_optimum_on_small_matrices():
+    from itertools import permutations
+    from random import Random
+    from illustration_planning import _maximum_scene_assignment
+    rng = Random(17)
+    for n in range(1, 5):
+        for _ in range(15):
+            scores = [[rng.randint(-20, 80) for _ in range(5)] for _ in range(n)]
+            chosen = _maximum_scene_assignment(scores)
+            assert len(set(chosen)) == n
+            assert sum(scores[i][j] for i,j in enumerate(chosen)) == max(
+                sum(scores[i][j] for i,j in enumerate(candidate))
+                for candidate in permutations(range(5), n))
+            assert chosen == _maximum_scene_assignment(scores)
+
+
+def test_short_signals_do_not_match_inside_unrelated_words():
+    from illustration_planning import _scene_tokens, _scene_hits
+    assert _scene_hits(_scene_tokens("chair chocolate clockwork"), ("oy", "och", "sir")) == 0
+    assert _scene_hits(_scene_tokens("oy va yulduz"), ("oy", "yulduz")) == 2
+    assert _scene_hits(_scene_tokens("returned"), ("return",)) == 1
+
+
+def test_uzbek_spelling_variants_have_equivalent_scores():
+    from illustration_planning import _scene_tokens, _scene_hits
+    variants = ["ko‘prik", "ko'prik", "koʻprik", "köprik"]
+    assert all(_scene_hits(_scene_tokens(text), ("ko‘pr", "köpr")) == 1 for text in variants)
+    assert _scene_tokens("chiroq shahar") == _scene_tokens("çiroq şahar")
+
+
+def test_v1_personal_continuity_keeps_legacy_assignment():
+    from private_character_continuity import plan_reference_book
+    book = str(uuid.uuid4())
+    chapters = ["A quiet adventure with friends."] * 8
+    chapters[2] = "The friends found a lantern and an old map."
+    old = plan_story_illustrations(book, chapters, "storybook", legacy=True)
+    personal = plan_reference_book(book, chapters, "storybook", "explorer")
+    assert [SCENES[p.scene_number-1] for p in personal.pages] == [b.scene for b in old]
