@@ -134,3 +134,86 @@ def test_preflight_stops_after_uncertain_page_attempt(reader_context, monkeypatc
     assert result["uncertain_pages"] == [2]
     assert result["next_page"] is None
     assert len(images.calls) == 1
+
+
+@pytest.mark.parametrize("count", [8, 12, 20])
+def test_full_personal_book_pipeline(worker_context, monkeypatch, count):
+    """One synthetic portrait, one approved sheet, N distinct scene prompts.
+    Mocked provider only; no network, real child data or provider charges."""
+    import json
+    from private_book_review import prepare_book_review, next_book_review_step
+    from private_character_reader import personal_book_readiness
+    from private_character_page_worker import process_character_page_request
+
+    (db, store, owner, other, source, _, _), sheet_worker, images, kwargs = worker_context
+    for flag in ("ENABLE_PERSONAL_BOOK_REVIEW", "ENABLE_CHARACTER_PAGE_WORKER",
+                 "ENABLE_CHARACTER_PAGE_READER"):
+        monkeypatch.setenv(flag, "true")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_GLOBAL_MICRO_USD", "3000000")
+    monkeypatch.setenv("PHOTO_EDIT_DAILY_PARENT_MICRO_USD", "3000000")
+    with db.connection() as c:
+        book = db.sql(c, "SELECT book_id FROM photo_illustration_requests WHERE id=?", (source,)).fetchone()[0]
+        story = json.dumps({"pages": [{"number": i, "text": "A quiet journey."} for i in range(1, count+1)]})
+        db.sql(c, "UPDATE books SET story=? WHERE id=?", (story, book))
+        c.commit()
+    prepare_book_review(owner, book, "storybook", "explorer")
+    assert personal_book_readiness(owner, book, "storybook", "explorer")["counts"]["pending_review"] == count
+    initial = next_book_review_step(owner, book, "storybook", "explorer")
+    assert initial["state"] == "prepare_character"
+    assert initial["estimated_remaining_micro_usd"] == (count+1)*100000
+    assert not images.calls
+    sheet_worker.process_character_sheet_request(owner, source, **kwargs)
+    with db.connection() as c:
+        rows = db.sql(c, "SELECT id,page_number FROM photo_illustration_requests WHERE owner_id=? AND book_id=? ORDER BY page_number", (owner, book)).fetchall()
+    approved = store.load_character_sheet(owner, source).png
+    for rid, number in rows:
+        step = next_book_review_step(owner, book, "storybook", "explorer")
+        assert step["state"] == "prepare_page" and step["next_page"] == number
+        assert process_character_page_request(owner, rid, **kwargs)["provider_invoked"] is True
+        assert process_character_page_request(owner, rid, **kwargs)["provider_invoked"] is False
+        metadata = db.private_illustration_for_page(book, number, owner)
+        assert metadata["kind"] == "personal" and metadata["job_id"] == rid
+        response = db.read_private_character_page(rid, owner)
+        assert response.body.startswith(b"\x89PNG")
+        assert response.headers["cache-control"] == "private, no-store"
+        with pytest.raises(HTTPException) as denied:
+            db.read_private_character_page(rid, other)
+        assert denied.value.status_code == 404
+    assert len(images.calls) == count+1
+    assert images.calls[0][0] == "reference.jpg"
+    assert all(name == "character-sheet.png" and png == approved for name, png, _ in images.calls[1:])
+    assert len({prompt for _, _, prompt in images.calls[1:]}) == count
+    report = personal_book_readiness(owner, book, "storybook", "explorer")
+    assert report["counts"] == {"not_requested": 0, "pending_review": 0, "needs_review": 0, "ready": count}
+    complete = next_book_review_step(owner, book, "storybook", "explorer")
+    assert complete["state"] == "complete" and complete["next_page"] is None
+    assert complete["estimated_remaining_micro_usd"] == 0
+    with db.connection() as c:
+        assert db.sql(c, "SELECT COUNT(*) FROM photo_character_pages").fetchone()[0] == count
+        assert db.sql(c, "SELECT reserved_micro_usd FROM photo_ai_daily_budget").fetchone()[0] == (count+1)*100000
+    db.delete_photo_reference(owner)
+    with db.connection() as c:
+        assert db.sql(c, "SELECT COUNT(*) FROM photo_character_pages").fetchone()[0] == 0
+        assert db.sql(c, "SELECT COUNT(*) FROM photo_character_sheets").fetchone()[0] == 0
+    for rid, number in rows:
+        with pytest.raises(HTTPException) as denied:
+            db.private_illustration_for_page(book, number, owner)
+        assert denied.value.status_code == 404
+
+
+def test_failed_character_sheet_is_visible_as_review_not_pending(worker_context, monkeypatch):
+    from types import SimpleNamespace
+    from private_character_reader import personal_book_readiness
+    (db, _, owner, _, source, _, _), sheet_worker, images, kwargs = worker_context
+    monkeypatch.setenv("ENABLE_CHARACTER_PAGE_READER", "true")
+    with db.connection() as c:
+        book = db.sql(c, "SELECT book_id FROM photo_illustration_requests WHERE id=?", (source,)).fetchone()[0]
+    assert db.private_illustration_for_page(book, 1, owner) == {"status": "pending_review"}
+    def fail(**_):
+        raise TimeoutError("Synthetic provider timeout")
+    kwargs["client"] = SimpleNamespace(images=SimpleNamespace(edit=fail))
+    with pytest.raises(TimeoutError):
+        sheet_worker.process_character_sheet_request(owner, source, **kwargs)
+    assert db.private_illustration_for_page(book, 1, owner) == {"status": "needs_review"}
+    assert db.private_illustration_for_page(book, 2, owner) == {"status": "needs_review"}
+    assert personal_book_readiness(owner, book, "storybook", "explorer")["counts"]["needs_review"] == 2

@@ -17,6 +17,38 @@ def reader_enabled():
             and os.getenv("ENABLE_CHARACTER_PAGE_READER", "false").lower() == "true")
 
 
+def _unready_status(c, owner, rid, snapshot):
+    """An untouched page is pending; uncertain attempts or invalid assets
+    require review. This decision never starts or retries generation."""
+    book, style, hero, _, _, _ = snapshot
+    attempt = db.sql(c, "SELECT 1 FROM photo_ai_attempt_reservations "
+        "WHERE request_id=? AND owner_id=?", (rid, owner)).fetchone()
+    asset = db.sql(c, "SELECT 1 FROM photo_character_pages WHERE request_id=? AND owner_id=?",
+                   (rid, owner)).fetchone()
+    sheet = db.sql(c, "SELECT 1 FROM photo_character_sheets WHERE owner_id=? "
+        "AND book_id=? AND style=? AND hero_mode=?",
+        (owner, book, style, hero)).fetchone()
+    sheet_attempt = db.sql(c, "SELECT 1 FROM photo_sheet_attempts WHERE owner_id=? "
+        "AND book_id=? AND style=? AND hero_mode=?",
+        (owner, book, style, hero)).fetchone()
+    if attempt or asset or sheet or sheet_attempt:
+        return "needs_review"
+    return "pending_review"
+
+
+def _page_metadata(c, owner, rid):
+    snapshot = _snapshot(c, owner, rid)
+    try:
+        key, _ = _context(c, owner, rid)
+        if _read_page(c, owner, rid, key) is not None:
+            return {"job_id": rid, "kind": "personal", "expires_at": key[3]}
+    except CharacterSheetUnavailable:
+        return {"status": _unready_status(c, owner, rid, snapshot)}
+    attempt = db.sql(c, "SELECT 1 FROM photo_ai_attempt_reservations "
+        "WHERE request_id=? AND owner_id=?", (rid, owner)).fetchone()
+    return {"status": "needs_review" if attempt else "pending_review"}
+
+
 def lookup_personal_page(owner, book, page):
     """Return metadata for the newest valid personal request, if any."""
     if not reader_enabled():
@@ -31,17 +63,7 @@ def lookup_personal_page(owner, book, page):
             if not requests:
                 return None
             rid = requests[0]
-            _snapshot(c, owner, rid)
-            try:
-                key, _ = _context(c, owner, rid)
-                png = _read_page(c, owner, rid, key)
-                if png is not None:
-                    return {"job_id": rid, "kind": "personal", "expires_at": key[3]}
-            except CharacterSheetUnavailable:
-                pass
-            attempt = db.sql(c, "SELECT 1 FROM photo_ai_attempt_reservations "
-                "WHERE request_id=? AND owner_id=?", (rid, owner)).fetchone()
-            return {"status": "needs_review" if attempt else "pending_review"}
+            return _page_metadata(c, owner, rid)
     except CharacterSheetUnavailable:
         return None
 
@@ -105,18 +127,13 @@ def personal_book_readiness(owner: str, book_id: str, style: str, hero_mode: str
             if rid:
                 status = "needs_review"
                 try:
-                    _snapshot(c, owner, rid)
-                    key, _ = _context(c, owner, rid)
-                    if key[0][5] != plan.fingerprint:
+                    if _snapshot(c, owner, rid)[5] != plan.fingerprint:
                         raise CharacterSheetUnavailable("Plan mismatch")
-                    if _read_page(c, owner, rid, key) is not None:
-                        status = "ready"
-                    elif not db.sql(c, "SELECT 1 FROM photo_ai_attempt_reservations "
-                                   "WHERE request_id=? AND owner_id=?", (rid, owner)).fetchone():
-                        status = "pending_review"
+                    metadata = _page_metadata(c, owner, rid)
+                    status = "ready" if "job_id" in metadata else metadata["status"]
                 except CharacterSheetUnavailable:
-                    # A missing sheet, expired context or corrupt asset must
-                    # not be counted as ready or authorized for another call.
+                    # Invalid consent, reference or plan must never be
+                    # counted as ready or authorized for another call.
                     pass
             pages.append({"page_number": page.page_number, "status": status})
         counts = {status: sum(p["status"] == status for p in pages)
