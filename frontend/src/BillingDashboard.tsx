@@ -53,14 +53,16 @@ function AdminDemoSections({section}:{section:AdminSection}){
  const [query,setQuery]=useState("");
  const [plan,setPlan]=useState<"all"|DemoUser["plan"]>("all");
  const [userPage,setUserPage]=useState(0);
+ const [userStatus,setUserStatus]=useState<"all"|DemoUser["status"]>("all");
+ const [userSort,setUserSort]=useState<"id"|"books">("id");
  const [contentFilter,setContentFilter]=useState<"all"|DemoContent["status"]>("all");
  const [budget,setBudget]=useState(10);
  useEffect(()=>setQuery(""),[section]);
- useEffect(()=>setUserPage(0),[query,plan,section]);
+ useEffect(()=>setUserPage(0),[query,plan,userStatus,userSort,section]);
  const jobs=[{name:"Текст сказок",done:120,failed:4,cost:240},{name:"Иллюстрации",done:80,failed:7,cost:360},{name:"Видео",done:12,failed:2,cost:180}];
  const spent=jobs.reduce((n,j)=>n+j.cost,0);
  const usd=(cents:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(cents/100);
- const visibleUsers=users.filter(user=>(plan==="all"||user.plan===plan)&&user.id.toLowerCase().includes(query.trim().toLowerCase()));
+ const visibleUsers=users.filter(user=>(plan==="all"||user.plan===plan)&&(userStatus==="all"||user.status===userStatus)&&user.id.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b)=>(userSort==="books"?b.books-a.books:0)||a.id.localeCompare(b.id));
  const pageSize=8;
  const pageCount=Math.max(1,Math.ceil(visibleUsers.length/pageSize));
  const safePage=Math.min(userPage,pageCount-1);
@@ -72,13 +74,15 @@ function AdminDemoSections({section}:{section:AdminSection}){
   {section==="users"&&<>
    <h2 className="admin-section-description">Обзор аккаунтов</h2>
    {metricCards([["Демо-аккаунты",users.length],["Активные",users.filter(u=>u.status==="active").length],["Приостановленные",users.filter(u=>u.status==="paused").length],["Сказки",users.reduce((n,u)=>n+u.books,0)]])}
-   <div className="billing-filters">
+   <div className="billing-filters admin-section-filters">
     <label>Поиск по ID<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="DEMO-001"/></label>
     <label>Тариф<select value={plan} onChange={e=>setPlan(e.target.value as typeof plan)}><option value="all">Все тарифы</option>{Object.entries(planNames).map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
-    <button type="button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;setUsers(demoUsers());setQuery("");setPlan("all");log("Сброс пользователей","Демо");}}>Сбросить демо</button>
+    <label>Статус<select value={userStatus} onChange={e=>setUserStatus(e.target.value as typeof userStatus)}><option value="all">Все статусы</option><option value="active">Активные</option><option value="paused">Приостановленные</option></select></label>
+    <label>Сортировка<select value={userSort} onChange={e=>setUserSort(e.target.value as typeof userSort)}><option value="id">По ID</option><option value="books">По числу сказок</option></select></label>
+    <div className="admin-filter-actions"><button type="button" onClick={()=>{setQuery("");setPlan("all");setUserStatus("all");setUserSort("id");setUserPage(0);}}>Очистить фильтры</button><button type="button" disabled={!canManageUsers(role)} onClick={()=>{if(!canManageUsers(role))return;setUsers(demoUsers());setQuery("");setPlan("all");setUserStatus("all");setUserSort("id");setUserPage(0);log("Сброс пользователей","Демо");}}>Сбросить демо</button></div>
    </div>
    <div className="admin-list-heading"><strong>Аккаунты</strong><small>Найдено: {visibleUsers.length}</small></div>
-   {!visibleUsers.length&&<p className="admin-empty" role="status">Ничего не найдено. Измените поиск или тариф.</p>}
+   {!visibleUsers.length&&<p className="admin-empty" role="status">Ничего не найдено. Измените фильтры или поиск.</p>}
    <div className="admin-record-list">{visibleUsers.slice(safePage*pageSize,(safePage+1)*pageSize).map(user=><article key={user.id}>
     <strong>{user.id}</strong><small>{planNames[user.plan]} · {user.books} сказок</small>
     <span className="admin-status" data-tone={user.status==="active"?"good":"warning"}>{user.status==="active"?"Активен":"Приостановлен"}</span>
@@ -89,10 +93,10 @@ function AdminDemoSections({section}:{section:AdminSection}){
   {section==="content"&&<>
    <h2>Модерация контента</h2>
    {metricCards([["Всего",content.length],["На проверке",content.filter(c=>c.status==="review").length],["Одобрено",content.filter(c=>c.status==="approved").length],["Скрыто",content.filter(c=>c.status==="hidden").length]])}
-   <div className="billing-filters">
+   <div className="billing-filters admin-section-filters">
     <label>Поиск<input value={query} onChange={e=>setQuery(e.target.value)}/></label>
     <label>Статус<select value={contentFilter} onChange={e=>setContentFilter(e.target.value as typeof contentFilter)}><option value="all">Все статусы</option>{Object.entries(contentStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
-    <button type="button" disabled={!canModerate(role)} onClick={()=>{if(!canModerate(role))return;setContent(demoContent());setQuery("");setContentFilter("all");log("Сброс контента","Демо");}}>Сбросить демо</button>
+    <div className="admin-filter-actions"><button type="button" onClick={()=>{setQuery("");setContentFilter("all");}}>Очистить фильтры</button><button type="button" disabled={!canModerate(role)} onClick={()=>{if(!canModerate(role))return;setContent(demoContent());setQuery("");setContentFilter("all");log("Сброс контента","Демо");}}>Сбросить демо</button></div>
    </div>
    <div className="admin-list-heading"><strong>Материалы</strong><small>Найдено: {visibleContent.length}</small></div>
    {!visibleContent.length&&<p className="admin-empty" role="status">Ничего не найдено. Измените фильтр или поиск.</p>}
