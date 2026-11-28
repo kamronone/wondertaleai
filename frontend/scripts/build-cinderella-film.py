@@ -10,11 +10,6 @@ from pathlib import Path
 import shutil
 import sys
 
-try:
-    import edge_tts
-except ImportError:
-    sys.exit('Install narration dependency: python -m pip install edge-tts==7.2.7')
-
 ROOT = Path(__file__).resolve().parents[1]
 ANIMATIONS = {"cinderella": {5: "cinderella-walking"}, "red-hood": {1: "red-hood-walk-wave"}, "three-pigs": {4: "three-pigs-building", 7: "three-pigs-wolf"}}
 VOICES = {"ru": "ru-RU-SvetlanaNeural", "uz": "uz-UZ-MadinaNeural", "en": "en-US-JennyNeural"}
@@ -29,8 +24,44 @@ def stamp(seconds):
     s, ms = divmod(ms, 1000)
     return f"{h:02}:{m:02}:{s:02}.{ms:03}"
 
+def validate_source(story, source, public_dir, audio_dir=None):
+    """Validate all inputs before any TTS, FFmpeg or output writes."""
+    if (not isinstance(source, dict) or source.get("storyId") != story
+            or source.get("languages") != list(VOICES)
+            or not isinstance(source.get("scenes"), list)
+            or len(source["scenes"]) != 8):
+        raise ValueError("Invalid film source")
+    missing = []
+    for i, scene in enumerate(source["scenes"], 1):
+        expected = f"/images/classics/{story}/pages/page-{i}.png"
+        if (not isinstance(scene, dict) or type(scene.get("page")) is not int
+                or scene["page"] != i or scene.get("image") != expected
+                or not isinstance(scene.get("narration"), dict)
+                or set(scene["narration"]) != set(VOICES)
+                or any(not isinstance(text, str) or not 10 <= len(text.strip()) <= 500
+                       or "\n" in text or "\r" in text
+                       for text in scene["narration"].values())):
+            raise ValueError(f"Invalid film scene {i}")
+        image = public_dir / expected.lstrip("/")
+        if not image.is_file():
+            missing.append(expected)
+        else:
+            with image.open("rb") as file:
+                if file.read(8) != b"\x89PNG\r\n\x1a\n":
+                    raise ValueError(f"Invalid PNG: {expected}")
+        if audio_dir is not None:
+            for lang in VOICES:
+                clip = audio_dir / f"{lang}-{i}.mp3"
+                if not clip.is_file() or clip.stat().st_size == 0:
+                    missing.append(f"audio/{lang}-{i}.mp3")
+    return missing
+
+
 async def main():
     parser = argparse.ArgumentParser(description="Render a classic picture film")
+    parser.add_argument("--check", action="store_true", help="Validate assets only; no TTS, FFmpeg or output")
+    parser.add_argument("--audio-dir", type=Path, help="Use existing local ru-N.mp3, uz-N.mp3, en-N.mp3; no external TTS")
+    parser.add_argument("--allow-network-tts", action="store_true", help="Explicitly permit external TTS for public classic narration")
     parser.add_argument("--static", action="store_true", help="Disable camera motion and fades")
     parser.add_argument("--story", choices=["cinderella", "snow-white", "rapunzel"], default="cinderella")
     parser.add_argument("--music", type=Path, help="Local background audio with cleared usage rights")
@@ -47,15 +78,37 @@ async def main():
     if args.music and not args.music.is_file():
         parser.error("--music must point to an existing audio file")
     source_path = ROOT / "scripts/film-sources" / f"{args.story}.json"
+    if args.audio_dir is not None and not args.audio_dir.is_dir():
+        parser.error("--audio-dir must be an existing directory")
+    if args.audio_dir and args.allow_network_tts:
+        parser.error("Choose local audio or external TTS, not both")
+    source = json.loads(source_path.read_text(encoding="utf-8"))
+    missing = validate_source(args.story, source, ROOT / "public", args.audio_dir)
+    if missing:
+        parser.error("Missing film inputs: " + ", ".join(missing))
+    scenes = source["scenes"]
+    if args.check:
+        print(f"Source ready: {args.story}, {len(scenes)} scenes, {len(VOICES)} languages; no media generated")
+        return
+    if not args.audio_dir and not args.allow_network_tts:
+        parser.error("Provide --audio-dir or explicitly allow --allow-network-tts")
+    if not args.audio_dir:
+        try:
+            import edge_tts
+        except ImportError:
+            sys.exit("Install narration dependency: python -m pip install edge-tts==7.2.7")
     for tool in ("ffmpeg", "ffprobe"):
         if shutil.which(tool) is None:
             raise RuntimeError(f"Required executable missing: {tool}")
-    source = json.loads(source_path.read_text(encoding="utf-8"))
-    scenes = source["scenes"]
-    for scene in scenes:
-        image = ROOT / "public" / scene["image"].lstrip("/")
-        if not image.is_file():
-            raise FileNotFoundError(image)
+    # Probe all provided clips before rendering any scenes.
+    if args.audio_dir:
+        for lang in VOICES:
+            for scene in scenes:
+                clip = args.audio_dir / f"{lang}-{scene['page']}.mp3"
+                seconds = float(run("ffprobe", "-v", "error", "-select_streams", "a:0",
+                    "-show_entries", "stream=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(clip)))
+                if not math.isfinite(seconds) or not 0.2 <= seconds <= 120:
+                    parser.error(f"Invalid audio duration: {clip.name}")
     out = ROOT / "cartoon-build" / args.story
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
@@ -72,8 +125,13 @@ async def main():
                 spoken = narration
                 if lang == "uz":
                     spoken = spoken.translate(str.maketrans({"ş":"sh","Ş":"Sh","ç":"ch","Ç":"Ch","ö":"oʻ","Ö":"Oʻ","ğ":"gʻ","Ğ":"Gʻ"}))
-                await edge_tts.Communicate(spoken, voice, rate="-10%").save(str(audio))
+                if args.audio_dir:
+                    shutil.copyfile(args.audio_dir / f"{lang}-{i}.mp3", audio)
+                else:
+                    await edge_tts.Communicate(spoken, voice, rate="-10%").save(str(audio))
                 duration = float(run("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(audio)))
+                if not math.isfinite(duration) or not 0.2 <= duration <= 120:
+                    raise ValueError("Invalid narration duration")
                 image = ROOT / "public" / scene["image"].lstrip("/")
                 frames = max(1, math.ceil((duration + 0.8) * 25))
                 base = "scale=768:1024:force_original_aspect_ratio=decrease,pad=768:1024:(ow-iw)/2:(oh-ih)/2,setsar=1"
