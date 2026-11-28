@@ -19,6 +19,9 @@ const fetchWithToken=(api:string,path:string,token:string,init?:RequestInit)=>fe
  // Prevent private parent content from entering browser HTTP caches.
  cache:"no-store",
  headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json",...init?.headers},
+ // Never follow a redirect with private story content or credentials.
+ redirect:"error",
+ credentials:"omit",
  signal:init?.signal?AbortSignal.any([init.signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000),
 });
 const publicPageArt=new Set(["red-hood","cinderella","three-pigs","rapunzel"]);

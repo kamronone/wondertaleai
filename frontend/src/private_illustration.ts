@@ -6,11 +6,17 @@ export async function loadPrivatePageIllustration(
   api:string,token:string,bookId:string,pageNumber:number,signal:AbortSignal,
   fetcher:typeof fetch=fetch
 ):Promise<PrivateIllustrationResult>{
-  if(!api.startsWith("https://")&&!api.startsWith("http://localhost:"))
+  // Reject userinfo, paths, query strings and fragments in the configured origin.
+  // Only HTTPS and explicit localhost development are allowed.
+  let origin:URL;
+  try{origin=new URL(api);}catch{throw new Error("Invalid private illustration API origin");}
+  if((origin.protocol!=="https:"&&!(origin.protocol==="http:"&&origin.hostname==="localhost"&&origin.port))||
+     origin.username||origin.password||origin.pathname!=="/"||origin.search||origin.hash||
+     api!==origin.origin)
     throw new Error("Invalid private illustration API origin");
   if(!token||!UUID.test(bookId)||!Number.isInteger(pageNumber)||pageNumber<1||pageNumber>20)
     throw new Error("Invalid private illustration request");
-  const options={headers:{Authorization:"Bearer "+token},cache:"no-store" as RequestCache,signal};
+  const options={headers:{Authorization:"Bearer "+token},cache:"no-store" as RequestCache,redirect:"error" as RequestRedirect,credentials:"omit" as RequestCredentials,signal};
   const metadata=await fetcher(api+"/api/illustrations/books/"+bookId+"/pages/"+pageNumber,options);
   if(metadata.status===404)return null;
   if(!metadata.ok)throw new Error("Illustration lookup unavailable");

@@ -45,6 +45,7 @@ test("valid authenticated PNG uses private no-store requests and short-lived obj
  assert.equal(history.length,2);
  assert.equal(history[0].opts.headers.Authorization,"Bearer private-token");
  assert.equal(history[1].opts.cache,"no-store");
+ assert.ok(history.every(call=>call.opts.redirect==="error"&&call.opts.credentials==="omit"));
  assert.ok(history.every(call=>!call.url.includes("private-token")));
 });
 test("fake PNG with valid MIME type never produces an object URL",async()=>{
@@ -71,4 +72,20 @@ test("book identifiers and API origin are validated before network requests",asy
  await assert.rejects(loadPrivatePageIllustration("http://insecure.example","x",book,2,new AbortController().signal,never),/origin/);
  await assert.rejects(loadPrivatePageIllustration(api,"x","../../private",2,new AbortController().signal,never),/request/);
  await assert.rejects(loadPrivatePageIllustration(api,"x",book,21,new AbortController().signal,never),/request/);
+});
+
+test("private illustration origin cannot contain credentials, paths or query fragments",async()=>{
+ const never=()=>{throw Error("Should not send request")};
+ for(const invalid of ["https://user:pass@private.example.test","https://private.example.test/api","https://private.example.test?token=x","https://private.example.test#private","http://localhost.example.test:5173","https://private.example.test/"]){
+  await assert.rejects(loadPrivatePageIllustration(invalid,"x",book,2,new AbortController().signal,never),/origin/);
+ }
+});
+test("metadata redirect failure never requests image bytes",async()=>{
+ let calls=0;
+ await assert.rejects(loadPrivatePageIllustration(api,"private-token",book,2,new AbortController().signal,async(_url,opts)=>{
+  calls++;
+  assert.equal(opts.redirect,"error");
+  throw new TypeError("Redirect blocked");
+ }),/Redirect blocked/);
+ assert.equal(calls,1);
 });
