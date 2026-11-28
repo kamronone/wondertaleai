@@ -53,8 +53,8 @@ import "./brick-pass-interaction.css";
 import "./create-hero-art-final.css";
 import "./create-photo-unavailable.css";
 import "./private-reader-illustration-status.css";
-import "./reader-pager-no-overlap.css";
 import "./shared-control-standard.css";
+import "./reader-pager-no-overlap.css";
 import {canDownloadClassicArt,hasClassicOfflineArt,downloadClassicOfflineArt} from "./reader_offline_art";
 import { createDemoBook, createDemoSequel, getDemoBooks, getLocalLibraryHealth, saveDemoBooks, isDemoBook, canRefreshClassicDemoStory, refreshClassicDemoStory, type DemoBook } from "./demo";
 import { checkAiStoryAccess } from "./ai_preflight";
@@ -1335,7 +1335,7 @@ function App(){
     {tab==="account"?<ProfileHeader lang={lang} onLanguage={switchLang} onPrivacy={()=>openLegal("privacy")} siteTheme={siteTheme} onSiteTheme={changeSiteTheme}/>:
     <header className="topbar">
       <button type="button" className="brand" onClick={()=>setTab("home")} aria-label={t.backHome}><span className="brandmark"><img src="/icons/icon-192.png" alt="" /></span><span>Wonder<span className="brandaccent">Tale</span><small>AI STORY STUDIO</small></span></button>
-      <div className="header-actions"><button type="button" className="small-button" onClick={()=>setTab("account")}><UserRound size={17}/> <span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></div>
+      <div className="header-actions"><button type="button" className="small-button" aria-label={({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]} onClick={()=>setTab("account")}><UserRound size={17} aria-hidden="true"/> <span>{({ru:"Профиль",uz:"Profil",en:"Profile"} as const)[lang]}</span></button></div>
     </header>}
     {!isOnline&&<div className="offline-status-banner" role="status">
       {({ru:"Нет интернета. Сохранённые на устройстве сказки доступны, а AI и синхронизация временно не работают.",uz:"Internet yoq. Qurilmada saqlangan ertaklarni öqiş mumkin, AI va sinxronlaş vaqtinça işlamaydi.",en:"You're offline. Stories saved on this device remain available; AI and sync are paused."} as const)[lang]}

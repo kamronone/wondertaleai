@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const read=name=>readFileSync(new URL("../src/"+name,import.meta.url),"utf8");
 const app=read("main.tsx"),css=read("shared-control-standard.css"),reader=read("reader-controls-compact.css"),profile=read("profile-concept-three.css");
-test("shared controls load after route-specific styles and exclude admin",()=>{
- assert.ok(app.indexOf('import "./shared-control-standard.css";')>app.indexOf('import "./reader-pager-no-overlap.css";'));
+test("shared controls load after route styles and before final pager correction",()=>{
+ const shared=app.indexOf('import "./shared-control-standard.css";');
+ assert.ok(shared>app.indexOf('import "./private-reader-illustration-status.css";'));
+ assert.ok(shared<app.indexOf('import "./reader-pager-no-overlap.css";'));
  for(const route of [".library-page.library-concept-two",".create-page.create-reference-page",".reader-page",".profile-concept-three",".cartoon-studio"])assert.ok(css.includes(route));
  assert.ok(css.includes("--wt-control-touch: 44px"));
  assert.ok(css.includes(":focus-visible"));
@@ -29,4 +31,11 @@ test("library search follows existing theme tokens",()=>{
  assert.ok(css.includes('.shell[data-site-theme="forest"] .library-page'));
  assert.ok(css.includes('.shell[data-site-theme="night"] .library-page'));
  assert.ok(css.includes("color: var(--wt-site-ink) !important"));
+});
+
+test("icon-only mobile profile button retains a localized accessible name",()=>{
+ const header=app.slice(app.indexOf('<header className="topbar">'),app.indexOf('</header>}',app.indexOf('<header className="topbar">')));
+ assert.ok(header.includes('className="small-button" aria-label='));
+ assert.ok(header.includes('ru:"Профиль",uz:"Profil",en:"Profile"'));
+ assert.ok(header.includes('onClick={()=>setTab("account")}'));
 });
